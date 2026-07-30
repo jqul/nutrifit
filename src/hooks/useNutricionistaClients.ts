@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { ClientData, DailyCheckin, Goal } from '../types'
+import { ClientData, DailyCheckin } from '../types'
 import { clientFromRow, clientToRow, checkinFromRow } from '../lib/mappers'
 import { calcAdherence, calcStreak } from '../lib/adherence'
 import { toast } from '../components/shared/Toast'
@@ -43,7 +43,7 @@ export interface NewClientInput {
   surname: string
   phone: string
   email: string
-  goal: Goal | ''
+  goal: string
   heightCm: string
   gender: string
   birthDate: string
@@ -106,7 +106,7 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
         id: `demo-new-${Date.now()}`, nutricionistaId, token,
         authUserId: null, name: newClient.name.trim(), surname: newClient.surname.trim(),
         phone: newClient.phone.trim(), email: newClient.email.trim(),
-        goal: newClient.goal || null, heightCm: newClient.heightCm ? parseFloat(newClient.heightCm) : null,
+        goal: newClient.goal.trim() || null, heightCm: newClient.heightCm ? parseFloat(newClient.heightCm) : null,
         gender: newClient.gender || null, birthDate: newClient.birthDate || null,
         allergies: newClient.allergies.trim(), notes: '', createdAt: Date.now(),
       }
@@ -121,7 +121,7 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
       surname: newClient.surname.trim(),
       phone: newClient.phone.trim(),
       email: newClient.email.trim() || null,
-      goal: newClient.goal || null,
+      goal: newClient.goal.trim() || null,
       height_cm: newClient.heightCm ? parseFloat(newClient.heightCm) : null,
       gender: newClient.gender || null,
       birth_date: newClient.birthDate || null,

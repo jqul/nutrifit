@@ -9,7 +9,9 @@ export interface UserProfile {
   createdAt: number
 }
 
-export type Goal = 'perder_peso' | 'ganar_masa' | 'mantenimiento' | 'rendimiento' | 'salud'
+// Objetivos predefinidos con etiqueta traducida — el campo `goal` del cliente
+// es texto libre (el nutricionista puede escribir uno propio si ninguno encaja).
+export type PresetGoal = 'perder_peso' | 'ganar_masa' | 'mantenimiento' | 'rendimiento' | 'salud'
 
 export interface ClientData {
   id: string
@@ -23,7 +25,7 @@ export interface ClientData {
   birthDate: string | null
   gender: string | null
   heightCm: number | null
-  goal: Goal | null
+  goal: string | null
   allergies: string
   notes: string
   createdAt: number

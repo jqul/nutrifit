@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { ClientData } from '../../../types'
-import { GOAL_LABELS, GOAL_OPTIONS } from '../../../lib/constants'
+import { goalLabel } from '../../../lib/constants'
 import { Button } from '../../shared/Button'
 import { Modal } from '../../shared/Modal'
+import { GoalSelect } from '../../shared/GoalSelect'
 import { toast } from '../../shared/Toast'
 import { exportClientData } from '../../../lib/gdprExport'
 import { Copy, RefreshCw, Download, Trash2 } from 'lucide-react'
@@ -63,7 +64,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         <Field label="Nombre" value={`${client.name} ${client.surname}`} />
         <Field label="Teléfono" value={client.phone || '—'} />
         <Field label="Email" value={client.email || '—'} />
-        <Field label="Objetivo" value={client.goal ? GOAL_LABELS[client.goal] : '—'} />
+        <Field label="Objetivo" value={goalLabel(client.goal)} />
         <Field label="Altura" value={client.heightCm ? `${client.heightCm} cm` : '—'} />
         <Field label="Género" value={client.gender || '—'} />
         <Field label="Fecha de nacimiento" value={client.birthDate || '—'} />
@@ -109,14 +110,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         <Input label="Teléfono" value={form.phone} onChange={v => setForm({ ...form, phone: v })} />
         <Input label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} />
       </div>
-      <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Objetivo</label>
-        <select value={form.goal || ''} onChange={e => setForm({ ...form, goal: (e.target.value || null) as ClientData['goal'] })}
-          className="w-full px-3 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm">
-          <option value="">Sin especificar</option>
-          {GOAL_OPTIONS.map(g => <option key={g} value={g}>{GOAL_LABELS[g]}</option>)}
-        </select>
-      </div>
+      <GoalSelect value={form.goal || ''} onChange={goal => setForm({ ...form, goal: goal || null })} surface="card" />
       <div className="grid grid-cols-3 gap-3">
         <Input label="Altura (cm)" type="number" value={form.heightCm?.toString() || ''} onChange={v => setForm({ ...form, heightCm: v ? parseFloat(v) : null })} />
         <Input label="Género" value={form.gender || ''} onChange={v => setForm({ ...form, gender: v })} />

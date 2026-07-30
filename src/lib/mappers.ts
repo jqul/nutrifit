@@ -4,7 +4,7 @@ import {
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
-  WeightEntry, ProgressPhotoSession, DailyCheckin, Goal, Food,
+  WeightEntry, ProgressPhotoSession, DailyCheckin, Food,
 } from '../types'
 
 export function clientFromRow(row: ClienteRow): ClientData {
@@ -20,7 +20,7 @@ export function clientFromRow(row: ClienteRow): ClientData {
     birthDate: row.birth_date,
     gender: row.gender,
     heightCm: row.height_cm,
-    goal: (row.goal as Goal) || null,
+    goal: row.goal || null,
     allergies: row.allergies || '',
     notes: row.notes || '',
     createdAt: new Date(row.created_at).getTime(),

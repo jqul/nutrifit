@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { UserProfile, ClientData } from '../../types'
 import { useNutricionistaClients, NewClientInput } from '../../hooks/useNutricionistaClients'
-import { GOAL_LABELS, GOAL_OPTIONS } from '../../lib/constants'
+import { goalLabel } from '../../lib/constants'
 import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
 import { ThemeToggle } from '../shared/ThemeToggle'
-import { Plus, Flame, Copy, LogOut, Search } from 'lucide-react'
+import { GoalSelect } from '../shared/GoalSelect'
+import { Plus, Flame, Copy, LogOut, Search, Crown } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const EMPTY_FORM: NewClientInput = {
@@ -27,6 +28,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   const filtered = clients.filter(c =>
     `${c.name} ${c.surname}`.toLowerCase().includes(query.toLowerCase())
   )
+  const topStreak = Math.max(0, ...clients.map(c => c.streak || 0))
 
   const handleCreate = async () => {
     if (!form.name.trim()) { toast('Introduce el nombre del cliente', 'warn'); return }
@@ -81,13 +83,20 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map(c => (
-              <div key={c.id} className="bg-card border border-border rounded-2xl p-5 hover:border-accent/40 hover:shadow-sm transition-all cursor-pointer"
+            {filtered.map(c => {
+              const isTopStreak = topStreak > 0 && (c.streak || 0) === topStreak
+              return (
+              <div key={c.id} className={`bg-card border rounded-2xl p-5 hover:shadow-sm transition-all cursor-pointer ${
+                isTopStreak ? 'border-accent/50' : 'border-border hover:border-accent/40'
+              }`}
                 onClick={() => onSelectClient(c)}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-serif font-bold text-lg">{c.name} {c.surname}</p>
-                    {c.goal && <p className="text-xs text-muted mt-0.5">{GOAL_LABELS[c.goal]}</p>}
+                    <p className="font-serif font-bold text-lg flex items-center gap-1.5">
+                      {c.name} {c.surname}
+                      {isTopStreak && <Crown className="w-4 h-4 text-accent flex-shrink-0" aria-label="Mejor racha" />}
+                    </p>
+                    {c.goal && <p className="text-xs text-muted mt-0.5">{goalLabel(c.goal)}</p>}
                   </div>
                   <button onClick={e => { e.stopPropagation(); copyLink(c.token) }}
                     className="p-1.5 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors flex-shrink-0" title="Copiar enlace del cliente">
@@ -110,7 +119,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
                   <p className="text-xs text-warn mt-2">Sin check-in hoy</p>
                 )}
               </div>
-            ))}
+            )})}
           </div>
         )}
       </main>
@@ -141,14 +150,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
                 className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Objetivo</label>
-            <select value={form.goal} onChange={e => setForm({ ...form, goal: e.target.value as NewClientInput['goal'] })}
-              className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm">
-              <option value="">Sin especificar</option>
-              {GOAL_OPTIONS.map(g => <option key={g} value={g}>{GOAL_LABELS[g]}</option>)}
-            </select>
-          </div>
+          <GoalSelect value={form.goal} onChange={goal => setForm({ ...form, goal })} />
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Altura (cm)</label>
