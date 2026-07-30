@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ClientData, DietPlan } from '../../../types'
+import { ClientData, DietPlan, Food } from '../../../types'
 import { supabase } from '../../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow } from '../../../lib/supabase-types'
+import { foodFromRow } from '../../../lib/mappers'
+import { detectAllergenConflict } from '../../../lib/allergens'
 import { Button } from '../../shared/Button'
 import { toast } from '../../shared/Toast'
-import { Plus, Trash2, Eye, EyeOff, BookmarkPlus } from 'lucide-react'
+import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle } from 'lucide-react'
 
 interface EditableItem { id: string; foodName: string; quantity: string; unit: string; kcal: string; proteinG: string; carbsG: string; fatG: string }
 interface EditableMeal { id: string; name: string; time: string; kcalTarget: string; items: EditableItem[] }
@@ -42,6 +44,12 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   const [supplements, setSupplements] = useState<EditableSupplement[]>(demoEditable?.supplements ?? [])
   const [templates, setTemplates] = useState<DietTemplateRow[]>([])
   const [templateName, setTemplateName] = useState('')
+  const [foods, setFoods] = useState<Food[]>([])
+  const [openSuggestFor, setOpenSuggestFor] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.from('foods').select('*').order('name').then(({ data }) => setFoods((data || []).map(foodFromRow)))
+  }, [])
 
   const loadTemplates = useCallback(async () => {
     if (demoPlan) return
@@ -183,6 +191,13 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
     if (!meal) return
     updateMeal(mealId, { items: meal.items.map(i => i.id === itemId ? { ...i, ...updates } : i) })
   }
+  const selectFood = (mealId: string, itemId: string, food: Food) => {
+    updateItem(mealId, itemId, {
+      foodName: food.name, quantity: '100', unit: 'g',
+      kcal: String(food.kcal), proteinG: String(food.proteinG), carbsG: String(food.carbsG), fatG: String(food.fatG),
+    })
+    setOpenSuggestFor(null)
+  }
 
   const addSupplement = () => setSupplements([...supplements, { id: newId(), name: '', dose: '', timing: '', visibleToClient: true }])
   const removeSupplement = (id: string) => setSupplements(supplements.filter(s => s.id !== id))
@@ -243,17 +258,45 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
               <button onClick={() => removeMeal(meal.id)} className="p-2 text-muted hover:text-warn"><Trash2 className="w-4 h-4" /></button>
             </div>
             <div className="space-y-2">
-              {meal.items.map(item => (
-                <div key={item.id} className="flex items-center gap-2">
-                  <input value={item.foodName} onChange={e => updateItem(meal.id, item.id, { foodName: e.target.value })} placeholder="Alimento"
-                    className="flex-1 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                  <input value={item.quantity} onChange={e => updateItem(meal.id, item.id, { quantity: e.target.value })} placeholder="Cant."
-                    className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                  <input value={item.unit} onChange={e => updateItem(meal.id, item.id, { unit: e.target.value })} placeholder="Unidad"
-                    className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                  <button onClick={() => removeItem(meal.id, item.id)} className="p-1.5 text-muted hover:text-warn"><Trash2 className="w-3.5 h-3.5" /></button>
-                </div>
-              ))}
+              {meal.items.map(item => {
+                const allergenHit = detectAllergenConflict(client.allergies, item.foodName)
+                const suggestions = openSuggestFor === item.id && item.foodName.trim().length > 0
+                  ? foods.filter(f => f.name.toLowerCase().includes(item.foodName.toLowerCase())).slice(0, 6)
+                  : []
+                return (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <input value={item.foodName}
+                        onChange={e => updateItem(meal.id, item.id, { foodName: e.target.value })}
+                        onFocus={() => setOpenSuggestFor(item.id)}
+                        onBlur={() => setTimeout(() => setOpenSuggestFor(null), 150)}
+                        placeholder="Alimento"
+                        className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+                      {suggestions.length > 0 && (
+                        <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                          {suggestions.map(f => (
+                            <button key={f.id} type="button" onMouseDown={() => selectFood(meal.id, item.id, f)}
+                              className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
+                              <span>{f.name}</span>
+                              <span className="text-muted flex-shrink-0">{f.kcal} kcal/100g</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <input value={item.quantity} onChange={e => updateItem(meal.id, item.id, { quantity: e.target.value })} placeholder="Cant."
+                      className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+                    <input value={item.unit} onChange={e => updateItem(meal.id, item.id, { unit: e.target.value })} placeholder="Unidad"
+                      className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+                    {allergenHit && (
+                      <span title={`Posible alérgeno para este cliente: ${allergenHit.replace('_', ' ')}`} className="flex-shrink-0 text-warn">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                      </span>
+                    )}
+                    <button onClick={() => removeItem(meal.id, item.id)} className="p-1.5 text-muted hover:text-warn"><Trash2 className="w-3.5 h-3.5" /></button>
+                  </div>
+                )
+              })}
               <button onClick={() => addItem(meal.id)} className="flex items-center gap-1 text-xs text-muted hover:text-accent"><Plus className="w-3 h-3" /> Añadir alimento</button>
             </div>
           </div>

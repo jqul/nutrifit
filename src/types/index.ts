@@ -98,6 +98,16 @@ export interface ProgressPhotoSession {
   note: string
 }
 
+export interface Food {
+  id: string
+  name: string
+  category: string
+  kcal: number
+  proteinG: number
+  carbsG: number
+  fatG: number
+}
+
 export type FollowedPlan = 'si' | 'parcial' | 'no'
 
 export interface DailyCheckin {

@@ -26,7 +26,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
 }) {
   const [tab, setTab] = useState<Tab>('perfil')
   const [current, setCurrent] = useState(client)
-  const { updateClient, regenerateToken } = useNutricionistaClients({
+  const { updateClient, regenerateToken, deleteClient } = useNutricionistaClients({
     nutricionistaId: userProfile.uid, demoClients: demoMode ? [current] : undefined,
   })
 
@@ -40,6 +40,11 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
     const token = await regenerateToken(current.id)
     if (token) setCurrent({ ...current, token })
     return token
+  }
+
+  const handleDelete = async () => {
+    const ok = await deleteClient(current.id)
+    if (ok) onClose()
   }
 
   return (
@@ -67,7 +72,10 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {tab === 'perfil' && <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken} />}
+        {tab === 'perfil' && (
+          <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
+            onDelete={handleDelete} demoMode={demoMode} />
+        )}
         {tab === 'dieta' && (
           <PlanDietaTab client={current} nutricionistaId={userProfile.uid}
             demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} />

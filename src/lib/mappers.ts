@@ -1,10 +1,10 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
-  WeightLogRow, ProgressPhotoRow, DailyCheckinRow,
+  WeightLogRow, ProgressPhotoRow, DailyCheckinRow, FoodRow,
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
-  WeightEntry, ProgressPhotoSession, DailyCheckin, Goal,
+  WeightEntry, ProgressPhotoSession, DailyCheckin, Goal, Food,
 } from '../types'
 
 export function clientFromRow(row: ClienteRow): ClientData {
@@ -106,6 +106,13 @@ export function photoSessionFromRow(row: ProgressPhotoRow): ProgressPhotoSession
   return {
     id: row.id, clientId: row.client_id, date: row.date,
     frontUrl: row.front_url, sideUrl: row.side_url, backUrl: row.back_url, note: row.note || '',
+  }
+}
+
+export function foodFromRow(row: FoodRow): Food {
+  return {
+    id: row.id, name: row.name, category: row.category,
+    kcal: row.kcal, proteinG: row.protein_g, carbsG: row.carbs_g, fatG: row.fat_g,
   }
 }
 

@@ -99,6 +99,16 @@ export interface ProgressPhotoRow {
   note: string | null
 }
 
+export interface FoodRow {
+  id: string
+  name: string
+  category: string
+  kcal: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+}
+
 export interface DailyCheckinRow {
   id: string
   client_id: string

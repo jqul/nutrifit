@@ -2,17 +2,44 @@ import { useState } from 'react'
 import { ClientData } from '../../../types'
 import { GOAL_LABELS, GOAL_OPTIONS } from '../../../lib/constants'
 import { Button } from '../../shared/Button'
+import { Modal } from '../../shared/Modal'
 import { toast } from '../../shared/Toast'
-import { Copy, RefreshCw } from 'lucide-react'
+import { exportClientData } from '../../../lib/gdprExport'
+import { Copy, RefreshCw, Download, Trash2 } from 'lucide-react'
 
-export function PerfilTab({ client, onUpdate, onRegenerateToken }: {
+export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode }: {
   client: ClientData
   onUpdate: (updates: Partial<ClientData>) => Promise<boolean>
   onRegenerateToken: () => Promise<string | null>
+  onDelete: () => Promise<void>
+  demoMode?: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(client)
   const [saving, setSaving] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+
+  const handleExport = async () => {
+    if (demoMode) { toast('No disponible en modo demo', 'warn'); return }
+    setExporting(true)
+    try {
+      await exportClientData(client)
+      toast('Datos exportados ✓', 'ok')
+    } catch {
+      toast('Error al exportar los datos', 'warn')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    await onDelete()
+    setDeleting(false)
+    setConfirmDeleteOpen(false)
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -42,11 +69,33 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken }: {
         <Field label="Fecha de nacimiento" value={client.birthDate || '—'} />
         <Field label="Alergias / intolerancias" value={client.allergies || '—'} />
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button variant="outline" onClick={() => { setForm(client); setEditing(true) }}>Editar</Button>
         <Button variant="outline" onClick={copyLink}><Copy className="w-3.5 h-3.5" /> Copiar enlace</Button>
         <Button variant="outline" onClick={onRegenerateToken}><RefreshCw className="w-3.5 h-3.5" /> Regenerar enlace</Button>
       </div>
+
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted">Datos del cliente (RGPD)</p>
+        <p className="text-xs text-muted">Descarga toda la información guardada de este cliente, o elimínala por completo si te lo solicita.</p>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={handleExport} loading={exporting}><Download className="w-3.5 h-3.5" /> Exportar datos</Button>
+          <Button variant="danger" onClick={() => setConfirmDeleteOpen(true)}><Trash2 className="w-3.5 h-3.5" /> Eliminar cliente y sus datos</Button>
+        </div>
+      </div>
+
+      <Modal open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} title="Eliminar cliente">
+        <div className="space-y-4">
+          <p className="text-sm text-muted">
+            ¿Eliminar a <strong className="text-ink">{client.name} {client.surname}</strong> y todos sus datos
+            (plan de dieta, peso, fotos, check-ins)? Esta acción no se puede deshacer.
+          </p>
+          <div className="flex gap-2">
+            <Button variant="danger" onClick={handleDelete} loading={deleting}>Sí, eliminar</Button>
+            <Button variant="ghost" onClick={() => setConfirmDeleteOpen(false)}>Cancelar</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 
