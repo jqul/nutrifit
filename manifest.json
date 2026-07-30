@@ -1,0 +1,10 @@
+{
+  "name": "NutriFit",
+  "short_name": "NutriFit",
+  "description": "Software para nutricionistas: planes de dieta, seguimiento y comunicación con clientes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f5ee",
+  "theme_color": "#3f7d4f",
+  "icons": []
+}

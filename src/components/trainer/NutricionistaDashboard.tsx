@@ -1,0 +1,179 @@
+import { useState } from 'react'
+import { UserProfile, ClientData } from '../../types'
+import { useNutricionistaClients, NewClientInput } from '../../hooks/useNutricionistaClients'
+import { GOAL_LABELS, GOAL_OPTIONS } from '../../lib/constants'
+import { Button } from '../shared/Button'
+import { Modal } from '../shared/Modal'
+import { ThemeToggle } from '../shared/ThemeToggle'
+import { Plus, Flame, Copy, LogOut, Search } from 'lucide-react'
+import { toast } from '../shared/Toast'
+
+const EMPTY_FORM: NewClientInput = {
+  name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
+}
+
+export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients }: {
+  userProfile: UserProfile
+  onLogout: () => void
+  onSelectClient: (client: ClientData) => void
+  demoClients?: ClientData[]
+}) {
+  const { clients, loading, addClient } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
+  const [modalOpen, setModalOpen] = useState(false)
+  const [form, setForm] = useState<NewClientInput>(EMPTY_FORM)
+  const [saving, setSaving] = useState(false)
+  const [query, setQuery] = useState('')
+
+  const filtered = clients.filter(c =>
+    `${c.name} ${c.surname}`.toLowerCase().includes(query.toLowerCase())
+  )
+
+  const handleCreate = async () => {
+    if (!form.name.trim()) { toast('Introduce el nombre del cliente', 'warn'); return }
+    setSaving(true)
+    const ok = await addClient(form)
+    setSaving(false)
+    if (ok) { setModalOpen(false); setForm(EMPTY_FORM) }
+  }
+
+  const copyLink = (token: string) => {
+    const url = `${window.location.origin}/?c=${token}`
+    navigator.clipboard.writeText(url)
+    toast('Enlace copiado ✓', 'ok')
+  }
+
+  return (
+    <div className="min-h-screen bg-bg">
+      <header className="border-b border-border bg-bg/90 backdrop-blur-sm sticky top-0 z-10" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <span className="text-xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span></span>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <span className="text-sm text-muted hidden sm:inline">{userProfile.displayName}</span>
+            <button onClick={onLogout} className="p-2 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors" title="Cerrar sesión">
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-6 gap-3">
+          <h1 className="text-2xl font-serif font-bold">Clientes</h1>
+          <Button onClick={() => setModalOpen(true)}><Plus className="w-4 h-4" /> Nuevo cliente</Button>
+        </div>
+
+        {clients.length > 0 && (
+          <div className="relative mb-5 max-w-sm">
+            <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar cliente..."
+              className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+          </div>
+        )}
+
+        {loading ? (
+          <p className="text-muted text-sm">Cargando...</p>
+        ) : filtered.length === 0 ? (
+          <div className="bg-card border border-border rounded-2xl p-12 text-center">
+            <p className="text-muted text-sm">
+              {clients.length === 0 ? 'Todavía no tienes clientes. Crea el primero para empezar.' : 'Ningún cliente coincide con la búsqueda.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map(c => (
+              <div key={c.id} className="bg-card border border-border rounded-2xl p-5 hover:border-accent/40 hover:shadow-sm transition-all cursor-pointer"
+                onClick={() => onSelectClient(c)}>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-serif font-bold text-lg">{c.name} {c.surname}</p>
+                    {c.goal && <p className="text-xs text-muted mt-0.5">{GOAL_LABELS[c.goal]}</p>}
+                  </div>
+                  <button onClick={e => { e.stopPropagation(); copyLink(c.token) }}
+                    className="p-1.5 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors flex-shrink-0" title="Copiar enlace del cliente">
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-4 mt-4 text-sm">
+                  <div className="flex items-center gap-1 text-muted">
+                    <Flame className={`w-3.5 h-3.5 ${(c.streak || 0) > 0 ? 'text-accent' : ''}`} />
+                    <span>{c.streak || 0}d</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-1.5 bg-bg-alt rounded-full overflow-hidden">
+                      <div className="h-full bg-accent rounded-full" style={{ width: `${c.adherence7d || 0}%` }} />
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted">{c.adherence7d || 0}%</span>
+                </div>
+                {!c.doneToday && (
+                  <p className="text-xs text-warn mt-2">Sin check-in hoy</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nuevo cliente">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Nombre</label>
+              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Apellidos</label>
+              <input value={form.surname} onChange={e => setForm({ ...form, surname: e.target.value })}
+                className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Teléfono</label>
+              <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
+                className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Email</label>
+              <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Objetivo</label>
+            <select value={form.goal} onChange={e => setForm({ ...form, goal: e.target.value as NewClientInput['goal'] })}
+              className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm">
+              <option value="">Sin especificar</option>
+              {GOAL_OPTIONS.map(g => <option key={g} value={g}>{GOAL_LABELS[g]}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Altura (cm)</label>
+              <input type="number" value={form.heightCm} onChange={e => setForm({ ...form, heightCm: e.target.value })}
+                className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Género</label>
+              <input value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}
+                className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Nacimiento</label>
+              <input type="date" value={form.birthDate} onChange={e => setForm({ ...form, birthDate: e.target.value })}
+                className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Alergias / intolerancias</label>
+            <textarea value={form.allergies} onChange={e => setForm({ ...form, allergies: e.target.value })} rows={2}
+              className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm resize-none" />
+          </div>
+          <Button onClick={handleCreate} loading={saving} className="w-full">Crear cliente</Button>
+        </div>
+      </Modal>
+    </div>
+  )
+}

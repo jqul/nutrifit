@@ -1,0 +1,86 @@
+import { useState } from 'react'
+import { UserProfile, ClientData } from '../../types'
+import { useNutricionistaClients } from '../../hooks/useNutricionistaClients'
+import { PerfilTab } from './client-panel/PerfilTab'
+import { NotasTab } from './client-panel/NotasTab'
+import { PlanDietaTab } from './client-panel/PlanDietaTab'
+import { SeguimientoTab } from './client-panel/SeguimientoTab'
+import { ThemeToggle } from '../shared/ThemeToggle'
+import { ArrowLeft } from 'lucide-react'
+import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS } from '../../lib/demo-data'
+
+type Tab = 'perfil' | 'dieta' | 'seguimiento' | 'notas'
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'perfil', label: 'Perfil' },
+  { id: 'dieta', label: 'Plan de dieta' },
+  { id: 'seguimiento', label: 'Seguimiento' },
+  { id: 'notas', label: 'Notas' },
+]
+
+export function ClientPanel({ client, userProfile, onClose, demoMode }: {
+  client: ClientData
+  userProfile: UserProfile
+  onClose: () => void
+  demoMode?: boolean
+}) {
+  const [tab, setTab] = useState<Tab>('perfil')
+  const [current, setCurrent] = useState(client)
+  const { updateClient, regenerateToken } = useNutricionistaClients({
+    nutricionistaId: userProfile.uid, demoClients: demoMode ? [current] : undefined,
+  })
+
+  const handleUpdate = async (updates: Partial<ClientData>) => {
+    const ok = await updateClient(current.id, updates)
+    if (ok) setCurrent({ ...current, ...updates })
+    return ok
+  }
+
+  const handleRegenerateToken = async () => {
+    const token = await regenerateToken(current.id)
+    if (token) setCurrent({ ...current, token })
+    return token
+  }
+
+  return (
+    <div className="min-h-screen bg-bg">
+      <header className="border-b border-border bg-bg/90 backdrop-blur-sm sticky top-0 z-10" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <span className="font-serif font-bold text-lg">{current.name} {current.surname}</span>
+          </div>
+          <ThemeToggle />
+        </div>
+        <div className="max-w-5xl mx-auto px-6 flex gap-1 overflow-x-auto">
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                tab === t.id ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'
+              }`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        {tab === 'perfil' && <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken} />}
+        {tab === 'dieta' && (
+          <PlanDietaTab client={current} nutricionistaId={userProfile.uid}
+            demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} />
+        )}
+        {tab === 'seguimiento' && (
+          <SeguimientoTab client={current} demoData={demoMode ? {
+            weights: DEMO_WEIGHTS[current.id] || [],
+            checkins: DEMO_CHECKINS[current.id] || [],
+            photos: DEMO_PHOTOS[current.id] || [],
+          } : undefined} />
+        )}
+        {tab === 'notas' && <NotasTab client={current} onUpdate={handleUpdate} />}
+      </main>
+    </div>
+  )
+}
