@@ -145,6 +145,14 @@ export interface AppointmentRow {
   google_event_id: string | null
 }
 
+export interface RecipeRow {
+  id: string
+  nutricionista_id: string
+  name: string
+  items: unknown // jsonb: EditableItem[] tal cual (camelCase), snapshot igual que diet_templates.plan
+  created_at: string
+}
+
 export interface MealLogRow {
   id: string
   client_id: string

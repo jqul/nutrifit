@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ClientData, DietPlan, Food } from '../../../types'
 import { supabase } from '../../../lib/supabase'
-import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow } from '../../../lib/supabase-types'
+import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow, RecipeRow } from '../../../lib/supabase-types'
 import { foodFromRow } from '../../../lib/mappers'
 import { detectAllergenConflict } from '../../../lib/allergens'
 import { sendPush } from '../../../lib/usePushNotifications'
 import { Button } from '../../shared/Button'
 import { toast } from '../../shared/Toast'
-import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat } from 'lucide-react'
 
 interface EditableItem { id: string; foodName: string; quantity: string; unit: string; kcal: string; proteinG: string; carbsG: string; fatG: string }
 interface EditableMeal { id: string; name: string; time: string; kcalTarget: string; items: EditableItem[] }
@@ -47,10 +47,49 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   const [templateName, setTemplateName] = useState('')
   const [foods, setFoods] = useState<Food[]>([])
   const [openSuggestFor, setOpenSuggestFor] = useState<string | null>(null)
+  const [recipes, setRecipes] = useState<RecipeRow[]>([])
+  const [savingRecipeFor, setSavingRecipeFor] = useState<string | null>(null)
+  const [recipeNameDraft, setRecipeNameDraft] = useState('')
 
   useEffect(() => {
     supabase.from('foods').select('*').order('name').then(({ data }) => setFoods((data || []).map(foodFromRow)))
   }, [])
+
+  const loadRecipes = useCallback(async () => {
+    if (demoPlan) return
+    const { data } = await supabase.from('recipes').select('*').eq('nutricionista_id', nutricionistaId).order('name')
+    setRecipes(data || [])
+  }, [nutricionistaId, demoPlan])
+
+  useEffect(() => { loadRecipes() }, [loadRecipes])
+
+  const saveMealAsRecipe = async (mealId: string, name: string) => {
+    if (!name.trim()) { toast('Ponle un nombre a la receta', 'warn'); return }
+    const meal = meals.find(m => m.id === mealId)
+    if (!meal || meal.items.length === 0) { toast('Añade algún alimento antes de guardar la receta', 'warn'); return }
+    if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); setSavingRecipeFor(null); setRecipeNameDraft(''); return }
+    const { error } = await supabase.from('recipes').insert({
+      nutricionista_id: nutricionistaId, name: name.trim(), items: meal.items,
+    })
+    if (error) { toast('Error: ' + error.message, 'warn'); return }
+    toast(`Receta "${name.trim()}" guardada ✓`, 'ok')
+    setSavingRecipeFor(null); setRecipeNameDraft('')
+    await loadRecipes()
+  }
+
+  const insertRecipe = (mealId: string, recipe: RecipeRow) => {
+    const items = (recipe.items as EditableItem[] | null) || []
+    const meal = meals.find(m => m.id === mealId)
+    if (!meal) return
+    updateMeal(mealId, { items: [...meal.items, ...items.map(i => ({ ...i, id: newId() }))] })
+    toast(`Receta "${recipe.name}" insertada ✓`, 'ok')
+  }
+
+  const deleteRecipe = async (id: string) => {
+    if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
+    setRecipes(prev => prev.filter(r => r.id !== id))
+    await supabase.from('recipes').delete().eq('id', id)
+  }
 
   const loadTemplates = useCallback(async () => {
     if (demoPlan) return
@@ -228,6 +267,20 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
         </div>
       )}
 
+      {recipes.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5"><ChefHat className="w-3.5 h-3.5" /> Tu recetario ({recipes.length})</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {recipes.map(r => (
+              <span key={r.id} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-bg-alt rounded-lg text-xs font-medium">
+                {r.name}
+                <button onClick={() => deleteRecipe(r.id)} className="p-0.5 text-muted hover:text-warn" title="Eliminar receta"><Trash2 className="w-3 h-3" /></button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <p className="font-semibold text-sm">Objetivo de macros</p>
         <div className="grid grid-cols-4 gap-3">
@@ -300,6 +353,32 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
                 )
               })}
               <button onClick={() => addItem(meal.id)} className="flex items-center gap-1 text-xs text-muted hover:text-accent"><Plus className="w-3 h-3" /> Añadir alimento</button>
+            </div>
+
+            <div className="pt-2 border-t border-border flex items-center gap-2 flex-wrap">
+              {recipes.length > 0 && (
+                <select defaultValue="" onChange={e => {
+                  const recipe = recipes.find(r => r.id === e.target.value)
+                  if (recipe) insertRecipe(meal.id, recipe)
+                  e.target.value = ''
+                }} className="px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+                  <option value="" disabled>Insertar receta...</option>
+                  {recipes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              )}
+              {savingRecipeFor === meal.id ? (
+                <>
+                  <input value={recipeNameDraft} onChange={e => setRecipeNameDraft(e.target.value)} placeholder="Nombre de la receta" autoFocus
+                    className="px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20 w-40" />
+                  <button onClick={() => saveMealAsRecipe(meal.id, recipeNameDraft)} className="px-2.5 py-1.5 bg-ink text-white rounded-lg text-xs font-semibold">Guardar</button>
+                  <button onClick={() => { setSavingRecipeFor(null); setRecipeNameDraft('') }} className="text-xs text-muted hover:text-warn">Cancelar</button>
+                </>
+              ) : (
+                <button onClick={() => { setSavingRecipeFor(meal.id); setRecipeNameDraft(meal.name) }}
+                  className="flex items-center gap-1 text-xs text-muted hover:text-accent">
+                  <ChefHat className="w-3.5 h-3.5" /> Guardar esta comida como receta
+                </button>
+              )}
             </div>
           </div>
         ))}

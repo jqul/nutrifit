@@ -9,6 +9,7 @@ import { PushToggle } from '../shared/PushToggle'
 import { GoalSelect } from '../shared/GoalSelect'
 import { CalendarTab } from './CalendarTab'
 import { BusinessDashboard } from './BusinessDashboard'
+import { ConversorTab } from './ConversorTab'
 import { Plus, Flame, Copy, LogOut, Search, Crown } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
@@ -16,11 +17,12 @@ const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
 }
 
-type View = 'clientes' | 'calendario' | 'negocio'
+type View = 'clientes' | 'calendario' | 'negocio' | 'conversor'
 const VIEWS: { id: View; label: string }[] = [
   { id: 'clientes', label: 'Clientes' },
   { id: 'calendario', label: 'Calendario' },
   { id: 'negocio', label: 'Negocio' },
+  { id: 'conversor', label: 'Conversor' },
 ]
 
 export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients }: {
@@ -84,6 +86,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
       <main className="max-w-5xl mx-auto px-6 py-8">
         {view === 'calendario' && <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />}
         {view === 'negocio' && <BusinessDashboard clients={clients} />}
+        {view === 'conversor' && <ConversorTab />}
         {view === 'clientes' && (
           <>
             <div className="flex items-center justify-between mb-6 gap-3">

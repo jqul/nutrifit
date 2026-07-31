@@ -1,0 +1,116 @@
+import { useState, useEffect, useMemo } from 'react'
+import { supabase } from '../../lib/supabase'
+import { foodFromRow } from '../../lib/mappers'
+import { Food } from '../../types'
+import { convertQuantity, computeMacros, CONVERTIBLE_UNITS } from '../../lib/foodConversion'
+import { Calculator } from 'lucide-react'
+
+export function ConversorTab() {
+  const [foods, setFoods] = useState<Food[]>([])
+  const [query, setQuery] = useState('')
+  const [selected, setSelected] = useState<Food | null>(null)
+  const [quantity, setQuantity] = useState('100')
+  const [unit, setUnit] = useState('g')
+
+  useEffect(() => {
+    supabase.from('foods').select('*').order('name').then(({ data }) => setFoods((data || []).map(foodFromRow)))
+  }, [])
+
+  const suggestions = query.trim().length > 0 && !selected
+    ? foods.filter(f => f.name.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
+    : []
+
+  const qtyNum = parseFloat(quantity)
+  const macros = selected && !isNaN(qtyNum) ? computeMacros(selected, qtyNum, unit) : null
+
+  const equivalents = useMemo(() => {
+    if (isNaN(qtyNum)) return []
+    return CONVERTIBLE_UNITS.filter(u => u !== unit).map(u => ({ unit: u, value: convertQuantity(qtyNum, unit, u) }))
+  }, [qtyNum, unit])
+
+  return (
+    <div className="max-w-lg">
+      <div className="flex items-center gap-2 mb-6">
+        <Calculator className="w-5 h-5 text-accent" />
+        <h1 className="text-2xl font-serif font-bold">Conversor de alimentos</h1>
+      </div>
+      <p className="text-sm text-muted mb-5">
+        Elige un alimento y una cantidad para ver sus macros y la equivalencia en otras unidades caseras (g, ml, cucharada, cucharadita, taza, vaso, puñado).
+      </p>
+
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+        <div className="relative">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Alimento</label>
+          <input
+            value={selected ? selected.name : query}
+            onChange={e => { setQuery(e.target.value); setSelected(null) }}
+            placeholder="Busca un alimento..."
+            className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+          {suggestions.length > 0 && (
+            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
+              {suggestions.map(f => (
+                <button key={f.id} type="button" onClick={() => { setSelected(f); setQuery('') }}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
+                  <span>{f.name}</span>
+                  <span className="text-muted text-xs flex-shrink-0">{f.kcal} kcal/100g</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Cantidad</label>
+            <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)}
+              className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Unidad</label>
+            <select value={unit} onChange={e => setUnit(e.target.value)}
+              className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm">
+              {CONVERTIBLE_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {selected && macros && (
+          <div className="pt-3 border-t border-border space-y-3">
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <MacroBox label="Kcal" value={macros.kcal} />
+              <MacroBox label="Prot." value={`${macros.proteinG}g`} />
+              <MacroBox label="Carbos" value={`${macros.carbsG}g`} />
+              <MacroBox label="Grasas" value={`${macros.fatG}g`} />
+            </div>
+            {equivalents.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Equivale a</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {equivalents.map(e => (
+                    <span key={e.unit} className="px-2.5 py-1 bg-bg-alt rounded-lg text-xs">
+                      {e.value != null ? Math.round(e.value * 10) / 10 : '—'} {e.unit}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {selected && !macros && (
+          <p className="text-xs text-warn pt-2 border-t border-border">
+            La unidad "{unit}" no tiene una equivalencia fija en gramos para este cálculo (ej. "unidad" varía según el alimento).
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MacroBox({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="bg-bg-alt rounded-xl py-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</p>
+      <p className="text-sm font-bold mt-0.5">{value}</p>
+    </div>
+  )
+}
