@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow } from '../../../lib/supabase-types'
 import { foodFromRow } from '../../../lib/mappers'
 import { detectAllergenConflict } from '../../../lib/allergens'
+import { sendPush } from '../../../lib/usePushNotifications'
 import { Button } from '../../shared/Button'
 import { toast } from '../../shared/Toast'
 import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle } from 'lucide-react'
@@ -142,6 +143,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
     }
     setSaving(false)
     toast('Plan de dieta guardado ✓', 'ok')
+    sendPush({ clientId: client.id }, 'Tu plan de dieta se ha actualizado 🥗', 'Tu nutricionista ha actualizado tu plan — échale un vistazo.')
     await loadPlan()
   }
 

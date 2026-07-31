@@ -5,13 +5,23 @@ import { goalLabel } from '../../lib/constants'
 import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
 import { ThemeToggle } from '../shared/ThemeToggle'
+import { PushToggle } from '../shared/PushToggle'
 import { GoalSelect } from '../shared/GoalSelect'
+import { CalendarTab } from './CalendarTab'
+import { BusinessDashboard } from './BusinessDashboard'
 import { Plus, Flame, Copy, LogOut, Search, Crown } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
 }
+
+type View = 'clientes' | 'calendario' | 'negocio'
+const VIEWS: { id: View; label: string }[] = [
+  { id: 'clientes', label: 'Clientes' },
+  { id: 'calendario', label: 'Calendario' },
+  { id: 'negocio', label: 'Negocio' },
+]
 
 export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients }: {
   userProfile: UserProfile
@@ -20,6 +30,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   demoClients?: ClientData[]
 }) {
   const { clients, loading, addClient } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
+  const [view, setView] = useState<View>('clientes')
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState<NewClientInput>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -50,6 +61,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="text-xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span></span>
           <div className="flex items-center gap-2">
+            <PushToggle nutricionistaId={demoClients ? undefined : userProfile.uid} />
             <ThemeToggle />
             <span className="text-sm text-muted hidden sm:inline">{userProfile.displayName}</span>
             <button onClick={onLogout} className="p-2 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors" title="Cerrar sesión">
@@ -57,70 +69,86 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             </button>
           </div>
         </div>
+        <div className="max-w-5xl mx-auto px-6 flex gap-1 overflow-x-auto">
+          {VIEWS.map(v => (
+            <button key={v.id} onClick={() => setView(v.id)}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                view === v.id ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'
+              }`}>
+              {v.label}
+            </button>
+          ))}
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6 gap-3">
-          <h1 className="text-2xl font-serif font-bold">Clientes</h1>
-          <Button onClick={() => setModalOpen(true)}><Plus className="w-4 h-4" /> Nuevo cliente</Button>
-        </div>
+        {view === 'calendario' && <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />}
+        {view === 'negocio' && <BusinessDashboard clients={clients} />}
+        {view === 'clientes' && (
+          <>
+            <div className="flex items-center justify-between mb-6 gap-3">
+              <h1 className="text-2xl font-serif font-bold">Clientes</h1>
+              <Button onClick={() => setModalOpen(true)}><Plus className="w-4 h-4" /> Nuevo cliente</Button>
+            </div>
 
-        {clients.length > 0 && (
-          <div className="relative mb-5 max-w-sm">
-            <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
-            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar cliente..."
-              className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
-          </div>
-        )}
-
-        {loading ? (
-          <p className="text-muted text-sm">Cargando...</p>
-        ) : filtered.length === 0 ? (
-          <div className="bg-card border border-border rounded-2xl p-12 text-center">
-            <p className="text-muted text-sm">
-              {clients.length === 0 ? 'Todavía no tienes clientes. Crea el primero para empezar.' : 'Ningún cliente coincide con la búsqueda.'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map(c => {
-              const isTopStreak = topStreak > 0 && (c.streak || 0) === topStreak
-              return (
-              <div key={c.id} className={`bg-card border rounded-2xl p-5 hover:shadow-sm transition-all cursor-pointer ${
-                isTopStreak ? 'border-accent/50' : 'border-border hover:border-accent/40'
-              }`}
-                onClick={() => onSelectClient(c)}>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-serif font-bold text-lg flex items-center gap-1.5">
-                      {c.name} {c.surname}
-                      {isTopStreak && <Crown className="w-4 h-4 text-accent flex-shrink-0" aria-label="Mejor racha" />}
-                    </p>
-                    {c.goal && <p className="text-xs text-muted mt-0.5">{goalLabel(c.goal)}</p>}
-                  </div>
-                  <button onClick={e => { e.stopPropagation(); copyLink(c.token) }}
-                    className="p-1.5 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors flex-shrink-0" title="Copiar enlace del cliente">
-                    <Copy className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="flex items-center gap-4 mt-4 text-sm">
-                  <div className="flex items-center gap-1 text-muted">
-                    <Flame className={`w-3.5 h-3.5 ${(c.streak || 0) > 0 ? 'text-accent' : ''}`} />
-                    <span>{c.streak || 0}d</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="h-1.5 bg-bg-alt rounded-full overflow-hidden">
-                      <div className="h-full bg-accent rounded-full" style={{ width: `${c.adherence7d || 0}%` }} />
-                    </div>
-                  </div>
-                  <span className="text-xs text-muted">{c.adherence7d || 0}%</span>
-                </div>
-                {!c.doneToday && (
-                  <p className="text-xs text-warn mt-2">Sin check-in hoy</p>
-                )}
+            {clients.length > 0 && (
+              <div className="relative mb-5 max-w-sm">
+                <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar cliente..."
+                  className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
               </div>
-            )})}
-          </div>
+            )}
+
+            {loading ? (
+              <p className="text-muted text-sm">Cargando...</p>
+            ) : filtered.length === 0 ? (
+              <div className="bg-card border border-border rounded-2xl p-12 text-center">
+                <p className="text-muted text-sm">
+                  {clients.length === 0 ? 'Todavía no tienes clientes. Crea el primero para empezar.' : 'Ningún cliente coincide con la búsqueda.'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map(c => {
+                  const isTopStreak = topStreak > 0 && (c.streak || 0) === topStreak
+                  return (
+                  <div key={c.id} className={`bg-card border rounded-2xl p-5 hover:shadow-sm transition-all cursor-pointer ${
+                    isTopStreak ? 'border-accent/50' : 'border-border hover:border-accent/40'
+                  }`}
+                    onClick={() => onSelectClient(c)}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-serif font-bold text-lg flex items-center gap-1.5">
+                          {c.name} {c.surname}
+                          {isTopStreak && <Crown className="w-4 h-4 text-accent flex-shrink-0" aria-label="Mejor racha" />}
+                        </p>
+                        {c.goal && <p className="text-xs text-muted mt-0.5">{goalLabel(c.goal)}</p>}
+                      </div>
+                      <button onClick={e => { e.stopPropagation(); copyLink(c.token) }}
+                        className="p-1.5 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors flex-shrink-0" title="Copiar enlace del cliente">
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-4 mt-4 text-sm">
+                      <div className="flex items-center gap-1 text-muted">
+                        <Flame className={`w-3.5 h-3.5 ${(c.streak || 0) > 0 ? 'text-accent' : ''}`} />
+                        <span>{c.streak || 0}d</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="h-1.5 bg-bg-alt rounded-full overflow-hidden">
+                          <div className="h-full bg-accent rounded-full" style={{ width: `${c.adherence7d || 0}%` }} />
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted">{c.adherence7d || 0}%</span>
+                    </div>
+                    {!c.doneToday && (
+                      <p className="text-xs text-warn mt-2">Sin check-in hoy</p>
+                    )}
+                  </div>
+                )})}
+              </div>
+            )}
+          </>
         )}
       </main>
 

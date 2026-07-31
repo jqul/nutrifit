@@ -3,11 +3,42 @@ import { supabase } from '../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow } from '../../lib/supabase-types'
 import { dietPlanFromRows } from '../../lib/mappers'
 import { DietPlan } from '../../types'
-import { Utensils } from 'lucide-react'
+import { Utensils, ShoppingCart, Check } from 'lucide-react'
+
+interface ShoppingItem { key: string; foodName: string; unit: string; totalQty: number | null; parts: string[] }
+
+function buildShoppingList(plan: DietPlan): ShoppingItem[] {
+  const map = new Map<string, ShoppingItem>()
+  for (const meal of plan.meals) {
+    for (const item of meal.items) {
+      if (!item.foodName.trim()) continue
+      const key = `${item.foodName.trim().toLowerCase()}|${item.unit.trim().toLowerCase()}`
+      const qtyNum = parseFloat(item.quantity.replace(',', '.'))
+      const existing = map.get(key)
+      if (existing) {
+        existing.totalQty = existing.totalQty !== null && !isNaN(qtyNum) ? existing.totalQty + qtyNum : null
+        if (item.quantity) existing.parts.push(item.quantity)
+      } else {
+        map.set(key, {
+          key, foodName: item.foodName.trim(), unit: item.unit.trim(),
+          totalQty: isNaN(qtyNum) ? null : qtyNum, parts: item.quantity ? [item.quantity] : [],
+        })
+      }
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.foodName.localeCompare(b.foodName))
+}
 
 export function DietaClienteTab({ clientId }: { clientId: string }) {
   const [plan, setPlan] = useState<DietPlan | null>(null)
   const [loading, setLoading] = useState(true)
+  const [checked, setChecked] = useState<Set<string>>(new Set())
+
+  const toggleChecked = (key: string) => setChecked(prev => {
+    const next = new Set(prev)
+    next.has(key) ? next.delete(key) : next.add(key)
+    return next
+  })
 
   useEffect(() => {
     (async () => {
@@ -93,6 +124,40 @@ export function DietaClienteTab({ clientId }: { clientId: string }) {
           </ul>
         </div>
       )}
+
+      <ShoppingList plan={plan} checked={checked} onToggle={toggleChecked} />
+    </div>
+  )
+}
+
+function ShoppingList({ plan, checked, onToggle }: { plan: DietPlan; checked: Set<string>; onToggle: (key: string) => void }) {
+  const items = buildShoppingList(plan)
+  if (items.length === 0) return null
+  return (
+    <div className="bg-card border border-border rounded-2xl p-4">
+      <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3 flex items-center gap-1.5">
+        <ShoppingCart className="w-3.5 h-3.5" /> Lista de la compra
+      </p>
+      <p className="text-xs text-muted mb-3">Generada a partir de tu plan de dieta actual. Márcalos según los vayas comprando.</p>
+      <ul className="space-y-1.5">
+        {items.map(item => {
+          const isChecked = checked.has(item.key)
+          const qtyLabel = item.totalQty !== null ? `${item.totalQty}${item.unit ? ` ${item.unit}` : ''}` : item.parts.join(' + ')
+          return (
+            <li key={item.key}>
+              <button onClick={() => onToggle(item.key)} className="w-full flex items-center gap-2.5 text-left py-1">
+                <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
+                  isChecked ? 'bg-accent border-accent' : 'border-border'
+                }`}>
+                  {isChecked && <Check className="w-3 h-3 text-white" />}
+                </span>
+                <span className={`text-sm flex-1 ${isChecked ? 'line-through text-muted' : ''}`}>{item.foodName}</span>
+                <span className={`text-xs ${isChecked ? 'text-muted' : 'text-muted'}`}>{qtyLabel}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }

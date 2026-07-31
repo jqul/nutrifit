@@ -41,6 +41,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     goal: 'perder_peso',
     allergies: 'Intolerancia a la lactosa',
     notes: 'Prefiere comidas sencillas de preparar entre semana, cocina los domingos para toda la semana.',
+    monthlyPrice: 45, customMessages: {},
     createdAt: Date.now() - 60 * 86400000,
   },
   {
@@ -54,6 +55,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     goal: 'ganar_masa',
     allergies: '',
     notes: 'Entrena 5 días/semana, necesita opciones altas en proteína para llevar al gimnasio.',
+    monthlyPrice: 60, customMessages: {},
     createdAt: Date.now() - 90 * 86400000,
   },
   {
@@ -67,6 +69,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     goal: 'salud',
     allergies: 'Alergia a los frutos secos',
     notes: 'Lleva 10 días sin registrar check-in — pendiente de contactar.',
+    monthlyPrice: 40, customMessages: {},
     createdAt: Date.now() - 45 * 86400000,
   },
 ]

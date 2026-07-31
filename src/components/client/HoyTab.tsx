@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react'
-import { ClientData, FollowedPlan } from '../../types'
+import { useState, useEffect, useCallback } from 'react'
+import { ClientData, FollowedPlan, Appointment } from '../../types'
 import { supabase } from '../../lib/supabase'
 import { logError } from '../../lib/errors'
 import { FOLLOWED_PLAN_LABELS } from '../../lib/constants'
-import { CheckCircle2 } from 'lucide-react'
-
-function toLocalISODate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+import { toLocalISODate } from '../../lib/date'
+import { appointmentFromRow } from '../../lib/mappers'
+import { sendPush } from '../../lib/usePushNotifications'
+import { toast } from '../shared/Toast'
+import { CheckCircle2, Calendar, Plus } from 'lucide-react'
 
 const SCALE = [1, 2, 3, 4, 5]
 
@@ -101,6 +101,87 @@ export function HoyTab({ client }: { client: ClientData }) {
           {saving ? 'Guardando...' : doneToday ? 'Actualizar check-in' : 'Guardar check-in'}
         </button>
       </div>
+
+      <ProximasCitas client={client} />
+    </div>
+  )
+}
+
+function ProximasCitas({ client }: { client: ClientData }) {
+  const [citas, setCitas] = useState<Appointment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [requesting, setRequesting] = useState(false)
+  const [date, setDate] = useState('')
+  const [time, setTime] = useState('10:00')
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('appointments').select('*')
+      .eq('client_id', client.id).in('status', ['confirmada', 'pendiente'])
+      .gte('start_at', new Date().toISOString()).order('start_at').limit(3)
+    setCitas((data || []).map(appointmentFromRow))
+    setLoading(false)
+  }, [client.id])
+
+  useEffect(() => { load() }, [load])
+
+  const requestAppointment = async () => {
+    if (!date) { toast('Elige una fecha', 'warn'); return }
+    setSaving(true)
+    const start = new Date(date + 'T' + time)
+    const end = new Date(start.getTime() + 30 * 60000)
+    const { error } = await supabase.from('appointments').insert({
+      nutricionista_id: client.nutricionistaId, client_id: client.id,
+      title: `Cita solicitada por ${client.name}`,
+      start_at: start.toISOString(), end_at: end.toISOString(), status: 'pendiente', notes: '',
+    })
+    setSaving(false)
+    if (error) { toast('Error al pedir la cita', 'warn'); return }
+    sendPush({ nutricionistaId: client.nutricionistaId }, 'Nueva solicitud de cita 📅',
+      `${client.name} ha pedido cita para el ${new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`)
+    toast('Cita solicitada — te avisaremos cuando se confirme ✓', 'ok')
+    setRequesting(false); setDate('')
+    await load()
+  }
+
+  if (loading) return null
+
+  return (
+    <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="font-semibold text-sm flex items-center gap-1.5"><Calendar className="w-4 h-4" /> Próximas citas</p>
+        <button onClick={() => setRequesting(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
+          <Plus className="w-3.5 h-3.5" /> Pedir cita
+        </button>
+      </div>
+      {citas.length === 0 ? (
+        <p className="text-sm text-muted">No tienes citas próximas.</p>
+      ) : (
+        <div className="space-y-2">
+          {citas.map(c => (
+            <div key={c.id} className="border border-border rounded-xl p-3 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold">{c.title}</p>
+                <p className="text-xs text-muted">
+                  {new Date(c.startAt).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}
+                  {' · '}{new Date(c.startAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              {c.status === 'pendiente' && <span className="text-[10px] font-bold text-warn uppercase flex-shrink-0">Pendiente</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {requesting && (
+        <div className="flex items-center gap-2 pt-1">
+          <input type="date" value={date} min={toLocalISODate(new Date())} onChange={e => setDate(e.target.value)}
+            className="flex-1 px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none" />
+          <input type="time" value={time} onChange={e => setTime(e.target.value)}
+            className="w-28 px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none" />
+          <button onClick={requestAppointment} disabled={saving}
+            className="px-3 py-2 bg-ink text-white rounded-lg text-xs font-bold disabled:opacity-50">Pedir</button>
+        </div>
+      )}
     </div>
   )
 }

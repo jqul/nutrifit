@@ -47,7 +47,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
     const ok = await onUpdate({
       name: form.name, surname: form.surname, phone: form.phone, email: form.email,
       goal: form.goal, heightCm: form.heightCm, gender: form.gender, birthDate: form.birthDate,
-      allergies: form.allergies,
+      allergies: form.allergies, monthlyPrice: form.monthlyPrice,
     })
     setSaving(false)
     if (ok) { setEditing(false); toast('Perfil actualizado ✓', 'ok') }
@@ -69,6 +69,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         <Field label="Género" value={client.gender || '—'} />
         <Field label="Fecha de nacimiento" value={client.birthDate || '—'} />
         <Field label="Alergias / intolerancias" value={client.allergies || '—'} />
+        <Field label="Precio mensual" value={client.monthlyPrice != null ? `${client.monthlyPrice}€` : '—'} />
       </div>
       <div className="flex gap-2 flex-wrap">
         <Button variant="outline" onClick={() => { setForm(client); setEditing(true) }}>Editar</Button>
@@ -121,6 +122,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         <textarea value={form.allergies} onChange={e => setForm({ ...form, allergies: e.target.value })} rows={2}
           className="w-full px-3 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm resize-none" />
       </div>
+      <Input label="Precio mensual (€)" type="number" value={form.monthlyPrice?.toString() || ''} onChange={v => setForm({ ...form, monthlyPrice: v ? parseFloat(v) : null })} />
       <div className="flex gap-2">
         <Button onClick={handleSave} loading={saving}>Guardar</Button>
         <Button variant="ghost" onClick={() => setEditing(false)}>Cancelar</Button>

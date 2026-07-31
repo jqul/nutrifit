@@ -28,6 +28,8 @@ export interface ClientData {
   goal: string | null
   allergies: string
   notes: string
+  monthlyPrice: number | null
+  customMessages: Record<string, string>
   createdAt: number
 }
 
@@ -110,6 +112,17 @@ export interface Food {
   fatG: number
 }
 
+export type MessageType = 'nuevo_plan' | 'racha' | 'checkin_recordatorio' | 'custom'
+
+export interface MessageTemplate {
+  id: string
+  nutricionistaId: string
+  tipo: MessageType
+  nombre: string
+  texto: string
+  createdAt: number
+}
+
 export type FollowedPlan = 'si' | 'parcial' | 'no'
 
 export interface DailyCheckin {
@@ -122,4 +135,28 @@ export interface DailyCheckin {
   mood: number
   waterL: number | null
   notes: string
+}
+
+export type AppointmentStatus = 'pendiente' | 'confirmada' | 'cancelada' | 'completada'
+
+export interface Appointment {
+  id: string
+  nutricionistaId: string
+  clientId: string | null
+  title: string
+  startAt: string
+  endAt: string
+  status: AppointmentStatus
+  notes: string
+  recurring: 'weekly' | null
+}
+
+export interface MealLog {
+  id: string
+  clientId: string
+  date: string
+  mealName: string
+  photoUrl: string | null
+  note: string
+  createdAt: number
 }

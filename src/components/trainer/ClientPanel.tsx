@@ -5,16 +5,18 @@ import { PerfilTab } from './client-panel/PerfilTab'
 import { NotasTab } from './client-panel/NotasTab'
 import { PlanDietaTab } from './client-panel/PlanDietaTab'
 import { SeguimientoTab } from './client-panel/SeguimientoTab'
+import { MensajesTab } from './client-panel/MensajesTab'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { ArrowLeft } from 'lucide-react'
 import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS } from '../../lib/demo-data'
 
-type Tab = 'perfil' | 'dieta' | 'seguimiento' | 'notas'
+type Tab = 'perfil' | 'dieta' | 'seguimiento' | 'mensajes' | 'notas'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'perfil', label: 'Perfil' },
   { id: 'dieta', label: 'Plan de dieta' },
   { id: 'seguimiento', label: 'Seguimiento' },
+  { id: 'mensajes', label: 'Mensajes' },
   { id: 'notas', label: 'Notas' },
 ]
 
@@ -86,6 +88,9 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
             checkins: DEMO_CHECKINS[current.id] || [],
             photos: DEMO_PHOTOS[current.id] || [],
           } : undefined} />
+        )}
+        {tab === 'mensajes' && (
+          <MensajesTab client={current} nutricionistaId={userProfile.uid} onUpdate={handleUpdate} demoMode={demoMode} />
         )}
         {tab === 'notas' && <NotasTab client={current} onUpdate={handleUpdate} />}
       </main>

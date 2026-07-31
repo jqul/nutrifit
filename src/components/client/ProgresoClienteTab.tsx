@@ -1,34 +1,39 @@
 import { useState, useEffect, useCallback, ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logError } from '../../lib/errors'
-import { weightFromRow, checkinFromRow, photoSessionFromRow } from '../../lib/mappers'
-import { WeightEntry, DailyCheckin, ProgressPhotoSession } from '../../types'
+import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow } from '../../lib/mappers'
+import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog } from '../../types'
 import { calcAdherence, calcStreak } from '../../lib/adherence'
+import { toLocalISODate } from '../../lib/date'
 import { WeightChart } from '../shared/WeightChart'
-import { Camera, Flame } from 'lucide-react'
+import { Camera, Flame, UtensilsCrossed, Plus } from 'lucide-react'
 import { toast } from '../shared/Toast'
-
-function toLocalISODate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 export function ProgresoClienteTab({ clientId }: { clientId: string }) {
   const [weights, setWeights] = useState<WeightEntry[]>([])
   const [checkins, setCheckins] = useState<DailyCheckin[]>([])
   const [sessions, setSessions] = useState<ProgressPhotoSession[]>([])
+  const [mealLogs, setMealLogs] = useState<MealLog[]>([])
   const [newWeight, setNewWeight] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
+  const [addingMeal, setAddingMeal] = useState(false)
+  const [mealName, setMealName] = useState('')
+  const [mealNote, setMealNote] = useState('')
+  const [mealFile, setMealFile] = useState<File | null>(null)
+  const [savingMeal, setSavingMeal] = useState(false)
 
   const load = useCallback(async () => {
-    const [{ data: w }, { data: c }, { data: p }] = await Promise.all([
+    const [{ data: w }, { data: c }, { data: p }, { data: m }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', clientId).order('date'),
       supabase.from('daily_checkins').select('*').eq('client_id', clientId),
       supabase.from('progress_photos').select('*').eq('client_id', clientId).order('date', { ascending: false }),
+      supabase.from('meal_logs').select('*').eq('client_id', clientId).order('created_at', { ascending: false }),
     ])
     setWeights((w || []).map(weightFromRow))
     setCheckins((c || []).map(checkinFromRow))
     setSessions((p || []).map(photoSessionFromRow))
+    setMealLogs((m || []).map(mealLogFromRow))
   }, [clientId])
 
   useEffect(() => { load() }, [load])
@@ -64,6 +69,27 @@ export function ProgresoClienteTab({ clientId }: { clientId: string }) {
     const column = angle === 'front' ? 'front_url' : angle === 'side' ? 'side_url' : 'back_url'
     await supabase.from('progress_photos').update({ [column]: pub.publicUrl }).eq('id', sessionId)
     setUploading(null)
+    await load()
+  }
+
+  const handleAddMealLog = async () => {
+    if (!mealName.trim()) { toast('Ponle un nombre a la comida', 'warn'); return }
+    setSavingMeal(true)
+    let photoUrl: string | null = null
+    if (mealFile) {
+      const ext = mealFile.name.split('.').pop()
+      const path = `${clientId}/meals/${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('photos').upload(path, mealFile, { upsert: true })
+      if (upErr) { toast('Error al subir la foto', 'warn'); setSavingMeal(false); return }
+      photoUrl = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl
+    }
+    const { error } = await supabase.from('meal_logs').insert({
+      client_id: clientId, date: toLocalISODate(new Date()), meal_name: mealName.trim(), note: mealNote.trim(), photo_url: photoUrl,
+    })
+    setSavingMeal(false)
+    if (error) { toast('Error al guardar la comida', 'warn'); return }
+    toast('Comida añadida al diario ✓', 'ok')
+    setAddingMeal(false); setMealName(''); setMealNote(''); setMealFile(null)
     await load()
   }
 
@@ -122,6 +148,56 @@ export function ProgresoClienteTab({ clientId }: { clientId: string }) {
                       </label>
                     )
                   })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="font-semibold text-sm flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4" /> Diario de comidas</p>
+          <button onClick={() => setAddingMeal(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
+            <Plus className="w-3.5 h-3.5" /> Añadir
+          </button>
+        </div>
+
+        {addingMeal && (
+          <div className="border border-dashed border-border rounded-xl p-3 space-y-2">
+            <input value={mealName} onChange={e => setMealName(e.target.value)} placeholder="Ej. Desayuno, tentempié..."
+              className="w-full px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none" />
+            <textarea value={mealNote} onChange={e => setMealNote(e.target.value)} rows={2} placeholder="Nota (opcional)"
+              className="w-full px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none resize-none" />
+            <input type="file" accept="image/*" onChange={e => setMealFile(e.target.files?.[0] || null)}
+              className="w-full text-xs text-muted" />
+            <div className="flex gap-2">
+              <button onClick={() => { setAddingMeal(false); setMealName(''); setMealNote(''); setMealFile(null) }}
+                className="flex-1 py-1.5 border border-border rounded-lg text-xs text-muted">Cancelar</button>
+              <button onClick={handleAddMealLog} disabled={savingMeal}
+                className="flex-1 py-1.5 bg-ink text-white rounded-lg text-xs font-semibold disabled:opacity-50">
+                {savingMeal ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {mealLogs.length === 0 ? (
+          <p className="text-sm text-muted">Todavía no has registrado ninguna comida.</p>
+        ) : (
+          <div className="space-y-2">
+            {mealLogs.map(m => (
+              <div key={m.id} className="flex items-center gap-3 border border-border rounded-xl p-2.5">
+                {m.photoUrl ? (
+                  <img src={m.photoUrl} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" alt={m.mealName} />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-bg-alt flex items-center justify-center flex-shrink-0">
+                    <UtensilsCrossed className="w-4 h-4 text-muted" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate">{m.mealName}</p>
+                  <p className="text-xs text-muted">{new Date(m.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}{m.note ? ` · ${m.note}` : ''}</p>
                 </div>
               </div>
             ))}

@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ClientData } from '../../../types'
 import { supabase } from '../../../lib/supabase'
-import { weightFromRow, checkinFromRow, photoSessionFromRow } from '../../../lib/mappers'
-import { WeightEntry, DailyCheckin, ProgressPhotoSession } from '../../../types'
+import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow } from '../../../lib/mappers'
+import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog } from '../../../types'
 import { calcAdherence, calcStreak } from '../../../lib/adherence'
 import { WeightChart } from '../../shared/WeightChart'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
-import { Flame, Camera } from 'lucide-react'
+import { Flame, Camera, UtensilsCrossed } from 'lucide-react'
 
 interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[] }
 
@@ -14,19 +14,22 @@ export function SeguimientoTab({ client, demoData }: { client: ClientData; demoD
   const [weights, setWeights] = useState<WeightEntry[]>(demoData?.weights ?? [])
   const [checkins, setCheckins] = useState<DailyCheckin[]>(demoData?.checkins ?? [])
   const [sessions, setSessions] = useState<ProgressPhotoSession[]>(demoData?.photos ?? [])
+  const [mealLogs, setMealLogs] = useState<MealLog[]>([])
   const [loading, setLoading] = useState(!demoData)
 
   const load = useCallback(async () => {
     if (demoData) return
     setLoading(true)
-    const [{ data: w }, { data: c }, { data: p }] = await Promise.all([
+    const [{ data: w }, { data: c }, { data: p }, { data: m }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', client.id).order('date'),
       supabase.from('daily_checkins').select('*').eq('client_id', client.id).order('date', { ascending: false }),
       supabase.from('progress_photos').select('*').eq('client_id', client.id).order('date', { ascending: false }),
+      supabase.from('meal_logs').select('*').eq('client_id', client.id).order('created_at', { ascending: false }),
     ])
     setWeights((w || []).map(weightFromRow))
     setCheckins((c || []).map(checkinFromRow))
     setSessions((p || []).map(photoSessionFromRow))
+    setMealLogs((m || []).map(mealLogFromRow))
     setLoading(false)
   }, [client.id, demoData])
 
@@ -77,6 +80,31 @@ export function SeguimientoTab({ client, demoData }: { client: ClientData; demoD
                       {url ? <img src={url} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-muted">—</span>}
                     </div>
                   ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-5">
+        <p className="font-semibold text-sm mb-3 flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4" /> Diario de comidas</p>
+        {mealLogs.length === 0 ? (
+          <p className="text-sm text-muted">El cliente todavía no ha registrado comidas.</p>
+        ) : (
+          <div className="space-y-2">
+            {mealLogs.slice(0, 10).map(m => (
+              <div key={m.id} className="flex items-center gap-3 border border-border rounded-xl p-2.5">
+                {m.photoUrl ? (
+                  <img src={m.photoUrl} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" alt={m.mealName} />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-bg-alt flex items-center justify-center flex-shrink-0">
+                    <UtensilsCrossed className="w-4 h-4 text-muted" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate">{m.mealName}</p>
+                  <p className="text-xs text-muted">{new Date(m.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}{m.note ? ` · ${m.note}` : ''}</p>
                 </div>
               </div>
             ))}

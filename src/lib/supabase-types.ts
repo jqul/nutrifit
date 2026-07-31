@@ -25,6 +25,8 @@ export interface ClienteRow {
   goal: string | null
   allergies: string | null
   notes: string | null
+  monthly_price: number | null
+  custom_messages: Record<string, string> | null
   created_at: string
 }
 
@@ -109,6 +111,15 @@ export interface FoodRow {
   fat_g: number
 }
 
+export interface MessageTemplateRow {
+  id: string
+  nutricionista_id: string
+  tipo: 'nuevo_plan' | 'racha' | 'checkin_recordatorio' | 'custom'
+  nombre: string
+  texto: string
+  created_at: string
+}
+
 export interface DailyCheckinRow {
   id: string
   client_id: string
@@ -119,4 +130,27 @@ export interface DailyCheckinRow {
   mood: number
   water_l: number | null
   notes: string | null
+}
+
+export interface AppointmentRow {
+  id: string
+  nutricionista_id: string
+  client_id: string | null
+  title: string
+  start_at: string
+  end_at: string
+  status: 'pendiente' | 'confirmada' | 'cancelada' | 'completada'
+  notes: string
+  recurring: 'weekly' | null
+  google_event_id: string | null
+}
+
+export interface MealLogRow {
+  id: string
+  client_id: string
+  date: string
+  meal_name: string
+  photo_url: string | null
+  note: string | null
+  created_at: string
 }

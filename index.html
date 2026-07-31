@@ -19,11 +19,20 @@
     <title>NutriFit — Software para nutricionistas | Gestiona clientes online</title>
     <meta name="description" content="Software para nutricionistas y dietistas: crea planes de dieta, haz seguimiento de peso, fotos y check-ins de cada cliente desde un panel propio, sin que el cliente instale nada." />
     <meta name="robots" content="index, follow" />
-
-    <div id="root-placeholder"></div>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Registrar Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('[NutriFit] SW registrado:', reg.scope))
+            .catch(err => console.warn('[NutriFit] SW error:', err))
+        })
+      }
+    </script>
   </body>
 </html>

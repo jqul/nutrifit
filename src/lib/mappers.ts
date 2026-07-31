@@ -1,10 +1,12 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
-  WeightLogRow, ProgressPhotoRow, DailyCheckinRow, FoodRow,
+  WeightLogRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
+  AppointmentRow, MealLogRow,
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
-  WeightEntry, ProgressPhotoSession, DailyCheckin, Food,
+  WeightEntry, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
+  Appointment, MealLog,
 } from '../types'
 
 export function clientFromRow(row: ClienteRow): ClientData {
@@ -23,6 +25,8 @@ export function clientFromRow(row: ClienteRow): ClientData {
     goal: row.goal || null,
     allergies: row.allergies || '',
     notes: row.notes || '',
+    monthlyPrice: row.monthly_price,
+    customMessages: row.custom_messages || {},
     createdAt: new Date(row.created_at).getTime(),
   }
 }
@@ -41,6 +45,8 @@ export function clientToRow(client: Partial<ClientData>): Partial<ClienteRow> {
   if (client.goal !== undefined) row.goal = client.goal
   if (client.allergies !== undefined) row.allergies = client.allergies
   if (client.notes !== undefined) row.notes = client.notes
+  if (client.monthlyPrice !== undefined) row.monthly_price = client.monthlyPrice
+  if (client.customMessages !== undefined) row.custom_messages = client.customMessages
   return row
 }
 
@@ -116,9 +122,31 @@ export function foodFromRow(row: FoodRow): Food {
   }
 }
 
+export function messageTemplateFromRow(row: MessageTemplateRow): MessageTemplate {
+  return {
+    id: row.id, nutricionistaId: row.nutricionista_id, tipo: row.tipo,
+    nombre: row.nombre, texto: row.texto, createdAt: new Date(row.created_at).getTime(),
+  }
+}
+
 export function checkinFromRow(row: DailyCheckinRow): DailyCheckin {
   return {
     id: row.id, clientId: row.client_id, date: row.date, followedPlan: row.followed_plan,
     hunger: row.hunger, energy: row.energy, mood: row.mood, waterL: row.water_l, notes: row.notes || '',
+  }
+}
+
+export function appointmentFromRow(row: AppointmentRow): Appointment {
+  return {
+    id: row.id, nutricionistaId: row.nutricionista_id, clientId: row.client_id,
+    title: row.title, startAt: row.start_at, endAt: row.end_at,
+    status: row.status, notes: row.notes || '', recurring: row.recurring,
+  }
+}
+
+export function mealLogFromRow(row: MealLogRow): MealLog {
+  return {
+    id: row.id, clientId: row.client_id, date: row.date, mealName: row.meal_name,
+    photoUrl: row.photo_url, note: row.note || '', createdAt: new Date(row.created_at).getTime(),
   }
 }

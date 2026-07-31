@@ -7,6 +7,7 @@ import { logError } from '../../lib/errors'
 import { NotFound } from '../shared/NotFound'
 import { ClientRegister } from './ClientRegister'
 import { ThemeToggle } from '../shared/ThemeToggle'
+import { PushToggle } from '../shared/PushToggle'
 import { HoyTab } from './HoyTab'
 import { DietaClienteTab } from './DietaClienteTab'
 import { ProgresoClienteTab } from './ProgresoClienteTab'
@@ -125,6 +126,13 @@ export function ClientView({ token }: { token: string }) {
                 <p className="text-xs text-muted">Cambia la apariencia de tu panel</p>
               </div>
               <ThemeToggle />
+            </div>
+            <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">Notificaciones</p>
+                <p className="text-xs text-muted">Avisos cuando tu nutricionista actualice tu plan o confirme una cita</p>
+              </div>
+              <PushToggle clientId={clientData.id} />
             </div>
             <button onClick={async () => {
               loggingOutRef.current = true
