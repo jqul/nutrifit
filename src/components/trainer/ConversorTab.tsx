@@ -131,10 +131,10 @@ export function ConversorTab() {
         <p className="text-xs text-muted mb-3">
           {selected
             ? `¿Por cuánto alimento sustituyo ${quantity || '?'} ${unit} de ${selected.name} manteniendo los mismos macros?`
-            : 'Elige primero un alimento arriba para poder sustituirlo.'}
+            : 'Elige un alimento de la lista desplegable de arriba (haz clic en una sugerencia) para poder sustituirlo.'}
         </p>
 
-        <div className={`bg-card border border-border rounded-2xl p-5 space-y-4 ${!selected ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
           <div className="relative">
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Sustituir por</label>
             <input
@@ -169,11 +169,16 @@ export function ConversorTab() {
             </div>
           </div>
 
-          {subSelected && substituteGrams != null && (
+          {subSelected && !selected && (
+            <p className="text-xs text-warn pt-2 border-t border-border">
+              Falta elegir el alimento de origen: haz clic en una sugerencia de la lista de "Alimento" arriba.
+            </p>
+          )}
+          {subSelected && selected && substituteGrams != null && (
             <div className="pt-3 border-t border-border">
               <p className="text-sm">
                 <span className="font-bold text-accent">{Math.round(substituteGrams * 10) / 10}g</span> de {subSelected.name}
-                {' '}≈ misma {MACRO_OPTIONS.find(m => m.key === matchBy)?.label.toLowerCase()} que {quantity} {unit} de {selected?.name}
+                {' '}≈ misma {MACRO_OPTIONS.find(m => m.key === matchBy)?.label.toLowerCase()} que {quantity} {unit} de {selected.name}
               </p>
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {CONVERTIBLE_UNITS.filter(u => u !== 'g').map(u => {
@@ -185,7 +190,7 @@ export function ConversorTab() {
               </div>
             </div>
           )}
-          {subSelected && substituteGrams == null && (
+          {subSelected && selected && substituteGrams == null && (
             <p className="text-xs text-warn pt-2 border-t border-border">
               {subSelected.name} no aporta nada de {MACRO_OPTIONS.find(m => m.key === matchBy)?.label.toLowerCase()} — prueba a igualar por otro macro.
             </p>
