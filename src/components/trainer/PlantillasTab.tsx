@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { DietTemplateRow, RecipeRow } from '../../lib/supabase-types'
+import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { BookmarkPlus, ChefHat, Trash2 } from 'lucide-react'
 
@@ -11,12 +12,12 @@ interface TemplatePlanShape {
 interface RecipeItemShape { foodName?: string }
 
 export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: string; demoMode?: boolean }) {
-  const [templates, setTemplates] = useState<DietTemplateRow[]>([])
-  const [recipes, setRecipes] = useState<RecipeRow[]>([])
+  const [templates, setTemplates] = useState<DietTemplateRow[]>(demoMode ? DEMO_DIET_TEMPLATES : [])
+  const [recipes, setRecipes] = useState<RecipeRow[]>(demoMode ? DEMO_RECIPES : [])
   const [loading, setLoading] = useState(!demoMode)
 
   const load = useCallback(async () => {
-    if (demoMode) return
+    if (demoMode) { setTemplates(DEMO_DIET_TEMPLATES); setRecipes(DEMO_RECIPES); return }
     setLoading(true)
     const [{ data: t }, { data: r }] = await Promise.all([
       supabase.from('diet_templates').select('*').eq('nutricionista_id', nutricionistaId).order('name'),

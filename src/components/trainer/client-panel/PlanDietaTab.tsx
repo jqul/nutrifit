@@ -5,6 +5,7 @@ import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow, Recip
 import { foodFromRow } from '../../../lib/mappers'
 import { detectAllergenConflict } from '../../../lib/allergens'
 import { sendPush } from '../../../lib/usePushNotifications'
+import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../../lib/demo-data'
 import { Button } from '../../shared/Button'
 import { toast } from '../../shared/Toast'
 import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat } from 'lucide-react'
@@ -56,7 +57,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   }, [])
 
   const loadRecipes = useCallback(async () => {
-    if (demoPlan) return
+    if (demoPlan) { setRecipes(DEMO_RECIPES); return }
     const { data } = await supabase.from('recipes').select('*').eq('nutricionista_id', nutricionistaId).order('name')
     setRecipes(data || [])
   }, [nutricionistaId, demoPlan])
@@ -92,7 +93,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   }
 
   const loadTemplates = useCallback(async () => {
-    if (demoPlan) return
+    if (demoPlan) { setTemplates(DEMO_DIET_TEMPLATES); return }
     const { data } = await supabase.from('diet_templates').select('*').eq('nutricionista_id', nutricionistaId)
     setTemplates(data || [])
   }, [nutricionistaId, demoPlan])

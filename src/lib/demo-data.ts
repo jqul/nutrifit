@@ -1,4 +1,5 @@
 import { UserProfile, ClientData, DietPlan, WeightEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan } from '../types'
+import { DietTemplateRow, RecipeRow } from './supabase-types'
 
 export const DEMO_NUTRICIONISTA_ID = 'demo-nutri-001'
 
@@ -207,6 +208,74 @@ export const DEMO_CHECKINS: Record<string, DailyCheckin[]> = {
   // Laura: sin check-ins recientes — cliente en riesgo.
   'demo-client-003': buildCheckins('demo-client-003', ['parcial', 'no', 'si'], 10),
 }
+
+// ── Plantillas y recetario (demo, solo lectura/local) ──────
+
+export const DEMO_DIET_TEMPLATES: DietTemplateRow[] = [
+  {
+    id: 'demo-tpl-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pérdida de peso 1600 kcal',
+    plan: {
+      kcalTarget: 1600, proteinG: 130, carbsG: 150, fatG: 45,
+      advice: 'Prioriza la proteína en cada comida y bebe al menos 2L de agua al día.',
+      meals: [
+        { name: 'Desayuno', time: '08:00', kcalTarget: 350, items: [
+          { id: 'dt1i1', foodName: 'Yogur natural', quantity: '150', unit: 'g', kcal: '90', proteinG: '8', carbsG: '10', fatG: '2' },
+          { id: 'dt1i2', foodName: 'Avena', quantity: '40', unit: 'g', kcal: '150', proteinG: '5', carbsG: '27', fatG: '3' },
+        ]},
+        { name: 'Comida', time: '14:00', kcalTarget: 550, items: [
+          { id: 'dt1i3', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: '230', proteinG: '45', carbsG: '0', fatG: '5' },
+          { id: 'dt1i4', foodName: 'Arroz integral', quantity: '60', unit: 'g', kcal: '210', proteinG: '5', carbsG: '44', fatG: '2' },
+        ]},
+        { name: 'Cena', time: '21:00', kcalTarget: 550, items: [
+          { id: 'dt1i5', foodName: 'Salmón', quantity: '150', unit: 'g', kcal: '280', proteinG: '35', carbsG: '0', fatG: '15' },
+          { id: 'dt1i6', foodName: 'Boniato asado', quantity: '150', unit: 'g', kcal: '130', proteinG: '2', carbsG: '30', fatG: '0' },
+        ]},
+      ],
+      supplements: [{ name: 'Multivitamínico', dose: '1 cápsula', timing: 'Con el desayuno', visibleToClient: true }],
+    },
+  },
+  {
+    id: 'demo-tpl-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Volumen 2800 kcal',
+    plan: {
+      kcalTarget: 2800, proteinG: 180, carbsG: 320, fatG: 80,
+      advice: 'Superávit calórico progresivo. No te saltes la merienda post-entreno.',
+      meals: [
+        { name: 'Desayuno', time: '07:30', kcalTarget: 600, items: [
+          { id: 'dt2i1', foodName: 'Huevos revueltos', quantity: '3', unit: 'ud', kcal: '220', proteinG: '18', carbsG: '2', fatG: '15' },
+          { id: 'dt2i2', foodName: 'Pan integral', quantity: '80', unit: 'g', kcal: '200', proteinG: '8', carbsG: '38', fatG: '2' },
+        ]},
+        { name: 'Post-entreno', time: '18:00', kcalTarget: 400, items: [
+          { id: 'dt2i3', foodName: 'Batido de proteína', quantity: '1', unit: 'scoop', kcal: '120', proteinG: '24', carbsG: '3', fatG: '1' },
+          { id: 'dt2i4', foodName: 'Plátano', quantity: '1', unit: 'ud', kcal: '100', proteinG: '1', carbsG: '27', fatG: '0' },
+        ]},
+      ],
+      supplements: [
+        { name: 'Proteína whey', dose: '1 scoop', timing: 'Post-entreno', visibleToClient: true },
+        { name: 'Creatina', dose: '5g', timing: 'Cualquier momento', visibleToClient: true },
+      ],
+    },
+  },
+]
+
+export const DEMO_RECIPES: RecipeRow[] = [
+  {
+    id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '',
+    items: [
+      { id: 'dr1i1', foodName: 'Avena', quantity: '40', unit: 'g', kcal: '150', proteinG: '5', carbsG: '27', fatG: '3' },
+      { id: 'dr1i2', foodName: 'Yogur natural', quantity: '150', unit: 'g', kcal: '90', proteinG: '8', carbsG: '10', fatG: '2' },
+      { id: 'dr1i3', foodName: 'Arándanos', quantity: '50', unit: 'g', kcal: '30', proteinG: '0', carbsG: '7', fatG: '0' },
+      { id: 'dr1i4', foodName: 'Miel', quantity: '10', unit: 'g', kcal: '30', proteinG: '0', carbsG: '8', fatG: '0' },
+    ],
+  },
+  {
+    id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '',
+    items: [
+      { id: 'dr2i1', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: '230', proteinG: '45', carbsG: '0', fatG: '5' },
+      { id: 'dr2i2', foodName: 'Arroz integral', quantity: '60', unit: 'g', kcal: '210', proteinG: '5', carbsG: '44', fatG: '2' },
+      { id: 'dr2i3', foodName: 'Verdura al vapor', quantity: '200', unit: 'g', kcal: '60', proteinG: '3', carbsG: '12', fatG: '0' },
+    ],
+  },
+]
 
 // ── Fotos de progreso ───────────────────────────────────────
 
