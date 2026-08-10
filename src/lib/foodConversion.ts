@@ -35,3 +35,26 @@ export function computeMacros(food: Food, quantity: number, unit: string): Macro
     fatG: Math.round(food.fatG * factor * 10) / 10,
   }
 }
+
+export type MacroKey = 'kcal' | 'proteinG' | 'carbsG' | 'fatG'
+export const MACRO_KEY_PER_100G: Record<MacroKey, keyof Food> = {
+  kcal: 'kcal', proteinG: 'proteinG', carbsG: 'carbsG', fatG: 'fatG',
+}
+
+/**
+ * Sustituto de un alimento por otro: cuántos gramos de `toFood` aportan el mismo
+ * valor de `matchBy` que `quantity` `unit` de `fromFood` (ej. "150g de pollo ≈
+ * cuántos gramos de tofu para igualar la proteína"). Null si la unidad de origen
+ * no es convertible, o si el alimento destino no aporta nada de ese macro (división por cero).
+ */
+export function computeSubstitution(
+  fromFood: Food, quantity: number, unit: string, toFood: Food, matchBy: MacroKey
+): number | null {
+  const grams = convertQuantity(quantity, unit, 'g')
+  if (grams == null) return null
+  const targetPer100g = fromFood[MACRO_KEY_PER_100G[matchBy]] as number
+  const target = (targetPer100g * grams) / 100
+  const toPer100g = toFood[MACRO_KEY_PER_100G[matchBy]] as number
+  if (toPer100g === 0) return null
+  return (target * 100) / toPer100g
+}
