@@ -10,6 +10,7 @@ import { GoalSelect } from '../shared/GoalSelect'
 import { CalendarTab } from './CalendarTab'
 import { BusinessDashboard } from './BusinessDashboard'
 import { ConversorTab } from './ConversorTab'
+import { PlantillasTab } from './PlantillasTab'
 import { Plus, Flame, Copy, LogOut, Search, Crown } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
@@ -17,12 +18,13 @@ const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
 }
 
-type View = 'clientes' | 'calendario' | 'negocio' | 'conversor'
+type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'plantillas'
 const VIEWS: { id: View; label: string }[] = [
   { id: 'clientes', label: 'Clientes' },
   { id: 'calendario', label: 'Calendario' },
   { id: 'negocio', label: 'Negocio' },
   { id: 'conversor', label: 'Conversor' },
+  { id: 'plantillas', label: 'Plantillas' },
 ]
 
 export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients }: {
@@ -87,6 +89,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         {view === 'calendario' && <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />}
         {view === 'negocio' && <BusinessDashboard clients={clients} />}
         {view === 'conversor' && <ConversorTab />}
+        {view === 'plantillas' && <PlantillasTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
         {view === 'clientes' && (
           <>
             <div className="flex items-center justify-between mb-6 gap-3">
