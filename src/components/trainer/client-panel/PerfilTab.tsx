@@ -144,10 +144,13 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5"><Receipt className="w-3.5 h-3.5" /> Facturación</p>
-          <Button variant="outline" onClick={handleGenerateInvoice} loading={generatingInvoice} disabled={hasCurrentInvoice}>
+          <Button variant="outline" onClick={handleGenerateInvoice} loading={generatingInvoice} disabled={hasCurrentInvoice || client.monthlyPrice == null}>
             {hasCurrentInvoice ? 'Ya generada este mes' : 'Generar factura de este mes'}
           </Button>
         </div>
+        {client.monthlyPrice == null && (
+          <p className="text-xs text-warn">Ponle un precio mensual a este cliente (arriba, en "Editar") para poder generarle facturas.</p>
+        )}
         {invoices.length === 0 ? (
           <p className="text-sm text-muted">Todavía no hay facturas para este cliente.</p>
         ) : (
