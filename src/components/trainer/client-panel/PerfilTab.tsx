@@ -11,6 +11,7 @@ import { Modal } from '../../shared/Modal'
 import { GoalSelect } from '../../shared/GoalSelect'
 import { toast } from '../../shared/Toast'
 import { exportClientData } from '../../../lib/gdprExport'
+import { DEMO_WEIGHTS } from '../../../lib/demo-data'
 import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt } from 'lucide-react'
 
 export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName }: {
@@ -30,6 +31,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
   const [anamnesisAnswers, setAnamnesisAnswers] = useState<Record<string, string> | null>(null)
   const [invoices, setInvoices] = useState<InvoiceRow[]>([])
   const [generatingInvoice, setGeneratingInvoice] = useState(false)
+  const [currentWeight, setCurrentWeight] = useState<number | null>(null)
 
   const loadInvoices = () => {
     if (demoMode) return
@@ -38,9 +40,15 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
   }
 
   useEffect(() => {
-    if (demoMode) return
+    if (demoMode) {
+      const demoEntries = DEMO_WEIGHTS[client.id] || []
+      setCurrentWeight(demoEntries.length ? demoEntries[demoEntries.length - 1].weightKg : null)
+      return
+    }
     supabase.from('anamnesis').select('*').eq('client_id', client.id).maybeSingle()
       .then(({ data }) => setAnamnesisAnswers(data?.completed_at ? data.answers || {} : null))
+    supabase.from('weight_logs').select('weight_kg').eq('client_id', client.id).order('date', { ascending: false }).limit(1).maybeSingle()
+      .then(({ data }) => setCurrentWeight(data?.weight_kg ?? null))
     loadInvoices()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client.id, demoMode])
@@ -117,6 +125,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         <Field label="Fecha de nacimiento" value={client.birthDate || '—'} />
         <Field label="Alergias / intolerancias" value={client.allergies || '—'} />
         <Field label="Precio mensual" value={client.monthlyPrice != null ? `${client.monthlyPrice}€` : '—'} />
+        <Field label="Peso actual" value={currentWeight != null ? `${currentWeight} kg` : '—'} />
         <Field label="Peso objetivo" value={client.goalWeightKg != null ? `${client.goalWeightKg} kg` : '—'} />
       </div>
       <div className="flex gap-2 flex-wrap">
