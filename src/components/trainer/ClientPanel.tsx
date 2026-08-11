@@ -8,7 +8,7 @@ import { SeguimientoTab } from './client-panel/SeguimientoTab'
 import { MensajesTab } from './client-panel/MensajesTab'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { ArrowLeft } from 'lucide-react'
-import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS } from '../../lib/demo-data'
+import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS } from '../../lib/demo-data'
 
 type Tab = 'perfil' | 'dieta' | 'seguimiento' | 'mensajes' | 'notas'
 
@@ -87,6 +87,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
             weights: DEMO_WEIGHTS[current.id] || [],
             checkins: DEMO_CHECKINS[current.id] || [],
             photos: DEMO_PHOTOS[current.id] || [],
+            mealLogs: DEMO_MEAL_LOGS[current.id] || [],
           } : undefined} />
         )}
         {tab === 'mensajes' && (

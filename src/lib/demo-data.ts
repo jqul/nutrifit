@@ -1,5 +1,5 @@
-import { UserProfile, ClientData, DietPlan, WeightEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan } from '../types'
-import { DietTemplateRow, RecipeRow } from './supabase-types'
+import { UserProfile, ClientData, DietPlan, WeightEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment } from '../types'
+import { DietTemplateRow, RecipeRow, InvoiceRow } from './supabase-types'
 
 export const DEMO_NUTRICIONISTA_ID = 'demo-nutri-001'
 
@@ -288,5 +288,93 @@ export const DEMO_PHOTOS: Record<string, ProgressPhotoSession[]> = {
     backUrl: placeholderPhoto('Espalda', '#1a6038'),
     note: 'Semana 8 del plan',
   }],
+  'demo-client-003': [],
+}
+
+// ── Diario de comidas ───────────────────────────────────────
+
+function mealPlaceholder(label: string, color: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="${color}"/><text x="50%" y="50%" font-family="sans-serif" font-size="15" fill="#fff" text-anchor="middle" dominant-baseline="middle">${label}</text></svg>`
+  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`
+}
+
+export const DEMO_MEAL_LOGS: Record<string, MealLog[]> = {
+  'demo-client-001': [
+    { id: 'ml-maria-1', clientId: 'demo-client-001', date: daysAgo(0), mealName: 'Desayuno', note: 'Con arándanos de más, se me fue la mano 😄',
+      photoUrl: mealPlaceholder('Desayuno', '#3f7d4f'), createdAt: Date.now() - 3 * 3600000 },
+    { id: 'ml-maria-2', clientId: 'demo-client-001', date: daysAgo(1), mealName: 'Comida', note: '',
+      photoUrl: mealPlaceholder('Comida', '#8fae6c'), createdAt: Date.now() - 27 * 3600000 },
+  ],
+  'demo-client-002': [
+    { id: 'ml-carlos-1', clientId: 'demo-client-002', date: daysAgo(0), mealName: 'Post-entreno', note: 'Batido + plátano justo al salir del gym',
+      photoUrl: mealPlaceholder('Post-entreno', '#1a6038'), createdAt: Date.now() - 5 * 3600000 },
+  ],
+  'demo-client-003': [],
+}
+
+// ── Citas ───────────────────────────────────────────────────
+
+function daysFromNow(n: number, hour: number, minute = 0): Date {
+  const d = new Date()
+  d.setDate(d.getDate() + n)
+  d.setHours(hour, minute, 0, 0)
+  return d
+}
+
+export const DEMO_APPOINTMENTS: Appointment[] = [
+  {
+    id: 'apt-demo-1', nutricionistaId: DEMO_NUTRICIONISTA_ID, clientId: 'demo-client-001',
+    title: 'Consulta de seguimiento', startAt: daysFromNow(0, 10).toISOString(), endAt: daysFromNow(0, 10, 30).toISOString(),
+    status: 'confirmada', notes: '', recurring: null, videoLink: 'https://meet.google.com/demo-consulta',
+  },
+  {
+    id: 'apt-demo-2', nutricionistaId: DEMO_NUTRICIONISTA_ID, clientId: 'demo-client-002',
+    title: 'Cita solicitada por Carlos', startAt: daysFromNow(2, 18).toISOString(), endAt: daysFromNow(2, 18, 30).toISOString(),
+    status: 'pendiente', notes: '', recurring: null, videoLink: null,
+  },
+  {
+    id: 'apt-demo-3', nutricionistaId: DEMO_NUTRICIONISTA_ID, clientId: 'demo-client-003',
+    title: 'Primera consulta', startAt: daysFromNow(-1, 11).toISOString(), endAt: daysFromNow(-1, 11, 45).toISOString(),
+    status: 'completada', notes: '', recurring: null, videoLink: null,
+  },
+]
+
+// ── Cuestionario de salud ───────────────────────────────────
+
+export const DEMO_ANAMNESIS: Record<string, Record<string, string>> = {
+  'demo-client-001': {
+    motivo: 'Perder peso de forma sostenible antes de la boda de mi hermana en junio.',
+    condiciones: 'Ninguna diagnosticada.',
+    medicacion: 'Ninguna.',
+    actividad: 'Ligera (1-3 días/semana)',
+    sueno: '7',
+    agua: '1.5',
+    dietas_previas: 'Probé keto un par de meses, perdí peso pero lo recuperé al dejarlo.',
+    habitos: 'Alguna copa de vino el fin de semana.',
+  },
+  'demo-client-002': {
+    motivo: 'Ganar masa muscular de forma limpia, sin pasarme de grasa.',
+    actividad: 'Alta (6-7 días/semana)',
+    sueno: '8',
+    agua: '3',
+  },
+}
+
+// ── Facturación ─────────────────────────────────────────────
+
+function periodMonthsAgo(n: number): string {
+  const d = new Date()
+  d.setMonth(d.getMonth() - n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+export const DEMO_INVOICES: Record<string, InvoiceRow[]> = {
+  'demo-client-001': [
+    { id: 'inv-maria-1', nutricionista_id: DEMO_NUTRICIONISTA_ID, client_id: 'demo-client-001', period: periodMonthsAgo(0), amount: 45, status: 'pendiente', created_at: new Date().toISOString() },
+    { id: 'inv-maria-2', nutricionista_id: DEMO_NUTRICIONISTA_ID, client_id: 'demo-client-001', period: periodMonthsAgo(1), amount: 45, status: 'pagado', created_at: new Date(Date.now() - 30 * 86400000).toISOString() },
+  ],
+  'demo-client-002': [
+    { id: 'inv-carlos-1', nutricionista_id: DEMO_NUTRICIONISTA_ID, client_id: 'demo-client-002', period: periodMonthsAgo(0), amount: 60, status: 'pagado', created_at: new Date().toISOString() },
+  ],
   'demo-client-003': [],
 }

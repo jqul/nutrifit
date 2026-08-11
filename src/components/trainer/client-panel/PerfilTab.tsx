@@ -11,7 +11,7 @@ import { Modal } from '../../shared/Modal'
 import { GoalSelect } from '../../shared/GoalSelect'
 import { toast } from '../../shared/Toast'
 import { exportClientData } from '../../../lib/gdprExport'
-import { DEMO_WEIGHTS } from '../../../lib/demo-data'
+import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
 import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt } from 'lucide-react'
 
 export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName }: {
@@ -43,6 +43,8 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
     if (demoMode) {
       const demoEntries = DEMO_WEIGHTS[client.id] || []
       setCurrentWeight(demoEntries.length ? demoEntries[demoEntries.length - 1].weightKg : null)
+      setAnamnesisAnswers(DEMO_ANAMNESIS[client.id] || null)
+      setInvoices(DEMO_INVOICES[client.id] || [])
       return
     }
     supabase.from('anamnesis').select('*').eq('client_id', client.id).maybeSingle()

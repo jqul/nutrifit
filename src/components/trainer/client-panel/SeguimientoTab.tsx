@@ -8,13 +8,13 @@ import { WeightChart } from '../../shared/WeightChart'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { Flame, Camera, UtensilsCrossed } from 'lucide-react'
 
-interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[] }
+interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[] }
 
 export function SeguimientoTab({ client, demoData }: { client: ClientData; demoData?: DemoData }) {
   const [weights, setWeights] = useState<WeightEntry[]>(demoData?.weights ?? [])
   const [checkins, setCheckins] = useState<DailyCheckin[]>(demoData?.checkins ?? [])
   const [sessions, setSessions] = useState<ProgressPhotoSession[]>(demoData?.photos ?? [])
-  const [mealLogs, setMealLogs] = useState<MealLog[]>([])
+  const [mealLogs, setMealLogs] = useState<MealLog[]>(demoData?.mealLogs ?? [])
   const [loading, setLoading] = useState(!demoData)
 
   const load = useCallback(async () => {

@@ -5,6 +5,7 @@ import { Appointment, AppointmentStatus } from '../../types'
 import { toLocalISODate } from '../../lib/date'
 import { ClientWithStats } from '../../hooks/useNutricionistaClients'
 import { sendPush } from '../../lib/usePushNotifications'
+import { DEMO_APPOINTMENTS } from '../../lib/demo-data'
 import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
 import { toast } from '../shared/Toast'
@@ -56,6 +57,15 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
     setLoading(true)
     const start = days[0]
     const end = new Date(days[6]); end.setDate(end.getDate() + 1)
+    if (demoMode) {
+      const inRange = DEMO_APPOINTMENTS.filter(a => {
+        const t = new Date(a.startAt).getTime()
+        return t >= start.getTime() && t < end.getTime()
+      }).sort((a, b) => a.startAt.localeCompare(b.startAt))
+      setAppointments(inRange)
+      setLoading(false)
+      return
+    }
     const { data } = await supabase.from('appointments').select('*')
       .eq('nutricionista_id', nutricionistaId)
       .gte('start_at', start.toISOString()).lt('start_at', end.toISOString())
@@ -63,7 +73,7 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
     setAppointments((data || []).map(appointmentFromRow))
     setLoading(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nutricionistaId, rangeKey])
+  }, [nutricionistaId, rangeKey, demoMode])
 
   useEffect(() => { load() }, [load])
 
