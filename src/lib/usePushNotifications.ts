@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+// Fallback fijo — ver el comentario en lib/supabase.ts sobre por qué no basta
+// con confiar en la variable de entorno en algunas plataformas de despliegue.
+const FALLBACK_VAPID_KEY = 'BMJsM8qK_wLP8bcy_mf7QkFVmju7O2vBkk9Je38qlXT57ZNFokzsZOJ6uSKx1zbxde1dwiyEbXh6W2n5ti2TRvg'
+const envVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+const VAPID_PUBLIC_KEY = envVapidKey && /^[\w-]{80,}$/.test(envVapidKey) ? envVapidKey : FALLBACK_VAPID_KEY
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4)
