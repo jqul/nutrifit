@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ClientData } from '../../../types'
+import { ClientData, CustomAnamnesisQuestion } from '../../../types'
 import { goalLabel } from '../../../lib/constants'
 import { ANAMNESIS_QUESTIONS } from '../../../lib/anamnesis'
 import { supabase } from '../../../lib/supabase'
@@ -14,13 +14,14 @@ import { exportClientData } from '../../../lib/gdprExport'
 import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
 import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt } from 'lucide-react'
 
-export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName }: {
+export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName, customQuestions }: {
   client: ClientData
   onUpdate: (updates: Partial<ClientData>) => Promise<boolean>
   onRegenerateToken: () => Promise<string | null>
   onDelete: () => Promise<void>
   demoMode?: boolean
   nutricionistaName?: string
+  customQuestions?: CustomAnamnesisQuestion[]
 }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(client)
@@ -144,6 +145,12 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
               <div key={q.key}>
                 <p className="text-xs text-muted">{q.label}</p>
                 <p className="text-sm mt-0.5">{anamnesisAnswers[q.key]}</p>
+              </div>
+            ) : null)}
+            {(customQuestions || []).map(q => anamnesisAnswers[q.id] ? (
+              <div key={q.id}>
+                <p className="text-xs text-muted">{q.label}</p>
+                <p className="text-sm mt-0.5">{anamnesisAnswers[q.id]}</p>
               </div>
             ) : null)}
           </div>

@@ -10,6 +10,12 @@ export const DEMO_NUTRICIONISTA_PROFILE: UserProfile = {
   role: 'trainer',
   approved: true,
   createdAt: Date.now(),
+  customAnamnesisQuestions: [
+    { id: 'demo-q1', label: '¿Sigues alguna dieta religiosa o cultural (halal, kosher, vegana estricta...)?' },
+  ],
+  logoUrl: null,
+  accentColor: null,
+  customDomain: null,
 }
 
 function toLocalISODate(d: Date): string {
@@ -351,6 +357,7 @@ export const DEMO_ANAMNESIS: Record<string, Record<string, string>> = {
     agua: '1.5',
     dietas_previas: 'Probé keto un par de meses, perdí peso pero lo recuperé al dejarlo.',
     habitos: 'Alguna copa de vino el fin de semana.',
+    'demo-q1': 'No, ninguna restricción religiosa ni cultural.',
   },
   'demo-client-002': {
     motivo: 'Ganar masa muscular de forma limpia, sin pasarme de grasa.',

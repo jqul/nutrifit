@@ -48,15 +48,27 @@ describe('computeSubstitution', () => {
 
 describe('computeMacros', () => {
   it('scales macros per 100g proportionally to the given quantity', () => {
-    expect(computeMacros(pollo, 200, 'g')).toEqual({ kcal: 330, proteinG: 62, carbsG: 0, fatG: 7.2 })
+    expect(computeMacros(pollo, 200, 'g')).toEqual({
+      kcal: 330, proteinG: 62, carbsG: 0, fatG: 7.2,
+      fiberG: null, sugarG: null, sodiumMg: null, saturatedFatG: null,
+    })
   })
 
   it('converts household units before scaling', () => {
     // 1 cucharada = 15g = 0.15x
-    expect(computeMacros(pollo, 1, 'cucharada')).toEqual({ kcal: 25, proteinG: 4.6, carbsG: 0, fatG: 0.5 })
+    expect(computeMacros(pollo, 1, 'cucharada')).toEqual({
+      kcal: 25, proteinG: 4.6, carbsG: 0, fatG: 0.5,
+      fiberG: null, sugarG: null, sodiumMg: null, saturatedFatG: null,
+    })
   })
 
   it('returns null for a non-convertible unit', () => {
     expect(computeMacros(pollo, 1, 'unidad')).toBeNull()
+  })
+
+  it('scales extended nutrition facts (fiber, sugar, sodium, saturated fat) when the food has them', () => {
+    const avena: Food = { id: '4', name: 'Avena', category: 'Cereal', kcal: 380, proteinG: 13, carbsG: 66, fatG: 7, fiberG: 10, sugarG: 1, sodiumMg: 2, saturatedFatG: 1.4 }
+    const macros = computeMacros(avena, 40, 'g')
+    expect(macros).toMatchObject({ fiberG: 4, sugarG: 0.4, sodiumMg: 0.8, saturatedFatG: 0.6 })
   })
 })

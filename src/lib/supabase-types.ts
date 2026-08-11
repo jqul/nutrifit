@@ -1,6 +1,8 @@
 // Formas de fila crudas tal y como las devuelve Supabase (snake_case).
 // src/types/index.ts contiene los tipos de app (camelCase); mappers.ts convierte entre ambos.
 
+import { CustomAnamnesisQuestion } from '../types'
+
 export interface NutricionistaRow {
   uid: string
   email: string
@@ -8,6 +10,10 @@ export interface NutricionistaRow {
   approved: boolean
   role: 'trainer' | 'super_admin'
   created_at: string
+  custom_anamnesis_questions: CustomAnamnesisQuestion[]
+  logo_url: string | null
+  accent_color: string | null
+  custom_domain: string | null
 }
 
 export interface ClienteRow {
@@ -65,6 +71,10 @@ export interface DietMealItemRow {
   protein_g: number | null
   carbs_g: number | null
   fat_g: number | null
+  fiber_g: number | null
+  sugar_g: number | null
+  sodium_mg: number | null
+  saturated_fat_g: number | null
   sort_order: number
 }
 
@@ -110,6 +120,10 @@ export interface FoodRow {
   protein_g: number
   carbs_g: number
   fat_g: number
+  fiber_g: number | null
+  sugar_g: number | null
+  sodium_mg: number | null
+  saturated_fat_g: number | null
 }
 
 export interface MessageTemplateRow {

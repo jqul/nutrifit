@@ -76,7 +76,8 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
       <main className="max-w-5xl mx-auto px-6 py-8">
         {tab === 'perfil' && (
           <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
-            onDelete={handleDelete} demoMode={demoMode} nutricionistaName={userProfile.displayName} />
+            onDelete={handleDelete} demoMode={demoMode} nutricionistaName={userProfile.displayName}
+            customQuestions={userProfile.customAnamnesisQuestions} />
         )}
         {tab === 'dieta' && (
           <PlanDietaTab client={current} nutricionistaId={userProfile.uid}

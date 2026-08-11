@@ -101,6 +101,17 @@ export function ConversorTab() {
                 <MacroBox label="Carbos" value={`${macros.carbsG}g`} />
                 <MacroBox label="Grasas" value={`${macros.fatG}g`} />
               </div>
+              {(macros.fiberG != null || macros.sugarG != null || macros.sodiumMg != null || macros.saturatedFatG != null) && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Nutrientes ampliados</p>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    <MacroBox label="Fibra" value={macros.fiberG != null ? `${macros.fiberG}g` : '—'} />
+                    <MacroBox label="Azúcares" value={macros.sugarG != null ? `${macros.sugarG}g` : '—'} />
+                    <MacroBox label="Sodio" value={macros.sodiumMg != null ? `${macros.sodiumMg}mg` : '—'} />
+                    <MacroBox label="Sat." value={macros.saturatedFatG != null ? `${macros.saturatedFatG}g` : '—'} />
+                  </div>
+                </div>
+              )}
               {equivalents.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Equivale a</p>

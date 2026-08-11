@@ -20,7 +20,7 @@ export function useAuthBootstrap() {
   const loadProfile = async (uid: string, email: string) => {
     const { data } = await supabase
       .from('nutricionistas')
-      .select('display_name, approved, role')
+      .select('display_name, approved, role, custom_anamnesis_questions, logo_url, accent_color, custom_domain')
       .eq('uid', uid)
       .maybeSingle()
 
@@ -38,6 +38,10 @@ export function useAuthBootstrap() {
       role: data.role === 'super_admin' ? 'super_admin' : 'trainer',
       approved: true,
       createdAt: Date.now(),
+      customAnamnesisQuestions: data.custom_anamnesis_questions || [],
+      logoUrl: data.logo_url ?? null,
+      accentColor: data.accent_color ?? null,
+      customDomain: data.custom_domain ?? null,
     })
     setView('trainer')
   }
@@ -74,5 +78,5 @@ export function useAuthBootstrap() {
     return () => subscription.unsubscribe()
   }, [])
 
-  return { view, userProfile, pendingUser, clientToken, logout, setView }
+  return { view, userProfile, pendingUser, clientToken, logout, setView, setUserProfile }
 }

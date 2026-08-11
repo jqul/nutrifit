@@ -5,6 +5,7 @@ import { Auth } from './components/shared/Auth'
 import { ResetPassword } from './components/shared/ResetPassword'
 import { useToast, ToastContainer } from './components/shared/Toast'
 import { useAuthBootstrap } from './lib/useAuthBootstrap'
+import { useAccentOverride } from './lib/useAccentOverride'
 import { DEMO_NUTRICIONISTA_PROFILE, DEMO_CLIENTS } from './lib/demo-data'
 import { Mail, Clock } from 'lucide-react'
 
@@ -81,7 +82,7 @@ function DemoView({ selectedClient, setSelectedClient, onRegister, onLogin }: {
           <ClientPanel client={selectedClient} userProfile={demoProfile} onClose={() => setSelectedClient(null)} demoMode />
         ) : (
           <NutricionistaDashboard userProfile={demoProfile} onLogout={() => { window.location.href = '/' }}
-            demoClients={DEMO_CLIENTS} onSelectClient={setSelectedClient} />
+            demoClients={DEMO_CLIENTS} onSelectClient={setSelectedClient} onUpdateProfile={() => {}} />
         )}
       </div>
     </>
@@ -89,9 +90,10 @@ function DemoView({ selectedClient, setSelectedClient, onRegister, onLogin }: {
 }
 
 export default function App() {
-  const { view, userProfile, pendingUser, clientToken, logout, setView } = useAuthBootstrap()
+  const { view, userProfile, pendingUser, clientToken, logout, setView, setUserProfile } = useAuthBootstrap()
   const [selectedClient, setSelectedClient] = useState<ClientData | null>(null)
   const { toasts } = useToast()
+  useAccentOverride(view === 'trainer' ? userProfile?.accentColor : null)
 
   if (view === 'loading') return <LoadingScreen />
 
@@ -143,6 +145,7 @@ export default function App() {
             userProfile={userProfile}
             onLogout={logout}
             onSelectClient={setSelectedClient}
+            onUpdateProfile={updates => setUserProfile(prev => prev ? { ...prev, ...updates } : prev)}
           />
         )
       )}

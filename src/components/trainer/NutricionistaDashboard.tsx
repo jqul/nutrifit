@@ -11,31 +11,36 @@ import { CalendarTab } from './CalendarTab'
 import { BusinessDashboard } from './BusinessDashboard'
 import { ConversorTab } from './ConversorTab'
 import { PlantillasTab } from './PlantillasTab'
-import { Plus, Flame, Copy, LogOut, Search, Crown } from 'lucide-react'
+import { AjustesTab } from './AjustesTab'
+import { ImportClientsModal } from './ImportClientsModal'
+import { Plus, Flame, Copy, LogOut, Search, Crown, Upload } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
 }
 
-type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'plantillas'
+type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'plantillas' | 'ajustes'
 const VIEWS: { id: View; label: string }[] = [
   { id: 'clientes', label: 'Clientes' },
   { id: 'calendario', label: 'Calendario' },
   { id: 'negocio', label: 'Negocio' },
   { id: 'conversor', label: 'Conversor' },
   { id: 'plantillas', label: 'Plantillas' },
+  { id: 'ajustes', label: 'Ajustes' },
 ]
 
-export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients }: {
+export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients, onUpdateProfile }: {
   userProfile: UserProfile
   onLogout: () => void
   onSelectClient: (client: ClientData) => void
   demoClients?: ClientData[]
+  onUpdateProfile: (updates: Partial<UserProfile>) => void
 }) {
-  const { clients, loading, addClient } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
+  const { clients, loading, addClient, fetchClients } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
   const [view, setView] = useState<View>('clientes')
   const [modalOpen, setModalOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [form, setForm] = useState<NewClientInput>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [query, setQuery] = useState('')
@@ -63,7 +68,14 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border bg-bg/90 backdrop-blur-sm sticky top-0 z-10" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="text-xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span></span>
+          {userProfile.logoUrl ? (
+            <div className="flex items-center gap-2">
+              <img src={userProfile.logoUrl} alt={userProfile.displayName} className="w-8 h-8 rounded-full object-cover" />
+              <span className="font-serif font-bold hidden sm:inline">{userProfile.displayName}</span>
+            </div>
+          ) : (
+            <span className="text-xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span></span>
+          )}
           <div className="flex items-center gap-2">
             <PushToggle nutricionistaId={demoClients ? undefined : userProfile.uid} />
             <ThemeToggle />
@@ -90,11 +102,15 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         {view === 'negocio' && <BusinessDashboard clients={clients} />}
         {view === 'conversor' && <ConversorTab />}
         {view === 'plantillas' && <PlantillasTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
+        {view === 'ajustes' && <AjustesTab userProfile={userProfile} demoMode={!!demoClients} onUpdateProfile={onUpdateProfile} />}
         {view === 'clientes' && (
           <>
-            <div className="flex items-center justify-between mb-6 gap-3">
+            <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
               <h1 className="text-2xl font-serif font-bold">Clientes</h1>
-              <Button onClick={() => setModalOpen(true)}><Plus className="w-4 h-4" /> Nuevo cliente</Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="w-4 h-4" /> Importar CSV/Excel</Button>
+                <Button onClick={() => setModalOpen(true)}><Plus className="w-4 h-4" /> Nuevo cliente</Button>
+              </div>
             </div>
 
             {clients.length > 0 && (
@@ -210,6 +226,9 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
           <Button onClick={handleCreate} loading={saving} className="w-full">Crear cliente</Button>
         </div>
       </Modal>
+
+      <ImportClientsModal open={importOpen} onClose={() => setImportOpen(false)} nutricionistaId={userProfile.uid}
+        demoMode={!!demoClients} onImported={fetchClients} />
     </div>
   )
 }

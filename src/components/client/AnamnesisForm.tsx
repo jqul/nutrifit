@@ -1,21 +1,27 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { ANAMNESIS_QUESTIONS } from '../../lib/anamnesis'
+import { CustomAnamnesisQuestion } from '../../types'
 import { toast } from '../shared/Toast'
 import { ClipboardList, Check } from 'lucide-react'
 
-export function AnamnesisForm({ clientId }: { clientId: string }) {
+export function AnamnesisForm({ clientId, nutricionistaId }: { clientId: string; nutricionistaId: string }) {
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [completedAt, setCompletedAt] = useState<string | null>(null)
+  const [customQuestions, setCustomQuestions] = useState<CustomAnamnesisQuestion[]>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from('anamnesis').select('*').eq('client_id', clientId).maybeSingle()
+    const [{ data }, { data: nutri }] = await Promise.all([
+      supabase.from('anamnesis').select('*').eq('client_id', clientId).maybeSingle(),
+      supabase.from('nutricionistas').select('custom_anamnesis_questions').eq('uid', nutricionistaId).maybeSingle(),
+    ])
     if (data) { setAnswers(data.answers || {}); setCompletedAt(data.completed_at) }
+    setCustomQuestions(nutri?.custom_anamnesis_questions || [])
     setLoading(false)
-  }, [clientId])
+  }, [clientId, nutricionistaId])
 
   useEffect(() => { load() }, [load])
 
@@ -69,6 +75,18 @@ export function AnamnesisForm({ clientId }: { clientId: string }) {
               )}
             </div>
           ))}
+          {customQuestions.length > 0 && (
+            <div className="pt-2 border-t border-border space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">Preguntas de tu nutricionista</p>
+              {customQuestions.map(q => (
+                <div key={q.id}>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{q.label}</label>
+                  <textarea value={answers[q.id] || ''} onChange={e => setAnswers({ ...answers, [q.id]: e.target.value })} rows={2}
+                    className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+                </div>
+              ))}
+            </div>
+          )}
           <button onClick={handleSave} disabled={saving}
             className="w-full py-3 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5">
             <Check className="w-4 h-4" /> {saving ? 'Guardando...' : 'Guardar respuestas'}

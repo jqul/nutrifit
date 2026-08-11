@@ -11,9 +11,13 @@ import { ScannedFood } from '../../../lib/openFoodFacts'
 import { Button } from '../../shared/Button'
 import { BarcodeScanner } from '../../shared/BarcodeScanner'
 import { toast } from '../../shared/Toast'
-import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode } from 'lucide-react'
+import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical, ChevronDown, ChevronUp } from 'lucide-react'
 
-interface EditableItem { id: string; foodName: string; quantity: string; unit: string; kcal: string; proteinG: string; carbsG: string; fatG: string }
+interface EditableItem {
+  id: string; foodName: string; quantity: string; unit: string
+  kcal: string; proteinG: string; carbsG: string; fatG: string
+  fiberG: string; sugarG: string; sodiumMg: string; saturatedFatG: string
+}
 interface EditableMeal { id: string; name: string; time: string; kcalTarget: string; items: EditableItem[] }
 interface EditableSupplement { id: string; name: string; dose: string; timing: string; visibleToClient: boolean }
 
@@ -29,6 +33,8 @@ function demoPlanToEditable(plan: DietPlan) {
         id: i.id, foodName: i.foodName, quantity: i.quantity, unit: i.unit,
         kcal: i.kcal != null ? String(i.kcal) : '', proteinG: i.proteinG != null ? String(i.proteinG) : '',
         carbsG: i.carbsG != null ? String(i.carbsG) : '', fatG: i.fatG != null ? String(i.fatG) : '',
+        fiberG: i.fiberG != null ? String(i.fiberG) : '', sugarG: i.sugarG != null ? String(i.sugarG) : '',
+        sodiumMg: i.sodiumMg != null ? String(i.sodiumMg) : '', saturatedFatG: i.saturatedFatG != null ? String(i.saturatedFatG) : '',
       })),
     })),
     supplements: plan.supplements.map(s => ({ id: s.id, name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
@@ -132,6 +138,8 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
         id: i.id, foodName: i.food_name, quantity: i.quantity, unit: i.unit,
         kcal: i.kcal != null ? String(i.kcal) : '', proteinG: i.protein_g != null ? String(i.protein_g) : '',
         carbsG: i.carbs_g != null ? String(i.carbs_g) : '', fatG: i.fat_g != null ? String(i.fat_g) : '',
+        fiberG: i.fiber_g != null ? String(i.fiber_g) : '', sugarG: i.sugar_g != null ? String(i.sugar_g) : '',
+        sodiumMg: i.sodium_mg != null ? String(i.sodium_mg) : '', saturatedFatG: i.saturated_fat_g != null ? String(i.saturated_fat_g) : '',
       })),
     })))
     setSupplements((supRows || []).map((s: DietSupplementRow) => ({
@@ -175,7 +183,10 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
         await supabase.from('diet_meal_items').insert(meal.items.map((item, i) => ({
           meal_id: insertedMeal.id, food_name: item.foodName, quantity: item.quantity, unit: item.unit,
           kcal: item.kcal ? parseFloat(item.kcal) : null, protein_g: item.proteinG ? parseFloat(item.proteinG) : null,
-          carbs_g: item.carbsG ? parseFloat(item.carbsG) : null, fat_g: item.fatG ? parseFloat(item.fatG) : null, sort_order: i,
+          carbs_g: item.carbsG ? parseFloat(item.carbsG) : null, fat_g: item.fatG ? parseFloat(item.fatG) : null,
+          fiber_g: item.fiberG ? parseFloat(item.fiberG) : null, sugar_g: item.sugarG ? parseFloat(item.sugarG) : null,
+          sodium_mg: item.sodiumMg ? parseFloat(item.sodiumMg) : null, saturated_fat_g: item.saturatedFatG ? parseFloat(item.saturatedFatG) : null,
+          sort_order: i,
         })))
       }
     }
@@ -239,7 +250,10 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   const removeMeal = (id: string) => setMeals(meals.filter(m => m.id !== id))
   const updateMeal = (id: string, updates: Partial<EditableMeal>) => setMeals(meals.map(m => m.id === id ? { ...m, ...updates } : m))
   const addItem = (mealId: string) => updateMeal(mealId, {
-    items: [...(meals.find(m => m.id === mealId)?.items || []), { id: newId(), foodName: '', quantity: '', unit: '', kcal: '', proteinG: '', carbsG: '', fatG: '' }],
+    items: [...(meals.find(m => m.id === mealId)?.items || []), {
+      id: newId(), foodName: '', quantity: '', unit: '', kcal: '', proteinG: '', carbsG: '', fatG: '',
+      fiberG: '', sugarG: '', sodiumMg: '', saturatedFatG: '',
+    }],
   })
   const removeItem = (mealId: string, itemId: string) => {
     const meal = meals.find(m => m.id === mealId)
@@ -255,6 +269,8 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
     updateItem(mealId, itemId, {
       foodName: food.name, quantity: '100', unit: 'g',
       kcal: String(food.kcal), proteinG: String(food.proteinG), carbsG: String(food.carbsG), fatG: String(food.fatG),
+      fiberG: food.fiberG != null ? String(food.fiberG) : '', sugarG: food.sugarG != null ? String(food.sugarG) : '',
+      sodiumMg: food.sodiumMg != null ? String(food.sodiumMg) : '', saturatedFatG: food.saturatedFatG != null ? String(food.saturatedFatG) : '',
     })
     setOpenSuggestFor(null)
   }
@@ -265,10 +281,13 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
     updateItem(scanningFor.mealId, scanningFor.itemId, {
       foodName: food.name, quantity: '100', unit: 'g',
       kcal: String(food.kcal), proteinG: String(food.proteinG), carbsG: String(food.carbsG), fatG: String(food.fatG),
+      fiberG: food.fiberG != null ? String(food.fiberG) : '', sugarG: food.sugarG != null ? String(food.sugarG) : '',
+      sodiumMg: food.sodiumMg != null ? String(food.sodiumMg) : '', saturatedFatG: food.saturatedFatG != null ? String(food.saturatedFatG) : '',
     })
     toast(`"${food.name}" añadido ✓`, 'ok')
     setScanningFor(null)
   }
+  const [expandedItem, setExpandedItem] = useState<string | null>(null)
 
   const addSupplement = () => setSupplements([...supplements, { id: newId(), name: '', dose: '', timing: '', visibleToClient: true }])
   const removeSupplement = (id: string) => setSupplements(supplements.filter(s => s.id !== id))
@@ -348,39 +367,62 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
                 const suggestions = openSuggestFor === item.id && item.foodName.trim().length > 0
                   ? foods.filter(f => f.name.toLowerCase().includes(item.foodName.toLowerCase())).slice(0, 6)
                   : []
+                const isExpanded = expandedItem === item.id
+                const hasExtra = item.fiberG || item.sugarG || item.sodiumMg || item.saturatedFatG
                 return (
-                  <div key={item.id} className="flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <input value={item.foodName}
-                        onChange={e => updateItem(meal.id, item.id, { foodName: e.target.value })}
-                        onFocus={() => setOpenSuggestFor(item.id)}
-                        onBlur={() => setTimeout(() => setOpenSuggestFor(null), 150)}
-                        placeholder="Alimento"
-                        className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                      {suggestions.length > 0 && (
-                        <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                          {suggestions.map(f => (
-                            <button key={f.id} type="button" onMouseDown={() => selectFood(meal.id, item.id, f)}
-                              className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
-                              <span>{f.name}</span>
-                              <span className="text-muted flex-shrink-0">{f.kcal} kcal/100g</span>
-                            </button>
-                          ))}
-                        </div>
+                  <div key={item.id}>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <input value={item.foodName}
+                          onChange={e => updateItem(meal.id, item.id, { foodName: e.target.value })}
+                          onFocus={() => setOpenSuggestFor(item.id)}
+                          onBlur={() => setTimeout(() => setOpenSuggestFor(null), 150)}
+                          placeholder="Alimento"
+                          className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+                        {suggestions.length > 0 && (
+                          <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                            {suggestions.map(f => (
+                              <button key={f.id} type="button" onMouseDown={() => selectFood(meal.id, item.id, f)}
+                                className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
+                                <span>{f.name}</span>
+                                <span className="text-muted flex-shrink-0">{f.kcal} kcal/100g</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <input value={item.quantity} onChange={e => updateItem(meal.id, item.id, { quantity: e.target.value })} placeholder="Cant."
+                        className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+                      <input value={item.unit} onChange={e => updateItem(meal.id, item.id, { unit: e.target.value })} placeholder="Unidad"
+                        className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+                      <button onClick={() => setScanningFor({ mealId: meal.id, itemId: item.id })} title="Escanear código de barras"
+                        className="p-1.5 text-muted hover:text-accent flex-shrink-0"><Barcode className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setExpandedItem(isExpanded ? null : item.id)}
+                        title="Nutrientes ampliados (fibra, azúcares, sodio, grasas saturadas)"
+                        className={`p-1.5 flex-shrink-0 ${hasExtra ? 'text-accent' : 'text-muted hover:text-accent'}`}>
+                        <FlaskConical className="w-3.5 h-3.5" />
+                      </button>
+                      {allergenHit && (
+                        <span title={`Posible alérgeno para este cliente: ${allergenHit.replace('_', ' ')}`} className="flex-shrink-0 text-warn">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                        </span>
                       )}
+                      <button onClick={() => removeItem(meal.id, item.id)} className="p-1.5 text-muted hover:text-warn"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
-                    <input value={item.quantity} onChange={e => updateItem(meal.id, item.id, { quantity: e.target.value })} placeholder="Cant."
-                      className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                    <input value={item.unit} onChange={e => updateItem(meal.id, item.id, { unit: e.target.value })} placeholder="Unidad"
-                      className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                    <button onClick={() => setScanningFor({ mealId: meal.id, itemId: item.id })} title="Escanear código de barras"
-                      className="p-1.5 text-muted hover:text-accent flex-shrink-0"><Barcode className="w-3.5 h-3.5" /></button>
-                    {allergenHit && (
-                      <span title={`Posible alérgeno para este cliente: ${allergenHit.replace('_', ' ')}`} className="flex-shrink-0 text-warn">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                      </span>
+                    {isExpanded && (
+                      <div className="flex items-center gap-2 mt-1.5 pl-1">
+                        <button onClick={() => setExpandedItem(null)} className="text-muted"><ChevronUp className="w-3 h-3" /></button>
+                        <MicroInput label="Fibra (g)" value={item.fiberG} onChange={v => updateItem(meal.id, item.id, { fiberG: v })} />
+                        <MicroInput label="Azúcares (g)" value={item.sugarG} onChange={v => updateItem(meal.id, item.id, { sugarG: v })} />
+                        <MicroInput label="Sodio (mg)" value={item.sodiumMg} onChange={v => updateItem(meal.id, item.id, { sodiumMg: v })} />
+                        <MicroInput label="Sat. (g)" value={item.saturatedFatG} onChange={v => updateItem(meal.id, item.id, { saturatedFatG: v })} />
+                      </div>
                     )}
-                    <button onClick={() => removeItem(meal.id, item.id)} className="p-1.5 text-muted hover:text-warn"><Trash2 className="w-3.5 h-3.5" /></button>
+                    {!isExpanded && hasExtra && (
+                      <button onClick={() => setExpandedItem(item.id)} className="flex items-center gap-1 text-[10px] text-muted hover:text-accent mt-0.5 pl-1">
+                        <ChevronDown className="w-3 h-3" /> fibra {item.fiberG || 0}g · azúc. {item.sugarG || 0}g · sodio {item.sodiumMg || 0}mg · sat. {item.saturatedFatG || 0}g
+                      </button>
+                    )}
                   </div>
                 )
               })}
@@ -457,6 +499,16 @@ function NumInput({ label, value, onChange }: { label: string; value: string; on
       <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{label}</label>
       <input type="number" value={value} onChange={e => onChange(e.target.value)}
         className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+    </div>
+  )
+}
+
+function MicroInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-1">
+      <label className="text-[10px] text-muted whitespace-nowrap">{label}</label>
+      <input type="number" value={value} onChange={e => onChange(e.target.value)}
+        className="w-14 px-1.5 py-1 bg-bg border border-border rounded-md text-[11px] outline-none focus:ring-2 focus:ring-accent/20" />
     </div>
   )
 }

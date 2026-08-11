@@ -12,6 +12,7 @@ import { HoyTab } from './HoyTab'
 import { DietaClienteTab } from './DietaClienteTab'
 import { ProgresoClienteTab } from './ProgresoClienteTab'
 import { AnamnesisForm } from './AnamnesisForm'
+import { useAccentOverride } from '../../lib/useAccentOverride'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'mas'
 type AuthState = 'loading' | 'needs_register' | 'needs_login' | 'authenticated'
@@ -21,7 +22,10 @@ export function ClientView({ token }: { token: string }) {
   const [error, setError] = useState('')
   const [client, setClient] = useState<ClienteRow | null>(null)
   const [nutricionistaName, setNutricionistaName] = useState('Tu nutricionista')
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [accentColor, setAccentColor] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('hoy')
+  useAccentOverride(accentColor)
   const loggingOutRef = useRef(false)
   const authStateRef = useRef(authState)
   authStateRef.current = authState
@@ -36,15 +40,18 @@ export function ClientView({ token }: { token: string }) {
   }, [token])
 
   const checkAuth = async () => {
-    const [{ data: rows, error: cErr }, { data: name }] = await Promise.all([
+    const [{ data: rows, error: cErr }, { data: brandingRows }] = await Promise.all([
       supabase.rpc('get_client_by_token', { p_token: token }),
-      supabase.rpc('get_nutricionista_name_by_token', { p_token: token }),
+      supabase.rpc('get_nutricionista_branding_by_token', { p_token: token }),
     ])
     if (cErr) logError('ClientView:loadClient', cErr)
     const clientData = rows?.[0] || null
     if (!clientData) { setError('Enlace no válido o expirado.'); return }
     setClient(clientData)
-    if (name) setNutricionistaName(name)
+    const branding = brandingRows?.[0]
+    if (branding?.display_name) setNutricionistaName(branding.display_name)
+    setLogoUrl(branding?.logo_url || null)
+    setAccentColor(branding?.accent_color || null)
 
     if (!clientData.auth_user_id) { setAuthState('needs_register'); return }
 
@@ -99,9 +106,13 @@ export function ClientView({ token }: { token: string }) {
       <header className="bg-card/95 backdrop-blur-sm border-b border-border flex-shrink-0 z-20">
         <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto w-full">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 bg-accent">
-              {nutricionistaName[0]}
-            </div>
+            {logoUrl ? (
+              <img src={logoUrl} alt={nutricionistaName} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+            ) : (
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 bg-accent">
+                {nutricionistaName[0]}
+              </div>
+            )}
             <span className="font-serif font-bold text-base">{nutricionistaName}</span>
           </div>
           <p className="text-xs font-semibold">{clientName}</p>
@@ -135,7 +146,7 @@ export function ClientView({ token }: { token: string }) {
               </div>
               <PushToggle clientId={clientData.id} />
             </div>
-            <AnamnesisForm clientId={clientData.id} />
+            <AnamnesisForm clientId={clientData.id} nutricionistaId={clientData.nutricionistaId} />
             <button onClick={async () => {
               loggingOutRef.current = true
               setAuthState('needs_login')

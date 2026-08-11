@@ -1,5 +1,10 @@
 export type Role = 'trainer' | 'super_admin'
 
+export interface CustomAnamnesisQuestion {
+  id: string
+  label: string
+}
+
 export interface UserProfile {
   uid: string
   email: string
@@ -7,6 +12,10 @@ export interface UserProfile {
   role: Role
   approved: boolean
   createdAt: number
+  customAnamnesisQuestions: CustomAnamnesisQuestion[]
+  logoUrl: string | null
+  accentColor: string | null
+  customDomain: string | null
 }
 
 // Objetivos predefinidos con etiqueta traducida — el campo `goal` del cliente
@@ -43,6 +52,12 @@ export interface DietMealItem {
   proteinG: number | null
   carbsG: number | null
   fatG: number | null
+  // Opcionales: solo los rellenan los alimentos del catálogo o el escáner de
+  // código de barras — los datos de demo no los incluyen en cada ítem.
+  fiberG?: number | null
+  sugarG?: number | null
+  sodiumMg?: number | null
+  saturatedFatG?: number | null
 }
 
 export interface DietMeal {
@@ -111,6 +126,10 @@ export interface Food {
   proteinG: number
   carbsG: number
   fatG: number
+  fiberG?: number | null
+  sugarG?: number | null
+  sodiumMg?: number | null
+  saturatedFatG?: number | null
 }
 
 export type MessageType = 'nuevo_plan' | 'racha' | 'checkin_recordatorio' | 'custom'

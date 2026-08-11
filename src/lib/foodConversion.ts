@@ -21,9 +21,16 @@ export function convertQuantity(quantity: number, fromUnit: string, toUnit: stri
   return (quantity * from) / to
 }
 
-export interface Macros { kcal: number; proteinG: number; carbsG: number; fatG: number }
+export interface Macros {
+  kcal: number; proteinG: number; carbsG: number; fatG: number
+  fiberG: number | null; sugarG: number | null; sodiumMg: number | null; saturatedFatG: number | null
+}
 
-/** Escala los macros por 100g de un alimento a la cantidad indicada (en la unidad dada). */
+function scaleNullable(v: number | null | undefined, factor: number): number | null {
+  return v != null ? Math.round(v * factor * 10) / 10 : null
+}
+
+/** Escala los macros (y nutrientes ampliados, si el alimento los tiene) por 100g a la cantidad indicada. */
 export function computeMacros(food: Food, quantity: number, unit: string): Macros | null {
   const grams = convertQuantity(quantity, unit, 'g')
   if (grams == null) return null
@@ -33,6 +40,10 @@ export function computeMacros(food: Food, quantity: number, unit: string): Macro
     proteinG: Math.round(food.proteinG * factor * 10) / 10,
     carbsG: Math.round(food.carbsG * factor * 10) / 10,
     fatG: Math.round(food.fatG * factor * 10) / 10,
+    fiberG: scaleNullable(food.fiberG, factor),
+    sugarG: scaleNullable(food.sugarG, factor),
+    sodiumMg: scaleNullable(food.sodiumMg, factor),
+    saturatedFatG: scaleNullable(food.saturatedFatG, factor),
   }
 }
 
