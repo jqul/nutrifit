@@ -7,7 +7,7 @@ import { toLocalISODate } from '../../lib/date'
 import { appointmentFromRow } from '../../lib/mappers'
 import { sendPush } from '../../lib/usePushNotifications'
 import { toast } from '../shared/Toast'
-import { CheckCircle2, Calendar, Plus } from 'lucide-react'
+import { CheckCircle2, Calendar, Plus, Video } from 'lucide-react'
 
 const SCALE = [1, 2, 3, 4, 5]
 
@@ -167,7 +167,15 @@ function ProximasCitas({ client }: { client: ClientData }) {
                   {' · '}{new Date(c.startAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
-              {c.status === 'pendiente' && <span className="text-[10px] font-bold text-warn uppercase flex-shrink-0">Pendiente</span>}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {c.videoLink && (
+                  <a href={c.videoLink} target="_blank" rel="noreferrer"
+                    className="flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-lg text-[10px] font-bold">
+                    <Video className="w-3 h-3" /> Unirse
+                  </a>
+                )}
+                {c.status === 'pendiente' && <span className="text-[10px] font-bold text-warn uppercase">Pendiente</span>}
+              </div>
             </div>
           ))}
         </div>

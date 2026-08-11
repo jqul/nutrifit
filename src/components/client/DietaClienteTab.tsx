@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow } from '../../lib/supabase-types'
 import { dietPlanFromRows } from '../../lib/mappers'
-import { DietPlan } from '../../types'
-import { Utensils, ShoppingCart, Check } from 'lucide-react'
+import { DietPlan, ClientData } from '../../types'
+import { printDietPlan } from '../../lib/printPlan'
+import { Utensils, ShoppingCart, Check, Download } from 'lucide-react'
 
 interface ShoppingItem { key: string; foodName: string; unit: string; totalQty: number | null; parts: string[] }
 
@@ -29,7 +30,8 @@ function buildShoppingList(plan: DietPlan): ShoppingItem[] {
   return Array.from(map.values()).sort((a, b) => a.foodName.localeCompare(b.foodName))
 }
 
-export function DietaClienteTab({ clientId }: { clientId: string }) {
+export function DietaClienteTab({ client }: { client: ClientData }) {
+  const clientId = client.id
   const [plan, setPlan] = useState<DietPlan | null>(null)
   const [loading, setLoading] = useState(true)
   const [checked, setChecked] = useState<Set<string>>(new Set())
@@ -73,6 +75,12 @@ export function DietaClienteTab({ clientId }: { clientId: string }) {
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
+      <div className="flex justify-end">
+        <button onClick={() => printDietPlan(client, plan)}
+          className="flex items-center gap-1.5 text-xs font-bold text-accent">
+          <Download className="w-3.5 h-3.5" /> Descargar PDF
+        </button>
+      </div>
       <div className="grid grid-cols-4 gap-2">
         <MacroCard label="Kcal" value={plan.kcalTarget} />
         <MacroCard label="Prot." value={plan.proteinG} suffix="g" />

@@ -2,14 +2,15 @@ import { useState, useEffect, useCallback, ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logError } from '../../lib/errors'
 import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow } from '../../lib/mappers'
-import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog } from '../../types'
+import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClientData } from '../../types'
 import { calcAdherence, calcStreak } from '../../lib/adherence'
 import { toLocalISODate } from '../../lib/date'
 import { WeightChart } from '../shared/WeightChart'
 import { Camera, Flame, UtensilsCrossed, Plus } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
-export function ProgresoClienteTab({ clientId }: { clientId: string }) {
+export function ProgresoClienteTab({ client }: { client: ClientData }) {
+  const clientId = client.id
   const [weights, setWeights] = useState<WeightEntry[]>([])
   const [checkins, setCheckins] = useState<DailyCheckin[]>([])
   const [sessions, setSessions] = useState<ProgressPhotoSession[]>([])
@@ -117,7 +118,7 @@ export function ProgresoClienteTab({ clientId }: { clientId: string }) {
             Guardar
           </button>
         </div>
-        <WeightChart entries={weights} />
+        <WeightChart entries={weights} goalKg={client.goalWeightKg} />
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">

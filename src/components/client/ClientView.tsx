@@ -11,6 +11,7 @@ import { PushToggle } from '../shared/PushToggle'
 import { HoyTab } from './HoyTab'
 import { DietaClienteTab } from './DietaClienteTab'
 import { ProgresoClienteTab } from './ProgresoClienteTab'
+import { AnamnesisForm } from './AnamnesisForm'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'mas'
 type AuthState = 'loading' | 'needs_register' | 'needs_login' | 'authenticated'
@@ -110,8 +111,8 @@ export function ClientView({ token }: { token: string }) {
       <main className="flex-1 overflow-y-auto overscroll-contain max-w-2xl mx-auto w-full relative z-10"
         style={{ paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {activeTab === 'hoy' && <HoyTab client={clientData} />}
-        {activeTab === 'dieta' && <DietaClienteTab clientId={clientData.id} />}
-        {activeTab === 'progreso' && <ProgresoClienteTab clientId={clientData.id} />}
+        {activeTab === 'dieta' && <DietaClienteTab client={clientData} />}
+        {activeTab === 'progreso' && <ProgresoClienteTab client={clientData} />}
         {activeTab === 'mas' && (
           <div className="px-4 py-6 space-y-4 max-w-xl mx-auto pb-24">
             <h3 className="font-serif font-bold text-xl">Más opciones</h3>
@@ -134,6 +135,7 @@ export function ClientView({ token }: { token: string }) {
               </div>
               <PushToggle clientId={clientData.id} />
             </div>
+            <AnamnesisForm clientId={clientData.id} />
             <button onClick={async () => {
               loggingOutRef.current = true
               setAuthState('needs_login')

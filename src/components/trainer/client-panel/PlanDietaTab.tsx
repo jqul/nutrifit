@@ -6,9 +6,12 @@ import { foodFromRow } from '../../../lib/mappers'
 import { detectAllergenConflict } from '../../../lib/allergens'
 import { sendPush } from '../../../lib/usePushNotifications'
 import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../../lib/demo-data'
+import { printDietPlan } from '../../../lib/printPlan'
+import { ScannedFood } from '../../../lib/openFoodFacts'
 import { Button } from '../../shared/Button'
+import { BarcodeScanner } from '../../shared/BarcodeScanner'
 import { toast } from '../../shared/Toast'
-import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat } from 'lucide-react'
+import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode } from 'lucide-react'
 
 interface EditableItem { id: string; foodName: string; quantity: string; unit: string; kcal: string; proteinG: string; carbsG: string; fatG: string }
 interface EditableMeal { id: string; name: string; time: string; kcalTarget: string; items: EditableItem[] }
@@ -187,6 +190,21 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
     await loadPlan()
   }
 
+  const handlePrint = () => {
+    const printable: DietPlan = {
+      id: planId || '', clientId: client.id, nutricionistaId, name: 'Plan de dieta',
+      kcalTarget: parseFloat(kcalTarget) || 0, proteinG: parseFloat(proteinG) || 0,
+      carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, advice, isActive: true,
+      meals: meals.map(m => ({
+        id: m.id, name: m.name, time: m.time, kcalTarget: m.kcalTarget ? parseFloat(m.kcalTarget) : null,
+        items: m.items.map(i => ({ id: i.id, foodName: i.foodName, quantity: i.quantity, unit: i.unit, kcal: null, proteinG: null, carbsG: null, fatG: null })),
+      })),
+      supplements: supplements.map(s => ({ id: s.id, name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
+      createdAt: Date.now(), updatedAt: Date.now(),
+    }
+    printDietPlan(client, printable)
+  }
+
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) { toast('Ponle un nombre a la plantilla', 'warn'); return }
     if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); setTemplateName(''); return }
@@ -239,6 +257,17 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
       kcal: String(food.kcal), proteinG: String(food.proteinG), carbsG: String(food.carbsG), fatG: String(food.fatG),
     })
     setOpenSuggestFor(null)
+  }
+
+  const [scanningFor, setScanningFor] = useState<{ mealId: string; itemId: string } | null>(null)
+  const handleScanned = (food: ScannedFood) => {
+    if (!scanningFor) return
+    updateItem(scanningFor.mealId, scanningFor.itemId, {
+      foodName: food.name, quantity: '100', unit: 'g',
+      kcal: String(food.kcal), proteinG: String(food.proteinG), carbsG: String(food.carbsG), fatG: String(food.fatG),
+    })
+    toast(`"${food.name}" añadido ✓`, 'ok')
+    setScanningFor(null)
   }
 
   const addSupplement = () => setSupplements([...supplements, { id: newId(), name: '', dose: '', timing: '', visibleToClient: true }])
@@ -344,6 +373,8 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
                       className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
                     <input value={item.unit} onChange={e => updateItem(meal.id, item.id, { unit: e.target.value })} placeholder="Unidad"
                       className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+                    <button onClick={() => setScanningFor({ mealId: meal.id, itemId: item.id })} title="Escanear código de barras"
+                      className="p-1.5 text-muted hover:text-accent flex-shrink-0"><Barcode className="w-3.5 h-3.5" /></button>
                     {allergenHit && (
                       <span title={`Posible alérgeno para este cliente: ${allergenHit.replace('_', ' ')}`} className="flex-shrink-0 text-warn">
                         <AlertTriangle className="w-3.5 h-3.5" />
@@ -409,10 +440,13 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
 
       <div className="flex items-center gap-2 flex-wrap">
         <Button onClick={handleSave} loading={saving}>Guardar plan</Button>
+        <Button variant="outline" onClick={handlePrint}><Download className="w-3.5 h-3.5" /> Descargar PDF</Button>
         <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Nombre de la plantilla"
           className="px-3 py-2 bg-card border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20 w-48" />
         <Button variant="outline" onClick={handleSaveTemplate}><BookmarkPlus className="w-3.5 h-3.5" /> Guardar como plantilla</Button>
       </div>
+
+      <BarcodeScanner open={!!scanningFor} onClose={() => setScanningFor(null)} onFound={handleScanned} />
     </div>
   )
 }

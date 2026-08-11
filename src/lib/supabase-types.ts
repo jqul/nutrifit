@@ -26,6 +26,7 @@ export interface ClienteRow {
   allergies: string | null
   notes: string | null
   monthly_price: number | null
+  goal_weight_kg: number | null
   custom_messages: Record<string, string> | null
   created_at: string
 }
@@ -143,6 +144,7 @@ export interface AppointmentRow {
   notes: string
   recurring: 'weekly' | null
   google_event_id: string | null
+  video_link: string | null
 }
 
 export interface RecipeRow {
@@ -160,5 +162,23 @@ export interface MealLogRow {
   meal_name: string
   photo_url: string | null
   note: string | null
+  created_at: string
+}
+
+export interface AnamnesisRow {
+  id: string
+  client_id: string
+  answers: Record<string, string>
+  completed_at: string | null
+  updated_at: string
+}
+
+export interface InvoiceRow {
+  id: string
+  nutricionista_id: string
+  client_id: string
+  period: string
+  amount: number
+  status: 'pendiente' | 'pagado'
   created_at: string
 }

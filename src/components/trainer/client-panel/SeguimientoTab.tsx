@@ -62,7 +62,7 @@ export function SeguimientoTab({ client, demoData }: { client: ClientData; demoD
 
       <div className="bg-card border border-border rounded-2xl p-5">
         <p className="font-semibold text-sm mb-3">Peso corporal</p>
-        <WeightChart entries={weights} />
+        <WeightChart entries={weights} goalKg={client.goalWeightKg} />
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-5">

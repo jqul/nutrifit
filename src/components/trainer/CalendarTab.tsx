@@ -8,7 +8,7 @@ import { sendPush } from '../../lib/usePushNotifications'
 import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
 import { toast } from '../shared/Toast'
-import { ChevronLeft, ChevronRight, Plus, Check, X, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Check, X, Trash2, Video } from 'lucide-react'
 
 const STATUS_LABEL: Record<AppointmentStatus, string> = {
   pendiente: 'Pendiente', confirmada: 'Confirmada', cancelada: 'Cancelada', completada: 'Completada',
@@ -35,7 +35,7 @@ function weekDays(anchor: Date): Date[] {
   })
 }
 
-const EMPTY_FORM = { title: '', clientId: '', date: toLocalISODate(new Date()), time: '10:00', durationMin: '30', recurring: false, recurringWeeks: '4' }
+const EMPTY_FORM = { title: '', clientId: '', date: toLocalISODate(new Date()), time: '10:00', durationMin: '30', recurring: false, recurringWeeks: '4', videoLink: '' }
 
 export function CalendarTab({ nutricionistaId, clients, demoMode }: {
   nutricionistaId: string
@@ -88,6 +88,7 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
         status: 'confirmada' as const,
         notes: '',
         recurring: form.recurring ? ('weekly' as const) : null,
+        video_link: form.videoLink.trim() || null,
       }
     })
     const { error } = await supabase.from('appointments').insert(rows)
@@ -155,6 +156,11 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
                     </p>
                     {a.clientId && <p className="text-[10px] text-muted">{clients.find(c => c.id === a.clientId)?.name || 'Cliente'}</p>}
                     <p className={`text-[10px] font-semibold ${STATUS_COLOR[a.status]}`}>{STATUS_LABEL[a.status]}</p>
+                    {a.videoLink && (
+                      <a href={a.videoLink} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] font-semibold text-accent hover:underline">
+                        <Video className="w-3 h-3" /> Videollamada
+                      </a>
+                    )}
                     <div className="flex items-center gap-1">
                       {a.status === 'pendiente' && (
                         <button onClick={() => updateStatus(a.id, 'confirmada')} className="p-1 text-ok hover:bg-ok/10 rounded" title="Confirmar"><Check className="w-3 h-3" /></button>
@@ -203,6 +209,11 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
               <input type="number" value={form.durationMin} onChange={e => setForm({ ...form, durationMin: e.target.value })}
                 className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
             </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Enlace de videollamada (opcional)</label>
+            <input value={form.videoLink} onChange={e => setForm({ ...form, videoLink: e.target.value })} placeholder="https://meet.google.com/..."
+              className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.recurring} onChange={e => setForm({ ...form, recurring: e.target.checked })} />

@@ -1,12 +1,12 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
   WeightLogRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
-  AppointmentRow, MealLogRow,
+  AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow,
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
   WeightEntry, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
-  Appointment, MealLog,
+  Appointment, MealLog, Anamnesis, Invoice,
 } from '../types'
 
 export function clientFromRow(row: ClienteRow): ClientData {
@@ -26,6 +26,7 @@ export function clientFromRow(row: ClienteRow): ClientData {
     allergies: row.allergies || '',
     notes: row.notes || '',
     monthlyPrice: row.monthly_price,
+    goalWeightKg: row.goal_weight_kg,
     customMessages: row.custom_messages || {},
     createdAt: new Date(row.created_at).getTime(),
   }
@@ -46,6 +47,7 @@ export function clientToRow(client: Partial<ClientData>): Partial<ClienteRow> {
   if (client.allergies !== undefined) row.allergies = client.allergies
   if (client.notes !== undefined) row.notes = client.notes
   if (client.monthlyPrice !== undefined) row.monthly_price = client.monthlyPrice
+  if (client.goalWeightKg !== undefined) row.goal_weight_kg = client.goalWeightKg
   if (client.customMessages !== undefined) row.custom_messages = client.customMessages
   return row
 }
@@ -141,6 +143,7 @@ export function appointmentFromRow(row: AppointmentRow): Appointment {
     id: row.id, nutricionistaId: row.nutricionista_id, clientId: row.client_id,
     title: row.title, startAt: row.start_at, endAt: row.end_at,
     status: row.status, notes: row.notes || '', recurring: row.recurring,
+    videoLink: row.video_link,
   }
 }
 
@@ -148,5 +151,21 @@ export function mealLogFromRow(row: MealLogRow): MealLog {
   return {
     id: row.id, clientId: row.client_id, date: row.date, mealName: row.meal_name,
     photoUrl: row.photo_url, note: row.note || '', createdAt: new Date(row.created_at).getTime(),
+  }
+}
+
+export function anamnesisFromRow(row: AnamnesisRow): Anamnesis {
+  return {
+    id: row.id, clientId: row.client_id, answers: row.answers || {},
+    completedAt: row.completed_at ? new Date(row.completed_at).getTime() : null,
+    updatedAt: new Date(row.updated_at).getTime(),
+  }
+}
+
+export function invoiceFromRow(row: InvoiceRow): Invoice {
+  return {
+    id: row.id, nutricionistaId: row.nutricionista_id, clientId: row.client_id,
+    period: row.period, amount: row.amount, status: row.status,
+    createdAt: new Date(row.created_at).getTime(),
   }
 }

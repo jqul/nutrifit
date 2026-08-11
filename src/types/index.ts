@@ -29,6 +29,7 @@ export interface ClientData {
   allergies: string
   notes: string
   monthlyPrice: number | null
+  goalWeightKg: number | null
   customMessages: Record<string, string>
   createdAt: number
 }
@@ -149,6 +150,7 @@ export interface Appointment {
   status: AppointmentStatus
   notes: string
   recurring: 'weekly' | null
+  videoLink: string | null
 }
 
 export interface MealLog {
@@ -158,5 +160,25 @@ export interface MealLog {
   mealName: string
   photoUrl: string | null
   note: string
+  createdAt: number
+}
+
+export interface Anamnesis {
+  id: string
+  clientId: string
+  answers: Record<string, string>
+  completedAt: number | null
+  updatedAt: number
+}
+
+export type InvoiceStatus = 'pendiente' | 'pagado'
+
+export interface Invoice {
+  id: string
+  nutricionistaId: string
+  clientId: string
+  period: string
+  amount: number
+  status: InvoiceStatus
   createdAt: number
 }
