@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { Button } from '../shared/Button'
 import { toast } from '../shared/Toast'
-import { LogOut, Check, X } from 'lucide-react'
+import { LogOut, Check, X, LayoutDashboard } from 'lucide-react'
 
 interface NutricionistaRow {
   uid: string
@@ -14,7 +14,7 @@ interface NutricionistaRow {
   created_at: string
 }
 
-export function SuperAdminPanel({ onLogout }: { onLogout: () => void }) {
+export function SuperAdminPanel({ onLogout, onSwitchToTrainer }: { onLogout: () => void; onSwitchToTrainer: () => void }) {
   const [nutricionistas, setNutricionistas] = useState<NutricionistaRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -44,6 +44,10 @@ export function SuperAdminPanel({ onLogout }: { onLogout: () => void }) {
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="text-xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span> <span className="text-xs text-muted font-sans">· Admin</span></span>
           <div className="flex items-center gap-2">
+            <button onClick={onSwitchToTrainer}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-muted hover:text-ink hover:bg-bg-alt transition-colors">
+              <LayoutDashboard className="w-3.5 h-3.5" /> Mi panel
+            </button>
             <ThemeToggle />
             <button onClick={onLogout} className="p-2 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors" title="Cerrar sesión">
               <LogOut className="w-4 h-4" />

@@ -13,7 +13,7 @@ import { ConversorTab } from './ConversorTab'
 import { PlantillasTab } from './PlantillasTab'
 import { AjustesTab } from './AjustesTab'
 import { ImportClientsModal } from './ImportClientsModal'
-import { Plus, Flame, Copy, LogOut, Search, Crown, Upload } from 'lucide-react'
+import { Plus, Flame, Copy, LogOut, Search, Crown, Upload, ShieldCheck } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const EMPTY_FORM: NewClientInput = {
@@ -30,12 +30,13 @@ const VIEWS: { id: View; label: string }[] = [
   { id: 'ajustes', label: 'Ajustes' },
 ]
 
-export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients, onUpdateProfile }: {
+export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients, onUpdateProfile, onSwitchToAdmin }: {
   userProfile: UserProfile
   onLogout: () => void
   onSelectClient: (client: ClientData) => void
   demoClients?: ClientData[]
   onUpdateProfile: (updates: Partial<UserProfile>) => void
+  onSwitchToAdmin?: () => void
 }) {
   const { clients, loading, addClient, fetchClients } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
   const [view, setView] = useState<View>('clientes')
@@ -77,6 +78,12 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             <span className="text-xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span></span>
           )}
           <div className="flex items-center gap-2">
+            {onSwitchToAdmin && (
+              <button onClick={onSwitchToAdmin}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-muted hover:text-ink hover:bg-bg-alt transition-colors">
+                <ShieldCheck className="w-3.5 h-3.5" /> Admin
+              </button>
+            )}
             <PushToggle nutricionistaId={demoClients ? undefined : userProfile.uid} />
             <ThemeToggle />
             <span className="text-sm text-muted hidden sm:inline">{userProfile.displayName}</span>

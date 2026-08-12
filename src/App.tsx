@@ -92,6 +92,7 @@ function DemoView({ selectedClient, setSelectedClient, onRegister, onLogin }: {
 export default function App() {
   const { view, userProfile, pendingUser, clientToken, logout, setView, setUserProfile } = useAuthBootstrap()
   const [selectedClient, setSelectedClient] = useState<ClientData | null>(null)
+  const [adminSubview, setAdminSubview] = useState<'admin' | 'trainer'>('admin')
   const { toasts } = useToast()
   useAccentOverride(view === 'trainer' ? userProfile?.accentColor : null)
 
@@ -132,8 +133,8 @@ export default function App() {
       )}
 
       {view === 'trainer' && userProfile && (
-        userProfile.role === 'super_admin' ? (
-          <SuperAdminPanel onLogout={logout} />
+        userProfile.role === 'super_admin' && adminSubview === 'admin' ? (
+          <SuperAdminPanel onLogout={logout} onSwitchToTrainer={() => setAdminSubview('trainer')} />
         ) : selectedClient ? (
           <ClientPanel
             client={selectedClient}
@@ -146,6 +147,7 @@ export default function App() {
             onLogout={logout}
             onSelectClient={setSelectedClient}
             onUpdateProfile={updates => setUserProfile(prev => prev ? { ...prev, ...updates } : prev)}
+            onSwitchToAdmin={userProfile.role === 'super_admin' ? () => setAdminSubview('admin') : undefined}
           />
         )
       )}

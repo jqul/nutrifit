@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { Button } from '../shared/Button'
 import { toast } from '../shared/Toast'
 import { SurveyManager } from './SurveyManager'
+import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { DEMO_CUSTOM_SURVEYS } from '../../lib/demo-data'
 import { Plus, Trash2, Palette, Globe, ClipboardList } from 'lucide-react'
 
@@ -84,6 +85,8 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
       </div>
 
       <SurveyManager nutricionistaId={userProfile.uid} demoMode={demoMode} demoSurveys={demoMode ? DEMO_CUSTOM_SURVEYS : undefined} />
+
+      <ChangePasswordCard demoMode={demoMode} />
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <p className="font-semibold text-sm flex items-center gap-1.5"><Palette className="w-4 h-4" /> Marca blanca</p>

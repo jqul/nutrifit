@@ -12,6 +12,7 @@ import { HoyTab } from './HoyTab'
 import { DietaClienteTab } from './DietaClienteTab'
 import { ProgresoClienteTab } from './ProgresoClienteTab'
 import { AnamnesisForm } from './AnamnesisForm'
+import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { useAccentOverride } from '../../lib/useAccentOverride'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'mas'
@@ -147,6 +148,7 @@ export function ClientView({ token }: { token: string }) {
               <PushToggle clientId={clientData.id} />
             </div>
             <AnamnesisForm clientId={clientData.id} nutricionistaId={clientData.nutricionistaId} />
+            <ChangePasswordCard />
             <button onClick={async () => {
               loggingOutRef.current = true
               setAuthState('needs_login')
