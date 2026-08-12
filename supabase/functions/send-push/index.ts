@@ -18,16 +18,26 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
 )
 
+// Esta función la invoca directamente el navegador (supabase.functions.invoke),
+// a diferencia de send-risk-reminders/send-survey-reminders que solo llama el
+// cron por servidor — sin estas cabeceras el preflight OPTIONS falla por CORS
+// y el push nunca llega a dispararse.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+}
+
 Deno.serve(async (req: Request) => {
-  if (req.method !== "POST") return new Response("Method not allowed", { status: 405 })
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
+  if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: corsHeaders })
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-    return new Response(JSON.stringify({ error: "VAPID keys not configured" }), { status: 500 })
+    return new Response(JSON.stringify({ error: "VAPID keys not configured" }), { status: 500, headers: corsHeaders })
   }
 
   try {
     const { nutricionistaId, clientId, title, body, url } = await req.json()
     if (!nutricionistaId && !clientId) {
-      return new Response(JSON.stringify({ error: "nutricionistaId or clientId required" }), { status: 400 })
+      return new Response(JSON.stringify({ error: "nutricionistaId or clientId required" }), { status: 400, headers: corsHeaders })
     }
 
     let query = supabase.from("push_subscriptions").select("*")
@@ -54,9 +64,9 @@ Deno.serve(async (req: Request) => {
 
     const sent = results.filter((r) => r.status === "fulfilled").length
     return new Response(JSON.stringify({ sent, total: subs?.length || 0 }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
+    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: corsHeaders })
   }
 })

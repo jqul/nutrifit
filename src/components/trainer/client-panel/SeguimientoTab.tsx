@@ -6,6 +6,8 @@ import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog } from '../../
 import { calcAdherence, calcStreak } from '../../../lib/adherence'
 import { WeightChart } from '../../shared/WeightChart'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
+import { SurveyHistory } from './SurveyHistory'
+import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
 import { Flame, Camera, UtensilsCrossed } from 'lucide-react'
 
 interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[] }
@@ -111,6 +113,10 @@ export function SeguimientoTab({ client, demoData }: { client: ClientData; demoD
           </div>
         )}
       </div>
+
+      <SurveyHistory client={client} demoMode={!!demoData}
+        demoSurveys={demoData ? DEMO_CUSTOM_SURVEYS : undefined}
+        demoResponses={demoData ? (DEMO_SURVEY_RESPONSES[client.id] || []) : undefined} />
 
       <div className="bg-card border border-border rounded-2xl p-5">
         <p className="font-semibold text-sm mb-3">Check-ins recientes</p>

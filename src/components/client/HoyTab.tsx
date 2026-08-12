@@ -6,6 +6,7 @@ import { FOLLOWED_PLAN_LABELS } from '../../lib/constants'
 import { toLocalISODate } from '../../lib/date'
 import { appointmentFromRow } from '../../lib/mappers'
 import { sendPush } from '../../lib/usePushNotifications'
+import { PendingSurveys } from './PendingSurveys'
 import { toast } from '../shared/Toast'
 import { CheckCircle2, Calendar, Plus, Video } from 'lucide-react'
 
@@ -58,6 +59,8 @@ export function HoyTab({ client }: { client: ClientData }) {
         <h2 className="text-xl font-serif font-bold">Hola, {client.name.split(' ')[0]} 👋</h2>
         <p className="text-sm text-muted mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
       </div>
+
+      <PendingSurveys client={client} />
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-5">
         <div className="flex items-center justify-between">

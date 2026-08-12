@@ -190,6 +190,27 @@ export interface Anamnesis {
   updatedAt: number
 }
 
+export type SurveyFrequency = 'weekly' | 'monthly'
+
+export interface CustomSurvey {
+  id: string
+  nutricionistaId: string
+  name: string
+  frequency: SurveyFrequency
+  questions: CustomAnamnesisQuestion[]
+  active: boolean
+  createdAt: number
+}
+
+export interface SurveyResponse {
+  id: string
+  surveyId: string
+  clientId: string
+  periodKey: string
+  answers: Record<string, string>
+  submittedAt: number
+}
+
 export type InvoiceStatus = 'pendiente' | 'pagado'
 
 export interface Invoice {

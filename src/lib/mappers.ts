@@ -1,12 +1,12 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
   WeightLogRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
-  AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow,
+  AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow,
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
   WeightEntry, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
-  Appointment, MealLog, Anamnesis, Invoice,
+  Appointment, MealLog, Anamnesis, Invoice, CustomSurvey, SurveyResponse,
 } from '../types'
 
 export function clientFromRow(row: ClienteRow): ClientData {
@@ -172,5 +172,21 @@ export function invoiceFromRow(row: InvoiceRow): Invoice {
     id: row.id, nutricionistaId: row.nutricionista_id, clientId: row.client_id,
     period: row.period, amount: row.amount, status: row.status,
     createdAt: new Date(row.created_at).getTime(),
+  }
+}
+
+export function surveyFromRow(row: CustomSurveyRow): CustomSurvey {
+  return {
+    id: row.id, nutricionistaId: row.nutricionista_id, name: row.name,
+    frequency: row.frequency, questions: row.questions || [], active: row.active,
+    createdAt: new Date(row.created_at).getTime(),
+  }
+}
+
+export function surveyResponseFromRow(row: SurveyResponseRow): SurveyResponse {
+  return {
+    id: row.id, surveyId: row.survey_id, clientId: row.client_id,
+    periodKey: row.period_key, answers: row.answers || {},
+    submittedAt: new Date(row.submitted_at).getTime(),
   }
 }

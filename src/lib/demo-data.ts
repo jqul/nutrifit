@@ -1,5 +1,6 @@
 import { UserProfile, ClientData, DietPlan, WeightEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment } from '../types'
-import { DietTemplateRow, RecipeRow, InvoiceRow } from './supabase-types'
+import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow } from './supabase-types'
+import { periodKeyFor } from './surveyPeriod'
 
 export const DEMO_NUTRICIONISTA_ID = 'demo-nutri-001'
 
@@ -382,6 +383,60 @@ export const DEMO_INVOICES: Record<string, InvoiceRow[]> = {
   ],
   'demo-client-002': [
     { id: 'inv-carlos-1', nutricionista_id: DEMO_NUTRICIONISTA_ID, client_id: 'demo-client-002', period: periodMonthsAgo(0), amount: 60, status: 'pagado', created_at: new Date().toISOString() },
+  ],
+  'demo-client-003': [],
+}
+
+// ── Encuestas recurrentes ───────────────────────────────────
+
+function weeksAgo(n: number): Date {
+  const d = new Date()
+  d.setDate(d.getDate() - n * 7)
+  return d
+}
+
+export const DEMO_CUSTOM_SURVEYS: CustomSurveyRow[] = [
+  {
+    id: 'demo-survey-weekly', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Seguimiento semanal',
+    frequency: 'weekly', active: true, created_at: new Date(Date.now() - 60 * 86400000).toISOString(),
+    questions: [
+      { id: 'sw-q1', label: '¿Cómo te has sentido esta semana en general?' },
+      { id: 'sw-q2', label: '¿Ha habido algún obstáculo con el plan?' },
+    ],
+  },
+  {
+    id: 'demo-survey-monthly', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Revisión mensual',
+    frequency: 'monthly', active: true, created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
+    questions: [
+      { id: 'sm-q1', label: '¿Cómo valoras tu progreso este mes del 1 al 10?' },
+    ],
+  },
+]
+
+export const DEMO_SURVEY_RESPONSES: Record<string, SurveyResponseRow[]> = {
+  'demo-client-001': [
+    {
+      id: 'demo-sr-1', survey_id: 'demo-survey-weekly', client_id: 'demo-client-001',
+      period_key: periodKeyFor('weekly', weeksAgo(1)), submitted_at: weeksAgo(1).toISOString(),
+      answers: { 'sw-q1': 'Bien, con más energía que la semana pasada.', 'sw-q2': 'Una cena familiar el sábado, pero por lo demás bien.' },
+    },
+    {
+      id: 'demo-sr-2', survey_id: 'demo-survey-weekly', client_id: 'demo-client-001',
+      period_key: periodKeyFor('weekly', weeksAgo(2)), submitted_at: weeksAgo(2).toISOString(),
+      answers: { 'sw-q1': 'Algo cansada, semana de mucho trabajo.', 'sw-q2': 'Ninguno relevante.' },
+    },
+    {
+      id: 'demo-sr-3', survey_id: 'demo-survey-monthly', client_id: 'demo-client-001',
+      period_key: periodMonthsAgo(1), submitted_at: new Date(Date.now() - 30 * 86400000).toISOString(),
+      answers: { 'sm-q1': '8 — muy contenta con la bajada de peso.' },
+    },
+  ],
+  'demo-client-002': [
+    {
+      id: 'demo-sr-4', survey_id: 'demo-survey-weekly', client_id: 'demo-client-002',
+      period_key: periodKeyFor('weekly', weeksAgo(1)), submitted_at: weeksAgo(1).toISOString(),
+      answers: { 'sw-q1': 'Muy bien, entrenando fuerte.', 'sw-q2': 'Ninguno.' },
+    },
   ],
   'demo-client-003': [],
 }

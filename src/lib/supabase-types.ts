@@ -187,6 +187,25 @@ export interface AnamnesisRow {
   updated_at: string
 }
 
+export interface CustomSurveyRow {
+  id: string
+  nutricionista_id: string
+  name: string
+  frequency: 'weekly' | 'monthly'
+  questions: CustomAnamnesisQuestion[]
+  active: boolean
+  created_at: string
+}
+
+export interface SurveyResponseRow {
+  id: string
+  survey_id: string
+  client_id: string
+  period_key: string
+  answers: Record<string, string>
+  submitted_at: string
+}
+
 export interface InvoiceRow {
   id: string
   nutricionista_id: string
