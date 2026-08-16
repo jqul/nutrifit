@@ -17,11 +17,23 @@ interface EditableItem {
   id: string; foodName: string; quantity: string; unit: string
   kcal: string; proteinG: string; carbsG: string; fatG: string
   fiberG: string; sugarG: string; sodiumMg: string; saturatedFatG: string
+  calciumMg: string; ironMg: string; zincMg: string
 }
 interface EditableMeal { id: string; name: string; time: string; kcalTarget: string; items: EditableItem[] }
 interface EditableSupplement { id: string; name: string; dose: string; timing: string; visibleToClient: boolean }
 
 function newId() { return crypto.randomUUID() }
+
+/** Suma de macros de una comida/receta completa — la "calculadora de recetas":
+ * a partir de los alimentos individuales, el total nutricional del plato. */
+function sumItemMacros(items: EditableItem[]) {
+  return items.reduce((acc, i) => ({
+    kcal: acc.kcal + (parseFloat(i.kcal) || 0),
+    proteinG: acc.proteinG + (parseFloat(i.proteinG) || 0),
+    carbsG: acc.carbsG + (parseFloat(i.carbsG) || 0),
+    fatG: acc.fatG + (parseFloat(i.fatG) || 0),
+  }), { kcal: 0, proteinG: 0, carbsG: 0, fatG: 0 })
+}
 
 function demoPlanToEditable(plan: DietPlan) {
   return {
@@ -35,6 +47,8 @@ function demoPlanToEditable(plan: DietPlan) {
         carbsG: i.carbsG != null ? String(i.carbsG) : '', fatG: i.fatG != null ? String(i.fatG) : '',
         fiberG: i.fiberG != null ? String(i.fiberG) : '', sugarG: i.sugarG != null ? String(i.sugarG) : '',
         sodiumMg: i.sodiumMg != null ? String(i.sodiumMg) : '', saturatedFatG: i.saturatedFatG != null ? String(i.saturatedFatG) : '',
+        calciumMg: i.calciumMg != null ? String(i.calciumMg) : '', ironMg: i.ironMg != null ? String(i.ironMg) : '',
+        zincMg: i.zincMg != null ? String(i.zincMg) : '',
       })),
     })),
     supplements: plan.supplements.map(s => ({ id: s.id, name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
@@ -140,6 +154,8 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
         carbsG: i.carbs_g != null ? String(i.carbs_g) : '', fatG: i.fat_g != null ? String(i.fat_g) : '',
         fiberG: i.fiber_g != null ? String(i.fiber_g) : '', sugarG: i.sugar_g != null ? String(i.sugar_g) : '',
         sodiumMg: i.sodium_mg != null ? String(i.sodium_mg) : '', saturatedFatG: i.saturated_fat_g != null ? String(i.saturated_fat_g) : '',
+        calciumMg: i.calcium_mg != null ? String(i.calcium_mg) : '', ironMg: i.iron_mg != null ? String(i.iron_mg) : '',
+        zincMg: i.zinc_mg != null ? String(i.zinc_mg) : '',
       })),
     })))
     setSupplements((supRows || []).map((s: DietSupplementRow) => ({
@@ -186,6 +202,8 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
           carbs_g: item.carbsG ? parseFloat(item.carbsG) : null, fat_g: item.fatG ? parseFloat(item.fatG) : null,
           fiber_g: item.fiberG ? parseFloat(item.fiberG) : null, sugar_g: item.sugarG ? parseFloat(item.sugarG) : null,
           sodium_mg: item.sodiumMg ? parseFloat(item.sodiumMg) : null, saturated_fat_g: item.saturatedFatG ? parseFloat(item.saturatedFatG) : null,
+          calcium_mg: item.calciumMg ? parseFloat(item.calciumMg) : null, iron_mg: item.ironMg ? parseFloat(item.ironMg) : null,
+          zinc_mg: item.zincMg ? parseFloat(item.zincMg) : null,
           sort_order: i,
         })))
       }
@@ -252,7 +270,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   const addItem = (mealId: string) => updateMeal(mealId, {
     items: [...(meals.find(m => m.id === mealId)?.items || []), {
       id: newId(), foodName: '', quantity: '', unit: '', kcal: '', proteinG: '', carbsG: '', fatG: '',
-      fiberG: '', sugarG: '', sodiumMg: '', saturatedFatG: '',
+      fiberG: '', sugarG: '', sodiumMg: '', saturatedFatG: '', calciumMg: '', ironMg: '', zincMg: '',
     }],
   })
   const removeItem = (mealId: string, itemId: string) => {
@@ -271,6 +289,8 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
       kcal: String(food.kcal), proteinG: String(food.proteinG), carbsG: String(food.carbsG), fatG: String(food.fatG),
       fiberG: food.fiberG != null ? String(food.fiberG) : '', sugarG: food.sugarG != null ? String(food.sugarG) : '',
       sodiumMg: food.sodiumMg != null ? String(food.sodiumMg) : '', saturatedFatG: food.saturatedFatG != null ? String(food.saturatedFatG) : '',
+      calciumMg: food.calciumMg != null ? String(food.calciumMg) : '', ironMg: food.ironMg != null ? String(food.ironMg) : '',
+      zincMg: food.zincMg != null ? String(food.zincMg) : '',
     })
     setOpenSuggestFor(null)
   }
@@ -283,6 +303,8 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
       kcal: String(food.kcal), proteinG: String(food.proteinG), carbsG: String(food.carbsG), fatG: String(food.fatG),
       fiberG: food.fiberG != null ? String(food.fiberG) : '', sugarG: food.sugarG != null ? String(food.sugarG) : '',
       sodiumMg: food.sodiumMg != null ? String(food.sodiumMg) : '', saturatedFatG: food.saturatedFatG != null ? String(food.saturatedFatG) : '',
+      calciumMg: food.calciumMg != null ? String(food.calciumMg) : '', ironMg: food.ironMg != null ? String(food.ironMg) : '',
+      zincMg: food.zincMg != null ? String(food.zincMg) : '',
     })
     toast(`"${food.name}" añadido ✓`, 'ok')
     setScanningFor(null)
@@ -320,12 +342,16 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
         <div className="bg-card border border-border rounded-2xl p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5"><ChefHat className="w-3.5 h-3.5" /> Tu recetario ({recipes.length})</p>
           <div className="flex items-center gap-1.5 flex-wrap">
-            {recipes.map(r => (
-              <span key={r.id} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-bg-alt rounded-lg text-xs font-medium">
-                {r.name}
-                <button onClick={() => deleteRecipe(r.id)} className="p-0.5 text-muted hover:text-warn" title="Eliminar receta"><Trash2 className="w-3 h-3" /></button>
-              </span>
-            ))}
+            {recipes.map(r => {
+              const totals = sumItemMacros((r.items as EditableItem[] | null) || [])
+              return (
+                <span key={r.id} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-bg-alt rounded-lg text-xs font-medium" title={`${Math.round(totals.kcal)} kcal · ${Math.round(totals.proteinG * 10) / 10}g prot. · ${Math.round(totals.carbsG * 10) / 10}g carbos · ${Math.round(totals.fatG * 10) / 10}g grasas`}>
+                  {r.name}
+                  <span className="text-muted font-normal">{Math.round(totals.kcal)} kcal</span>
+                  <button onClick={() => deleteRecipe(r.id)} className="p-0.5 text-muted hover:text-warn" title="Eliminar receta"><Trash2 className="w-3 h-3" /></button>
+                </span>
+              )
+            })}
           </div>
         </div>
       )}
@@ -368,7 +394,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
                   ? foods.filter(f => f.name.toLowerCase().includes(item.foodName.toLowerCase())).slice(0, 6)
                   : []
                 const isExpanded = expandedItem === item.id
-                const hasExtra = item.fiberG || item.sugarG || item.sodiumMg || item.saturatedFatG
+                const hasExtra = item.fiberG || item.sugarG || item.sodiumMg || item.saturatedFatG || item.calciumMg || item.ironMg || item.zincMg
                 return (
                   <div key={item.id}>
                     <div className="flex items-center gap-2">
@@ -410,17 +436,21 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
                       <button onClick={() => removeItem(meal.id, item.id)} className="p-1.5 text-muted hover:text-warn"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                     {isExpanded && (
-                      <div className="flex items-center gap-2 mt-1.5 pl-1">
+                      <div className="flex items-center gap-2 mt-1.5 pl-1 flex-wrap">
                         <button onClick={() => setExpandedItem(null)} className="text-muted"><ChevronUp className="w-3 h-3" /></button>
                         <MicroInput label="Fibra (g)" value={item.fiberG} onChange={v => updateItem(meal.id, item.id, { fiberG: v })} />
                         <MicroInput label="Azúcares (g)" value={item.sugarG} onChange={v => updateItem(meal.id, item.id, { sugarG: v })} />
                         <MicroInput label="Sodio (mg)" value={item.sodiumMg} onChange={v => updateItem(meal.id, item.id, { sodiumMg: v })} />
                         <MicroInput label="Sat. (g)" value={item.saturatedFatG} onChange={v => updateItem(meal.id, item.id, { saturatedFatG: v })} />
+                        <MicroInput label="Calcio (mg)" value={item.calciumMg} onChange={v => updateItem(meal.id, item.id, { calciumMg: v })} />
+                        <MicroInput label="Hierro (mg)" value={item.ironMg} onChange={v => updateItem(meal.id, item.id, { ironMg: v })} />
+                        <MicroInput label="Zinc (mg)" value={item.zincMg} onChange={v => updateItem(meal.id, item.id, { zincMg: v })} />
                       </div>
                     )}
                     {!isExpanded && hasExtra && (
                       <button onClick={() => setExpandedItem(item.id)} className="flex items-center gap-1 text-[10px] text-muted hover:text-accent mt-0.5 pl-1">
                         <ChevronDown className="w-3 h-3" /> fibra {item.fiberG || 0}g · azúc. {item.sugarG || 0}g · sodio {item.sodiumMg || 0}mg · sat. {item.saturatedFatG || 0}g
+                        {(item.calciumMg || item.ironMg || item.zincMg) ? ` · Ca ${item.calciumMg || 0}mg · Fe ${item.ironMg || 0}mg · Zn ${item.zincMg || 0}mg` : ''}
                       </button>
                     )}
                   </div>
@@ -428,6 +458,19 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
               })}
               <button onClick={() => addItem(meal.id)} className="flex items-center gap-1 text-xs text-muted hover:text-accent"><Plus className="w-3 h-3" /> Añadir alimento</button>
             </div>
+
+            {meal.items.length > 0 && (() => {
+              const totals = sumItemMacros(meal.items)
+              return (
+                <div className="flex items-center gap-3 text-xs bg-bg-alt rounded-xl px-3 py-2">
+                  <span className="font-semibold uppercase tracking-wider text-muted text-[10px]">Total comida</span>
+                  <span><strong>{Math.round(totals.kcal)}</strong> kcal</span>
+                  <span><strong>{Math.round(totals.proteinG * 10) / 10}</strong>g prot.</span>
+                  <span><strong>{Math.round(totals.carbsG * 10) / 10}</strong>g carbos</span>
+                  <span><strong>{Math.round(totals.fatG * 10) / 10}</strong>g grasas</span>
+                </div>
+              )
+            })()}
 
             <div className="pt-2 border-t border-border flex items-center gap-2 flex-wrap">
               {recipes.length > 0 && (

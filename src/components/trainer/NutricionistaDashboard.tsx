@@ -10,6 +10,7 @@ import { GoalSelect } from '../shared/GoalSelect'
 import { CalendarTab } from './CalendarTab'
 import { BusinessDashboard } from './BusinessDashboard'
 import { ConversorTab } from './ConversorTab'
+import { MicronutrientesTab } from './MicronutrientesTab'
 import { PlantillasTab } from './PlantillasTab'
 import { AjustesTab } from './AjustesTab'
 import { ImportClientsModal } from './ImportClientsModal'
@@ -20,12 +21,13 @@ const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
 }
 
-type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'plantillas' | 'ajustes'
+type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'micronutrientes' | 'plantillas' | 'ajustes'
 const VIEWS: { id: View; label: string }[] = [
   { id: 'clientes', label: 'Clientes' },
   { id: 'calendario', label: 'Calendario' },
   { id: 'negocio', label: 'Negocio' },
   { id: 'conversor', label: 'Conversor' },
+  { id: 'micronutrientes', label: 'Micronutrientes' },
   { id: 'plantillas', label: 'Plantillas' },
   { id: 'ajustes', label: 'Ajustes' },
 ]
@@ -108,6 +110,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         {view === 'calendario' && <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />}
         {view === 'negocio' && <BusinessDashboard clients={clients} />}
         {view === 'conversor' && <ConversorTab />}
+        {view === 'micronutrientes' && <MicronutrientesTab />}
         {view === 'plantillas' && <PlantillasTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
         {view === 'ajustes' && <AjustesTab userProfile={userProfile} demoMode={!!demoClients} onUpdateProfile={onUpdateProfile} />}
         {view === 'clientes' && (

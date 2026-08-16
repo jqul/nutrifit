@@ -75,6 +75,9 @@ export interface DietMealItemRow {
   sugar_g: number | null
   sodium_mg: number | null
   saturated_fat_g: number | null
+  calcium_mg: number | null
+  iron_mg: number | null
+  zinc_mg: number | null
   sort_order: number
 }
 
@@ -124,6 +127,10 @@ export interface FoodRow {
   sugar_g: number | null
   sodium_mg: number | null
   saturated_fat_g: number | null
+  calcium_mg: number | null
+  iron_mg: number | null
+  zinc_mg: number | null
+  reference: string | null
 }
 
 export interface MessageTemplateRow {

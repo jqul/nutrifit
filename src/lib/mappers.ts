@@ -66,6 +66,9 @@ export function mealItemFromRow(row: DietMealItemRow): DietMealItem {
     sugarG: row.sugar_g,
     sodiumMg: row.sodium_mg,
     saturatedFatG: row.saturated_fat_g,
+    calciumMg: row.calcium_mg,
+    ironMg: row.iron_mg,
+    zincMg: row.zinc_mg,
   }
 }
 
@@ -126,6 +129,7 @@ export function foodFromRow(row: FoodRow): Food {
     id: row.id, name: row.name, category: row.category,
     kcal: row.kcal, proteinG: row.protein_g, carbsG: row.carbs_g, fatG: row.fat_g,
     fiberG: row.fiber_g, sugarG: row.sugar_g, sodiumMg: row.sodium_mg, saturatedFatG: row.saturated_fat_g,
+    calciumMg: row.calcium_mg, ironMg: row.iron_mg, zincMg: row.zinc_mg, reference: row.reference,
   }
 }
 

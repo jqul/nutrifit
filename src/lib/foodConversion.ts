@@ -24,6 +24,7 @@ export function convertQuantity(quantity: number, fromUnit: string, toUnit: stri
 export interface Macros {
   kcal: number; proteinG: number; carbsG: number; fatG: number
   fiberG: number | null; sugarG: number | null; sodiumMg: number | null; saturatedFatG: number | null
+  calciumMg: number | null; ironMg: number | null; zincMg: number | null
 }
 
 function scaleNullable(v: number | null | undefined, factor: number): number | null {
@@ -44,6 +45,9 @@ export function computeMacros(food: Food, quantity: number, unit: string): Macro
     sugarG: scaleNullable(food.sugarG, factor),
     sodiumMg: scaleNullable(food.sodiumMg, factor),
     saturatedFatG: scaleNullable(food.saturatedFatG, factor),
+    calciumMg: scaleNullable(food.calciumMg, factor),
+    ironMg: scaleNullable(food.ironMg, factor),
+    zincMg: scaleNullable(food.zincMg, factor),
   }
 }
 
@@ -68,4 +72,26 @@ export function computeSubstitution(
   const toPer100g = toFood[MACRO_KEY_PER_100G[matchBy]] as number
   if (toPer100g === 0) return null
   return (target * 100) / toPer100g
+}
+
+export interface MacroDiff { kcal: number; proteinG: number; carbsG: number; fatG: number }
+
+/**
+ * Diferencia de macros (toFood - fromFood) al hacer la sustitución completa —
+ * el macro igualado (matchBy) siempre sale ~0, los otros muestran cuánto se
+ * gana o se pierde al hacer el cambio (ej. cambiar pollo por tofu igualando
+ * proteína: cuánta grasa de más o de menos, cuántos carbohidratos de más).
+ */
+export function computeSubstitutionDiff(
+  fromFood: Food, quantity: number, unit: string, toFood: Food, substituteGrams: number
+): MacroDiff | null {
+  const fromMacros = computeMacros(fromFood, quantity, unit)
+  const toMacros = computeMacros(toFood, substituteGrams, 'g')
+  if (!fromMacros || !toMacros) return null
+  return {
+    kcal: Math.round((toMacros.kcal - fromMacros.kcal) * 10) / 10,
+    proteinG: Math.round((toMacros.proteinG - fromMacros.proteinG) * 10) / 10,
+    carbsG: Math.round((toMacros.carbsG - fromMacros.carbsG) * 10) / 10,
+    fatG: Math.round((toMacros.fatG - fromMacros.fatG) * 10) / 10,
+  }
 }

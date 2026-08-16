@@ -1,6 +1,7 @@
 export interface ScannedFood {
   name: string; kcal: number; proteinG: number; carbsG: number; fatG: number
   fiberG: number | null; sugarG: number | null; sodiumMg: number | null; saturatedFatG: number | null
+  calciumMg: number | null; ironMg: number | null; zincMg: number | null
 }
 
 /** Busca un producto por código de barras (EAN/UPC) en la base de datos pública de OpenFoodFacts. */
@@ -24,5 +25,8 @@ export async function lookupBarcode(code: string): Promise<ScannedFood | null> {
     sugarG: n.sugars_100g != null ? Math.round(n.sugars_100g * 10) / 10 : null,
     sodiumMg: n.sodium_100g != null ? Math.round(n.sodium_100g * 1000) : null,
     saturatedFatG: n['saturated-fat_100g'] != null ? Math.round(n['saturated-fat_100g'] * 10) / 10 : null,
+    calciumMg: n.calcium_100g != null ? Math.round(n.calcium_100g * 1000) : null,
+    ironMg: n.iron_100g != null ? Math.round(n.iron_100g * 1000 * 10) / 10 : null,
+    zincMg: n.zinc_100g != null ? Math.round(n.zinc_100g * 1000 * 10) / 10 : null,
   }
 }

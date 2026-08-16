@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import { foodFromRow } from '../../lib/mappers'
 import { Food } from '../../types'
-import { convertQuantity, computeMacros, computeSubstitution, CONVERTIBLE_UNITS, MacroKey } from '../../lib/foodConversion'
+import { convertQuantity, computeMacros, computeSubstitution, computeSubstitutionDiff, CONVERTIBLE_UNITS, MacroKey } from '../../lib/foodConversion'
 import { Calculator, ArrowRightLeft } from 'lucide-react'
 
 const MACRO_OPTIONS: { key: MacroKey; label: string }[] = [
@@ -44,6 +44,10 @@ export function ConversorTab() {
 
   const substituteGrams = selected && subSelected && !isNaN(qtyNum)
     ? computeSubstitution(selected, qtyNum, unit, subSelected, matchBy)
+    : null
+
+  const substituteDiff = selected && subSelected && substituteGrams != null && !isNaN(qtyNum)
+    ? computeSubstitutionDiff(selected, qtyNum, unit, subSelected, substituteGrams)
     : null
 
   return (
@@ -111,6 +115,19 @@ export function ConversorTab() {
                     <MacroBox label="Sat." value={macros.saturatedFatG != null ? `${macros.saturatedFatG}g` : '—'} />
                   </div>
                 </div>
+              )}
+              {(macros.calciumMg != null || macros.ironMg != null || macros.zincMg != null) && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Minerales</p>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <MacroBox label="Calcio" value={macros.calciumMg != null ? `${macros.calciumMg}mg` : '—'} />
+                    <MacroBox label="Hierro" value={macros.ironMg != null ? `${macros.ironMg}mg` : '—'} />
+                    <MacroBox label="Zinc" value={macros.zincMg != null ? `${macros.zincMg}mg` : '—'} />
+                  </div>
+                </div>
+              )}
+              {selected.reference && (
+                <p className="text-[11px] text-muted">Fuente: {selected.reference}</p>
               )}
               {equivalents.length > 0 && (
                 <div>
@@ -199,6 +216,19 @@ export function ConversorTab() {
                   ) : null
                 })}
               </div>
+              {substituteDiff && (
+                <div className="mt-3 pt-3 border-t border-border">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">
+                    Diferencia al cambiar (lo que ganas o pierdes en el resto de macros)
+                  </p>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    <DiffBox label="Kcal" value={substituteDiff.kcal} matched={matchBy === 'kcal'} />
+                    <DiffBox label="Prot." value={substituteDiff.proteinG} unit="g" matched={matchBy === 'proteinG'} />
+                    <DiffBox label="Carbos" value={substituteDiff.carbsG} unit="g" matched={matchBy === 'carbsG'} />
+                    <DiffBox label="Grasas" value={substituteDiff.fatG} unit="g" matched={matchBy === 'fatG'} />
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {subSelected && selected && substituteGrams == null && (
@@ -217,6 +247,18 @@ function MacroBox({ label, value }: { label: string; value: string | number }) {
     <div className="bg-bg-alt rounded-xl py-2.5">
       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</p>
       <p className="text-sm font-bold mt-0.5">{value}</p>
+    </div>
+  )
+}
+
+function DiffBox({ label, value, unit = '', matched }: { label: string; value: number; unit?: string; matched: boolean }) {
+  const sign = value > 0 ? '+' : ''
+  return (
+    <div className={`rounded-xl py-2.5 ${matched ? 'bg-bg-alt' : value > 0 ? 'bg-warn/10' : value < 0 ? 'bg-ok/10' : 'bg-bg-alt'}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</p>
+      <p className={`text-sm font-bold mt-0.5 ${matched ? 'text-muted' : value > 0 ? 'text-warn' : value < 0 ? 'text-ok' : ''}`}>
+        {matched ? '≈0' : `${sign}${value}${unit}`}
+      </p>
     </div>
   )
 }

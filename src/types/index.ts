@@ -58,6 +58,9 @@ export interface DietMealItem {
   sugarG?: number | null
   sodiumMg?: number | null
   saturatedFatG?: number | null
+  calciumMg?: number | null
+  ironMg?: number | null
+  zincMg?: number | null
 }
 
 export interface DietMeal {
@@ -130,6 +133,10 @@ export interface Food {
   sugarG?: number | null
   sodiumMg?: number | null
   saturatedFatG?: number | null
+  calciumMg?: number | null
+  ironMg?: number | null
+  zincMg?: number | null
+  reference?: string | null
 }
 
 export type MessageType = 'nuevo_plan' | 'racha' | 'checkin_recordatorio' | 'custom'
