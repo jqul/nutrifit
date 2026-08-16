@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import { toast } from '../components/shared/Toast'
 
 // Fallback fijo — ver el comentario en lib/supabase.ts sobre por qué no basta
 // con confiar en la variable de entorno en algunas plataformas de despliegue.
@@ -33,22 +34,37 @@ export function usePushNotifications(owner: Owner) {
     if (!supported) return
     setLoading(true)
     try {
-      const reg = await navigator.serviceWorker.ready
+      // Importante: pedir el permiso ANTES de cualquier await de por medio
+      // (incl. serviceWorker.ready) — Safari/WebKit es más estricto que Chrome
+      // sobre qué cuenta como "gesto del usuario" y puede ignorar la petición
+      // en silencio (sin mostrar el diálogo del sistema) si ya ha pasado por
+      // un await distinto antes de llamar a requestPermission().
       const permission = await Notification.requestPermission()
+      if (permission === 'denied') {
+        toast('Notificaciones bloqueadas — actívalas desde los ajustes del sistema para esta app', 'warn')
+        setLoading(false)
+        return
+      }
       if (permission !== 'granted') { setLoading(false); return }
+
+      const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!),
       })
       const key = sub.toJSON() as { keys?: { p256dh: string; auth: string } }
-      await supabase.from('push_subscriptions').upsert({
+      const { error } = await supabase.from('push_subscriptions').upsert({
         nutricionista_id: owner.nutricionistaId || null,
         client_id: owner.clientId || null,
         endpoint: sub.endpoint,
         p256dh: key.keys?.p256dh || '',
         auth: key.keys?.auth || '',
       }, { onConflict: 'endpoint' })
+      if (error) { toast('Error al guardar la suscripción: ' + error.message, 'warn'); setLoading(false); return }
       setSubscribed(true)
+      toast('Notificaciones activadas ✓', 'ok')
+    } catch (err) {
+      toast('No se pudo activar las notificaciones: ' + (err instanceof Error ? err.message : String(err)), 'warn')
     } finally {
       setLoading(false)
     }
