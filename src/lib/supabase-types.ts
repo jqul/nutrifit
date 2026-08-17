@@ -171,7 +171,7 @@ export interface AppointmentRow {
 
 export interface RecipeRow {
   id: string
-  nutricionista_id: string
+  nutricionista_id: string | null // null = receta del sistema, visible para todos
   name: string
   items: unknown // jsonb: EditableItem[] tal cual (camelCase), snapshot igual que diet_templates.plan
   created_at: string

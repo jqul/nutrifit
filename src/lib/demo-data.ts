@@ -266,6 +266,14 @@ export const DEMO_DIET_TEMPLATES: DietTemplateRow[] = [
 
 export const DEMO_RECIPES: RecipeRow[] = [
   {
+    id: 'demo-recipe-system-001', nutricionista_id: null, name: 'Boloñesa de pasta integral con carne', created_at: '',
+    items: [
+      { id: 'drs1i1', foodName: 'Pasta integral (cocida)', quantity: '200', unit: 'g', kcal: '248', proteinG: '10.6', carbsG: '50', fatG: '2.2', fiberG: '9' },
+      { id: 'drs1i2', foodName: 'Ternera magra (picada)', quantity: '150', unit: 'g', kcal: '258', proteinG: '40.5', carbsG: '0', fatG: '10.5', fiberG: '0' },
+      { id: 'drs1i3', foodName: 'Tomate (triturado)', quantity: '200', unit: 'g', kcal: '36', proteinG: '1.8', carbsG: '7.8', fatG: '0.4', fiberG: '2.4' },
+    ],
+  },
+  {
     id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '',
     items: [
       { id: 'dr1i1', foodName: 'Avena', quantity: '40', unit: 'g', kcal: '150', proteinG: '5', carbsG: '27', fatG: '3' },

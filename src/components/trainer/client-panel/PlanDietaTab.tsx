@@ -83,7 +83,10 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
 
   const loadRecipes = useCallback(async () => {
     if (demoPlan) { setRecipes(DEMO_RECIPES); return }
-    const { data } = await supabase.from('recipes').select('*').eq('nutricionista_id', nutricionistaId).order('name')
+    // Propias + recetas del sistema (nutricionista_id null) — el punto de
+    // partida además de las tuyas, no en sustitución.
+    const { data } = await supabase.from('recipes').select('*')
+      .or(`nutricionista_id.eq.${nutricionistaId},nutricionista_id.is.null`).order('name')
     setRecipes(data || [])
   }, [nutricionistaId, demoPlan])
 
@@ -342,23 +345,20 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
         </div>
       )}
 
-      {recipes.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5"><ChefHat className="w-3.5 h-3.5" /> Tu recetario ({recipes.length})</p>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {recipes.map(r => {
-              const totals = sumItemMacros((r.items as EditableItem[] | null) || [])
-              return (
-                <span key={r.id} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-bg-alt rounded-lg text-xs font-medium" title={`${Math.round(totals.kcal)} kcal · ${Math.round(totals.proteinG * 10) / 10}g prot. · ${Math.round(totals.carbsG * 10) / 10}g carbos · ${Math.round(totals.fatG * 10) / 10}g grasas · ${Math.round(totals.fiberG * 10) / 10}g fibra`}>
-                  {r.name}
-                  <span className="text-muted font-normal">{Math.round(totals.kcal)} kcal</span>
-                  <button onClick={() => deleteRecipe(r.id)} className="p-0.5 text-muted hover:text-warn" title="Eliminar receta"><Trash2 className="w-3 h-3" /></button>
-                </span>
-              )
-            })}
+      {recipes.length > 0 && (() => {
+        const systemRecipes = recipes.filter(r => r.nutricionista_id === null)
+        const ownRecipes = recipes.filter(r => r.nutricionista_id !== null)
+        return (
+          <div className="space-y-3">
+            {systemRecipes.length > 0 && (
+              <RecipeGroup title="Recetas del sistema" recipes={systemRecipes} />
+            )}
+            {ownRecipes.length > 0 && (
+              <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} />
+            )}
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <p className="font-semibold text-sm">Objetivo de macros</p>
@@ -548,6 +548,34 @@ function NumInput({ label, value, onChange }: { label: string; value: string; on
       <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{label}</label>
       <input type="number" value={value} onChange={e => onChange(e.target.value)}
         className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+    </div>
+  )
+}
+
+function RecipeGroup({ title, recipes, onDelete }: { title: string; recipes: RecipeRow[]; onDelete?: (id: string) => void }) {
+  return (
+    <div className="bg-card border border-border rounded-2xl p-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
+        <ChefHat className="w-3.5 h-3.5" /> {title} ({recipes.length})
+      </p>
+      <div className="space-y-1.5">
+        {recipes.map(r => {
+          const totals = sumItemMacros((r.items as EditableItem[] | null) || [])
+          return (
+            <div key={r.id} className="flex items-center justify-between gap-2 bg-bg-alt rounded-xl px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold truncate">{r.name}</p>
+                <p className="text-[11px] text-muted">
+                  {Math.round(totals.kcal)} kcal · {Math.round(totals.proteinG * 10) / 10}g prot. · {Math.round(totals.carbsG * 10) / 10}g carbos · {Math.round(totals.fatG * 10) / 10}g grasas · {Math.round(totals.fiberG * 10) / 10}g fibra
+                </p>
+              </div>
+              {onDelete && (
+                <button onClick={() => onDelete(r.id)} className="p-1 text-muted hover:text-warn flex-shrink-0" title="Eliminar receta"><Trash2 className="w-3.5 h-3.5" /></button>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
