@@ -13,6 +13,7 @@ import { ConversorTab } from './ConversorTab'
 import { MicronutrientesTab } from './MicronutrientesTab'
 import { PlantillasTab } from './PlantillasTab'
 import { AjustesTab } from './AjustesTab'
+import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
 import { Plus, Flame, Copy, LogOut, Search, Crown, Upload, ShieldCheck } from 'lucide-react'
 import { toast } from '../shared/Toast'
@@ -21,7 +22,7 @@ const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
 }
 
-type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'micronutrientes' | 'plantillas' | 'ajustes'
+type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'micronutrientes' | 'plantillas' | 'difusion' | 'ajustes'
 const VIEWS: { id: View; label: string }[] = [
   { id: 'clientes', label: 'Clientes' },
   { id: 'calendario', label: 'Calendario' },
@@ -29,6 +30,7 @@ const VIEWS: { id: View; label: string }[] = [
   { id: 'conversor', label: 'Conversor' },
   { id: 'micronutrientes', label: 'Micronutrientes' },
   { id: 'plantillas', label: 'Plantillas' },
+  { id: 'difusion', label: 'Difusión' },
   { id: 'ajustes', label: 'Ajustes' },
 ]
 
@@ -112,6 +114,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         {view === 'conversor' && <ConversorTab />}
         {view === 'micronutrientes' && <MicronutrientesTab />}
         {view === 'plantillas' && <PlantillasTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
+        {view === 'difusion' && <DifusionTab clients={clients} nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
         {view === 'ajustes' && <AjustesTab userProfile={userProfile} demoMode={!!demoClients} onUpdateProfile={onUpdateProfile} />}
         {view === 'clientes' && (
           <>

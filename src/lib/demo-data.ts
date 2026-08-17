@@ -1,5 +1,5 @@
 import { UserProfile, ClientData, DietPlan, WeightEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment } from '../types'
-import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow } from './supabase-types'
+import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow } from './supabase-types'
 import { periodKeyFor } from './surveyPeriod'
 
 export const DEMO_NUTRICIONISTA_ID = 'demo-nutri-001'
@@ -49,7 +49,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     goal: 'perder_peso',
     allergies: 'Intolerancia a la lactosa',
     notes: 'Prefiere comidas sencillas de preparar entre semana, cocina los domingos para toda la semana.',
-    monthlyPrice: 45, goalWeightKg: 62, customMessages: {},
+    monthlyPrice: 45, goalWeightKg: 62, customMessages: {}, tags: ['Pérdida de grasa - Nivel 1'],
     createdAt: Date.now() - 60 * 86400000,
   },
   {
@@ -63,7 +63,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     goal: 'ganar_masa',
     allergies: '',
     notes: 'Entrena 5 días/semana, necesita opciones altas en proteína para llevar al gimnasio.',
-    monthlyPrice: 60, goalWeightKg: 78, customMessages: {},
+    monthlyPrice: 60, goalWeightKg: 78, customMessages: {}, tags: ['Ganancia muscular', 'Deportista'],
     createdAt: Date.now() - 90 * 86400000,
   },
   {
@@ -77,7 +77,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     goal: 'salud',
     allergies: 'Alergia a los frutos secos',
     notes: 'Lleva 10 días sin registrar check-in — pendiente de contactar.',
-    monthlyPrice: 40, goalWeightKg: null, customMessages: {},
+    monthlyPrice: 40, goalWeightKg: null, customMessages: {}, tags: ['Pérdida de grasa - Nivel 1', 'Riesgo de abandono'],
     createdAt: Date.now() - 45 * 86400000,
   },
 ]
@@ -267,6 +267,7 @@ export const DEMO_DIET_TEMPLATES: DietTemplateRow[] = [
 export const DEMO_RECIPES: RecipeRow[] = [
   {
     id: 'demo-recipe-system-001', nutricionista_id: null, name: 'Boloñesa de pasta integral con carne', created_at: '',
+    photo_url: placeholderPhoto('Boloñesa', '#b5573d'),
     items: [
       { id: 'drs1i1', foodName: 'Pasta integral (cocida)', quantity: '200', unit: 'g', kcal: '248', proteinG: '10.6', carbsG: '50', fatG: '2.2', fiberG: '9' },
       { id: 'drs1i2', foodName: 'Ternera magra (picada)', quantity: '150', unit: 'g', kcal: '258', proteinG: '40.5', carbsG: '0', fatG: '10.5', fiberG: '0' },
@@ -274,7 +275,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '',
+    id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '', photo_url: null,
     items: [
       { id: 'dr1i1', foodName: 'Avena', quantity: '40', unit: 'g', kcal: '150', proteinG: '5', carbsG: '27', fatG: '3' },
       { id: 'dr1i2', foodName: 'Yogur natural', quantity: '150', unit: 'g', kcal: '90', proteinG: '8', carbsG: '10', fatG: '2' },
@@ -283,7 +284,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '',
+    id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '', photo_url: null,
     items: [
       { id: 'dr2i1', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: '230', proteinG: '45', carbsG: '0', fatG: '5' },
       { id: 'dr2i2', foodName: 'Arroz integral', quantity: '60', unit: 'g', kcal: '210', proteinG: '5', carbsG: '44', fatG: '2' },
@@ -445,6 +446,25 @@ export const DEMO_SURVEY_RESPONSES: Record<string, SurveyResponseRow[]> = {
       period_key: periodKeyFor('weekly', weeksAgo(1)), submitted_at: weeksAgo(1).toISOString(),
       answers: { 'sw-q1': 'Muy bien, entrenando fuerte.', 'sw-q2': 'Ninguno.' },
     },
+  ],
+  'demo-client-003': [],
+}
+
+// ── Analíticas de sangre ─────────────────────────────────────
+
+export const DEMO_BLOOD_MARKERS: Record<string, BloodMarkerRow[]> = {
+  'demo-client-001': [
+    { id: 'demo-bm-1', client_id: 'demo-client-001', date: daysAgo(20), marker_key: 'glucosa', value: 92, created_at: '' },
+    { id: 'demo-bm-2', client_id: 'demo-client-001', date: daysAgo(20), marker_key: 'colesterol_total', value: 215, created_at: '' },
+    { id: 'demo-bm-3', client_id: 'demo-client-001', date: daysAgo(20), marker_key: 'ldl', value: 128, created_at: '' },
+    { id: 'demo-bm-4', client_id: 'demo-client-001', date: daysAgo(20), marker_key: 'hdl', value: 52, created_at: '' },
+    { id: 'demo-bm-5', client_id: 'demo-client-001', date: daysAgo(20), marker_key: 'trigliceridos', value: 98, created_at: '' },
+    { id: 'demo-bm-6', client_id: 'demo-client-001', date: daysAgo(20), marker_key: 'vitamina_d', value: 18, created_at: '' },
+  ],
+  'demo-client-002': [
+    { id: 'demo-bm-7', client_id: 'demo-client-002', date: daysAgo(35), marker_key: 'got_ast', value: 68, created_at: '' },
+    { id: 'demo-bm-8', client_id: 'demo-client-002', date: daysAgo(35), marker_key: 'gpt_alt', value: 74, created_at: '' },
+    { id: 'demo-bm-9', client_id: 'demo-client-002', date: daysAgo(35), marker_key: 'glucosa', value: 88, created_at: '' },
   ],
   'demo-client-003': [],
 }

@@ -12,7 +12,7 @@ import { GoalSelect } from '../../shared/GoalSelect'
 import { toast } from '../../shared/Toast'
 import { exportClientData } from '../../../lib/gdprExport'
 import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
-import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt } from 'lucide-react'
+import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt, Tag, X } from 'lucide-react'
 
 export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName, customQuestions }: {
   client: ClientData
@@ -106,10 +106,20 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
       name: form.name, surname: form.surname, phone: form.phone, email: form.email,
       goal: form.goal, heightCm: form.heightCm, gender: form.gender, birthDate: form.birthDate,
       allergies: form.allergies, monthlyPrice: form.monthlyPrice, goalWeightKg: form.goalWeightKg,
+      tags: form.tags,
     })
     setSaving(false)
     if (ok) { setEditing(false); toast('Perfil actualizado ✓', 'ok') }
   }
+
+  const [tagDraft, setTagDraft] = useState('')
+  const addTag = () => {
+    const t = tagDraft.trim()
+    if (!t || form.tags.includes(t)) { setTagDraft(''); return }
+    setForm({ ...form, tags: [...form.tags, t] })
+    setTagDraft('')
+  }
+  const removeTag = (t: string) => setForm({ ...form, tags: form.tags.filter(x => x !== t) })
 
   const copyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/?c=${client.token}`)
@@ -130,6 +140,18 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         <Field label="Precio mensual" value={client.monthlyPrice != null ? `${client.monthlyPrice}€` : '—'} />
         <Field label="Peso actual" value={currentWeight != null ? `${currentWeight} kg` : '—'} />
         <Field label="Peso objetivo" value={client.goalWeightKg != null ? `${client.goalWeightKg} kg` : '—'} />
+        <div>
+          <p className="text-xs uppercase tracking-wider text-muted mb-1">Etiquetas</p>
+          {client.tags.length === 0 ? (
+            <p className="text-sm text-muted">—</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {client.tags.map(t => (
+                <span key={t} className="px-2 py-0.5 bg-accent/10 text-accent rounded-full text-xs font-medium">{t}</span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex gap-2 flex-wrap">
         <Button variant="outline" onClick={() => { setForm(client); setEditing(true) }}>Editar</Button>
@@ -241,6 +263,26 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
       <div className="grid grid-cols-2 gap-3">
         <Input label="Precio mensual (€)" type="number" value={form.monthlyPrice?.toString() || ''} onChange={v => setForm({ ...form, monthlyPrice: v ? parseFloat(v) : null })} />
         <Input label="Peso objetivo (kg)" type="number" value={form.goalWeightKg?.toString() || ''} onChange={v => setForm({ ...form, goalWeightKg: v ? parseFloat(v) : null })} />
+      </div>
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5 flex items-center gap-1.5"><Tag className="w-3.5 h-3.5" /> Etiquetas</label>
+        {form.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {form.tags.map(t => (
+              <span key={t} className="flex items-center gap-1 pl-2.5 pr-1 py-1 bg-accent/10 text-accent rounded-full text-xs font-medium">
+                {t}
+                <button onClick={() => removeTag(t)} className="hover:text-warn"><X className="w-3 h-3" /></button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <input value={tagDraft} onChange={e => setTagDraft(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
+            placeholder='Ej. "Pérdida de grasa - Nivel 1"'
+            className="flex-1 px-3 py-2 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+          <button onClick={addTag} className="px-3 py-2 bg-bg-alt rounded-xl text-xs font-semibold text-muted hover:text-accent">Añadir</button>
+        </div>
       </div>
       <div className="flex gap-2">
         <Button onClick={handleSave} loading={saving}>Guardar</Button>

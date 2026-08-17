@@ -40,6 +40,7 @@ export interface ClientData {
   monthlyPrice: number | null
   goalWeightKg: number | null
   customMessages: Record<string, string>
+  tags: string[]
   createdAt: number
 }
 
@@ -217,6 +218,15 @@ export interface SurveyResponse {
   periodKey: string
   answers: Record<string, string>
   submittedAt: number
+}
+
+export interface BloodMarker {
+  id: string
+  clientId: string
+  date: string
+  markerKey: string
+  value: number
+  createdAt: number
 }
 
 export type InvoiceStatus = 'pendiente' | 'pagado'

@@ -7,11 +7,13 @@ import { detectAllergenConflict } from '../../../lib/allergens'
 import { sendPush } from '../../../lib/usePushNotifications'
 import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../../lib/demo-data'
 import { printDietPlan } from '../../../lib/printPlan'
+import { printRecipeBook } from '../../../lib/printRecipeBook'
 import { ScannedFood } from '../../../lib/openFoodFacts'
+import { gramsForAbsoluteMacro, computeMacros, MacroKey } from '../../../lib/foodConversion'
 import { Button } from '../../shared/Button'
 import { BarcodeScanner } from '../../shared/BarcodeScanner'
 import { toast } from '../../shared/Toast'
-import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical, ChevronDown, ChevronUp, Copy, Repeat, Camera, BookOpen } from 'lucide-react'
 
 interface EditableItem {
   id: string; foodName: string; quantity: string; unit: string
@@ -24,6 +26,8 @@ interface EditableSupplement { id: string; name: string; dose: string; timing: s
 
 function newId() { return crypto.randomUUID() }
 
+const MACRO_LABELS: Record<MacroKey, string> = { kcal: 'kcal', proteinG: 'proteína', carbsG: 'carbohidratos', fatG: 'grasas' }
+
 /** Suma de macros de una comida/receta completa — la "calculadora de recetas":
  * a partir de los alimentos individuales, el total nutricional del plato. */
 function sumItemMacros(items: EditableItem[]) {
@@ -34,6 +38,32 @@ function sumItemMacros(items: EditableItem[]) {
     fatG: acc.fatG + (parseFloat(i.fatG) || 0),
     fiberG: acc.fiberG + (parseFloat(i.fiberG) || 0),
   }), { kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 })
+}
+
+const SCALABLE_ITEM_FIELDS: (keyof EditableItem)[] = [
+  'quantity', 'kcal', 'proteinG', 'carbsG', 'fatG', 'fiberG', 'sugarG', 'sodiumMg', 'saturatedFatG', 'calciumMg', 'ironMg', 'zincMg',
+]
+
+/** Escala una receta entera (todos los ingredientes) a un objetivo de kcal,
+ * multiplicando cada gramaje por el mismo factor — al escalar todo por igual,
+ * las proporciones de macros se mantienen automáticamente. Es el "escalado
+ * automático por tramo calórico": la misma receta sirve para un objetivo de
+ * 400, 600 u 800 kcal sin tener que rehacerla a mano. */
+function scaleRecipeToKcal(items: EditableItem[], targetKcal: number): EditableItem[] {
+  const currentKcal = items.reduce((sum, i) => sum + (parseFloat(i.kcal) || 0), 0)
+  if (currentKcal <= 0) return items.map(i => ({ ...i, id: newId() }))
+  const factor = targetKcal / currentKcal
+  return items.map(item => {
+    const scaled: EditableItem = { ...item, id: newId() }
+    for (const field of SCALABLE_ITEM_FIELDS) {
+      const raw = item[field]
+      if (raw) {
+        const num = parseFloat(raw)
+        if (!isNaN(num)) scaled[field] = String(Math.round(num * factor * 10) / 10)
+      }
+    }
+    return scaled
+  })
 }
 
 function demoPlanToEditable(plan: DietPlan) {
@@ -56,7 +86,9 @@ function demoPlanToEditable(plan: DietPlan) {
   }
 }
 
-export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: ClientData; nutricionistaId: string; demoPlan?: DietPlan }) {
+export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, demoPlan }: {
+  client: ClientData; nutricionistaId: string; nutricionistaName?: string; demoPlan?: DietPlan
+}) {
   const demoEditable = demoPlan ? demoPlanToEditable(demoPlan) : null
   const [loading, setLoading] = useState(!demoPlan)
   const [saving, setSaving] = useState(false)
@@ -107,17 +139,43 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   }
 
   const insertRecipe = (mealId: string, recipe: RecipeRow) => {
-    const items = (recipe.items as EditableItem[] | null) || []
+    const rawItems = (recipe.items as EditableItem[] | null) || []
     const meal = meals.find(m => m.id === mealId)
     if (!meal) return
-    updateMeal(mealId, { items: [...meal.items, ...items.map(i => ({ ...i, id: newId() }))] })
-    toast(`Receta "${recipe.name}" insertada ✓`, 'ok')
+    // Constructor de menú por tramo calórico: si la comida ya tiene un
+    // objetivo de kcal, la receta se escala sola al hueco que queda (target
+    // menos lo que ya hay puesto), en vez de insertarse a su tamaño original.
+    const mealTarget = parseFloat(meal.kcalTarget)
+    const alreadyUsed = sumItemMacros(meal.items).kcal
+    const remaining = mealTarget - alreadyUsed
+    const shouldScale = !isNaN(mealTarget) && mealTarget > 0 && remaining > 0
+    const items = shouldScale ? scaleRecipeToKcal(rawItems, remaining) : rawItems.map(i => ({ ...i, id: newId() }))
+    updateMeal(mealId, { items: [...meal.items, ...items] })
+    toast(shouldScale
+      ? `Receta "${recipe.name}" insertada y ajustada a ${Math.round(remaining)} kcal ✓`
+      : `Receta "${recipe.name}" insertada ✓`, 'ok')
   }
 
   const deleteRecipe = async (id: string) => {
     if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
     setRecipes(prev => prev.filter(r => r.id !== id))
     await supabase.from('recipes').delete().eq('id', id)
+  }
+
+  const copyRecipe = async (recipe: RecipeRow) => {
+    if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
+    const { error } = await supabase.from('recipes').insert({
+      nutricionista_id: nutricionistaId, name: `${recipe.name} (copia)`, items: recipe.items,
+    })
+    if (error) { toast('Error: ' + error.message, 'warn'); return }
+    toast(`"${recipe.name}" copiada a tus recetas ✓`, 'ok')
+    await loadRecipes()
+  }
+
+  const setRecipePhoto = async (recipe: RecipeRow, url: string) => {
+    if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
+    setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, photo_url: url || null } : r))
+    await supabase.from('recipes').update({ photo_url: url || null }).eq('id', recipe.id)
   }
 
   const loadTemplates = useCallback(async () => {
@@ -318,6 +376,31 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   }
   const [expandedItem, setExpandedItem] = useState<string | null>(null)
 
+  const [substitutingFor, setSubstitutingFor] = useState<{ mealId: string; itemId: string } | null>(null)
+  const [subMatchBy, setSubMatchBy] = useState<MacroKey>('proteinG')
+  const [subQuery, setSubQuery] = useState('')
+
+  const applySubstitution = (mealId: string, item: EditableItem, substitute: Food) => {
+    const targetAbsolute = parseFloat(item[subMatchBy]) || 0
+    const grams = gramsForAbsoluteMacro(substitute, targetAbsolute, subMatchBy)
+    if (grams == null) {
+      toast(`${substitute.name} no aporta nada de ${MACRO_LABELS[subMatchBy]} — prueba a igualar por otro macro`, 'warn')
+      return
+    }
+    const macros = computeMacros(substitute, grams, 'g')
+    if (!macros) return
+    updateItem(mealId, item.id, {
+      foodName: substitute.name, quantity: String(Math.round(grams * 10) / 10), unit: 'g',
+      kcal: String(macros.kcal), proteinG: String(macros.proteinG), carbsG: String(macros.carbsG), fatG: String(macros.fatG),
+      fiberG: macros.fiberG != null ? String(macros.fiberG) : '', sugarG: macros.sugarG != null ? String(macros.sugarG) : '',
+      sodiumMg: macros.sodiumMg != null ? String(macros.sodiumMg) : '', saturatedFatG: macros.saturatedFatG != null ? String(macros.saturatedFatG) : '',
+      calciumMg: macros.calciumMg != null ? String(macros.calciumMg) : '', ironMg: macros.ironMg != null ? String(macros.ironMg) : '',
+      zincMg: macros.zincMg != null ? String(macros.zincMg) : '',
+    })
+    toast(`Sustituido por ${substitute.name} (${Math.round(grams * 10) / 10}g) ✓`, 'ok')
+    setSubstitutingFor(null); setSubQuery('')
+  }
+
   const addSupplement = () => setSupplements([...supplements, { id: newId(), name: '', dose: '', timing: '', visibleToClient: true }])
   const removeSupplement = (id: string) => setSupplements(supplements.filter(s => s.id !== id))
   const updateSupplement = (id: string, updates: Partial<EditableSupplement>) => setSupplements(supplements.map(s => s.id === id ? { ...s, ...updates } : s))
@@ -351,11 +434,16 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
         return (
           <div className="space-y-3">
             {systemRecipes.length > 0 && (
-              <RecipeGroup title="Recetas del sistema" recipes={systemRecipes} />
+              <RecipeGroup title="Recetas del sistema" recipes={systemRecipes} onCopy={copyRecipe} />
             )}
             {ownRecipes.length > 0 && (
-              <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} />
+              <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} onSetPhoto={setRecipePhoto} />
             )}
+            <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', recipes.map(r => ({
+              name: r.name, photoUrl: r.photo_url, items: (r.items as EditableItem[] | null) || [],
+            })))} className="flex items-center gap-1.5 text-xs font-bold text-accent">
+              <BookOpen className="w-3.5 h-3.5" /> Descargar recetario en PDF
+            </button>
           </div>
         )
       })()}
@@ -428,6 +516,12 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
                         className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
                       <button onClick={() => setScanningFor({ mealId: meal.id, itemId: item.id })} title="Escanear código de barras"
                         className="p-1.5 text-muted hover:text-accent flex-shrink-0"><Barcode className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => {
+                        const isOpen = substitutingFor?.itemId === item.id
+                        setSubstitutingFor(isOpen ? null : { mealId: meal.id, itemId: item.id })
+                        setSubQuery('')
+                      }} title="Sustituir por un alimento equivalente"
+                        className="p-1.5 text-muted hover:text-accent flex-shrink-0"><Repeat className="w-3.5 h-3.5" /></button>
                       <button onClick={() => setExpandedItem(isExpanded ? null : item.id)}
                         title="Nutrientes ampliados (fibra, azúcares, sodio, grasas saturadas)"
                         className={`p-1.5 flex-shrink-0 ${hasExtra ? 'text-accent' : 'text-muted hover:text-accent'}`}>
@@ -457,6 +551,40 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
                         <ChevronDown className="w-3 h-3" /> fibra {item.fiberG || 0}g · azúc. {item.sugarG || 0}g · sodio {item.sodiumMg || 0}mg · sat. {item.saturatedFatG || 0}g
                         {(item.calciumMg || item.ironMg || item.zincMg) ? ` · Ca ${item.calciumMg || 0}mg · Fe ${item.ironMg || 0}mg · Zn ${item.zincMg || 0}mg` : ''}
                       </button>
+                    )}
+                    {substitutingFor?.itemId === item.id && (
+                      <div className="mt-1.5 pl-1 pr-1 pt-2 border-t border-border space-y-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Igualar por</span>
+                          {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
+                            <button key={k} onClick={() => setSubMatchBy(k)}
+                              className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors ${
+                                subMatchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+                              }`}>
+                              {MACRO_LABELS[k]}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="relative">
+                          <input value={subQuery} onChange={e => setSubQuery(e.target.value)}
+                            placeholder={`Busca un sustituto para "${item.foodName}"...`} autoFocus
+                            className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+                          {subQuery.trim().length > 0 && (
+                            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                              {foods.filter(f => f.name.toLowerCase().includes(subQuery.toLowerCase()) && f.name !== item.foodName).slice(0, 6).map(f => {
+                                const grams = gramsForAbsoluteMacro(f, parseFloat(item[subMatchBy]) || 0, subMatchBy)
+                                return (
+                                  <button key={f.id} type="button" onMouseDown={() => applySubstitution(meal.id, item, f)}
+                                    className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
+                                    <span>{f.name}</span>
+                                    <span className="text-muted flex-shrink-0">{grams != null ? `≈ ${Math.round(grams * 10) / 10}g` : 'sin ese macro'}</span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 )
@@ -552,7 +680,12 @@ function NumInput({ label, value, onChange }: { label: string; value: string; on
   )
 }
 
-function RecipeGroup({ title, recipes, onDelete }: { title: string; recipes: RecipeRow[]; onDelete?: (id: string) => void }) {
+function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto }: {
+  title: string; recipes: RecipeRow[]; onDelete?: (id: string) => void; onCopy?: (recipe: RecipeRow) => void
+  onSetPhoto?: (recipe: RecipeRow, url: string) => void
+}) {
+  const [editingPhotoFor, setEditingPhotoFor] = useState<string | null>(null)
+  const [photoDraft, setPhotoDraft] = useState('')
   return (
     <div className="bg-card border border-border rounded-2xl p-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
@@ -562,15 +695,41 @@ function RecipeGroup({ title, recipes, onDelete }: { title: string; recipes: Rec
         {recipes.map(r => {
           const totals = sumItemMacros((r.items as EditableItem[] | null) || [])
           return (
-            <div key={r.id} className="flex items-center justify-between gap-2 bg-bg-alt rounded-xl px-3 py-2">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold truncate">{r.name}</p>
-                <p className="text-[11px] text-muted">
-                  {Math.round(totals.kcal)} kcal · {Math.round(totals.proteinG * 10) / 10}g prot. · {Math.round(totals.carbsG * 10) / 10}g carbos · {Math.round(totals.fatG * 10) / 10}g grasas · {Math.round(totals.fiberG * 10) / 10}g fibra
-                </p>
+            <div key={r.id} className="bg-bg-alt rounded-xl px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  {r.photo_url ? (
+                    <img src={r.photo_url} alt={r.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                  ) : onSetPhoto ? (
+                    <div className="w-9 h-9 rounded-lg bg-bg flex items-center justify-center flex-shrink-0 text-muted"><Camera className="w-3.5 h-3.5" /></div>
+                  ) : null}
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold truncate">{r.name}</p>
+                    <p className="text-[11px] text-muted">
+                      {Math.round(totals.kcal)} kcal · {Math.round(totals.proteinG * 10) / 10}g prot. · {Math.round(totals.carbsG * 10) / 10}g carbos · {Math.round(totals.fatG * 10) / 10}g grasas · {Math.round(totals.fiberG * 10) / 10}g fibra
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {onSetPhoto && (
+                    <button onClick={() => { setEditingPhotoFor(editingPhotoFor === r.id ? null : r.id); setPhotoDraft(r.photo_url || '') }}
+                      className="p-1 text-muted hover:text-accent" title="Foto de la receta"><Camera className="w-3.5 h-3.5" /></button>
+                  )}
+                  {onCopy && (
+                    <button onClick={() => onCopy(r)} className="p-1 text-muted hover:text-accent" title="Copiar a mis recetas"><Copy className="w-3.5 h-3.5" /></button>
+                  )}
+                  {onDelete && (
+                    <button onClick={() => onDelete(r.id)} className="p-1 text-muted hover:text-warn" title="Eliminar receta"><Trash2 className="w-3.5 h-3.5" /></button>
+                  )}
+                </div>
               </div>
-              {onDelete && (
-                <button onClick={() => onDelete(r.id)} className="p-1 text-muted hover:text-warn flex-shrink-0" title="Eliminar receta"><Trash2 className="w-3.5 h-3.5" /></button>
+              {editingPhotoFor === r.id && onSetPhoto && (
+                <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border">
+                  <input value={photoDraft} onChange={e => setPhotoDraft(e.target.value)} placeholder="https://... URL de la foto"
+                    className="flex-1 px-2 py-1 bg-bg border border-border rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-accent/20" />
+                  <button onClick={() => { onSetPhoto(r, photoDraft.trim()); setEditingPhotoFor(null) }}
+                    className="px-2 py-1 bg-ink text-white rounded-lg text-[10px] font-semibold">Guardar</button>
+                </div>
               )}
             </div>
           )

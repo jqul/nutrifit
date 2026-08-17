@@ -1,12 +1,12 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
   WeightLogRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
-  AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow,
+  AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow,
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
   WeightEntry, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
-  Appointment, MealLog, Anamnesis, Invoice, CustomSurvey, SurveyResponse,
+  Appointment, MealLog, Anamnesis, Invoice, CustomSurvey, SurveyResponse, BloodMarker,
 } from '../types'
 
 export function clientFromRow(row: ClienteRow): ClientData {
@@ -28,6 +28,7 @@ export function clientFromRow(row: ClienteRow): ClientData {
     monthlyPrice: row.monthly_price,
     goalWeightKg: row.goal_weight_kg,
     customMessages: row.custom_messages || {},
+    tags: row.tags || [],
     createdAt: new Date(row.created_at).getTime(),
   }
 }
@@ -49,6 +50,7 @@ export function clientToRow(client: Partial<ClientData>): Partial<ClienteRow> {
   if (client.monthlyPrice !== undefined) row.monthly_price = client.monthlyPrice
   if (client.goalWeightKg !== undefined) row.goal_weight_kg = client.goalWeightKg
   if (client.customMessages !== undefined) row.custom_messages = client.customMessages
+  if (client.tags !== undefined) row.tags = client.tags
   return row
 }
 
@@ -169,6 +171,14 @@ export function anamnesisFromRow(row: AnamnesisRow): Anamnesis {
     id: row.id, clientId: row.client_id, answers: row.answers || {},
     completedAt: row.completed_at ? new Date(row.completed_at).getTime() : null,
     updatedAt: new Date(row.updated_at).getTime(),
+  }
+}
+
+export function bloodMarkerFromRow(row: BloodMarkerRow): BloodMarker {
+  return {
+    id: row.id, clientId: row.client_id, date: row.date,
+    markerKey: row.marker_key, value: row.value,
+    createdAt: new Date(row.created_at).getTime(),
   }
 }
 

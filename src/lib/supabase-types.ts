@@ -34,6 +34,7 @@ export interface ClienteRow {
   monthly_price: number | null
   goal_weight_kg: number | null
   custom_messages: Record<string, string> | null
+  tags: string[]
   created_at: string
 }
 
@@ -174,6 +175,7 @@ export interface RecipeRow {
   nutricionista_id: string | null // null = receta del sistema, visible para todos
   name: string
   items: unknown // jsonb: EditableItem[] tal cual (camelCase), snapshot igual que diet_templates.plan
+  photo_url: string | null
   created_at: string
 }
 
@@ -212,6 +214,15 @@ export interface SurveyResponseRow {
   period_key: string
   answers: Record<string, string>
   submitted_at: string
+}
+
+export interface BloodMarkerRow {
+  id: string
+  client_id: string
+  date: string
+  marker_key: string
+  value: number
+  created_at: string
 }
 
 export interface InvoiceRow {

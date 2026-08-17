@@ -108,7 +108,7 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
         phone: newClient.phone.trim(), email: newClient.email.trim(),
         goal: newClient.goal.trim() || null, heightCm: newClient.heightCm ? parseFloat(newClient.heightCm) : null,
         gender: newClient.gender || null, birthDate: newClient.birthDate || null,
-        allergies: newClient.allergies.trim(), notes: '', monthlyPrice: null, goalWeightKg: null, customMessages: {},
+        allergies: newClient.allergies.trim(), notes: '', monthlyPrice: null, goalWeightKg: null, customMessages: {}, tags: [],
         createdAt: Date.now(),
       }
       setClients(prev => [...prev, ...withStats([demoClient], {})])

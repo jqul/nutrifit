@@ -6,16 +6,18 @@ import { NotasTab } from './client-panel/NotasTab'
 import { PlanDietaTab } from './client-panel/PlanDietaTab'
 import { SeguimientoTab } from './client-panel/SeguimientoTab'
 import { MensajesTab } from './client-panel/MensajesTab'
+import { AnaliticasTab } from './client-panel/AnaliticasTab'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { ArrowLeft } from 'lucide-react'
-import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS } from '../../lib/demo-data'
+import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS } from '../../lib/demo-data'
 
-type Tab = 'perfil' | 'dieta' | 'seguimiento' | 'mensajes' | 'notas'
+type Tab = 'perfil' | 'dieta' | 'seguimiento' | 'analiticas' | 'mensajes' | 'notas'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'perfil', label: 'Perfil' },
   { id: 'dieta', label: 'Plan de dieta' },
   { id: 'seguimiento', label: 'Seguimiento' },
+  { id: 'analiticas', label: 'Analíticas' },
   { id: 'mensajes', label: 'Mensajes' },
   { id: 'notas', label: 'Notas' },
 ]
@@ -80,7 +82,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
             customQuestions={userProfile.customAnamnesisQuestions} />
         )}
         {tab === 'dieta' && (
-          <PlanDietaTab client={current} nutricionistaId={userProfile.uid}
+          <PlanDietaTab client={current} nutricionistaId={userProfile.uid} nutricionistaName={userProfile.displayName}
             demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} />
         )}
         {tab === 'seguimiento' && (
@@ -90,6 +92,9 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
             photos: DEMO_PHOTOS[current.id] || [],
             mealLogs: DEMO_MEAL_LOGS[current.id] || [],
           } : undefined} />
+        )}
+        {tab === 'analiticas' && (
+          <AnaliticasTab client={current} demoMode={demoMode} demoMarkers={demoMode ? (DEMO_BLOOD_MARKERS[current.id] || []) : undefined} />
         )}
         {tab === 'mensajes' && (
           <MensajesTab client={current} nutricionistaId={userProfile.uid} onUpdate={handleUpdate} demoMode={demoMode} />

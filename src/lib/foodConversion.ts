@@ -74,6 +74,19 @@ export function computeSubstitution(
   return (target * 100) / toPer100g
 }
 
+/**
+ * Gramos de `toFood` que aportan una cantidad ABSOLUTA ya conocida de `matchBy`
+ * (a diferencia de computeSubstitution, aquí `targetAbsolute` ya es la cantidad
+ * final del ítem, no algo por escalar desde una cantidad/unidad de origen) —
+ * para sustituir un ingrediente ya puesto en una comida por otro equivalente.
+ * Null si el alimento destino no aporta nada de ese macro (división por cero).
+ */
+export function gramsForAbsoluteMacro(toFood: Food, targetAbsolute: number, matchBy: MacroKey): number | null {
+  const toPer100g = toFood[MACRO_KEY_PER_100G[matchBy]] as number
+  if (!toPer100g) return null
+  return (targetAbsolute * 100) / toPer100g
+}
+
 export interface MacroDiff { kcal: number; proteinG: number; carbsG: number; fatG: number }
 
 /**

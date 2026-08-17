@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { convertQuantity, computeMacros, computeSubstitution, computeSubstitutionDiff } from './foodConversion'
+import { convertQuantity, computeMacros, computeSubstitution, computeSubstitutionDiff, gramsForAbsoluteMacro } from './foodConversion'
 import { Food } from '../types'
 
 const pollo: Food = { id: '1', name: 'Pechuga de pollo', category: 'Proteína', kcal: 165, proteinG: 31, carbsG: 0, fatG: 3.6 }
@@ -78,6 +78,18 @@ describe('computeMacros', () => {
     const tofu100: Food = { id: '5', name: 'Tofu', category: 'Proteína', kcal: 76, proteinG: 8, carbsG: 1.9, fatG: 4.8, calciumMg: 350, ironMg: 5.4, zincMg: 0.8 }
     const macros = computeMacros(tofu100, 150, 'g')
     expect(macros).toMatchObject({ calciumMg: 525, ironMg: 8.1, zincMg: 1.2 })
+  })
+})
+
+describe('gramsForAbsoluteMacro', () => {
+  it('finds grams of a substitute food matching an already-known absolute macro amount', () => {
+    // Un ítem ya tiene 31g de proteína (sea cual sea su cantidad/alimento
+    // original) -> ¿cuántos gramos de tofu (8g prot/100g) dan esos 31g?
+    expect(gramsForAbsoluteMacro(tofu, 31, 'proteinG')).toBeCloseTo(387.5)
+  })
+
+  it('returns null when the substitute food has none of the matched macro', () => {
+    expect(gramsForAbsoluteMacro(aceite, 31, 'proteinG')).toBeNull()
   })
 })
 
