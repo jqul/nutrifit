@@ -99,17 +99,17 @@ export function ConversorTab() {
 
           {selected && macros && (
             <div className="pt-3 border-t border-border space-y-3">
-              <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="grid grid-cols-5 gap-2 text-center">
                 <MacroBox label="Kcal" value={macros.kcal} />
                 <MacroBox label="Prot." value={`${macros.proteinG}g`} />
                 <MacroBox label="Carbos" value={`${macros.carbsG}g`} />
                 <MacroBox label="Grasas" value={`${macros.fatG}g`} />
+                <MacroBox label="Fibra" value={macros.fiberG != null ? `${macros.fiberG}g` : '—'} />
               </div>
-              {(macros.fiberG != null || macros.sugarG != null || macros.sodiumMg != null || macros.saturatedFatG != null) && (
+              {(macros.sugarG != null || macros.sodiumMg != null || macros.saturatedFatG != null) && (
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Nutrientes ampliados</p>
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    <MacroBox label="Fibra" value={macros.fiberG != null ? `${macros.fiberG}g` : '—'} />
+                  <div className="grid grid-cols-3 gap-2 text-center">
                     <MacroBox label="Azúcares" value={macros.sugarG != null ? `${macros.sugarG}g` : '—'} />
                     <MacroBox label="Sodio" value={macros.sodiumMg != null ? `${macros.sodiumMg}mg` : '—'} />
                     <MacroBox label="Sat." value={macros.saturatedFatG != null ? `${macros.saturatedFatG}g` : '—'} />

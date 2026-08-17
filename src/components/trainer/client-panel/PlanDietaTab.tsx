@@ -32,13 +32,14 @@ function sumItemMacros(items: EditableItem[]) {
     proteinG: acc.proteinG + (parseFloat(i.proteinG) || 0),
     carbsG: acc.carbsG + (parseFloat(i.carbsG) || 0),
     fatG: acc.fatG + (parseFloat(i.fatG) || 0),
-  }), { kcal: 0, proteinG: 0, carbsG: 0, fatG: 0 })
+    fiberG: acc.fiberG + (parseFloat(i.fiberG) || 0),
+  }), { kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 })
 }
 
 function demoPlanToEditable(plan: DietPlan) {
   return {
     kcalTarget: String(plan.kcalTarget), proteinG: String(plan.proteinG),
-    carbsG: String(plan.carbsG), fatG: String(plan.fatG), advice: plan.advice,
+    carbsG: String(plan.carbsG), fatG: String(plan.fatG), fiberG: String(plan.fiberG), advice: plan.advice,
     meals: plan.meals.map(m => ({
       id: m.id, name: m.name, time: m.time, kcalTarget: m.kcalTarget != null ? String(m.kcalTarget) : '',
       items: m.items.map(i => ({
@@ -64,6 +65,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   const [proteinG, setProteinG] = useState(demoEditable?.proteinG ?? '')
   const [carbsG, setCarbsG] = useState(demoEditable?.carbsG ?? '')
   const [fatG, setFatG] = useState(demoEditable?.fatG ?? '')
+  const [fiberG, setFiberG] = useState(demoEditable?.fiberG ?? '')
   const [advice, setAdvice] = useState(demoEditable?.advice ?? '')
   const [meals, setMeals] = useState<EditableMeal[]>(demoEditable?.meals ?? [])
   const [supplements, setSupplements] = useState<EditableSupplement[]>(demoEditable?.supplements ?? [])
@@ -127,7 +129,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
     const { data: planRow } = await supabase.from('diet_plans').select('*').eq('client_id', client.id).eq('is_active', true).maybeSingle()
     if (!planRow) {
       setPlanId(null); setMeals([]); setSupplements([])
-      setKcalTarget(''); setProteinG(''); setCarbsG(''); setFatG(''); setAdvice('')
+      setKcalTarget(''); setProteinG(''); setCarbsG(''); setFatG(''); setFiberG(''); setAdvice('')
       setLoading(false)
       return
     }
@@ -145,6 +147,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
     setProteinG(String(planRow.protein_g ?? ''))
     setCarbsG(String(planRow.carbs_g ?? ''))
     setFatG(String(planRow.fat_g ?? ''))
+    setFiberG(String(planRow.fiber_g ?? ''))
     setAdvice(planRow.advice || '')
     setMeals((mealRows || []).map((m: DietMealRow) => ({
       id: m.id, name: m.name, time: m.time, kcalTarget: m.kcal_target != null ? String(m.kcal_target) : '',
@@ -169,7 +172,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   const handleCreatePlan = async () => {
     const { error } = await supabase.from('diet_plans').insert({
       client_id: client.id, nutricionista_id: nutricionistaId, name: 'Plan de dieta',
-      kcal_target: 0, protein_g: 0, carbs_g: 0, fat_g: 0, advice: '', is_active: true,
+      kcal_target: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, advice: '', is_active: true,
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     })
     if (error) { toast('Error: ' + error.message, 'warn'); return }
@@ -182,7 +185,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
     setSaving(true)
     await supabase.from('diet_plans').update({
       kcal_target: parseFloat(kcalTarget) || 0, protein_g: parseFloat(proteinG) || 0,
-      carbs_g: parseFloat(carbsG) || 0, fat_g: parseFloat(fatG) || 0,
+      carbs_g: parseFloat(carbsG) || 0, fat_g: parseFloat(fatG) || 0, fiber_g: parseFloat(fiberG) || 0,
       advice, updated_at: new Date().toISOString(),
     }).eq('id', planId)
 
@@ -223,7 +226,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
     const printable: DietPlan = {
       id: planId || '', clientId: client.id, nutricionistaId, name: 'Plan de dieta',
       kcalTarget: parseFloat(kcalTarget) || 0, proteinG: parseFloat(proteinG) || 0,
-      carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, advice, isActive: true,
+      carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, fiberG: parseFloat(fiberG) || 0, advice, isActive: true,
       meals: meals.map(m => ({
         id: m.id, name: m.name, time: m.time, kcalTarget: m.kcalTarget ? parseFloat(m.kcalTarget) : null,
         items: m.items.map(i => ({ id: i.id, foodName: i.foodName, quantity: i.quantity, unit: i.unit, kcal: null, proteinG: null, carbsG: null, fatG: null })),
@@ -241,7 +244,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
       nutricionista_id: nutricionistaId, name: templateName.trim(),
       plan: {
         kcalTarget: parseFloat(kcalTarget) || 0, proteinG: parseFloat(proteinG) || 0,
-        carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, advice,
+        carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, fiberG: parseFloat(fiberG) || 0, advice,
         meals: meals.map(m => ({ name: m.name, time: m.time, kcalTarget: m.kcalTarget, items: m.items })),
         supplements: supplements.map(s => ({ name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
       },
@@ -255,7 +258,8 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
   const applyTemplate = (tpl: DietTemplateRow) => {
     const p = tpl.plan as any
     setKcalTarget(String(p.kcalTarget ?? '')); setProteinG(String(p.proteinG ?? ''))
-    setCarbsG(String(p.carbsG ?? '')); setFatG(String(p.fatG ?? '')); setAdvice(p.advice || '')
+    setCarbsG(String(p.carbsG ?? '')); setFatG(String(p.fatG ?? '')); setFiberG(String(p.fiberG ?? ''))
+    setAdvice(p.advice || '')
     setMeals((p.meals || []).map((m: any) => ({
       id: newId(), name: m.name, time: m.time, kcalTarget: m.kcalTarget || '',
       items: (m.items || []).map((i: any) => ({ ...i, id: newId() })),
@@ -345,7 +349,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
             {recipes.map(r => {
               const totals = sumItemMacros((r.items as EditableItem[] | null) || [])
               return (
-                <span key={r.id} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-bg-alt rounded-lg text-xs font-medium" title={`${Math.round(totals.kcal)} kcal · ${Math.round(totals.proteinG * 10) / 10}g prot. · ${Math.round(totals.carbsG * 10) / 10}g carbos · ${Math.round(totals.fatG * 10) / 10}g grasas`}>
+                <span key={r.id} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-bg-alt rounded-lg text-xs font-medium" title={`${Math.round(totals.kcal)} kcal · ${Math.round(totals.proteinG * 10) / 10}g prot. · ${Math.round(totals.carbsG * 10) / 10}g carbos · ${Math.round(totals.fatG * 10) / 10}g grasas · ${Math.round(totals.fiberG * 10) / 10}g fibra`}>
                   {r.name}
                   <span className="text-muted font-normal">{Math.round(totals.kcal)} kcal</span>
                   <button onClick={() => deleteRecipe(r.id)} className="p-0.5 text-muted hover:text-warn" title="Eliminar receta"><Trash2 className="w-3 h-3" /></button>
@@ -358,11 +362,12 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <p className="font-semibold text-sm">Objetivo de macros</p>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-5 gap-3">
           <NumInput label="Kcal" value={kcalTarget} onChange={setKcalTarget} />
           <NumInput label="Proteína (g)" value={proteinG} onChange={setProteinG} />
           <NumInput label="Carbos (g)" value={carbsG} onChange={setCarbsG} />
           <NumInput label="Grasas (g)" value={fatG} onChange={setFatG} />
+          <NumInput label="Fibra (g)" value={fiberG} onChange={setFiberG} />
         </div>
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Consejo del nutricionista</label>
@@ -468,6 +473,7 @@ export function PlanDietaTab({ client, nutricionistaId, demoPlan }: { client: Cl
                   <span><strong>{Math.round(totals.proteinG * 10) / 10}</strong>g prot.</span>
                   <span><strong>{Math.round(totals.carbsG * 10) / 10}</strong>g carbos</span>
                   <span><strong>{Math.round(totals.fatG * 10) / 10}</strong>g grasas</span>
+                  <span><strong>{Math.round(totals.fiberG * 10) / 10}</strong>g fibra</span>
                 </div>
               )
             })()}

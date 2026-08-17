@@ -104,6 +104,7 @@ export function dietPlanFromRows(
     proteinG: plan.protein_g,
     carbsG: plan.carbs_g,
     fatG: plan.fat_g,
+    fiberG: plan.fiber_g,
     advice: plan.advice || '',
     isActive: plan.is_active,
     meals: meals.sort((a, b) => a.sort_order - b.sort_order).map(m => mealFromRow(m, items)),

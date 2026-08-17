@@ -87,7 +87,7 @@ export const DEMO_CLIENTS: ClientData[] = [
 export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
   'demo-client-001': {
     id: 'demo-plan-maria', clientId: 'demo-client-001', nutricionistaId: DEMO_NUTRICIONISTA_ID,
-    name: 'Plan de dieta', kcalTarget: 1600, proteinG: 130, carbsG: 150, fatG: 45,
+    name: 'Plan de dieta', kcalTarget: 1600, proteinG: 130, carbsG: 150, fatG: 45, fiberG: 28,
     advice: 'Prioriza la proteína en cada comida y bebe al menos 2L de agua al día. Vamos muy bien con la pérdida de peso, ¡sigue así!',
     isActive: true,
     meals: [
@@ -118,7 +118,7 @@ export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
   },
   'demo-client-002': {
     id: 'demo-plan-carlos', clientId: 'demo-client-002', nutricionistaId: DEMO_NUTRICIONISTA_ID,
-    name: 'Plan de dieta', kcalTarget: 2800, proteinG: 180, carbsG: 320, fatG: 80,
+    name: 'Plan de dieta', kcalTarget: 2800, proteinG: 180, carbsG: 320, fatG: 80, fiberG: 35,
     advice: 'Superávit calórico progresivo. Añade la merienda post-entreno los días que vayas al gimnasio, no te la saltes.',
     isActive: true,
     meals: [
@@ -148,7 +148,7 @@ export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
   },
   'demo-client-003': {
     id: 'demo-plan-laura', clientId: 'demo-client-003', nutricionistaId: DEMO_NUTRICIONISTA_ID,
-    name: 'Plan de dieta', kcalTarget: 1900, proteinG: 100, carbsG: 200, fatG: 60,
+    name: 'Plan de dieta', kcalTarget: 1900, proteinG: 100, carbsG: 200, fatG: 60, fiberG: 25,
     advice: 'Llevamos unos días sin noticias — escríbeme si algo del plan no te está encajando, lo ajustamos juntas.',
     isActive: true,
     meals: [

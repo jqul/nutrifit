@@ -66,6 +66,7 @@ export function printDietPlan(client: ClientData, plan: DietPlan) {
     <div class="macro"><b>${plan.proteinG}g</b><span>Proteína</span></div>
     <div class="macro"><b>${plan.carbsG}g</b><span>Carbos</span></div>
     <div class="macro"><b>${plan.fatG}g</b><span>Grasas</span></div>
+    <div class="macro"><b>${plan.fiberG}g</b><span>Fibra</span></div>
   </div>
   ${plan.advice ? `<div class="advice">${esc(plan.advice)}</div>` : ''}
   <h3>Comidas</h3>

@@ -46,6 +46,7 @@ export interface DietPlanRow {
   protein_g: number
   carbs_g: number
   fat_g: number
+  fiber_g: number
   advice: string | null
   is_active: boolean
   created_at: string

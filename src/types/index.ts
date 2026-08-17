@@ -88,6 +88,7 @@ export interface DietPlan {
   proteinG: number
   carbsG: number
   fatG: number
+  fiberG: number
   advice: string
   isActive: boolean
   meals: DietMeal[]

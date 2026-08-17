@@ -6,7 +6,7 @@ import { DietPlan, ClientData } from '../../types'
 import { printDietPlan } from '../../lib/printPlan'
 import { Utensils, ShoppingCart, Check, Download } from 'lucide-react'
 
-interface ShoppingItem { key: string; foodName: string; unit: string; totalQty: number | null; parts: string[] }
+interface ShoppingItem { key: string; foodName: string; unit: string; totalQty: number | null; parts: string[]; fiberG: number }
 
 function buildShoppingList(plan: DietPlan): ShoppingItem[] {
   const map = new Map<string, ShoppingItem>()
@@ -15,14 +15,16 @@ function buildShoppingList(plan: DietPlan): ShoppingItem[] {
       if (!item.foodName.trim()) continue
       const key = `${item.foodName.trim().toLowerCase()}|${item.unit.trim().toLowerCase()}`
       const qtyNum = parseFloat(item.quantity.replace(',', '.'))
+      const fiber = item.fiberG || 0
       const existing = map.get(key)
       if (existing) {
         existing.totalQty = existing.totalQty !== null && !isNaN(qtyNum) ? existing.totalQty + qtyNum : null
         if (item.quantity) existing.parts.push(item.quantity)
+        existing.fiberG += fiber
       } else {
         map.set(key, {
           key, foodName: item.foodName.trim(), unit: item.unit.trim(),
-          totalQty: isNaN(qtyNum) ? null : qtyNum, parts: item.quantity ? [item.quantity] : [],
+          totalQty: isNaN(qtyNum) ? null : qtyNum, parts: item.quantity ? [item.quantity] : [], fiberG: fiber,
         })
       }
     }
@@ -81,11 +83,12 @@ export function DietaClienteTab({ client }: { client: ClientData }) {
           <Download className="w-3.5 h-3.5" /> Descargar PDF
         </button>
       </div>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-5 gap-2">
         <MacroCard label="Kcal" value={plan.kcalTarget} />
         <MacroCard label="Prot." value={plan.proteinG} suffix="g" />
         <MacroCard label="Carbos" value={plan.carbsG} suffix="g" />
         <MacroCard label="Grasas" value={plan.fatG} suffix="g" />
+        <MacroCard label="Fibra" value={plan.fiberG} suffix="g" />
       </div>
 
       {plan.advice && (
@@ -151,6 +154,7 @@ function ShoppingList({ plan, checked, onToggle }: { plan: DietPlan; checked: Se
         {items.map(item => {
           const isChecked = checked.has(item.key)
           const qtyLabel = item.totalQty !== null ? `${item.totalQty}${item.unit ? ` ${item.unit}` : ''}` : item.parts.join(' + ')
+          const fiberRounded = Math.round(item.fiberG * 10) / 10
           return (
             <li key={item.key}>
               <button onClick={() => onToggle(item.key)} className="w-full flex items-center gap-2.5 text-left py-1">
@@ -160,6 +164,13 @@ function ShoppingList({ plan, checked, onToggle }: { plan: DietPlan; checked: Se
                   {isChecked && <Check className="w-3 h-3 text-white" />}
                 </span>
                 <span className={`text-sm flex-1 ${isChecked ? 'line-through text-muted' : ''}`}>{item.foodName}</span>
+                {fiberRounded > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                    isChecked ? 'text-muted' : fiberRounded >= 5 ? 'bg-ok/10 text-ok font-semibold' : 'bg-bg-alt text-muted'
+                  }`} title="Fibra">
+                    {fiberRounded}g fibra
+                  </span>
+                )}
                 <span className={`text-xs ${isChecked ? 'text-muted' : 'text-muted'}`}>{qtyLabel}</span>
               </button>
             </li>
