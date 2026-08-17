@@ -111,7 +111,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
       <main className="max-w-5xl mx-auto px-6 py-8">
         {view === 'calendario' && <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />}
         {view === 'negocio' && <BusinessDashboard clients={clients} />}
-        {view === 'conversor' && <ConversorTab />}
+        {view === 'conversor' && <ConversorTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
         {view === 'micronutrientes' && <MicronutrientesTab />}
         {view === 'plantillas' && <PlantillasTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
         {view === 'difusion' && <DifusionTab clients={clients} nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}

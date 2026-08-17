@@ -139,6 +139,7 @@ export interface Food {
   ironMg?: number | null
   zincMg?: number | null
   reference?: string | null
+  nutricionistaId?: string | null
 }
 
 export type MessageType = 'nuevo_plan' | 'racha' | 'checkin_recordatorio' | 'custom'

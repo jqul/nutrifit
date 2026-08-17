@@ -133,6 +133,7 @@ export interface FoodRow {
   iron_mg: number | null
   zinc_mg: number | null
   reference: string | null
+  nutricionista_id: string | null // null = alimento del sistema, visible para todos
 }
 
 export interface MessageTemplateRow {
