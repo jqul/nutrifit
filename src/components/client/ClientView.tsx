@@ -140,18 +140,23 @@ export function ClientView({ token }: { token: string }) {
 
       <main className="flex-1 overflow-y-auto overscroll-contain max-w-2xl mx-auto w-full relative z-10"
         style={{ paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
-        {activeTab === 'hoy' && <HoyTab client={clientData} demoMode={!!demoClient} />}
-        {activeTab === 'dieta' && (
+        {/* Montadas siempre, solo ocultas con CSS — si no, cambiar de
+            pestaña (ej. a Dieta y volver a Hoy) borra el check-in a medio
+            rellenar. */}
+        <div className={activeTab === 'hoy' ? '' : 'hidden'}>
+          <HoyTab client={clientData} demoMode={!!demoClient} />
+        </div>
+        <div className={activeTab === 'dieta' ? '' : 'hidden'}>
           <DietaClienteTab client={clientData} demoMode={!!demoClient} demoPlan={demoClient ? DEMO_DIET_PLANS[clientData.id] : undefined} />
-        )}
-        {activeTab === 'progreso' && (
+        </div>
+        <div className={activeTab === 'progreso' ? '' : 'hidden'}>
           <ProgresoClienteTab client={clientData} demoMode={!!demoClient} demoData={demoClient ? {
             weights: DEMO_WEIGHTS[clientData.id] || [],
             checkins: DEMO_CHECKINS[clientData.id] || [],
             photos: DEMO_PHOTOS[clientData.id] || [],
             mealLogs: DEMO_MEAL_LOGS[clientData.id] || [],
           } : undefined} />
-        )}
+        </div>
         {activeTab === 'mas' && (
           <div className="px-4 py-6 space-y-4 max-w-xl mx-auto pb-24">
             <h3 className="font-serif font-bold text-xl">Más opciones</h3>

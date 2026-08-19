@@ -76,31 +76,38 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {tab === 'perfil' && (
+        {/* Montadas siempre, solo ocultas con CSS — si no, cambiar de
+            pestaña (ej. a Notas y volver) borra cualquier edición del plan
+            de dieta que no se hubiera guardado todavía. */}
+        <div className={tab === 'perfil' ? '' : 'hidden'}>
           <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
             onDelete={handleDelete} demoMode={demoMode} nutricionistaName={userProfile.displayName}
             customQuestions={userProfile.customAnamnesisQuestions} />
-        )}
-        {tab === 'dieta' && (
+        </div>
+        <div className={tab === 'dieta' ? '' : 'hidden'}>
           <PlanDietaTab client={current} nutricionistaId={userProfile.uid} nutricionistaName={userProfile.displayName}
             nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
             demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} />
-        )}
-        {tab === 'seguimiento' && (
-          <SeguimientoTab client={current} demoData={demoMode ? {
-            weights: DEMO_WEIGHTS[current.id] || [],
-            checkins: DEMO_CHECKINS[current.id] || [],
-            photos: DEMO_PHOTOS[current.id] || [],
-            mealLogs: DEMO_MEAL_LOGS[current.id] || [],
-          } : undefined} />
-        )}
-        {tab === 'analiticas' && (
+        </div>
+        <div className={tab === 'seguimiento' ? '' : 'hidden'}>
+          <SeguimientoTab client={current} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
+            demoData={demoMode ? {
+              weights: DEMO_WEIGHTS[current.id] || [],
+              checkins: DEMO_CHECKINS[current.id] || [],
+              photos: DEMO_PHOTOS[current.id] || [],
+              mealLogs: DEMO_MEAL_LOGS[current.id] || [],
+              bloodMarkers: DEMO_BLOOD_MARKERS[current.id] || [],
+            } : undefined} />
+        </div>
+        <div className={tab === 'analiticas' ? '' : 'hidden'}>
           <AnaliticasTab client={current} demoMode={demoMode} demoMarkers={demoMode ? (DEMO_BLOOD_MARKERS[current.id] || []) : undefined} />
-        )}
-        {tab === 'mensajes' && (
+        </div>
+        <div className={tab === 'mensajes' ? '' : 'hidden'}>
           <MensajesTab client={current} nutricionistaId={userProfile.uid} onUpdate={handleUpdate} demoMode={demoMode} />
-        )}
-        {tab === 'notas' && <NotasTab client={current} onUpdate={handleUpdate} />}
+        </div>
+        <div className={tab === 'notas' ? '' : 'hidden'}>
+          <NotasTab client={current} onUpdate={handleUpdate} />
+        </div>
       </main>
     </div>
   )

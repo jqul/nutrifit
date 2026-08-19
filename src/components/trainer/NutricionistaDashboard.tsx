@@ -109,13 +109,32 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {view === 'calendario' && <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />}
-        {view === 'negocio' && <BusinessDashboard clients={clients} />}
-        {view === 'conversor' && <ConversorTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
-        {view === 'micronutrientes' && <MicronutrientesTab />}
-        {view === 'plantillas' && <PlantillasTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
-        {view === 'difusion' && <DifusionTab clients={clients} nutricionistaId={userProfile.uid} demoMode={!!demoClients} />}
-        {view === 'ajustes' && <AjustesTab userProfile={userProfile} demoMode={!!demoClients} onUpdateProfile={onUpdateProfile} />}
+        {/* Estas pestañas se quedan montadas siempre y solo se ocultan con
+            CSS (en vez de desmontarse con &&) — si no, cada vez que sales
+            (a Clientes, a otra pestaña...) el componente pierde su estado
+            interno entero: la búsqueda del Conversor, el alimento
+            seleccionado, el formulario a medio rellenar... */}
+        <div className={view === 'calendario' ? '' : 'hidden'}>
+          <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />
+        </div>
+        <div className={view === 'negocio' ? '' : 'hidden'}>
+          <BusinessDashboard clients={clients} />
+        </div>
+        <div className={view === 'conversor' ? '' : 'hidden'}>
+          <ConversorTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />
+        </div>
+        <div className={view === 'micronutrientes' ? '' : 'hidden'}>
+          <MicronutrientesTab />
+        </div>
+        <div className={view === 'plantillas' ? '' : 'hidden'}>
+          <PlantillasTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />
+        </div>
+        <div className={view === 'difusion' ? '' : 'hidden'}>
+          <DifusionTab clients={clients} nutricionistaId={userProfile.uid} demoMode={!!demoClients} />
+        </div>
+        <div className={view === 'ajustes' ? '' : 'hidden'}>
+          <AjustesTab userProfile={userProfile} demoMode={!!demoClients} onUpdateProfile={onUpdateProfile} />
+        </div>
         {view === 'clientes' && (
           <>
             <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">

@@ -3,12 +3,14 @@ import { ClientData } from '../../../types'
 import { supabase } from '../../../lib/supabase'
 import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow } from '../../../lib/mappers'
 import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog } from '../../../types'
+import { BloodMarkerRow } from '../../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../../lib/adherence'
 import { WeightChart } from '../../shared/WeightChart'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
-import { Flame, Camera, UtensilsCrossed, AlertTriangle } from 'lucide-react'
+import { printProgressReport } from '../../../lib/printProgressReport'
+import { Flame, Camera, UtensilsCrossed, AlertTriangle, FileDown } from 'lucide-react'
 
 const INTENSITY_LABELS = ['Ninguna', 'Leve', 'Moderada', 'Intensa']
 function isConcerningCheckin(c: DailyCheckin): boolean {
@@ -16,28 +18,34 @@ function isConcerningCheckin(c: DailyCheckin): boolean {
     || (c.bloating != null && c.bloating >= 2) || (c.abdominalPain != null && c.abdominalPain >= 2)
 }
 
-interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[] }
+interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]; bloodMarkers?: BloodMarkerRow[] }
 
-export function SeguimientoTab({ client, demoData }: { client: ClientData; demoData?: DemoData }) {
+export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutricionistaAccentColor }: {
+  client: ClientData; demoData?: DemoData
+  nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null
+}) {
   const [weights, setWeights] = useState<WeightEntry[]>(demoData?.weights ?? [])
   const [checkins, setCheckins] = useState<DailyCheckin[]>(demoData?.checkins ?? [])
   const [sessions, setSessions] = useState<ProgressPhotoSession[]>(demoData?.photos ?? [])
   const [mealLogs, setMealLogs] = useState<MealLog[]>(demoData?.mealLogs ?? [])
+  const [bloodMarkers, setBloodMarkers] = useState<BloodMarkerRow[]>(demoData?.bloodMarkers ?? [])
   const [loading, setLoading] = useState(!demoData)
 
   const load = useCallback(async () => {
     if (demoData) return
     setLoading(true)
-    const [{ data: w }, { data: c }, { data: p }, { data: m }] = await Promise.all([
+    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', client.id).order('date'),
       supabase.from('daily_checkins').select('*').eq('client_id', client.id).order('date', { ascending: false }),
       supabase.from('progress_photos').select('*').eq('client_id', client.id).order('date', { ascending: false }),
       supabase.from('meal_logs').select('*').eq('client_id', client.id).order('created_at', { ascending: false }),
+      supabase.from('blood_markers').select('*').eq('client_id', client.id).order('date', { ascending: false }),
     ])
     setWeights((w || []).map(weightFromRow))
     setCheckins((c || []).map(checkinFromRow))
     setSessions((p || []).map(photoSessionFromRow))
     setMealLogs((m || []).map(mealLogFromRow))
+    setBloodMarkers(bm || [])
     setLoading(false)
   }, [client.id, demoData])
 
@@ -53,6 +61,14 @@ export function SeguimientoTab({ client, demoData }: { client: ClientData; demoD
 
   return (
     <div className="max-w-2xl space-y-6">
+      <div className="flex justify-end">
+        <button onClick={() => printProgressReport(client, { weights, checkins, bloodMarkers },
+          { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
+          className="flex items-center gap-1.5 text-xs font-bold text-accent">
+          <FileDown className="w-3.5 h-3.5" /> Informe de evolución (PDF)
+        </button>
+      </div>
+
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-card border border-border rounded-2xl p-4 text-center">
           <div className="flex items-center justify-center gap-1"><Flame className="w-4 h-4 text-accent" /><p className="text-xl font-serif font-bold">{streak}d</p></div>
