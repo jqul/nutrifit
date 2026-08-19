@@ -6,7 +6,7 @@ import { foodFromRow } from '../../lib/mappers'
 import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { Button } from '../shared/Button'
-import { RecipePhotoUpload } from '../shared/RecipePhotoUpload'
+import { RecipeEditorPanel } from '../shared/RecipeEditorPanel'
 import { BookmarkPlus, ChefHat, Trash2, Plus, X, Copy } from 'lucide-react'
 
 interface EditableItem {
@@ -90,35 +90,10 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
   }
 
   // ── Editor de recetas ────────────────────────────────────────
-  const [recipeEditor, setRecipeEditor] = useState<{ mode: 'new' | 'edit'; id?: string; name: string; steps: string; photoUrl: string | null; items: EditableItem[] } | null>(null)
-  const [recipeSuggestFor, setRecipeSuggestFor] = useState<string | null>(null)
-
-  const openNewRecipe = () => setRecipeEditor({ mode: 'new', name: '', steps: '', photoUrl: null, items: [blankItem()] })
-  const openEditRecipe = (r: RecipeRow) => {
-    const items = ((r.items as EditableItem[] | null) || []).map(i => ({ ...i, id: i.id || newId() }))
-    setRecipeEditor({ mode: 'edit', id: r.id, name: r.name, steps: r.steps || '', photoUrl: r.photo_url, items: items.length ? items : [blankItem()] })
-  }
+  // 'new' = receta nueva vacía; RecipeRow = editando una existente; null = cerrado.
+  const [recipeEditor, setRecipeEditor] = useState<RecipeRow | 'new' | null>(null)
   const closeRecipeEditor = () => setRecipeEditor(null)
-
-  const saveRecipeEditor = async () => {
-    if (!recipeEditor) return
-    if (!recipeEditor.name.trim()) { toast('Ponle un nombre a la receta', 'warn'); return }
-    const items = recipeEditor.items.filter(i => i.foodName.trim())
-    if (items.length === 0) { toast('Añade al menos un alimento', 'warn'); return }
-    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); closeRecipeEditor(); return }
-    const steps = recipeEditor.steps.trim() || null
-    if (recipeEditor.mode === 'new') {
-      const { error } = await supabase.from('recipes').insert({ nutricionista_id: nutricionistaId, name: recipeEditor.name.trim(), steps, photo_url: recipeEditor.photoUrl, items })
-      if (error) { toast('Error: ' + error.message, 'warn'); return }
-      toast(`Receta "${recipeEditor.name.trim()}" creada ✓`, 'ok')
-    } else {
-      const { error } = await supabase.from('recipes').update({ name: recipeEditor.name.trim(), steps, photo_url: recipeEditor.photoUrl, items }).eq('id', recipeEditor.id)
-      if (error) { toast('Error: ' + error.message, 'warn'); return }
-      toast('Receta actualizada ✓', 'ok')
-    }
-    closeRecipeEditor()
-    await load()
-  }
+  const handleRecipeSaved = () => { closeRecipeEditor(); load() }
 
   // ── Editor de plantillas ─────────────────────────────────────
   const [templateEditor, setTemplateEditor] = useState<{
@@ -339,70 +314,16 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-sm flex items-center gap-1.5"><ChefHat className="w-4 h-4" /> Recetario ({recipes.length})</h2>
           {!recipeEditor && (
-            <button onClick={openNewRecipe} className="flex items-center gap-1 text-xs font-bold text-accent">
+            <button onClick={() => setRecipeEditor('new')} className="flex items-center gap-1 text-xs font-bold text-accent">
               <Plus className="w-3.5 h-3.5" /> Nueva receta
             </button>
           )}
         </div>
 
         {recipeEditor && (
-          <div className="bg-card border border-border rounded-2xl p-4 space-y-3 mb-3">
-            <div className="flex items-center gap-2">
-              <RecipePhotoUpload nutricionistaId={nutricionistaId} currentUrl={recipeEditor.photoUrl} demoMode={demoMode} size="lg"
-                onUploaded={url => setRecipeEditor({ ...recipeEditor, photoUrl: url })} />
-              <input value={recipeEditor.name} onChange={e => setRecipeEditor({ ...recipeEditor, name: e.target.value })}
-                placeholder="Nombre de la receta" autoFocus
-                className="flex-1 px-3 py-2 bg-bg border border-border rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-accent/20" />
-              <button onClick={closeRecipeEditor} className="p-2 text-muted hover:text-warn"><X className="w-4 h-4" /></button>
-            </div>
-            <div className="space-y-1.5">
-              {recipeEditor.items.map(item => {
-                const suggestions = recipeSuggestFor === item.id && item.foodName.trim().length > 0
-                  ? foods.filter(f => f.name.toLowerCase().includes(item.foodName.toLowerCase())).slice(0, 6)
-                  : []
-                return (
-                  <div key={item.id} className="relative flex items-center gap-1.5">
-                    <input value={item.foodName}
-                      onChange={e => setRecipeEditor({ ...recipeEditor, items: recipeEditor.items.map(i => i.id === item.id ? { ...i, foodName: e.target.value } : i) })}
-                      onFocus={() => setRecipeSuggestFor(item.id)} onBlur={() => setTimeout(() => setRecipeSuggestFor(null), 150)}
-                      placeholder="Alimento"
-                      className="flex-1 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                    <input value={item.quantity}
-                      onChange={e => setRecipeEditor({ ...recipeEditor, items: recipeEditor.items.map(i => i.id === item.id ? { ...i, quantity: e.target.value } : i) })}
-                      placeholder="Cant." className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                    <input value={item.unit}
-                      onChange={e => setRecipeEditor({ ...recipeEditor, items: recipeEditor.items.map(i => i.id === item.id ? { ...i, unit: e.target.value } : i) })}
-                      placeholder="Unidad" className="w-16 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                    <button onClick={() => setRecipeEditor({ ...recipeEditor, items: recipeEditor.items.filter(i => i.id !== item.id) })}
-                      className="p-1.5 text-muted hover:text-warn flex-shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
-                    {suggestions.length > 0 && (
-                      <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                        {suggestions.map(f => (
-                          <button key={f.id} type="button"
-                            onMouseDown={() => { setRecipeEditor({ ...recipeEditor, items: recipeEditor.items.map(i => i.id === item.id ? { ...i, ...itemFromFood(f) } : i) }); setRecipeSuggestFor(null) }}
-                            className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
-                            <span>{f.name}</span>
-                            <span className="text-muted flex-shrink-0">{f.kcal} kcal/100g</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-              <button onClick={() => setRecipeEditor({ ...recipeEditor, items: [...recipeEditor.items, blankItem()] })}
-                className="flex items-center gap-1 text-xs text-muted hover:text-accent"><Plus className="w-3 h-3" /> Añadir alimento</button>
-            </div>
-            <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Pasos de preparación (opcional, un paso por línea)</label>
-              <textarea value={recipeEditor.steps} onChange={e => setRecipeEditor({ ...recipeEditor, steps: e.target.value })} rows={4}
-                placeholder={'1. Cuece la pasta...\n2. Dora la carne...'}
-                className="w-full px-2.5 py-2 bg-bg border border-border rounded-lg text-xs outline-none resize-none focus:ring-2 focus:ring-accent/20" />
-            </div>
-            <div className="flex items-center gap-2 pt-1">
-              <Button size="sm" onClick={saveRecipeEditor}>Guardar receta</Button>
-              <Button size="sm" variant="ghost" onClick={closeRecipeEditor}>Cancelar</Button>
-            </div>
+          <div className="mb-3">
+            <RecipeEditorPanel nutricionistaId={nutricionistaId} demoMode={demoMode} foods={foods}
+              initial={recipeEditor === 'new' ? null : recipeEditor} onClose={closeRecipeEditor} onSaved={handleRecipeSaved} />
           </div>
         )}
 
@@ -421,7 +342,7 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
               {ownRecipes.length > 0 && (
                 <div className="space-y-2">
                   {ownRecipes.map(r => (
-                    <RecipeListCard key={r.id} recipe={r} onClick={() => openEditRecipe(r)} onDelete={() => deleteRecipe(r.id)} />
+                    <RecipeListCard key={r.id} recipe={r} onClick={() => setRecipeEditor(r)} onDelete={() => deleteRecipe(r.id)} />
                   ))}
                 </div>
               )}

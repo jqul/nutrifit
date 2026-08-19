@@ -18,6 +18,7 @@ import {
 import { Button } from '../../shared/Button'
 import { BarcodeScanner } from '../../shared/BarcodeScanner'
 import { RecipePhotoUpload } from '../../shared/RecipePhotoUpload'
+import { RecipeEditorPanel } from '../../shared/RecipeEditorPanel'
 import { toast } from '../../shared/Toast'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
@@ -120,6 +121,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   const [recipes, setRecipes] = useState<RecipeRow[]>([])
   const [savingRecipeFor, setSavingRecipeFor] = useState<string | null>(null)
   const [recipeNameDraft, setRecipeNameDraft] = useState('')
+  const [editingRecipe, setEditingRecipe] = useState<RecipeRow | null>(null)
 
   useEffect(() => {
     supabase.from('foods').select('*').order('name').then(({ data }) => setFoods((data || []).map(foodFromRow)))
@@ -440,6 +442,12 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         </div>
       )}
 
+      {editingRecipe && (
+        <RecipeEditorPanel nutricionistaId={nutricionistaId} demoMode={!!demoPlan} foods={foods}
+          initial={editingRecipe} onClose={() => setEditingRecipe(null)}
+          onSaved={() => { setEditingRecipe(null); loadRecipes() }} />
+      )}
+
       {recipes.length > 0 && (() => {
         const systemRecipes = recipes.filter(r => r.nutricionista_id === null)
         const ownRecipes = recipes.filter(r => r.nutricionista_id !== null)
@@ -449,7 +457,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               <RecipeGroup title="Recetas del sistema" recipes={systemRecipes} onCopy={copyRecipe} />
             )}
             {ownRecipes.length > 0 && (
-              <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} onSetPhoto={setRecipePhoto} nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />
+              <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} onSetPhoto={setRecipePhoto}
+                onEdit={setEditingRecipe} nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />
             )}
             <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', recipes.map(r => ({
               name: r.name, photoUrl: r.photo_url, steps: r.steps, items: (r.items as EditableItem[] | null) || [],
@@ -708,9 +717,10 @@ function NumInput({ label, value, onChange }: { label: string; value: string; on
   )
 }
 
-function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto, nutricionistaId, demoMode }: {
+function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto, onEdit, nutricionistaId, demoMode }: {
   title: string; recipes: RecipeRow[]; onDelete?: (id: string) => void; onCopy?: (recipe: RecipeRow) => void
   onSetPhoto?: (recipe: RecipeRow, url: string) => void
+  onEdit?: (recipe: RecipeRow) => void
   nutricionistaId?: string; demoMode?: boolean
 }) {
   const [stepsOpenFor, setStepsOpenFor] = useState<string | null>(null)
@@ -723,12 +733,15 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto, nutricionis
         {recipes.map(r => {
           const totals = sumItemMacros((r.items as EditableItem[] | null) || [])
           return (
-            <div key={r.id} className="bg-bg-alt rounded-xl px-3 py-2">
+            <div key={r.id} onClick={onEdit ? () => onEdit(r) : undefined}
+              className={`bg-bg-alt rounded-xl px-3 py-2 ${onEdit ? 'cursor-pointer hover:bg-accent/5 transition-colors' : ''}`}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   {onSetPhoto && nutricionistaId ? (
-                    <RecipePhotoUpload nutricionistaId={nutricionistaId} currentUrl={r.photo_url} demoMode={demoMode}
-                      onUploaded={url => onSetPhoto(r, url)} />
+                    <div onClick={e => e.stopPropagation()}>
+                      <RecipePhotoUpload nutricionistaId={nutricionistaId} currentUrl={r.photo_url} demoMode={demoMode}
+                        onUploaded={url => onSetPhoto(r, url)} />
+                    </div>
                   ) : r.photo_url ? (
                     <img src={r.photo_url} alt={r.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
                   ) : null}
@@ -741,16 +754,16 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto, nutricionis
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {r.steps && (
-                    <button onClick={() => setStepsOpenFor(stepsOpenFor === r.id ? null : r.id)}
+                    <button onClick={e => { e.stopPropagation(); setStepsOpenFor(stepsOpenFor === r.id ? null : r.id) }}
                       className="p-1 text-muted hover:text-accent" title="Ver pasos de preparación">
                       {stepsOpenFor === r.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     </button>
                   )}
                   {onCopy && (
-                    <button onClick={() => onCopy(r)} className="p-1 text-muted hover:text-accent" title="Copiar a mis recetas"><Copy className="w-3.5 h-3.5" /></button>
+                    <button onClick={e => { e.stopPropagation(); onCopy(r) }} className="p-1 text-muted hover:text-accent" title="Copiar a mis recetas"><Copy className="w-3.5 h-3.5" /></button>
                   )}
                   {onDelete && (
-                    <button onClick={() => onDelete(r.id)} className="p-1 text-muted hover:text-warn" title="Eliminar receta"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={e => { e.stopPropagation(); onDelete(r.id) }} className="p-1 text-muted hover:text-warn" title="Eliminar receta"><Trash2 className="w-3.5 h-3.5" /></button>
                   )}
                 </div>
               </div>
@@ -759,6 +772,9 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto, nutricionis
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Preparación</p>
                   <p className="text-[11px] whitespace-pre-line">{r.steps}</p>
                 </div>
+              )}
+              {onEdit && (
+                <p className="text-[10px] text-accent mt-1.5">Toca para ver/editar la receta completa</p>
               )}
             </div>
           )
