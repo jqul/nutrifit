@@ -76,13 +76,13 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
   }
 
   // ── Editor de recetas ────────────────────────────────────────
-  const [recipeEditor, setRecipeEditor] = useState<{ mode: 'new' | 'edit'; id?: string; name: string; items: EditableItem[] } | null>(null)
+  const [recipeEditor, setRecipeEditor] = useState<{ mode: 'new' | 'edit'; id?: string; name: string; steps: string; items: EditableItem[] } | null>(null)
   const [recipeSuggestFor, setRecipeSuggestFor] = useState<string | null>(null)
 
-  const openNewRecipe = () => setRecipeEditor({ mode: 'new', name: '', items: [blankItem()] })
+  const openNewRecipe = () => setRecipeEditor({ mode: 'new', name: '', steps: '', items: [blankItem()] })
   const openEditRecipe = (r: RecipeRow) => {
     const items = ((r.items as EditableItem[] | null) || []).map(i => ({ ...i, id: i.id || newId() }))
-    setRecipeEditor({ mode: 'edit', id: r.id, name: r.name, items: items.length ? items : [blankItem()] })
+    setRecipeEditor({ mode: 'edit', id: r.id, name: r.name, steps: r.steps || '', items: items.length ? items : [blankItem()] })
   }
   const closeRecipeEditor = () => setRecipeEditor(null)
 
@@ -92,12 +92,13 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
     const items = recipeEditor.items.filter(i => i.foodName.trim())
     if (items.length === 0) { toast('Añade al menos un alimento', 'warn'); return }
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); closeRecipeEditor(); return }
+    const steps = recipeEditor.steps.trim() || null
     if (recipeEditor.mode === 'new') {
-      const { error } = await supabase.from('recipes').insert({ nutricionista_id: nutricionistaId, name: recipeEditor.name.trim(), items })
+      const { error } = await supabase.from('recipes').insert({ nutricionista_id: nutricionistaId, name: recipeEditor.name.trim(), steps, items })
       if (error) { toast('Error: ' + error.message, 'warn'); return }
       toast(`Receta "${recipeEditor.name.trim()}" creada ✓`, 'ok')
     } else {
-      const { error } = await supabase.from('recipes').update({ name: recipeEditor.name.trim(), items }).eq('id', recipeEditor.id)
+      const { error } = await supabase.from('recipes').update({ name: recipeEditor.name.trim(), steps, items }).eq('id', recipeEditor.id)
       if (error) { toast('Error: ' + error.message, 'warn'); return }
       toast('Receta actualizada ✓', 'ok')
     }
@@ -375,6 +376,12 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
               })}
               <button onClick={() => setRecipeEditor({ ...recipeEditor, items: [...recipeEditor.items, blankItem()] })}
                 className="flex items-center gap-1 text-xs text-muted hover:text-accent"><Plus className="w-3 h-3" /> Añadir alimento</button>
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Pasos de preparación (opcional, un paso por línea)</label>
+              <textarea value={recipeEditor.steps} onChange={e => setRecipeEditor({ ...recipeEditor, steps: e.target.value })} rows={4}
+                placeholder={'1. Cuece la pasta...\n2. Dora la carne...'}
+                className="w-full px-2.5 py-2 bg-bg border border-border rounded-lg text-xs outline-none resize-none focus:ring-2 focus:ring-accent/20" />
             </div>
             <div className="flex items-center gap-2 pt-1">
               <Button size="sm" onClick={saveRecipeEditor}>Guardar receta</Button>

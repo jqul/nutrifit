@@ -11,6 +11,18 @@ import { toast } from '../shared/Toast'
 import { CheckCircle2, Calendar, Plus, Video } from 'lucide-react'
 
 const SCALE = [1, 2, 3, 4, 5]
+const BRISTOL_OPTIONS = [
+  { value: 1, label: '1', hint: 'Bolitas duras' },
+  { value: 2, label: '2', hint: 'Grumosa' },
+  { value: 3, label: '3', hint: 'Agrietada' },
+  { value: 4, label: '4', hint: 'Normal' },
+  { value: 5, label: '5', hint: 'Blanda' },
+  { value: 6, label: '6', hint: 'Pastosa' },
+  { value: 7, label: '7', hint: 'Líquida' },
+]
+const INTENSITY_OPTIONS = [
+  { value: 0, label: 'Ninguna' }, { value: 1, label: 'Leve' }, { value: 2, label: 'Moderada' }, { value: 3, label: 'Intensa' },
+]
 
 export function HoyTab({ client }: { client: ClientData }) {
   const today = toLocalISODate(new Date())
@@ -22,6 +34,10 @@ export function HoyTab({ client }: { client: ClientData }) {
   const [mood, setMood] = useState(3)
   const [waterL, setWaterL] = useState('')
   const [notes, setNotes] = useState('')
+  const [showDigestive, setShowDigestive] = useState(false)
+  const [bristolScale, setBristolScale] = useState<number | null>(null)
+  const [bloating, setBloating] = useState<number | null>(null)
+  const [abdominalPain, setAbdominalPain] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -35,6 +51,10 @@ export function HoyTab({ client }: { client: ClientData }) {
           setMood(data.mood)
           setWaterL(data.water_l != null ? String(data.water_l) : '')
           setNotes(data.notes || '')
+          setBristolScale(data.bristol_scale)
+          setBloating(data.bloating)
+          setAbdominalPain(data.abdominal_pain)
+          if (data.bristol_scale != null || data.bloating != null || data.abdominal_pain != null) setShowDigestive(true)
         }
         setLoading(false)
       })
@@ -45,6 +65,7 @@ export function HoyTab({ client }: { client: ClientData }) {
     const { error } = await supabase.from('daily_checkins').upsert({
       client_id: client.id, date: today, followed_plan: followedPlan,
       hunger, energy, mood, water_l: waterL ? parseFloat(waterL) : null, notes,
+      bristol_scale: bristolScale, bloating, abdominal_pain: abdominalPain,
     }, { onConflict: 'client_id,date' })
     setSaving(false)
     if (error) { logError('HoyTab:save', error); return }
@@ -98,6 +119,31 @@ export function HoyTab({ client }: { client: ClientData }) {
           <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
             className="w-full px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
         </div>
+
+        {!showDigestive ? (
+          <button onClick={() => setShowDigestive(true)} className="text-xs font-bold text-accent">
+            + Añadir diario digestivo (opcional)
+          </button>
+        ) : (
+          <div className="pt-3 border-t border-border space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Diario digestivo (opcional)</p>
+            <div>
+              <p className="text-xs text-muted mb-2">Forma de las heces hoy (escala de Bristol)</p>
+              <div className="flex gap-1.5 flex-wrap">
+                {BRISTOL_OPTIONS.map(o => (
+                  <button key={o.value} onClick={() => setBristolScale(bristolScale === o.value ? null : o.value)} title={o.hint}
+                    className={`flex-1 min-w-[38px] py-2 rounded-xl text-xs font-semibold border transition-all ${
+                      bristolScale === o.value ? 'bg-accent text-white border-accent' : 'border-border text-muted hover:border-accent'
+                    }`}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <IntensityField label="Hinchazón" value={bloating} onChange={setBloating} />
+            <IntensityField label="Dolor abdominal" value={abdominalPain} onChange={setAbdominalPain} />
+          </div>
+        )}
 
         <button onClick={handleSave} disabled={saving}
           className="w-full py-3.5 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50">
@@ -193,6 +239,24 @@ function ProximasCitas({ client }: { client: ClientData }) {
             className="px-3 py-2 bg-ink text-white rounded-lg text-xs font-bold disabled:opacity-50">Pedir</button>
         </div>
       )}
+    </div>
+  )
+}
+
+function IntensityField({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
+  return (
+    <div>
+      <p className="text-xs text-muted mb-2">{label}</p>
+      <div className="flex gap-1.5">
+        {INTENSITY_OPTIONS.map(o => (
+          <button key={o.value} onClick={() => onChange(value === o.value ? null : o.value)}
+            className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-all ${
+              value === o.value ? 'bg-accent text-white border-accent' : 'border-border text-muted hover:border-accent'
+            }`}>
+            {o.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

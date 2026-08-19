@@ -206,12 +206,15 @@ function buildCheckins(clientId: string, pattern: FollowedPlan[], startDaysAgo: 
 }
 
 export const DEMO_CHECKINS: Record<string, DailyCheckin[]> = {
-  // María: constante, buena racha, adherencia alta.
+  // María: constante, buena racha, adherencia alta. Diario digestivo sin nada reseñable.
   'demo-client-001': buildCheckins('demo-client-001',
-    ['si', 'si', 'si', 'parcial', 'si', 'si', 'si', 'si', 'parcial', 'si', 'si', 'si'], 11),
-  // Carlos: adherencia media, algún día suelto.
+    ['si', 'si', 'si', 'parcial', 'si', 'si', 'si', 'si', 'parcial', 'si', 'si', 'si'], 11)
+    .map((c, i, arr) => i === arr.length - 1 ? { ...c, bristolScale: 4, bloating: 0, abdominalPain: 0 } : c),
+  // Carlos: adherencia media, algún día suelto. Diario digestivo con hinchazón/molestias
+  // moderadas los últimos días — el tipo de patrón que el nutricionista quiere ver a tiempo.
   'demo-client-002': buildCheckins('demo-client-002',
-    ['si', 'parcial', 'si', 'no', 'si', 'parcial', 'si', 'si', 'no', 'parcial', 'si', 'si', 'si', 'parcial'], 13),
+    ['si', 'parcial', 'si', 'no', 'si', 'parcial', 'si', 'si', 'no', 'parcial', 'si', 'si', 'si', 'parcial'], 13)
+    .map((c, i, arr) => i === arr.length - 1 ? { ...c, bristolScale: 6, bloating: 2, abdominalPain: 1 } : c),
   // Laura: sin check-ins recientes — cliente en riesgo.
   'demo-client-003': buildCheckins('demo-client-003', ['parcial', 'no', 'si'], 10),
 }
@@ -267,7 +270,7 @@ export const DEMO_DIET_TEMPLATES: DietTemplateRow[] = [
 export const DEMO_RECIPES: RecipeRow[] = [
   {
     id: 'demo-recipe-system-001', nutricionista_id: null, name: 'Bowl de avena con plátano y almendras', created_at: '',
-    photo_url: placeholderPhoto('Bowl avena', '#c98a2b'),
+    photo_url: placeholderPhoto('Bowl avena', '#c98a2b'), steps: null,
     items: [
       { id: 'pr1-1', foodName: 'Avena', quantity: '50', unit: 'g', kcal: '195', proteinG: '8.5', carbsG: '33', fatG: '3.5', fiberG: '5.1', sugarG: '0.5', sodiumMg: '1', saturatedFatG: '0.7', calciumMg: '27', ironMg: '2.2', zincMg: '2' },
       { id: 'pr1-2', foodName: 'Plátano', quantity: '100', unit: 'g', kcal: '89', proteinG: '1.1', carbsG: '23', fatG: '0.3', fiberG: '2.6', sugarG: '12.2', sodiumMg: '1', saturatedFatG: '0.1', calciumMg: '5', ironMg: '0.3', zincMg: '0.2' },
@@ -277,7 +280,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
   },
   {
     id: 'demo-recipe-system-002', nutricionista_id: null, name: 'Pollo con arroz integral y brócoli', created_at: '',
-    photo_url: placeholderPhoto('Pollo arroz', '#4a7a3d'),
+    photo_url: placeholderPhoto('Pollo arroz', '#4a7a3d'), steps: null,
     items: [
       { id: 'pr2-1', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: '248', proteinG: '46.5', carbsG: '0', fatG: '5.4', fiberG: '0', sugarG: '0', sodiumMg: '111', saturatedFatG: '1.5', calciumMg: '9', ironMg: '0.6', zincMg: '1.1' },
       { id: 'pr2-2', foodName: 'Arroz integral (cocido)', quantity: '150', unit: 'g', kcal: '167', proteinG: '3.9', carbsG: '34.5', fatG: '1.4', fiberG: '2.7', sugarG: '0.3', sodiumMg: '3', saturatedFatG: '0.3', calciumMg: '6', ironMg: '0.6', zincMg: '0.9' },
@@ -288,6 +291,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
   {
     id: 'demo-recipe-system-003', nutricionista_id: null, name: 'Boloñesa de pasta integral con carne', created_at: '',
     photo_url: placeholderPhoto('Boloñesa', '#b5573d'),
+    steps: '1. Pica la cebolla y sofríela en el aceite de oliva a fuego medio hasta que esté transparente.\n2. Añade la ternera picada y dora bien, deshaciendo los grumos.\n3. Incorpora el tomate triturado, sazona y cuece 15-20 min a fuego bajo.\n4. Mientras, cuece la pasta integral según el envase.\n5. Mezcla la pasta con la salsa y sirve.',
     items: [
       { id: 'pr3-1', foodName: 'Pasta integral (cocida)', quantity: '200', unit: 'g', kcal: '248', proteinG: '10.6', carbsG: '50', fatG: '2.2', fiberG: '9', sugarG: '1.4', sodiumMg: '6', saturatedFatG: '0.4', calciumMg: '26', ironMg: '2.6', zincMg: '2' },
       { id: 'pr3-2', foodName: 'Ternera magra (picada)', quantity: '150', unit: 'g', kcal: '258', proteinG: '40.5', carbsG: '0', fatG: '10.5', fiberG: '0', sugarG: '0', sodiumMg: '98', saturatedFatG: '4.5', calciumMg: '12', ironMg: '3.2', zincMg: '6' },
@@ -298,7 +302,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
   },
   {
     id: 'demo-recipe-system-004', nutricionista_id: null, name: 'Boloñesa de pasta integral con tofu (plant-based)', created_at: '',
-    photo_url: placeholderPhoto('Boloñesa tofu', '#7a8a3d'),
+    photo_url: placeholderPhoto('Boloñesa tofu', '#7a8a3d'), steps: null,
     items: [
       { id: 'pr4-1', foodName: 'Pasta integral (cocida)', quantity: '200', unit: 'g', kcal: '248', proteinG: '10.6', carbsG: '50', fatG: '2.2', fiberG: '9', sugarG: '1.4', sodiumMg: '6', saturatedFatG: '0.4', calciumMg: '26', ironMg: '2.6', zincMg: '2' },
       { id: 'pr4-2', foodName: 'Tofu (desmenuzado)', quantity: '200', unit: 'g', kcal: '152', proteinG: '16', carbsG: '3.8', fatG: '9.6', fiberG: '0.6', sugarG: '1.2', sodiumMg: '14', saturatedFatG: '1.4', calciumMg: '700', ironMg: '10.8', zincMg: '1.6' },
@@ -309,7 +313,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
   },
   {
     id: 'demo-recipe-system-005', nutricionista_id: null, name: 'Ensalada de garbanzos con aguacate', created_at: '',
-    photo_url: placeholderPhoto('Ens. garbanzos', '#6b8f3f'),
+    photo_url: placeholderPhoto('Ens. garbanzos', '#6b8f3f'), steps: null,
     items: [
       { id: 'pr5-1', foodName: 'Garbanzos (cocidos)', quantity: '150', unit: 'g', kcal: '246', proteinG: '13.5', carbsG: '40.5', fatG: '3.9', fiberG: '11.4', sugarG: '7.2', sodiumMg: '11', saturatedFatG: '0.5', calciumMg: '74', ironMg: '4.4', zincMg: '2.3' },
       { id: 'pr5-2', foodName: 'Espinacas', quantity: '50', unit: 'g', kcal: '12', proteinG: '1.5', carbsG: '1.8', fatG: '0.2', fiberG: '1.1', sugarG: '0.2', sodiumMg: '40', saturatedFatG: '0.1', calciumMg: '50', ironMg: '1.4', zincMg: '0.3' },
@@ -320,6 +324,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
   },
   {
     id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '', photo_url: null,
+    steps: '1. Pon la avena en un bol con el yogur natural.\n2. Añade los arándanos por encima.\n3. Termina con un chorrito de miel.',
     items: [
       { id: 'dr1i1', foodName: 'Avena', quantity: '40', unit: 'g', kcal: '150', proteinG: '5', carbsG: '27', fatG: '3' },
       { id: 'dr1i2', foodName: 'Yogur natural', quantity: '150', unit: 'g', kcal: '90', proteinG: '8', carbsG: '10', fatG: '2' },
@@ -329,7 +334,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
   },
   {
     id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '',
-    photo_url: placeholderPhoto('Pollo arroz', '#3f6d8f'),
+    photo_url: placeholderPhoto('Pollo arroz', '#3f6d8f'), steps: null,
     items: [
       { id: 'dr2i1', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: '230', proteinG: '45', carbsG: '0', fatG: '5' },
       { id: 'dr2i2', foodName: 'Arroz integral', quantity: '60', unit: 'g', kcal: '210', proteinG: '5', carbsG: '44', fatG: '2' },

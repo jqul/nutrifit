@@ -8,7 +8,13 @@ import { WeightChart } from '../../shared/WeightChart'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
-import { Flame, Camera, UtensilsCrossed } from 'lucide-react'
+import { Flame, Camera, UtensilsCrossed, AlertTriangle } from 'lucide-react'
+
+const INTENSITY_LABELS = ['Ninguna', 'Leve', 'Moderada', 'Intensa']
+function isConcerningCheckin(c: DailyCheckin): boolean {
+  return (c.bristolScale != null && (c.bristolScale <= 2 || c.bristolScale >= 6))
+    || (c.bloating != null && c.bloating >= 2) || (c.abdominalPain != null && c.abdominalPain >= 2)
+}
 
 interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[] }
 
@@ -125,10 +131,20 @@ export function SeguimientoTab({ client, demoData }: { client: ClientData; demoD
         ) : (
           <div className="divide-y divide-border">
             {recentCheckins.slice(0, 14).map(c => (
-              <div key={c.id} className="py-2.5 flex items-center justify-between text-sm">
-                <span className="text-muted">{new Date(c.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
-                <span className="font-medium">{FOLLOWED_PLAN_LABELS[c.followedPlan]}</span>
-                <span className="text-xs text-muted">🍽 {c.hunger} · ⚡ {c.energy} · 🙂 {c.mood}</span>
+              <div key={c.id} className="py-2.5 space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted">{new Date(c.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+                  <span className="font-medium">{FOLLOWED_PLAN_LABELS[c.followedPlan]}</span>
+                  <span className="text-xs text-muted">🍽 {c.hunger} · ⚡ {c.energy} · 🙂 {c.mood}</span>
+                </div>
+                {(c.bristolScale != null || c.bloating != null || c.abdominalPain != null) && (
+                  <div className={`flex items-center gap-1.5 flex-wrap text-[11px] ${isConcerningCheckin(c) ? 'text-warn' : 'text-muted'}`}>
+                    {isConcerningCheckin(c) && <AlertTriangle className="w-3 h-3 flex-shrink-0" />}
+                    {c.bristolScale != null && <span>Bristol {c.bristolScale}</span>}
+                    {c.bloating != null && <span>Hinchazón: {INTENSITY_LABELS[c.bloating]}</span>}
+                    {c.abdominalPain != null && <span>Dolor abdominal: {INTENSITY_LABELS[c.abdominalPain]}</span>}
+                  </div>
+                )}
               </div>
             ))}
           </div>

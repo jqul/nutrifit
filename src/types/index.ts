@@ -165,6 +165,9 @@ export interface DailyCheckin {
   mood: number
   waterL: number | null
   notes: string
+  bristolScale?: number | null
+  bloating?: number | null
+  abdominalPain?: number | null
 }
 
 export type AppointmentStatus = 'pendiente' | 'confirmada' | 'cancelada' | 'completada'

@@ -83,6 +83,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
         )}
         {tab === 'dieta' && (
           <PlanDietaTab client={current} nutricionistaId={userProfile.uid} nutricionistaName={userProfile.displayName}
+            nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
             demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} />
         )}
         {tab === 'seguimiento' && (

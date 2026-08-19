@@ -10,10 +10,17 @@ import { printDietPlan } from '../../../lib/printPlan'
 import { printRecipeBook } from '../../../lib/printRecipeBook'
 import { ScannedFood } from '../../../lib/openFoodFacts'
 import { gramsForAbsoluteMacro, computeMacros, MacroKey } from '../../../lib/foodConversion'
+import {
+  Sex, Formula, ActivityLevel, Goal, ACTIVITY_LABELS, GOAL_LABELS,
+  computeMetabolicPlan, ageFromBirthDate,
+} from '../../../lib/metabolicCalculator'
 import { Button } from '../../shared/Button'
 import { BarcodeScanner } from '../../shared/BarcodeScanner'
 import { toast } from '../../shared/Toast'
-import { Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical, ChevronDown, ChevronUp, Copy, Repeat, Camera, BookOpen } from 'lucide-react'
+import {
+  Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
+  ChevronDown, ChevronUp, Copy, Repeat, Camera, BookOpen, Calculator, X,
+} from 'lucide-react'
 
 interface EditableItem {
   id: string; foodName: string; quantity: string; unit: string
@@ -86,8 +93,10 @@ function demoPlanToEditable(plan: DietPlan) {
   }
 }
 
-export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, demoPlan }: {
-  client: ClientData; nutricionistaId: string; nutricionistaName?: string; demoPlan?: DietPlan
+export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutricionistaLogoUrl, nutricionistaAccentColor, demoPlan }: {
+  client: ClientData; nutricionistaId: string; nutricionistaName?: string
+  nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null
+  demoPlan?: DietPlan
 }) {
   const demoEditable = demoPlan ? demoPlanToEditable(demoPlan) : null
   const [loading, setLoading] = useState(!demoPlan)
@@ -102,6 +111,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, demoP
   const [meals, setMeals] = useState<EditableMeal[]>(demoEditable?.meals ?? [])
   const [supplements, setSupplements] = useState<EditableSupplement[]>(demoEditable?.supplements ?? [])
   const [templates, setTemplates] = useState<DietTemplateRow[]>([])
+  const [showCalculator, setShowCalculator] = useState(false)
   const [templateName, setTemplateName] = useState('')
   const [foods, setFoods] = useState<Food[]>([])
   const [openSuggestFor, setOpenSuggestFor] = useState<string | null>(null)
@@ -295,7 +305,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, demoP
       supplements: supplements.map(s => ({ id: s.id, name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
       createdAt: Date.now(), updatedAt: Date.now(),
     }
-    printDietPlan(client, printable)
+    printDietPlan(client, printable, { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })
   }
 
   const handleSaveTemplate = async () => {
@@ -440,8 +450,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, demoP
               <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} onSetPhoto={setRecipePhoto} />
             )}
             <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', recipes.map(r => ({
-              name: r.name, photoUrl: r.photo_url, items: (r.items as EditableItem[] | null) || [],
-            })))} className="flex items-center gap-1.5 text-xs font-bold text-accent">
+              name: r.name, photoUrl: r.photo_url, steps: r.steps, items: (r.items as EditableItem[] | null) || [],
+            })), { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })} className="flex items-center gap-1.5 text-xs font-bold text-accent">
               <BookOpen className="w-3.5 h-3.5" /> Descargar recetario en PDF
             </button>
           </div>
@@ -449,7 +459,21 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, demoP
       })()}
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-        <p className="font-semibold text-sm">Objetivo de macros</p>
+        <div className="flex items-center justify-between">
+          <p className="font-semibold text-sm">Objetivo de macros</p>
+          <button onClick={() => setShowCalculator(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
+            <Calculator className="w-3.5 h-3.5" /> Calculadora metabólica
+          </button>
+        </div>
+        {showCalculator && (
+          <MetabolicCalculatorPanel client={client} onClose={() => setShowCalculator(false)}
+            onApply={(result) => {
+              setKcalTarget(String(result.kcalTarget)); setProteinG(String(result.proteinG))
+              setCarbsG(String(result.carbsG)); setFatG(String(result.fatG)); setFiberG(String(result.fiberG))
+              setShowCalculator(false)
+              toast('Objetivo de macros aplicado — recuerda guardar el plan ✓', 'ok')
+            }} />
+        )}
         <div className="grid grid-cols-5 gap-3">
           <NumInput label="Kcal" value={kcalTarget} onChange={setKcalTarget} />
           <NumInput label="Proteína (g)" value={proteinG} onChange={setProteinG} />
@@ -686,6 +710,7 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto }: {
 }) {
   const [editingPhotoFor, setEditingPhotoFor] = useState<string | null>(null)
   const [photoDraft, setPhotoDraft] = useState('')
+  const [stepsOpenFor, setStepsOpenFor] = useState<string | null>(null)
   return (
     <div className="bg-card border border-border rounded-2xl p-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
@@ -711,6 +736,12 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto }: {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
+                  {r.steps && (
+                    <button onClick={() => setStepsOpenFor(stepsOpenFor === r.id ? null : r.id)}
+                      className="p-1 text-muted hover:text-accent" title="Ver pasos de preparación">
+                      {stepsOpenFor === r.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
                   {onSetPhoto && (
                     <button onClick={() => { setEditingPhotoFor(editingPhotoFor === r.id ? null : r.id); setPhotoDraft(r.photo_url || '') }}
                       className="p-1 text-muted hover:text-accent" title="Foto de la receta"><Camera className="w-3.5 h-3.5" /></button>
@@ -723,6 +754,12 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto }: {
                   )}
                 </div>
               </div>
+              {stepsOpenFor === r.id && r.steps && (
+                <div className="mt-2 pt-2 border-t border-border">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Preparación</p>
+                  <p className="text-[11px] whitespace-pre-line">{r.steps}</p>
+                </div>
+              )}
               {editingPhotoFor === r.id && onSetPhoto && (
                 <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border">
                   <input value={photoDraft} onChange={e => setPhotoDraft(e.target.value)} placeholder="https://... URL de la foto"
@@ -735,6 +772,119 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto }: {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function MetabolicCalculatorPanel({ client, onClose, onApply }: {
+  client: ClientData
+  onClose: () => void
+  onApply: (result: { kcalTarget: number; proteinG: number; carbsG: number; fatG: number; fiberG: number }) => void
+}) {
+  const inferredSex: Sex = client.gender?.toLowerCase().includes('mujer') ? 'mujer' : 'hombre'
+  const inferredAge = ageFromBirthDate(client.birthDate)
+  const [formula, setFormula] = useState<Formula>('mifflin')
+  const [sex, setSex] = useState<Sex>(inferredSex)
+  const [weightKg, setWeightKg] = useState('')
+  const [heightCm, setHeightCm] = useState(client.heightCm ? String(client.heightCm) : '')
+  const [age, setAge] = useState(inferredAge != null ? String(inferredAge) : '')
+  const [bodyFatPct, setBodyFatPct] = useState('')
+  const [activity, setActivity] = useState<ActivityLevel>('moderado')
+  const [goal, setGoal] = useState<Goal>('deficit')
+  const [proteinGPerKg, setProteinGPerKg] = useState('2')
+  const [fatGPerKg, setFatGPerKg] = useState('1')
+
+  const result = computeMetabolicPlan({
+    formula, sex, weightKg: parseFloat(weightKg), heightCm: parseFloat(heightCm), age: parseFloat(age),
+    bodyFatPct: bodyFatPct ? parseFloat(bodyFatPct) : undefined,
+    activity, goal, proteinGPerKg: parseFloat(proteinGPerKg) || 0, fatGPerKg: parseFloat(fatGPerKg) || 0,
+  })
+
+  return (
+    <div className="bg-bg-alt rounded-xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted">Calculadora metabólica</p>
+        <button onClick={onClose} className="p-1 text-muted hover:text-warn"><X className="w-3.5 h-3.5" /></button>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div>
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Fórmula</label>
+          <select value={formula} onChange={e => setFormula(e.target.value as Formula)}
+            className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+            <option value="mifflin">Mifflin-St Jeor</option>
+            <option value="harris">Harris-Benedict</option>
+            <option value="katch">Katch-McArdle (% grasa)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Sexo</label>
+          <select value={sex} onChange={e => setSex(e.target.value as Sex)}
+            className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+            <option value="hombre">Hombre</option>
+            <option value="mujer">Mujer</option>
+          </select>
+        </div>
+        <CalcNumInput label="Peso actual (kg)" value={weightKg} onChange={setWeightKg} />
+        <CalcNumInput label="Altura (cm)" value={heightCm} onChange={setHeightCm} />
+        <CalcNumInput label="Edad" value={age} onChange={setAge} />
+        {formula === 'katch' && <CalcNumInput label="% grasa corporal" value={bodyFatPct} onChange={setBodyFatPct} />}
+        <div className="col-span-2 sm:col-span-3">
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Actividad</label>
+          <select value={activity} onChange={e => setActivity(e.target.value as ActivityLevel)}
+            className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+            {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map(k => <option key={k} value={k}>{ACTIVITY_LABELS[k]}</option>)}
+          </select>
+        </div>
+        <div className="col-span-2 sm:col-span-3">
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Objetivo</label>
+          <select value={goal} onChange={e => setGoal(e.target.value as Goal)}
+            className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+            {(Object.keys(GOAL_LABELS) as Goal[]).map(k => <option key={k} value={k}>{GOAL_LABELS[k]}</option>)}
+          </select>
+        </div>
+        <CalcNumInput label="Proteína (g/kg)" value={proteinGPerKg} onChange={setProteinGPerKg} />
+        <CalcNumInput label="Grasas (g/kg)" value={fatGPerKg} onChange={setFatGPerKg} />
+      </div>
+
+      {result ? (
+        <div className="pt-2 border-t border-border space-y-2">
+          <div className="flex flex-wrap gap-3 text-xs">
+            <span className="text-muted">TMB <strong className="text-ink">{result.bmr}</strong> kcal</span>
+            <span className="text-muted">Gasto total <strong className="text-ink">{result.tdee}</strong> kcal</span>
+          </div>
+          <div className="grid grid-cols-5 gap-2 text-center">
+            <MacroPreview label="Kcal" value={result.kcalTarget} />
+            <MacroPreview label="Prot." value={`${result.proteinG}g`} />
+            <MacroPreview label="Carbos" value={`${result.carbsG}g`} />
+            <MacroPreview label="Grasas" value={`${result.fatG}g`} />
+            <MacroPreview label="Fibra" value={`${result.fiberG}g`} />
+          </div>
+          <Button size="sm" onClick={() => onApply(result)}>Aplicar al plan</Button>
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted pt-1">
+          Rellena peso, altura y edad {formula === 'katch' ? '(y % de grasa corporal) ' : ''}para calcular.
+        </p>
+      )}
+    </div>
+  )
+}
+
+function CalcNumInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
+      <input type="number" value={value} onChange={e => onChange(e.target.value)}
+        className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+    </div>
+  )
+}
+
+function MacroPreview({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="bg-bg rounded-lg py-2">
+      <p className="text-[9px] font-semibold uppercase tracking-wider text-muted">{label}</p>
+      <p className="text-xs font-bold mt-0.5">{value}</p>
     </div>
   )
 }

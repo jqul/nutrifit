@@ -155,6 +155,9 @@ export interface DailyCheckinRow {
   mood: number
   water_l: number | null
   notes: string | null
+  bristol_scale: number | null
+  bloating: number | null
+  abdominal_pain: number | null
 }
 
 export interface AppointmentRow {
@@ -177,6 +180,7 @@ export interface RecipeRow {
   name: string
   items: unknown // jsonb: EditableItem[] tal cual (camelCase), snapshot igual que diet_templates.plan
   photo_url: string | null
+  steps: string | null // pasos de preparación, texto libre (un paso por línea)
   created_at: string
 }
 
