@@ -4,6 +4,7 @@ import { CustomSurveyRow, SurveyResponseRow } from '../../lib/supabase-types'
 import { supabase } from '../../lib/supabase'
 import { periodKeyFor } from '../../lib/surveyPeriod'
 import { toast } from '../shared/Toast'
+import { QuestionInput } from '../shared/QuestionInput'
 import { ClipboardEdit, Check } from 'lucide-react'
 
 const FREQUENCY_LABELS: Record<'weekly' | 'monthly', string> = { weekly: 'esta semana', monthly: 'este mes' }
@@ -37,6 +38,9 @@ export function PendingSurveys({ client }: { client: ClientData }) {
   if (pending.length === 0) return null
 
   const handleSave = async (surveyId: string, periodKey: string) => {
+    const survey = surveys.find(s => s.id === surveyId)
+    const missing = survey?.questions.find(q => q.required && !draftAnswers[q.id]?.trim())
+    if (missing) { toast(`Falta responder: "${missing.label}"`, 'warn'); return }
     setSaving(true)
     const { error } = await supabase.from('survey_responses').upsert({
       survey_id: surveyId, client_id: client.id, period_key: periodKey, answers: draftAnswers,
@@ -68,9 +72,10 @@ export function PendingSurveys({ client }: { client: ClientData }) {
             <div className="space-y-3 pt-2 border-t border-border">
               {survey.questions.map(q => (
                 <div key={q.id}>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{q.label}</label>
-                  <textarea value={draftAnswers[q.id] || ''} onChange={e => setDraftAnswers({ ...draftAnswers, [q.id]: e.target.value })} rows={2}
-                    className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">
+                    {q.label}{q.required && <span className="text-warn"> *</span>}
+                  </label>
+                  <QuestionInput question={q} value={draftAnswers[q.id] || ''} onChange={v => setDraftAnswers({ ...draftAnswers, [q.id]: v })} />
                 </div>
               ))}
               <button onClick={() => handleSave(survey.id, periodKey)} disabled={saving}

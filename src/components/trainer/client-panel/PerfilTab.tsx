@@ -10,6 +10,7 @@ import { Button } from '../../shared/Button'
 import { Modal } from '../../shared/Modal'
 import { GoalSelect } from '../../shared/GoalSelect'
 import { toast } from '../../shared/Toast'
+import { QuestionAnswerDisplay } from '../../shared/QuestionAnswerDisplay'
 import { exportClientData } from '../../../lib/gdprExport'
 import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
 import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt, Tag, X } from 'lucide-react'
@@ -171,8 +172,8 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
             ) : null)}
             {(customQuestions || []).map(q => anamnesisAnswers[q.id] ? (
               <div key={q.id}>
-                <p className="text-xs text-muted">{q.label}</p>
-                <p className="text-sm mt-0.5">{anamnesisAnswers[q.id]}</p>
+                <p className="text-xs text-muted mb-0.5">{q.label}</p>
+                <QuestionAnswerDisplay question={q} value={anamnesisAnswers[q.id]} />
               </div>
             ) : null)}
           </div>

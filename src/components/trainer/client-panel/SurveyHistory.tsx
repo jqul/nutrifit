@@ -3,6 +3,7 @@ import { ClientData } from '../../../types'
 import { CustomSurveyRow, SurveyResponseRow } from '../../../lib/supabase-types'
 import { supabase } from '../../../lib/supabase'
 import { periodLabel } from '../../../lib/surveyPeriod'
+import { QuestionAnswerDisplay } from '../../shared/QuestionAnswerDisplay'
 import { ClipboardEdit } from 'lucide-react'
 
 export function SurveyHistory({ client, demoMode, demoSurveys, demoResponses }: {
@@ -53,8 +54,8 @@ export function SurveyHistory({ client, demoMode, demoSurveys, demoResponses }: 
                       <div className="space-y-1.5">
                         {s.questions.map(q => r.answers[q.id] ? (
                           <div key={q.id}>
-                            <p className="text-xs text-muted">{q.label}</p>
-                            <p className="text-sm">{r.answers[q.id]}</p>
+                            <p className="text-xs text-muted mb-0.5">{q.label}</p>
+                            <QuestionAnswerDisplay question={q} value={r.answers[q.id]} />
                           </div>
                         ) : null)}
                       </div>

@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { ANAMNESIS_QUESTIONS } from '../../lib/anamnesis'
 import { CustomAnamnesisQuestion } from '../../types'
 import { toast } from '../shared/Toast'
+import { QuestionInput } from '../shared/QuestionInput'
 import { ClipboardList, Check } from 'lucide-react'
 
 export function AnamnesisForm({ clientId, nutricionistaId }: { clientId: string; nutricionistaId: string }) {
@@ -26,6 +27,8 @@ export function AnamnesisForm({ clientId, nutricionistaId }: { clientId: string;
   useEffect(() => { load() }, [load])
 
   const handleSave = async () => {
+    const missing = customQuestions.find(q => q.required && !answers[q.id]?.trim())
+    if (missing) { toast(`Falta responder: "${missing.label}"`, 'warn'); return }
     setSaving(true)
     const { error } = await supabase.from('anamnesis').upsert({
       client_id: clientId, answers, completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
@@ -80,9 +83,10 @@ export function AnamnesisForm({ clientId, nutricionistaId }: { clientId: string;
               <p className="text-xs font-bold uppercase tracking-wider text-muted">Preguntas de tu nutricionista</p>
               {customQuestions.map(q => (
                 <div key={q.id}>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{q.label}</label>
-                  <textarea value={answers[q.id] || ''} onChange={e => setAnswers({ ...answers, [q.id]: e.target.value })} rows={2}
-                    className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">
+                    {q.label}{q.required && <span className="text-warn"> *</span>}
+                  </label>
+                  <QuestionInput question={q} value={answers[q.id] || ''} onChange={v => setAnswers({ ...answers, [q.id]: v })} />
                 </div>
               ))}
             </div>

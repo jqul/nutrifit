@@ -5,9 +5,8 @@ import { supabase } from '../../lib/supabase'
 import { sendPush } from '../../lib/usePushNotifications'
 import { toast } from '../shared/Toast'
 import { Button } from '../shared/Button'
+import { QuestionEditor } from '../shared/QuestionEditor'
 import { Plus, Trash2, ClipboardEdit, Power } from 'lucide-react'
-
-function newId() { return crypto.randomUUID() }
 
 const FREQUENCY_LABELS: Record<SurveyFrequency, string> = { weekly: 'Semanal', monthly: 'Mensual' }
 
@@ -22,7 +21,6 @@ export function SurveyManager({ nutricionistaId, demoMode, demoSurveys }: {
   const [name, setName] = useState('')
   const [frequency, setFrequency] = useState<SurveyFrequency>('weekly')
   const [questions, setQuestions] = useState<CustomAnamnesisQuestion[]>([])
-  const [newQuestion, setNewQuestion] = useState('')
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -34,13 +32,7 @@ export function SurveyManager({ nutricionistaId, demoMode, demoSurveys }: {
 
   useEffect(() => { load() }, [load])
 
-  const addQuestion = () => {
-    if (!newQuestion.trim()) return
-    setQuestions([...questions, { id: newId(), label: newQuestion.trim() }])
-    setNewQuestion('')
-  }
-
-  const resetForm = () => { setName(''); setFrequency('weekly'); setQuestions([]); setNewQuestion(''); setCreating(false) }
+  const resetForm = () => { setName(''); setFrequency('weekly'); setQuestions([]); setCreating(false) }
 
   const handleCreate = async () => {
     if (!name.trim()) { toast('Ponle un nombre a la encuesta', 'warn'); return }
@@ -135,24 +127,9 @@ export function SurveyManager({ nutricionistaId, demoMode, demoSurveys }: {
               </select>
             </div>
           </div>
-          {questions.length > 0 && (
-            <div className="space-y-2">
-              {questions.map(q => (
-                <div key={q.id} className="flex items-center gap-2 bg-bg-alt rounded-lg px-3 py-2">
-                  <span className="flex-1 text-sm">{q.label}</span>
-                  <button onClick={() => setQuestions(questions.filter(x => x.id !== q.id))} className="text-muted hover:text-warn flex-shrink-0">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <input value={newQuestion} onChange={e => setNewQuestion(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addQuestion()}
-              placeholder="Ej. ¿Cómo ha ido tu adherencia esta semana?"
-              className="flex-1 px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
-            <button onClick={addQuestion} className="p-2.5 bg-bg-alt rounded-xl text-muted hover:text-accent flex-shrink-0"><Plus className="w-4 h-4" /></button>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Preguntas</label>
+            <QuestionEditor questions={questions} onChange={setQuestions} />
           </div>
           <div className="flex gap-2">
             <Button onClick={handleCreate} loading={saving}>Crear encuesta</Button>

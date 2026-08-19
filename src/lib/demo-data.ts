@@ -12,7 +12,9 @@ export const DEMO_NUTRICIONISTA_PROFILE: UserProfile = {
   approved: true,
   createdAt: Date.now(),
   customAnamnesisQuestions: [
-    { id: 'demo-q1', label: '¿Sigues alguna dieta religiosa o cultural (halal, kosher, vegana estricta...)?' },
+    { id: 'demo-q1', label: '¿Sigues alguna dieta religiosa o cultural (halal, kosher, vegana estricta...)?', type: 'yesno', required: false },
+    { id: 'demo-q2', label: '¿Cómo valorarías tu nivel de estrés habitual?', type: 'scale', required: false },
+    { id: 'demo-q3', label: '¿Cuál es tu comida favorita del día?', type: 'choice', options: ['Desayuno', 'Comida', 'Cena'], required: false },
   ],
   logoUrl: null,
   accentColor: null,
@@ -417,7 +419,7 @@ export const DEMO_ANAMNESIS: Record<string, Record<string, string>> = {
     agua: '1.5',
     dietas_previas: 'Probé keto un par de meses, perdí peso pero lo recuperé al dejarlo.',
     habitos: 'Alguna copa de vino el fin de semana.',
-    'demo-q1': 'No, ninguna restricción religiosa ni cultural.',
+    'demo-q1': 'no', 'demo-q2': '4', 'demo-q3': 'Comida',
   },
   'demo-client-002': {
     motivo: 'Ganar masa muscular de forma limpia, sin pasarme de grasa.',
@@ -459,15 +461,19 @@ export const DEMO_CUSTOM_SURVEYS: CustomSurveyRow[] = [
     id: 'demo-survey-weekly', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Seguimiento semanal',
     frequency: 'weekly', active: true, created_at: new Date(Date.now() - 60 * 86400000).toISOString(),
     questions: [
-      { id: 'sw-q1', label: '¿Cómo te has sentido esta semana en general?' },
-      { id: 'sw-q2', label: '¿Ha habido algún obstáculo con el plan?' },
+      { id: 'sw-q1', label: '¿Cómo te has sentido esta semana en general?', type: 'text' },
+      { id: 'sw-q2', label: '¿Ha habido algún obstáculo con el plan?', type: 'text' },
+      { id: 'sw-q3', label: 'Energía media esta semana', type: 'scale', required: true },
+      { id: 'sw-q4', label: '¿Has seguido el plan de comidas esta semana?', type: 'yesno', required: true },
     ],
   },
   {
     id: 'demo-survey-monthly', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Revisión mensual',
     frequency: 'monthly', active: true, created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
     questions: [
-      { id: 'sm-q1', label: '¿Cómo valoras tu progreso este mes del 1 al 10?' },
+      { id: 'sm-q1', label: '¿Cómo valoras tu progreso este mes?', type: 'scale', required: true },
+      { id: 'sm-q2', label: 'Cuéntanos por qué', type: 'text' },
+      { id: 'sm-q3', label: '¿Qué quieres priorizar el próximo mes?', type: 'choice', options: ['Alimentación', 'Entrenamiento', 'Descanso', 'Constancia'] },
     ],
   },
 ]
@@ -477,24 +483,27 @@ export const DEMO_SURVEY_RESPONSES: Record<string, SurveyResponseRow[]> = {
     {
       id: 'demo-sr-1', survey_id: 'demo-survey-weekly', client_id: 'demo-client-001',
       period_key: periodKeyFor('weekly', weeksAgo(1)), submitted_at: weeksAgo(1).toISOString(),
-      answers: { 'sw-q1': 'Bien, con más energía que la semana pasada.', 'sw-q2': 'Una cena familiar el sábado, pero por lo demás bien.' },
+      answers: {
+        'sw-q1': 'Bien, con más energía que la semana pasada.', 'sw-q2': 'Una cena familiar el sábado, pero por lo demás bien.',
+        'sw-q3': '7', 'sw-q4': 'si',
+      },
     },
     {
       id: 'demo-sr-2', survey_id: 'demo-survey-weekly', client_id: 'demo-client-001',
       period_key: periodKeyFor('weekly', weeksAgo(2)), submitted_at: weeksAgo(2).toISOString(),
-      answers: { 'sw-q1': 'Algo cansada, semana de mucho trabajo.', 'sw-q2': 'Ninguno relevante.' },
+      answers: { 'sw-q1': 'Algo cansada, semana de mucho trabajo.', 'sw-q2': 'Ninguno relevante.', 'sw-q3': '5', 'sw-q4': 'si' },
     },
     {
       id: 'demo-sr-3', survey_id: 'demo-survey-monthly', client_id: 'demo-client-001',
       period_key: periodMonthsAgo(1), submitted_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-      answers: { 'sm-q1': '8 — muy contenta con la bajada de peso.' },
+      answers: { 'sm-q1': '8', 'sm-q2': 'Muy contenta con la bajada de peso.', 'sm-q3': 'Alimentación' },
     },
   ],
   'demo-client-002': [
     {
       id: 'demo-sr-4', survey_id: 'demo-survey-weekly', client_id: 'demo-client-002',
       period_key: periodKeyFor('weekly', weeksAgo(1)), submitted_at: weeksAgo(1).toISOString(),
-      answers: { 'sw-q1': 'Muy bien, entrenando fuerte.', 'sw-q2': 'Ninguno.' },
+      answers: { 'sw-q1': 'Muy bien, entrenando fuerte.', 'sw-q2': 'Ninguno.', 'sw-q3': '9', 'sw-q4': 'si' },
     },
   ],
   'demo-client-003': [],

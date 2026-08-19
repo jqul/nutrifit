@@ -1,8 +1,18 @@
 export type Role = 'trainer' | 'super_admin'
 
+// Tipos de pregunta para preguntas propias (cuestionario de salud y
+// encuestas recurrentes) — igual que en PanelFit: el nutricionista elige el
+// tipo al crear cada pregunta, no solo texto libre.
+export type SurveyQuestionType = 'text' | 'scale' | 'yesno' | 'choice'
+
 export interface CustomAnamnesisQuestion {
   id: string
   label: string
+  // Opcionales por compatibilidad con preguntas guardadas antes de tener
+  // tipos — se tratan como 'text' si faltan (ver QUESTION_TYPE_LABELS).
+  type?: SurveyQuestionType
+  options?: string[] // solo para type: 'choice'
+  required?: boolean
 }
 
 export interface UserProfile {

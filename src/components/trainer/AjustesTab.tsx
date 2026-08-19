@@ -4,11 +4,10 @@ import { supabase } from '../../lib/supabase'
 import { Button } from '../shared/Button'
 import { toast } from '../shared/Toast'
 import { SurveyManager } from './SurveyManager'
+import { QuestionEditor } from '../shared/QuestionEditor'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { DEMO_CUSTOM_SURVEYS } from '../../lib/demo-data'
-import { Plus, Trash2, Palette, Globe, ClipboardList } from 'lucide-react'
-
-function newId() { return crypto.randomUUID() }
+import { Palette, Globe, ClipboardList } from 'lucide-react'
 
 export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
   userProfile: UserProfile
@@ -16,20 +15,12 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
   onUpdateProfile: (updates: Partial<UserProfile>) => void
 }) {
   const [questions, setQuestions] = useState<CustomAnamnesisQuestion[]>(userProfile.customAnamnesisQuestions)
-  const [newQuestion, setNewQuestion] = useState('')
   const [savingQuestions, setSavingQuestions] = useState(false)
 
   const [logoUrl, setLogoUrl] = useState(userProfile.logoUrl || '')
   const [accentColor, setAccentColor] = useState(userProfile.accentColor || '#3f7d4f')
   const [customDomain, setCustomDomain] = useState(userProfile.customDomain || '')
   const [savingBranding, setSavingBranding] = useState(false)
-
-  const addQuestion = () => {
-    if (!newQuestion.trim()) return
-    setQuestions([...questions, { id: newId(), label: newQuestion.trim() }])
-    setNewQuestion('')
-  }
-  const removeQuestion = (id: string) => setQuestions(questions.filter(q => q.id !== id))
 
   const saveQuestions = async () => {
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
@@ -64,23 +55,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
         <p className="text-xs text-muted">
           Se añaden al cuestionario de salud que rellenan tus clientes, después de las preguntas fijas.
         </p>
-        {questions.length > 0 && (
-          <div className="space-y-2">
-            {questions.map(q => (
-              <div key={q.id} className="flex items-center gap-2 bg-bg-alt rounded-lg px-3 py-2">
-                <span className="flex-1 text-sm">{q.label}</span>
-                <button onClick={() => removeQuestion(q.id)} className="text-muted hover:text-warn flex-shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <input value={newQuestion} onChange={e => setNewQuestion(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addQuestion()}
-            placeholder="Ej. ¿Sigues alguna dieta religiosa o cultural?"
-            className="flex-1 px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
-          <button onClick={addQuestion} className="p-2.5 bg-bg-alt rounded-xl text-muted hover:text-accent flex-shrink-0"><Plus className="w-4 h-4" /></button>
-        </div>
+        <QuestionEditor questions={questions} onChange={setQuestions} />
         <Button onClick={saveQuestions} loading={savingQuestions}>Guardar preguntas</Button>
       </div>
 
