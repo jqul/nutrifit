@@ -1,9 +1,23 @@
-import { ClientData, DietPlan } from '../types'
+import { ClientData, DietPlan, DietMeal } from '../types'
 
 export interface PrintBranding { logoUrl?: string | null; accentColor?: string | null }
 
+const DAY_LABELS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function mealHtml(meal: DietMeal): string {
+  return `
+    <div class="meal">
+      <div class="meal-head">
+        <strong>${esc(meal.name)}</strong>
+        <span>${meal.time ? esc(meal.time) : ''}${meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</span>
+      </div>
+      ${meal.items.length ? `<ul>${meal.items.map(i => `<li><span>${esc(i.foodName)}</span><span>${esc(i.quantity)} ${esc(i.unit)}</span></li>`).join('')}</ul>` : ''}
+    </div>
+  `
 }
 
 /**
@@ -21,15 +35,19 @@ export function printDietPlan(client: ClientData, plan: DietPlan, branding?: Pri
   const visibleSupplements = plan.supplements.filter(s => s.visibleToClient)
   const today = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  const mealsHtml = plan.meals.map(meal => `
-    <div class="meal">
-      <div class="meal-head">
-        <strong>${esc(meal.name)}</strong>
-        <span>${meal.time ? esc(meal.time) : ''}${meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</span>
-      </div>
-      ${meal.items.length ? `<ul>${meal.items.map(i => `<li><span>${esc(i.foodName)}</span><span>${esc(i.quantity)} ${esc(i.unit)}</span></li>`).join('')}</ul>` : ''}
-    </div>
-  `).join('')
+  // Cuadrante semanal: si alguna comida tiene un día asignado, se agrupan
+  // por día (más una sección "Cada día" para las que no tienen uno). Si
+  // ninguna lo tiene (plan de un solo día tipo, el caso de siempre), se
+  // muestran igual que antes, sin cabeceras de día.
+  const usesWeeklyMenu = plan.meals.some(m => m.dayOfWeek != null)
+  const everyDayMeals = plan.meals.filter(m => m.dayOfWeek == null)
+  const mealsHtml = !usesWeeklyMenu ? plan.meals.map(mealHtml).join('') : (
+    DAY_LABELS.map((label, day) => {
+      const dayMeals = plan.meals.filter(m => m.dayOfWeek === day)
+      if (dayMeals.length === 0 && everyDayMeals.length === 0) return ''
+      return `<h3>${esc(label)}</h3>${dayMeals.map(mealHtml).join('')}${everyDayMeals.map(mealHtml).join('')}`
+    }).join('')
+  )
 
   const supplementsHtml = visibleSupplements.length ? `
     <h3>Suplementación</h3>

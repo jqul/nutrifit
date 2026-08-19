@@ -71,6 +71,7 @@ export function mealItemFromRow(row: DietMealItemRow): DietMealItem {
     calciumMg: row.calcium_mg,
     ironMg: row.iron_mg,
     zincMg: row.zinc_mg,
+    recipeId: row.recipe_id,
   }
 }
 
@@ -80,6 +81,7 @@ export function mealFromRow(row: DietMealRow, items: DietMealItemRow[]): DietMea
     name: row.name,
     time: row.time,
     kcalTarget: row.kcal_target,
+    dayOfWeek: row.day_of_week as DietMeal['dayOfWeek'],
     items: items.filter(i => i.meal_id === row.id).map(mealItemFromRow),
   }
 }

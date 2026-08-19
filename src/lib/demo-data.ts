@@ -99,9 +99,11 @@ export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
         { id: 'i3', foodName: 'Arándanos', quantity: '50', unit: 'g', kcal: 30, proteinG: 0, carbsG: 7, fatG: 0 },
       ]},
       { id: 'm2', name: 'Comida', time: '14:00', kcalTarget: 550, items: [
-        { id: 'i4', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: 230, proteinG: 45, carbsG: 0, fatG: 5 },
-        { id: 'i5', foodName: 'Arroz integral', quantity: '60', unit: 'g', kcal: 210, proteinG: 5, carbsG: 44, fatG: 2 },
-        { id: 'i6', foodName: 'Verdura al vapor', quantity: '200', unit: 'g', kcal: 60, proteinG: 3, carbsG: 12, fatG: 0 },
+        // Ligados a la receta propia "Pollo con arroz y verduras" (recipeId)
+        // para que el recetario dinámico del plan tenga algo que mostrar.
+        { id: 'i4', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: 230, proteinG: 45, carbsG: 0, fatG: 5, recipeId: 'demo-recipe-002' },
+        { id: 'i5', foodName: 'Arroz integral', quantity: '60', unit: 'g', kcal: 210, proteinG: 5, carbsG: 44, fatG: 2, recipeId: 'demo-recipe-002' },
+        { id: 'i6', foodName: 'Verdura al vapor', quantity: '200', unit: 'g', kcal: 60, proteinG: 3, carbsG: 12, fatG: 0, recipeId: 'demo-recipe-002' },
       ]},
       { id: 'm3', name: 'Merienda', time: '17:30', kcalTarget: 150, items: [
         { id: 'i7', foodName: 'Manzana', quantity: '1', unit: 'ud', kcal: 80, proteinG: 0, carbsG: 21, fatG: 0 },
@@ -121,23 +123,35 @@ export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
   'demo-client-002': {
     id: 'demo-plan-carlos', clientId: 'demo-client-002', nutricionistaId: DEMO_NUTRICIONISTA_ID,
     name: 'Plan de dieta', kcalTarget: 2800, proteinG: 180, carbsG: 320, fatG: 80, fiberG: 35,
-    advice: 'Superávit calórico progresivo. Añade la merienda post-entreno los días que vayas al gimnasio, no te la saltes.',
+    advice: 'Superávit calórico progresivo. Los días de entreno (lunes, miércoles y viernes) no te saltes la merienda post-entreno.',
     isActive: true,
+    // Ejemplo de cuadrante semanal: desayuno/comida/cena se repiten todos
+    // los días (dayOfWeek null), y la merienda post-entreno solo aparece
+    // los días que entrena (lunes=0, miércoles=2, viernes=4) — el caso de
+    // uso que el propio nutricionista describió.
     meals: [
-      { id: 'm1', name: 'Desayuno', time: '07:30', kcalTarget: 600, items: [
+      { id: 'm1', name: 'Desayuno', time: '07:30', kcalTarget: 600, dayOfWeek: null, items: [
         { id: 'i1', foodName: 'Huevos revueltos', quantity: '3', unit: 'ud', kcal: 220, proteinG: 18, carbsG: 2, fatG: 15 },
         { id: 'i2', foodName: 'Pan integral', quantity: '80', unit: 'g', kcal: 200, proteinG: 8, carbsG: 38, fatG: 2 },
         { id: 'i3', foodName: 'Aguacate', quantity: '50', unit: 'g', kcal: 80, proteinG: 1, carbsG: 4, fatG: 7 },
       ]},
-      { id: 'm2', name: 'Comida', time: '13:30', kcalTarget: 800, items: [
+      { id: 'm2', name: 'Comida', time: '13:30', kcalTarget: 800, dayOfWeek: null, items: [
         { id: 'i4', foodName: 'Ternera magra', quantity: '200', unit: 'g', kcal: 380, proteinG: 50, carbsG: 0, fatG: 18 },
         { id: 'i5', foodName: 'Pasta integral', quantity: '100', unit: 'g', kcal: 350, proteinG: 13, carbsG: 68, fatG: 2 },
       ]},
-      { id: 'm3', name: 'Post-entreno', time: '18:00', kcalTarget: 400, items: [
-        { id: 'i6', foodName: 'Batido de proteína', quantity: '1', unit: 'scoop', kcal: 120, proteinG: 24, carbsG: 3, fatG: 1 },
-        { id: 'i7', foodName: 'Plátano', quantity: '1', unit: 'ud', kcal: 100, proteinG: 1, carbsG: 27, fatG: 0 },
+      { id: 'm3-lun', name: 'Post-entreno', time: '18:00', kcalTarget: 400, dayOfWeek: 0, items: [
+        { id: 'i6-lun', foodName: 'Batido de proteína', quantity: '1', unit: 'scoop', kcal: 120, proteinG: 24, carbsG: 3, fatG: 1 },
+        { id: 'i7-lun', foodName: 'Plátano', quantity: '1', unit: 'ud', kcal: 100, proteinG: 1, carbsG: 27, fatG: 0 },
       ]},
-      { id: 'm4', name: 'Cena', time: '21:30', kcalTarget: 700, items: [
+      { id: 'm3-mie', name: 'Post-entreno', time: '18:00', kcalTarget: 400, dayOfWeek: 2, items: [
+        { id: 'i6-mie', foodName: 'Batido de proteína', quantity: '1', unit: 'scoop', kcal: 120, proteinG: 24, carbsG: 3, fatG: 1 },
+        { id: 'i7-mie', foodName: 'Plátano', quantity: '1', unit: 'ud', kcal: 100, proteinG: 1, carbsG: 27, fatG: 0 },
+      ]},
+      { id: 'm3-vie', name: 'Post-entreno', time: '18:00', kcalTarget: 400, dayOfWeek: 4, items: [
+        { id: 'i6-vie', foodName: 'Batido de proteína', quantity: '1', unit: 'scoop', kcal: 120, proteinG: 24, carbsG: 3, fatG: 1 },
+        { id: 'i7-vie', foodName: 'Plátano', quantity: '1', unit: 'ud', kcal: 100, proteinG: 1, carbsG: 27, fatG: 0 },
+      ]},
+      { id: 'm4', name: 'Cena', time: '21:30', kcalTarget: 700, dayOfWeek: null, items: [
         { id: 'i8', foodName: 'Merluza', quantity: '200', unit: 'g', kcal: 200, proteinG: 40, carbsG: 0, fatG: 4 },
         { id: 'i9', foodName: 'Patata cocida', quantity: '250', unit: 'g', kcal: 220, proteinG: 5, carbsG: 50, fatG: 0 },
       ]},

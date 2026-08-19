@@ -11,6 +11,7 @@ import { printRecipeBook } from '../../../lib/printRecipeBook'
 import { ScannedFood } from '../../../lib/openFoodFacts'
 import { gramsForAbsoluteMacro, computeMacros, MacroKey } from '../../../lib/foodConversion'
 import { buildShoppingList } from '../../../lib/shoppingList'
+import { buildWAUrl } from '../../../lib/whatsapp'
 import {
   Sex, Formula, ActivityLevel, Goal, ACTIVITY_LABELS, GOAL_LABELS,
   computeMetabolicPlan, ageFromBirthDate,
@@ -22,7 +23,7 @@ import { RecipeEditorPanel } from '../../shared/RecipeEditorPanel'
 import { toast } from '../../shared/Toast'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
-  ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, ShoppingCart, Check,
+  ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, ShoppingCart, Check, Send,
 } from 'lucide-react'
 
 interface EditableItem {
@@ -30,9 +31,15 @@ interface EditableItem {
   kcal: string; proteinG: string; carbsG: string; fatG: string
   fiberG: string; sugarG: string; sodiumMg: string; saturatedFatG: string
   calciumMg: string; ironMg: string; zincMg: string
+  recipeId?: string | null
 }
-interface EditableMeal { id: string; name: string; time: string; kcalTarget: string; items: EditableItem[] }
+// 0=lunes...6=domingo. null = todos los días (comportamiento anterior al
+// cuadrante semanal — los planes ya creados siguen así hasta que se les
+// asigne un día concreto a alguna comida).
+interface EditableMeal { id: string; name: string; time: string; kcalTarget: string; dayOfWeek: number | null; items: EditableItem[] }
 interface EditableSupplement { id: string; name: string; dose: string; timing: string; visibleToClient: boolean }
+
+const DAY_LABELS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 function newId() { return crypto.randomUUID() }
 
@@ -82,6 +89,7 @@ function demoPlanToEditable(plan: DietPlan) {
     carbsG: String(plan.carbsG), fatG: String(plan.fatG), fiberG: String(plan.fiberG), advice: plan.advice,
     meals: plan.meals.map(m => ({
       id: m.id, name: m.name, time: m.time, kcalTarget: m.kcalTarget != null ? String(m.kcalTarget) : '',
+      dayOfWeek: m.dayOfWeek ?? null,
       items: m.items.map(i => ({
         id: i.id, foodName: i.foodName, quantity: i.quantity, unit: i.unit,
         kcal: i.kcal != null ? String(i.kcal) : '', proteinG: i.proteinG != null ? String(i.proteinG) : '',
@@ -89,7 +97,7 @@ function demoPlanToEditable(plan: DietPlan) {
         fiberG: i.fiberG != null ? String(i.fiberG) : '', sugarG: i.sugarG != null ? String(i.sugarG) : '',
         sodiumMg: i.sodiumMg != null ? String(i.sodiumMg) : '', saturatedFatG: i.saturatedFatG != null ? String(i.saturatedFatG) : '',
         calciumMg: i.calciumMg != null ? String(i.calciumMg) : '', ironMg: i.ironMg != null ? String(i.ironMg) : '',
-        zincMg: i.zincMg != null ? String(i.zincMg) : '',
+        zincMg: i.zincMg != null ? String(i.zincMg) : '', recipeId: i.recipeId ?? null,
       })),
     })),
     supplements: plan.supplements.map(s => ({ id: s.id, name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
@@ -163,7 +171,11 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     const alreadyUsed = sumItemMacros(meal.items).kcal
     const remaining = mealTarget - alreadyUsed
     const shouldScale = !isNaN(mealTarget) && mealTarget > 0 && remaining > 0
-    const items = shouldScale ? scaleRecipeToKcal(rawItems, remaining) : rawItems.map(i => ({ ...i, id: newId() }))
+    const scaled = shouldScale ? scaleRecipeToKcal(rawItems, remaining) : rawItems.map(i => ({ ...i, id: newId() }))
+    // Se etiqueta cada ítem con la receta de origen (no la trae el jsonb de
+    // la receta en sí) para poder filtrar el recetario dinámico a solo las
+    // recetas realmente usadas en este plan.
+    const items = scaled.map(i => ({ ...i, recipeId: recipe.id }))
     updateMeal(mealId, { items: [...meal.items, ...items] })
     toast(shouldScale
       ? `Receta "${recipe.name}" insertada y ajustada a ${Math.round(remaining)} kcal ✓`
@@ -226,6 +238,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     setAdvice(planRow.advice || '')
     setMeals((mealRows || []).map((m: DietMealRow) => ({
       id: m.id, name: m.name, time: m.time, kcalTarget: m.kcal_target != null ? String(m.kcal_target) : '',
+      dayOfWeek: m.day_of_week,
       items: itemRows.filter(i => i.meal_id === m.id).map(i => ({
         id: i.id, foodName: i.food_name, quantity: i.quantity, unit: i.unit,
         kcal: i.kcal != null ? String(i.kcal) : '', proteinG: i.protein_g != null ? String(i.protein_g) : '',
@@ -233,7 +246,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         fiberG: i.fiber_g != null ? String(i.fiber_g) : '', sugarG: i.sugar_g != null ? String(i.sugar_g) : '',
         sodiumMg: i.sodium_mg != null ? String(i.sodium_mg) : '', saturatedFatG: i.saturated_fat_g != null ? String(i.saturated_fat_g) : '',
         calciumMg: i.calcium_mg != null ? String(i.calcium_mg) : '', ironMg: i.iron_mg != null ? String(i.iron_mg) : '',
-        zincMg: i.zinc_mg != null ? String(i.zinc_mg) : '',
+        zincMg: i.zinc_mg != null ? String(i.zinc_mg) : '', recipeId: i.recipe_id,
       })),
     })))
     setSupplements((supRows || []).map((s: DietSupplementRow) => ({
@@ -271,7 +284,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       const meal = meals[idx]
       const { data: insertedMeal } = await supabase.from('diet_meals').insert({
         plan_id: planId, name: meal.name, time: meal.time,
-        kcal_target: meal.kcalTarget ? parseFloat(meal.kcalTarget) : null, sort_order: idx,
+        kcal_target: meal.kcalTarget ? parseFloat(meal.kcalTarget) : null, day_of_week: meal.dayOfWeek, sort_order: idx,
       }).select().single()
       if (insertedMeal && meal.items.length) {
         await supabase.from('diet_meal_items').insert(meal.items.map((item, i) => ({
@@ -281,7 +294,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           fiber_g: item.fiberG ? parseFloat(item.fiberG) : null, sugar_g: item.sugarG ? parseFloat(item.sugarG) : null,
           sodium_mg: item.sodiumMg ? parseFloat(item.sodiumMg) : null, saturated_fat_g: item.saturatedFatG ? parseFloat(item.saturatedFatG) : null,
           calcium_mg: item.calciumMg ? parseFloat(item.calciumMg) : null, iron_mg: item.ironMg ? parseFloat(item.ironMg) : null,
-          zinc_mg: item.zincMg ? parseFloat(item.zincMg) : null,
+          zinc_mg: item.zincMg ? parseFloat(item.zincMg) : null, recipe_id: item.recipeId || null,
           sort_order: i,
         })))
       }
@@ -304,6 +317,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, fiberG: parseFloat(fiberG) || 0, advice, isActive: true,
       meals: meals.map(m => ({
         id: m.id, name: m.name, time: m.time, kcalTarget: m.kcalTarget ? parseFloat(m.kcalTarget) : null,
+        dayOfWeek: m.dayOfWeek as DietPlan['meals'][number]['dayOfWeek'],
         items: m.items.map(i => ({ id: i.id, foodName: i.foodName, quantity: i.quantity, unit: i.unit, kcal: null, proteinG: null, carbsG: null, fatG: null })),
       })),
       supplements: supplements.map(s => ({ id: s.id, name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
@@ -320,7 +334,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       plan: {
         kcalTarget: parseFloat(kcalTarget) || 0, proteinG: parseFloat(proteinG) || 0,
         carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, fiberG: parseFloat(fiberG) || 0, advice,
-        meals: meals.map(m => ({ name: m.name, time: m.time, kcalTarget: m.kcalTarget, items: m.items })),
+        meals: meals.map(m => ({ name: m.name, time: m.time, kcalTarget: m.kcalTarget, dayOfWeek: m.dayOfWeek, items: m.items })),
         supplements: supplements.map(s => ({ name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
       },
     })
@@ -336,14 +350,55 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     setCarbsG(String(p.carbsG ?? '')); setFatG(String(p.fatG ?? '')); setFiberG(String(p.fiberG ?? ''))
     setAdvice(p.advice || '')
     setMeals((p.meals || []).map((m: any) => ({
-      id: newId(), name: m.name, time: m.time, kcalTarget: m.kcalTarget || '',
+      id: newId(), name: m.name, time: m.time, kcalTarget: m.kcalTarget || '', dayOfWeek: m.dayOfWeek ?? null,
       items: (m.items || []).map((i: any) => ({ ...i, id: newId() })),
     })))
     setSupplements((p.supplements || []).map((s: any) => ({ ...s, id: newId() })))
     toast(`Plantilla "${tpl.name}" aplicada — recuerda guardar`, 'ok')
   }
 
-  const addMeal = () => setMeals([...meals, { id: newId(), name: 'Comida', time: '', kcalTarget: '', items: [] }])
+  // ── Cuadrante semanal ─────────────────────────────────────────
+  // 'all' = pestaña "Todos los días" (comidas con dayOfWeek null).
+  const [selectedDay, setSelectedDay] = useState<number | 'all'>('all')
+  const [copyFromDay, setCopyFromDay] = useState('')
+
+  const visibleMeals = meals.filter(m => selectedDay === 'all' ? m.dayOfWeek == null : (m.dayOfWeek === selectedDay || m.dayOfWeek == null))
+  const usesWeeklyMenu = meals.some(m => m.dayOfWeek != null)
+
+  const copyDayMeals = () => {
+    if (copyFromDay === '' || selectedDay === 'all') return
+    const sourceDay = parseInt(copyFromDay, 10)
+    const sourceMeals = meals.filter(m => m.dayOfWeek === sourceDay)
+    if (sourceMeals.length === 0) { toast('Ese día no tiene comidas todavía', 'warn'); return }
+    const copied = sourceMeals.map(m => ({
+      ...m, id: newId(), dayOfWeek: selectedDay as number,
+      items: m.items.map(i => ({ ...i, id: newId() })),
+    }))
+    setMeals([...meals, ...copied])
+    setCopyFromDay('')
+    toast(`${copied.length} comida${copied.length === 1 ? '' : 's'} copiada${copied.length === 1 ? '' : 's'} de ${DAY_LABELS[sourceDay]} ✓`, 'ok')
+  }
+
+  /** Recetario dinámico: solo las recetas realmente usadas en este plan
+   * (identificadas por recipeId en los ítems), con los ingredientes ya
+   * escalados a las necesidades de este cliente — no la receta base. */
+  const dynamicRecetario = () => {
+    const groups = new Map<string, { name: string; photoUrl: string | null; steps: string | null; items: EditableItem[] }>()
+    for (const meal of meals) {
+      for (const item of meal.items) {
+        if (!item.recipeId) continue
+        const recipe = recipes.find(r => r.id === item.recipeId)
+        if (!recipe) continue
+        if (!groups.has(item.recipeId)) groups.set(item.recipeId, { name: recipe.name, photoUrl: recipe.photo_url, steps: recipe.steps, items: [] })
+        groups.get(item.recipeId)!.items.push(item)
+      }
+    }
+    return Array.from(groups.values())
+  }
+
+  const addMeal = () => setMeals([...meals, {
+    id: newId(), name: 'Comida', time: '', kcalTarget: '', dayOfWeek: selectedDay === 'all' ? null : selectedDay, items: [],
+  }])
   const removeMeal = (id: string) => setMeals(meals.filter(m => m.id !== id))
   const updateMeal = (id: string, updates: Partial<EditableMeal>) => setMeals(meals.map(m => m.id === id ? { ...m, ...updates } : m))
   const addItem = (mealId: string) => updateMeal(mealId, {
@@ -460,11 +515,19 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} onSetPhoto={setRecipePhoto}
                 onEdit={setEditingRecipe} nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />
             )}
-            <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', recipes.map(r => ({
-              name: r.name, photoUrl: r.photo_url, steps: r.steps, items: (r.items as EditableItem[] | null) || [],
-            })), { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })} className="flex items-center gap-1.5 text-xs font-bold text-accent">
-              <BookOpen className="w-3.5 h-3.5" /> Descargar recetario en PDF
-            </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', recipes.map(r => ({
+                name: r.name, photoUrl: r.photo_url, steps: r.steps, items: (r.items as EditableItem[] | null) || [],
+              })), { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })} className="flex items-center gap-1.5 text-xs font-bold text-accent">
+                <BookOpen className="w-3.5 h-3.5" /> Descargar recetario en PDF
+              </button>
+              {dynamicRecetario().length > 0 && (
+                <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', dynamicRecetario(), { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
+                  className="flex items-center gap-1.5 text-xs font-bold text-accent" title="Solo las recetas usadas en este plan, con las cantidades ya ajustadas a este cliente">
+                  <BookOpen className="w-3.5 h-3.5" /> Recetario de este plan ({dynamicRecetario().length})
+                </button>
+              )}
+            </div>
           </div>
         )
       })()}
@@ -500,11 +563,54 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="font-semibold text-sm">Comidas</p>
-          <button onClick={addMeal} className="flex items-center gap-1 text-xs font-bold text-accent"><Plus className="w-3.5 h-3.5" /> Añadir comida</button>
+          <div className="flex items-center gap-2">
+            {selectedDay !== 'all' && (
+              <select value={copyFromDay} onChange={e => { setCopyFromDay(e.target.value); if (e.target.value !== '') copyDayMeals() }}
+                className="px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+                <option value="">Copiar comidas de...</option>
+                {DAY_LABELS.map((label, i) => i !== selectedDay && meals.some(m => m.dayOfWeek === i) && (
+                  <option key={i} value={i}>{label}</option>
+                ))}
+              </select>
+            )}
+            <button onClick={addMeal} className="flex items-center gap-1 text-xs font-bold text-accent"><Plus className="w-3.5 h-3.5" /> Añadir comida</button>
+          </div>
         </div>
-        {meals.map(meal => (
+
+        <div className="flex gap-1 overflow-x-auto pb-1">
+          <button onClick={() => setSelectedDay('all')}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              selectedDay === 'all' ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+            }`}>
+            Todos los días{meals.filter(m => m.dayOfWeek == null).length > 0 ? ` (${meals.filter(m => m.dayOfWeek == null).length})` : ''}
+          </button>
+          {DAY_LABELS.map((label, i) => (
+            <button key={i} onClick={() => setSelectedDay(i)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                selectedDay === i ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+              }`}>
+              {label}{meals.filter(m => m.dayOfWeek === i).length > 0 ? ` (${meals.filter(m => m.dayOfWeek === i).length})` : ''}
+            </button>
+          ))}
+        </div>
+        {selectedDay !== 'all' && usesWeeklyMenu && (
+          <p className="text-[11px] text-muted -mt-1.5">
+            Se muestran las comidas de {DAY_LABELS[selectedDay as number]}, más las de "Todos los días" si las hay.
+          </p>
+        )}
+
+        {visibleMeals.length === 0 && (
+          <div className="bg-card border border-dashed border-border rounded-2xl p-6 text-center">
+            <p className="text-muted text-sm">
+              {selectedDay === 'all' ? 'Sin comidas fijas para todos los días.' : `Sin comidas para ${DAY_LABELS[selectedDay as number]}.`}
+              {' '}Pulsa "Añadir comida" o copia las de otro día.
+            </p>
+          </div>
+        )}
+
+        {visibleMeals.map(meal => (
           <div key={meal.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <input value={meal.name} onChange={e => updateMeal(meal.id, { name: e.target.value })} placeholder="Nombre (ej. Desayuno)"
@@ -513,6 +619,12 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                 className="w-28 px-3 py-2 bg-bg border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20" />
               <input type="number" value={meal.kcalTarget} onChange={e => updateMeal(meal.id, { kcalTarget: e.target.value })} placeholder="Kcal"
                 className="w-20 px-3 py-2 bg-bg border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20" />
+              <select value={meal.dayOfWeek ?? ''} onChange={e => updateMeal(meal.id, { dayOfWeek: e.target.value === '' ? null : parseInt(e.target.value, 10) })}
+                title="Día de la semana"
+                className="px-2 py-2 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+                <option value="">Todos los días</option>
+                {DAY_LABELS.map((label, i) => <option key={i} value={i}>{label}</option>)}
+              </select>
               <button onClick={() => removeMeal(meal.id)} className="p-2 text-muted hover:text-warn"><Trash2 className="w-4 h-4" /></button>
             </div>
             <div className="space-y-2">
@@ -697,6 +809,13 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       <div className="flex items-center gap-2 flex-wrap">
         <Button onClick={handleSave} loading={saving}>Guardar plan</Button>
         <Button variant="outline" onClick={handlePrint}><Download className="w-3.5 h-3.5" /> Descargar PDF</Button>
+        <Button variant="outline" onClick={() => {
+          const url = `${window.location.origin}/?c=${client.token}`
+          const message = `Hola ${client.name} 👋\n\nAquí tienes tu plan de dieta actualizado, ábrelo directamente desde este enlace:\n${url}`
+          window.open(buildWAUrl(client.phone, message), '_blank')
+        }}>
+          <Send className="w-3.5 h-3.5" /> Enviar por WhatsApp
+        </Button>
         <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Nombre de la plantilla"
           className="px-3 py-2 bg-card border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20 w-48" />
         <Button variant="outline" onClick={handleSaveTemplate}><BookmarkPlus className="w-3.5 h-3.5" /> Guardar como plantilla</Button>

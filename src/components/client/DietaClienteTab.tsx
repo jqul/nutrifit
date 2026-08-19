@@ -6,9 +6,12 @@ import { DietPlan, ClientData, Food, DietMealItem } from '../../types'
 import { printDietPlan } from '../../lib/printPlan'
 import { buildShoppingList } from '../../lib/shoppingList'
 import { gramsForAbsoluteMacro, MacroKey } from '../../lib/foodConversion'
-import { Utensils, ShoppingCart, Check, Download, Repeat } from 'lucide-react'
+import { Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react'
 
 const MACRO_LABELS: Record<MacroKey, string> = { kcal: 'kcal', proteinG: 'proteína', carbsG: 'carbohidratos', fatG: 'grasas' }
+const DAY_LABELS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+/** JS Date.getDay() es 0=domingo...6=sábado; aquí usamos 0=lunes...6=domingo. */
+function todayDayOfWeek(): number { return (new Date().getDay() + 6) % 7 }
 
 export function DietaClienteTab({ client, demoMode, demoPlan }: { client: ClientData; demoMode?: boolean; demoPlan?: DietPlan }) {
   const clientId = client.id
@@ -16,6 +19,8 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
   const [loading, setLoading] = useState(!demoPlan)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [foods, setFoods] = useState<Food[]>([])
+  const [selectedDay, setSelectedDay] = useState<number>(todayDayOfWeek())
+  const [showWeekSummary, setShowWeekSummary] = useState(false)
 
   const toggleChecked = (key: string) => setChecked(prev => {
     const next = new Set(prev)
@@ -58,6 +63,8 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
   )
 
   const visibleSupplements = plan.supplements.filter(s => s.visibleToClient)
+  const usesWeeklyMenu = plan.meals.some(m => m.dayOfWeek != null)
+  const visibleMeals = !usesWeeklyMenu ? plan.meals : plan.meals.filter(m => m.dayOfWeek === selectedDay || m.dayOfWeek == null)
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
@@ -82,8 +89,58 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
         </div>
       )}
 
+      {usesWeeklyMenu && (
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <button onClick={() => setShowWeekSummary(v => !v)} className="w-full flex items-center justify-between">
+            <span className="font-semibold text-sm flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Cuadrante semanal</span>
+            {showWeekSummary ? <ChevronUp className="w-4 h-4 text-muted" /> : <ChevronDown className="w-4 h-4 text-muted" />}
+          </button>
+          {showWeekSummary && (
+            <div className="mt-3 pt-3 border-t border-border space-y-2.5">
+              {DAY_LABELS.map((label, day) => {
+                const dayMeals = plan.meals.filter(m => m.dayOfWeek === day || m.dayOfWeek == null)
+                return (
+                  <button key={day} onClick={() => { setSelectedDay(day); setShowWeekSummary(false) }}
+                    className={`w-full text-left rounded-xl px-3 py-2 transition-colors ${day === selectedDay ? 'bg-accent/10 border border-accent/30' : 'bg-bg-alt hover:bg-bg-alt/70'}`}>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted mb-1">{label}{day === todayDayOfWeek() ? ' · Hoy' : ''}</p>
+                    {dayMeals.length === 0 ? (
+                      <p className="text-xs text-muted">Sin comidas</p>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {dayMeals.map(m => (
+                          <p key={m.id} className="text-xs flex justify-between gap-2">
+                            <span className="truncate">{m.name}{m.items.length > 0 ? `: ${m.items.map(i => i.foodName).filter(Boolean).join(', ')}` : ''}</span>
+                            {m.kcalTarget != null && <span className="text-muted flex-shrink-0">{m.kcalTarget} kcal</span>}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {usesWeeklyMenu && (
+        <div className="flex gap-1 overflow-x-auto pb-1">
+          {DAY_LABELS.map((label, day) => (
+            <button key={day} onClick={() => setSelectedDay(day)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                selectedDay === day ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+              }`}>
+              {label}{day === todayDayOfWeek() ? ' · Hoy' : ''}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-3">
-        {plan.meals.map(meal => (
+        {visibleMeals.length === 0 && (
+          <p className="text-sm text-muted text-center py-4">Sin comidas para {DAY_LABELS[selectedDay]}.</p>
+        )}
+        {visibleMeals.map(meal => (
           <div key={meal.id} className="bg-card border border-border rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <p className="font-semibold text-sm">{meal.name}</p>

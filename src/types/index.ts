@@ -72,13 +72,20 @@ export interface DietMealItem {
   calciumMg?: number | null
   ironMg?: number | null
   zincMg?: number | null
+  recipeId?: string | null // receta de la que salió este ítem (si vino de "Insertar receta"), para el recetario dinámico
 }
+
+// 0=lunes ... 6=domingo. null/undefined = todos los días (comportamiento
+// anterior al cuadrante semanal, y el que siguen teniendo los planes ya
+// creados salvo que el nutricionista asigne un día concreto a una comida).
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
 export interface DietMeal {
   id: string
   name: string
   time: string
   kcalTarget: number | null
+  dayOfWeek?: DayOfWeek | null
   items: DietMealItem[]
 }
 

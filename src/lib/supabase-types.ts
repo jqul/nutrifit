@@ -60,6 +60,7 @@ export interface DietMealRow {
   name: string
   time: string
   kcal_target: number | null
+  day_of_week: number | null // 0=lunes...6=domingo, null=todos los días
   sort_order: number
 }
 
@@ -80,6 +81,7 @@ export interface DietMealItemRow {
   calcium_mg: number | null
   iron_mg: number | null
   zinc_mg: number | null
+  recipe_id: string | null
   sort_order: number
 }
 
