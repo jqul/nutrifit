@@ -2,19 +2,21 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { ANAMNESIS_QUESTIONS } from '../../lib/anamnesis'
 import { CustomAnamnesisQuestion } from '../../types'
+import { DEMO_ANAMNESIS, DEMO_NUTRICIONISTA_PROFILE } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { QuestionInput } from '../shared/QuestionInput'
 import { ClipboardList, Check } from 'lucide-react'
 
-export function AnamnesisForm({ clientId, nutricionistaId }: { clientId: string; nutricionistaId: string }) {
-  const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [completedAt, setCompletedAt] = useState<string | null>(null)
-  const [customQuestions, setCustomQuestions] = useState<CustomAnamnesisQuestion[]>([])
+export function AnamnesisForm({ clientId, nutricionistaId, demoMode }: { clientId: string; nutricionistaId: string; demoMode?: boolean }) {
+  const [answers, setAnswers] = useState<Record<string, string>>(demoMode ? (DEMO_ANAMNESIS[clientId] || {}) : {})
+  const [completedAt, setCompletedAt] = useState<string | null>(demoMode && DEMO_ANAMNESIS[clientId] ? new Date().toISOString() : null)
+  const [customQuestions, setCustomQuestions] = useState<CustomAnamnesisQuestion[]>(demoMode ? DEMO_NUTRICIONISTA_PROFILE.customAnamnesisQuestions : [])
   const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!demoMode)
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
+    if (demoMode) return
     const [{ data }, { data: nutri }] = await Promise.all([
       supabase.from('anamnesis').select('*').eq('client_id', clientId).maybeSingle(),
       supabase.from('nutricionistas').select('custom_anamnesis_questions').eq('uid', nutricionistaId).maybeSingle(),
@@ -22,13 +24,14 @@ export function AnamnesisForm({ clientId, nutricionistaId }: { clientId: string;
     if (data) { setAnswers(data.answers || {}); setCompletedAt(data.completed_at) }
     setCustomQuestions(nutri?.custom_anamnesis_questions || [])
     setLoading(false)
-  }, [clientId, nutricionistaId])
+  }, [clientId, nutricionistaId, demoMode])
 
   useEffect(() => { load() }, [load])
 
   const handleSave = async () => {
     const missing = customQuestions.find(q => q.required && !answers[q.id]?.trim())
     if (missing) { toast(`Falta responder: "${missing.label}"`, 'warn'); return }
+    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); setOpen(false); return }
     setSaving(true)
     const { error } = await supabase.from('anamnesis').upsert({
       client_id: clientId, answers, completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),

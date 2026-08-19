@@ -1,42 +1,21 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow } from '../../lib/supabase-types'
-import { dietPlanFromRows } from '../../lib/mappers'
-import { DietPlan, ClientData } from '../../types'
+import { dietPlanFromRows, foodFromRow } from '../../lib/mappers'
+import { DietPlan, ClientData, Food, DietMealItem } from '../../types'
 import { printDietPlan } from '../../lib/printPlan'
-import { Utensils, ShoppingCart, Check, Download } from 'lucide-react'
+import { buildShoppingList } from '../../lib/shoppingList'
+import { gramsForAbsoluteMacro, MacroKey } from '../../lib/foodConversion'
+import { Utensils, ShoppingCart, Check, Download, Repeat } from 'lucide-react'
 
-interface ShoppingItem { key: string; foodName: string; unit: string; totalQty: number | null; parts: string[]; fiberG: number }
+const MACRO_LABELS: Record<MacroKey, string> = { kcal: 'kcal', proteinG: 'proteína', carbsG: 'carbohidratos', fatG: 'grasas' }
 
-function buildShoppingList(plan: DietPlan): ShoppingItem[] {
-  const map = new Map<string, ShoppingItem>()
-  for (const meal of plan.meals) {
-    for (const item of meal.items) {
-      if (!item.foodName.trim()) continue
-      const key = `${item.foodName.trim().toLowerCase()}|${item.unit.trim().toLowerCase()}`
-      const qtyNum = parseFloat(item.quantity.replace(',', '.'))
-      const fiber = item.fiberG || 0
-      const existing = map.get(key)
-      if (existing) {
-        existing.totalQty = existing.totalQty !== null && !isNaN(qtyNum) ? existing.totalQty + qtyNum : null
-        if (item.quantity) existing.parts.push(item.quantity)
-        existing.fiberG += fiber
-      } else {
-        map.set(key, {
-          key, foodName: item.foodName.trim(), unit: item.unit.trim(),
-          totalQty: isNaN(qtyNum) ? null : qtyNum, parts: item.quantity ? [item.quantity] : [], fiberG: fiber,
-        })
-      }
-    }
-  }
-  return Array.from(map.values()).sort((a, b) => a.foodName.localeCompare(b.foodName))
-}
-
-export function DietaClienteTab({ client }: { client: ClientData }) {
+export function DietaClienteTab({ client, demoMode, demoPlan }: { client: ClientData; demoMode?: boolean; demoPlan?: DietPlan }) {
   const clientId = client.id
-  const [plan, setPlan] = useState<DietPlan | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [plan, setPlan] = useState<DietPlan | null>(demoPlan ?? null)
+  const [loading, setLoading] = useState(!demoPlan)
   const [checked, setChecked] = useState<Set<string>>(new Set())
+  const [foods, setFoods] = useState<Food[]>([])
 
   const toggleChecked = (key: string) => setChecked(prev => {
     const next = new Set(prev)
@@ -45,7 +24,12 @@ export function DietaClienteTab({ client }: { client: ClientData }) {
   })
 
   useEffect(() => {
-    (async () => {
+    supabase.from('foods').select('*').order('name').then(({ data }) => setFoods((data || []).map(foodFromRow)))
+  }, [])
+
+  useEffect(() => {
+    if (demoPlan) return
+    ;(async () => {
       setLoading(true)
       const { data: planRow } = await supabase.from('diet_plans').select('*').eq('client_id', clientId).eq('is_active', true).maybeSingle()
       if (!planRow) { setPlan(null); setLoading(false); return }
@@ -61,7 +45,7 @@ export function DietaClienteTab({ client }: { client: ClientData }) {
       setPlan(dietPlanFromRows(planRow, mealRows || [], itemRows, (supRows || []) as DietSupplementRow[]))
       setLoading(false)
     })()
-  }, [clientId])
+  }, [clientId, demoPlan])
 
   if (loading) return null
 
@@ -111,10 +95,7 @@ export function DietaClienteTab({ client }: { client: ClientData }) {
             {meal.items.length > 0 && (
               <ul className="space-y-1">
                 {meal.items.map(item => (
-                  <li key={item.id} className="text-sm text-muted flex justify-between">
-                    <span>{item.foodName}</span>
-                    <span>{item.quantity} {item.unit}</span>
-                  </li>
+                  <MealItemRow key={item.id} item={item} foods={foods} demoMode={demoMode} />
                 ))}
               </ul>
             )}
@@ -141,8 +122,79 @@ export function DietaClienteTab({ client }: { client: ClientData }) {
   )
 }
 
+/** Fila de un ingrediente, con un botón opcional para ver alimentos
+ * equivalentes ("sistema de intercambios") — puramente informativo: no
+ * modifica el plan real, solo muestra por cuánto se podría cambiar
+ * manteniendo el mismo macro. El cambio real solo lo hace el nutricionista. */
+function MealItemRow({ item, foods, demoMode }: { item: DietMealItem; foods: Food[]; demoMode?: boolean }) {
+  const [open, setOpen] = useState(false)
+  const [matchBy, setMatchBy] = useState<MacroKey>('proteinG')
+  const [query, setQuery] = useState('')
+
+  const itemMacro: Record<MacroKey, number | null> = {
+    kcal: item.kcal, proteinG: item.proteinG, carbsG: item.carbsG, fatG: item.fatG,
+  }
+  const canSubstitute = foods.length > 0
+
+  const suggestions = query.trim().length > 0
+    ? foods.filter(f => f.name.toLowerCase().includes(query.toLowerCase()) && f.name !== item.foodName).slice(0, 6)
+    : []
+
+  return (
+    <li>
+      <div className="text-sm text-muted flex justify-between items-center gap-2">
+        <span className="flex-1">{item.foodName}</span>
+        <span>{item.quantity} {item.unit}</span>
+        {canSubstitute && (
+          <button onClick={() => setOpen(v => !v)} title="Ver alimentos equivalentes"
+            className={`p-1 flex-shrink-0 ${open ? 'text-accent' : 'text-muted hover:text-accent'}`}>
+            <Repeat className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      {open && (
+        <div className="mt-1.5 mb-1 pl-1 pr-1 pt-2 border-t border-border space-y-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Igualar por</span>
+            {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
+              <button key={k} onClick={() => setMatchBy(k)}
+                className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors ${
+                  matchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+                }`}>
+                {MACRO_LABELS[k]}
+              </button>
+            ))}
+          </div>
+          <div className="relative">
+            <input value={query} onChange={e => setQuery(e.target.value)}
+              placeholder={`Busca un equivalente a "${item.foodName}"...`}
+              className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+            {suggestions.length > 0 && (
+              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                {suggestions.map(f => {
+                  const target = itemMacro[matchBy]
+                  const grams = target != null ? gramsForAbsoluteMacro(f, target, matchBy) : null
+                  return (
+                    <div key={f.id} className="w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between gap-2">
+                      <span>{f.name}</span>
+                      <span className="text-muted flex-shrink-0">{grams != null ? `≈ ${Math.round(grams * 10) / 10}g` : 'sin ese macro'}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          <p className="text-[10px] text-muted">
+            Solo orientativo — coméntaselo a tu nutricionista antes de cambiarlo{demoMode ? ' (modo demo)' : ''}.
+          </p>
+        </div>
+      )}
+    </li>
+  )
+}
+
 function ShoppingList({ plan, checked, onToggle }: { plan: DietPlan; checked: Set<string>; onToggle: (key: string) => void }) {
-  const items = buildShoppingList(plan)
+  const items = buildShoppingList(plan.meals)
   if (items.length === 0) return null
   return (
     <div className="bg-card border border-border rounded-2xl p-4">

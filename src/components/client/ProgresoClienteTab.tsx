@@ -9,12 +9,14 @@ import { WeightChart } from '../shared/WeightChart'
 import { Camera, Flame, UtensilsCrossed, Plus } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
-export function ProgresoClienteTab({ client }: { client: ClientData }) {
+interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[] }
+
+export function ProgresoClienteTab({ client, demoMode, demoData }: { client: ClientData; demoMode?: boolean; demoData?: DemoData }) {
   const clientId = client.id
-  const [weights, setWeights] = useState<WeightEntry[]>([])
-  const [checkins, setCheckins] = useState<DailyCheckin[]>([])
-  const [sessions, setSessions] = useState<ProgressPhotoSession[]>([])
-  const [mealLogs, setMealLogs] = useState<MealLog[]>([])
+  const [weights, setWeights] = useState<WeightEntry[]>(demoData?.weights ?? [])
+  const [checkins, setCheckins] = useState<DailyCheckin[]>(demoData?.checkins ?? [])
+  const [sessions, setSessions] = useState<ProgressPhotoSession[]>(demoData?.photos ?? [])
+  const [mealLogs, setMealLogs] = useState<MealLog[]>(demoData?.mealLogs ?? [])
   const [newWeight, setNewWeight] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
@@ -25,6 +27,7 @@ export function ProgresoClienteTab({ client }: { client: ClientData }) {
   const [savingMeal, setSavingMeal] = useState(false)
 
   const load = useCallback(async () => {
+    if (demoMode) return
     const [{ data: w }, { data: c }, { data: p }, { data: m }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', clientId).order('date'),
       supabase.from('daily_checkins').select('*').eq('client_id', clientId),
@@ -35,13 +38,14 @@ export function ProgresoClienteTab({ client }: { client: ClientData }) {
     setCheckins((c || []).map(checkinFromRow))
     setSessions((p || []).map(photoSessionFromRow))
     setMealLogs((m || []).map(mealLogFromRow))
-  }, [clientId])
+  }, [clientId, demoMode])
 
   useEffect(() => { load() }, [load])
 
   const handleAddWeight = async () => {
     const kg = parseFloat(newWeight)
     if (!kg || kg <= 0) { toast('Introduce un peso válido', 'warn'); return }
+    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); setNewWeight(''); return }
     setSaving(true)
     const { error } = await supabase.from('weight_logs').upsert({
       client_id: clientId, date: toLocalISODate(new Date()), weight_kg: kg, note: '',
@@ -53,6 +57,7 @@ export function ProgresoClienteTab({ client }: { client: ClientData }) {
   }
 
   const handleNewSession = async () => {
+    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
     const { error } = await supabase.from('progress_photos').insert({
       client_id: clientId, date: toLocalISODate(new Date()), note: '',
     })
@@ -61,6 +66,7 @@ export function ProgresoClienteTab({ client }: { client: ClientData }) {
   }
 
   const handleUpload = async (sessionId: string, angle: 'front' | 'side' | 'back', file: File) => {
+    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
     setUploading(`${sessionId}-${angle}`)
     const ext = file.name.split('.').pop()
     const path = `${clientId}/${sessionId}/${angle}_${Date.now()}.${ext}`
@@ -75,6 +81,7 @@ export function ProgresoClienteTab({ client }: { client: ClientData }) {
 
   const handleAddMealLog = async () => {
     if (!mealName.trim()) { toast('Ponle un nombre a la comida', 'warn'); return }
+    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); setAddingMeal(false); setMealName(''); setMealNote(''); setMealFile(null); return }
     setSavingMeal(true)
     let photoUrl: string | null = null
     if (mealFile) {

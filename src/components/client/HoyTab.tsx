@@ -7,6 +7,7 @@ import { toLocalISODate } from '../../lib/date'
 import { appointmentFromRow } from '../../lib/mappers'
 import { sendPush } from '../../lib/usePushNotifications'
 import { PendingSurveys } from './PendingSurveys'
+import { DEMO_APPOINTMENTS } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { CheckCircle2, Calendar, Plus, Video } from 'lucide-react'
 
@@ -24,9 +25,9 @@ const INTENSITY_OPTIONS = [
   { value: 0, label: 'Ninguna' }, { value: 1, label: 'Leve' }, { value: 2, label: 'Moderada' }, { value: 3, label: 'Intensa' },
 ]
 
-export function HoyTab({ client }: { client: ClientData }) {
+export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: boolean }) {
   const today = toLocalISODate(new Date())
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!demoMode)
   const [doneToday, setDoneToday] = useState(false)
   const [followedPlan, setFollowedPlan] = useState<FollowedPlan>('si')
   const [hunger, setHunger] = useState(3)
@@ -41,6 +42,7 @@ export function HoyTab({ client }: { client: ClientData }) {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    if (demoMode) return
     supabase.from('daily_checkins').select('*').eq('client_id', client.id).eq('date', today).maybeSingle()
       .then(({ data }) => {
         if (data) {
@@ -58,9 +60,10 @@ export function HoyTab({ client }: { client: ClientData }) {
         }
         setLoading(false)
       })
-  }, [client.id, today])
+  }, [client.id, today, demoMode])
 
   const handleSave = async () => {
+    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); setDoneToday(true); return }
     setSaving(true)
     const { error } = await supabase.from('daily_checkins').upsert({
       client_id: client.id, date: today, followed_plan: followedPlan,
@@ -81,7 +84,7 @@ export function HoyTab({ client }: { client: ClientData }) {
         <p className="text-sm text-muted mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
       </div>
 
-      <PendingSurveys client={client} />
+      <PendingSurveys client={client} demoMode={demoMode} />
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-5">
         <div className="flex items-center justify-between">
@@ -151,31 +154,33 @@ export function HoyTab({ client }: { client: ClientData }) {
         </button>
       </div>
 
-      <ProximasCitas client={client} />
+      <ProximasCitas client={client} demoMode={demoMode} demoCitas={demoMode ? DEMO_APPOINTMENTS.filter(a => a.clientId === client.id) : undefined} />
     </div>
   )
 }
 
-function ProximasCitas({ client }: { client: ClientData }) {
-  const [citas, setCitas] = useState<Appointment[]>([])
-  const [loading, setLoading] = useState(true)
+function ProximasCitas({ client, demoMode, demoCitas }: { client: ClientData; demoMode?: boolean; demoCitas?: Appointment[] }) {
+  const [citas, setCitas] = useState<Appointment[]>(demoCitas ?? [])
+  const [loading, setLoading] = useState(!demoMode)
   const [requesting, setRequesting] = useState(false)
   const [date, setDate] = useState('')
   const [time, setTime] = useState('10:00')
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
+    if (demoMode) return
     const { data } = await supabase.from('appointments').select('*')
       .eq('client_id', client.id).in('status', ['confirmada', 'pendiente'])
       .gte('start_at', new Date().toISOString()).order('start_at').limit(3)
     setCitas((data || []).map(appointmentFromRow))
     setLoading(false)
-  }, [client.id])
+  }, [client.id, demoMode])
 
   useEffect(() => { load() }, [load])
 
   const requestAppointment = async () => {
     if (!date) { toast('Elige una fecha', 'warn'); return }
+    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); setRequesting(false); setDate(''); return }
     setSaving(true)
     const start = new Date(date + 'T' + time)
     const end = new Date(start.getTime() + 30 * 60000)

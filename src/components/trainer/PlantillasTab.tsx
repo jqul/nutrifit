@@ -6,7 +6,8 @@ import { foodFromRow } from '../../lib/mappers'
 import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { Button } from '../shared/Button'
-import { BookmarkPlus, ChefHat, Trash2, Plus, X } from 'lucide-react'
+import { RecipePhotoUpload } from '../shared/RecipePhotoUpload'
+import { BookmarkPlus, ChefHat, Trash2, Plus, X, Copy } from 'lucide-react'
 
 interface EditableItem {
   id: string; foodName: string; quantity: string; unit: string
@@ -39,7 +40,7 @@ interface TemplatePlanShape {
 
 export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: string; demoMode?: boolean }) {
   const [templates, setTemplates] = useState<DietTemplateRow[]>(demoMode ? DEMO_DIET_TEMPLATES : [])
-  const [recipes, setRecipes] = useState<RecipeRow[]>(demoMode ? DEMO_RECIPES.filter(r => r.nutricionista_id !== null) : [])
+  const [recipes, setRecipes] = useState<RecipeRow[]>(demoMode ? DEMO_RECIPES : [])
   const [loading, setLoading] = useState(!demoMode)
   const [foods, setFoods] = useState<Food[]>([])
 
@@ -48,11 +49,14 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
   }, [])
 
   const load = useCallback(async () => {
-    if (demoMode) { setTemplates(DEMO_DIET_TEMPLATES); setRecipes(DEMO_RECIPES.filter(r => r.nutricionista_id !== null)); return }
+    if (demoMode) { setTemplates(DEMO_DIET_TEMPLATES); setRecipes(DEMO_RECIPES); return }
     setLoading(true)
+    // Recetas propias + del sistema (nutricionista_id null) — antes esta
+    // pantalla solo mostraba las propias, así que las del sistema no se
+    // podían ni ver ni copiar desde aquí, solo dentro del plan de un cliente.
     const [{ data: t }, { data: r }] = await Promise.all([
       supabase.from('diet_templates').select('*').eq('nutricionista_id', nutricionistaId).order('name'),
-      supabase.from('recipes').select('*').eq('nutricionista_id', nutricionistaId).order('name'),
+      supabase.from('recipes').select('*').or(`nutricionista_id.eq.${nutricionistaId},nutricionista_id.is.null`).order('name'),
     ])
     setTemplates(t || [])
     setRecipes(r || [])
@@ -75,14 +79,24 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
     toast('Receta eliminada', 'ok')
   }
 
+  const copySystemRecipe = async (r: RecipeRow) => {
+    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
+    const { error } = await supabase.from('recipes').insert({
+      nutricionista_id: nutricionistaId, name: `${r.name} (copia)`, items: r.items, steps: r.steps, photo_url: r.photo_url,
+    })
+    if (error) { toast('Error: ' + error.message, 'warn'); return }
+    toast(`"${r.name}" copiada a tus recetas ✓`, 'ok')
+    await load()
+  }
+
   // ── Editor de recetas ────────────────────────────────────────
-  const [recipeEditor, setRecipeEditor] = useState<{ mode: 'new' | 'edit'; id?: string; name: string; steps: string; items: EditableItem[] } | null>(null)
+  const [recipeEditor, setRecipeEditor] = useState<{ mode: 'new' | 'edit'; id?: string; name: string; steps: string; photoUrl: string | null; items: EditableItem[] } | null>(null)
   const [recipeSuggestFor, setRecipeSuggestFor] = useState<string | null>(null)
 
-  const openNewRecipe = () => setRecipeEditor({ mode: 'new', name: '', steps: '', items: [blankItem()] })
+  const openNewRecipe = () => setRecipeEditor({ mode: 'new', name: '', steps: '', photoUrl: null, items: [blankItem()] })
   const openEditRecipe = (r: RecipeRow) => {
     const items = ((r.items as EditableItem[] | null) || []).map(i => ({ ...i, id: i.id || newId() }))
-    setRecipeEditor({ mode: 'edit', id: r.id, name: r.name, steps: r.steps || '', items: items.length ? items : [blankItem()] })
+    setRecipeEditor({ mode: 'edit', id: r.id, name: r.name, steps: r.steps || '', photoUrl: r.photo_url, items: items.length ? items : [blankItem()] })
   }
   const closeRecipeEditor = () => setRecipeEditor(null)
 
@@ -94,11 +108,11 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); closeRecipeEditor(); return }
     const steps = recipeEditor.steps.trim() || null
     if (recipeEditor.mode === 'new') {
-      const { error } = await supabase.from('recipes').insert({ nutricionista_id: nutricionistaId, name: recipeEditor.name.trim(), steps, items })
+      const { error } = await supabase.from('recipes').insert({ nutricionista_id: nutricionistaId, name: recipeEditor.name.trim(), steps, photo_url: recipeEditor.photoUrl, items })
       if (error) { toast('Error: ' + error.message, 'warn'); return }
       toast(`Receta "${recipeEditor.name.trim()}" creada ✓`, 'ok')
     } else {
-      const { error } = await supabase.from('recipes').update({ name: recipeEditor.name.trim(), steps, items }).eq('id', recipeEditor.id)
+      const { error } = await supabase.from('recipes').update({ name: recipeEditor.name.trim(), steps, photo_url: recipeEditor.photoUrl, items }).eq('id', recipeEditor.id)
       if (error) { toast('Error: ' + error.message, 'warn'); return }
       toast('Receta actualizada ✓', 'ok')
     }
@@ -334,6 +348,8 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
         {recipeEditor && (
           <div className="bg-card border border-border rounded-2xl p-4 space-y-3 mb-3">
             <div className="flex items-center gap-2">
+              <RecipePhotoUpload nutricionistaId={nutricionistaId} currentUrl={recipeEditor.photoUrl} demoMode={demoMode} size="lg"
+                onUploaded={url => setRecipeEditor({ ...recipeEditor, photoUrl: url })} />
               <input value={recipeEditor.name} onChange={e => setRecipeEditor({ ...recipeEditor, name: e.target.value })}
                 placeholder="Nombre de la receta" autoFocus
                 className="flex-1 px-3 py-2 bg-bg border border-border rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-accent/20" />
@@ -390,33 +406,74 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
           </div>
         )}
 
-        {recipes.length === 0 && !recipeEditor ? (
-          <div className="bg-card border border-border rounded-2xl p-6 text-center">
-            <p className="text-muted text-sm">Todavía no tienes ninguna. Pulsa "Nueva receta" para crear la primera.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {recipes.map(r => {
-              const items = (r.items as { foodName?: string }[] | null) || []
-              return (
-                <div key={r.id} onClick={() => openEditRecipe(r)}
-                  className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-accent/50 transition-colors">
-                  <div>
-                    <p className="font-semibold text-sm">{r.name}</p>
-                    <p className="text-xs text-muted mt-0.5">
-                      {items.length} alimento{items.length === 1 ? '' : 's'}
-                      {items.length > 0 && ` (${items.map(i => i.foodName).filter(Boolean).join(', ')})`}
-                    </p>
-                  </div>
-                  <button onClick={e => { e.stopPropagation(); deleteRecipe(r.id) }} className="p-2 text-muted hover:text-warn flex-shrink-0" title="Eliminar receta">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+        {(() => {
+          const systemRecipes = recipes.filter(r => r.nutricionista_id === null)
+          const ownRecipes = recipes.filter(r => r.nutricionista_id !== null)
+          if (ownRecipes.length === 0 && systemRecipes.length === 0 && !recipeEditor) {
+            return (
+              <div className="bg-card border border-border rounded-2xl p-6 text-center">
+                <p className="text-muted text-sm">Todavía no tienes ninguna. Pulsa "Nueva receta" para crear la primera.</p>
+              </div>
+            )
+          }
+          return (
+            <div className="space-y-4">
+              {ownRecipes.length > 0 && (
+                <div className="space-y-2">
+                  {ownRecipes.map(r => (
+                    <RecipeListCard key={r.id} recipe={r} onClick={() => openEditRecipe(r)} onDelete={() => deleteRecipe(r.id)} />
+                  ))}
                 </div>
-              )
-            })}
-          </div>
-        )}
+              )}
+              {systemRecipes.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Recetas del sistema (compartidas, de solo lectura)</p>
+                  <div className="space-y-2">
+                    {systemRecipes.map(r => (
+                      <RecipeListCard key={r.id} recipe={r} onCopy={() => copySystemRecipe(r)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </div>
+    </div>
+  )
+}
+
+function RecipeListCard({ recipe: r, onClick, onDelete, onCopy }: {
+  recipe: RecipeRow; onClick?: () => void; onDelete?: () => void; onCopy?: () => void
+}) {
+  const items = (r.items as { foodName?: string }[] | null) || []
+  return (
+    <div onClick={onClick}
+      className={`bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3 transition-colors ${onClick ? 'cursor-pointer hover:border-accent/50' : ''}`}>
+      <div className="flex items-center gap-3 min-w-0">
+        {r.photo_url ? (
+          <img src={r.photo_url} alt={r.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+        ) : (
+          <div className="w-10 h-10 rounded-lg bg-bg-alt flex-shrink-0" />
+        )}
+        <div className="min-w-0">
+          <p className="font-semibold text-sm truncate">{r.name}</p>
+          <p className="text-xs text-muted mt-0.5 truncate">
+            {items.length} alimento{items.length === 1 ? '' : 's'}
+            {items.length > 0 && ` (${items.map(i => i.foodName).filter(Boolean).join(', ')})`}
+          </p>
+        </div>
+      </div>
+      {onDelete && (
+        <button onClick={e => { e.stopPropagation(); onDelete() }} className="p-2 text-muted hover:text-warn flex-shrink-0" title="Eliminar receta">
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+      {onCopy && (
+        <button onClick={e => { e.stopPropagation(); onCopy() }} className="p-2 text-muted hover:text-accent flex-shrink-0" title="Copiar a tus recetas">
+          <Copy className="w-4 h-4" />
+        </button>
+      )}
     </div>
   )
 }

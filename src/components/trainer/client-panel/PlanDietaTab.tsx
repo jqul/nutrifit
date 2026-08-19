@@ -10,16 +10,18 @@ import { printDietPlan } from '../../../lib/printPlan'
 import { printRecipeBook } from '../../../lib/printRecipeBook'
 import { ScannedFood } from '../../../lib/openFoodFacts'
 import { gramsForAbsoluteMacro, computeMacros, MacroKey } from '../../../lib/foodConversion'
+import { buildShoppingList } from '../../../lib/shoppingList'
 import {
   Sex, Formula, ActivityLevel, Goal, ACTIVITY_LABELS, GOAL_LABELS,
   computeMetabolicPlan, ageFromBirthDate,
 } from '../../../lib/metabolicCalculator'
 import { Button } from '../../shared/Button'
 import { BarcodeScanner } from '../../shared/BarcodeScanner'
+import { RecipePhotoUpload } from '../../shared/RecipePhotoUpload'
 import { toast } from '../../shared/Toast'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
-  ChevronDown, ChevronUp, Copy, Repeat, Camera, BookOpen, Calculator, X,
+  ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, ShoppingCart, Check,
 } from 'lucide-react'
 
 interface EditableItem {
@@ -447,7 +449,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               <RecipeGroup title="Recetas del sistema" recipes={systemRecipes} onCopy={copyRecipe} />
             )}
             {ownRecipes.length > 0 && (
-              <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} onSetPhoto={setRecipePhoto} />
+              <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} onSetPhoto={setRecipePhoto} nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />
             )}
             <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', recipes.map(r => ({
               name: r.name, photoUrl: r.photo_url, steps: r.steps, items: (r.items as EditableItem[] | null) || [],
@@ -659,6 +661,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         ))}
       </div>
 
+      <ShoppingListPreview meals={meals} />
+
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="font-semibold text-sm">Suplementación</p>
@@ -704,12 +708,11 @@ function NumInput({ label, value, onChange }: { label: string; value: string; on
   )
 }
 
-function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto }: {
+function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto, nutricionistaId, demoMode }: {
   title: string; recipes: RecipeRow[]; onDelete?: (id: string) => void; onCopy?: (recipe: RecipeRow) => void
   onSetPhoto?: (recipe: RecipeRow, url: string) => void
+  nutricionistaId?: string; demoMode?: boolean
 }) {
-  const [editingPhotoFor, setEditingPhotoFor] = useState<string | null>(null)
-  const [photoDraft, setPhotoDraft] = useState('')
   const [stepsOpenFor, setStepsOpenFor] = useState<string | null>(null)
   return (
     <div className="bg-card border border-border rounded-2xl p-4">
@@ -723,10 +726,11 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto }: {
             <div key={r.id} className="bg-bg-alt rounded-xl px-3 py-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  {r.photo_url ? (
+                  {onSetPhoto && nutricionistaId ? (
+                    <RecipePhotoUpload nutricionistaId={nutricionistaId} currentUrl={r.photo_url} demoMode={demoMode}
+                      onUploaded={url => onSetPhoto(r, url)} />
+                  ) : r.photo_url ? (
                     <img src={r.photo_url} alt={r.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
-                  ) : onSetPhoto ? (
-                    <div className="w-9 h-9 rounded-lg bg-bg flex items-center justify-center flex-shrink-0 text-muted"><Camera className="w-3.5 h-3.5" /></div>
                   ) : null}
                   <div className="min-w-0">
                     <p className="text-xs font-semibold truncate">{r.name}</p>
@@ -742,10 +746,6 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto }: {
                       {stepsOpenFor === r.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     </button>
                   )}
-                  {onSetPhoto && (
-                    <button onClick={() => { setEditingPhotoFor(editingPhotoFor === r.id ? null : r.id); setPhotoDraft(r.photo_url || '') }}
-                      className="p-1 text-muted hover:text-accent" title="Foto de la receta"><Camera className="w-3.5 h-3.5" /></button>
-                  )}
                   {onCopy && (
                     <button onClick={() => onCopy(r)} className="p-1 text-muted hover:text-accent" title="Copiar a mis recetas"><Copy className="w-3.5 h-3.5" /></button>
                   )}
@@ -758,14 +758,6 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto }: {
                 <div className="mt-2 pt-2 border-t border-border">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Preparación</p>
                   <p className="text-[11px] whitespace-pre-line">{r.steps}</p>
-                </div>
-              )}
-              {editingPhotoFor === r.id && onSetPhoto && (
-                <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border">
-                  <input value={photoDraft} onChange={e => setPhotoDraft(e.target.value)} placeholder="https://... URL de la foto"
-                    className="flex-1 px-2 py-1 bg-bg border border-border rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-accent/20" />
-                  <button onClick={() => { onSetPhoto(r, photoDraft.trim()); setEditingPhotoFor(null) }}
-                    className="px-2 py-1 bg-ink text-white rounded-lg text-[10px] font-semibold">Guardar</button>
                 </div>
               )}
             </div>
@@ -885,6 +877,48 @@ function MacroPreview({ label, value }: { label: string; value: string | number 
     <div className="bg-bg rounded-lg py-2">
       <p className="text-[9px] font-semibold uppercase tracking-wider text-muted">{label}</p>
       <p className="text-xs font-bold mt-0.5">{value}</p>
+    </div>
+  )
+}
+
+/** Vista previa de la lista de la compra que le va a generar el plan al
+ * cliente (misma lógica que DietaClienteTab), para que el nutricionista
+ * pueda verla/revisarla sin tener que mirar el panel del cliente. */
+function ShoppingListPreview({ meals }: { meals: EditableMeal[] }) {
+  const [open, setOpen] = useState(false)
+  const items = buildShoppingList(meals)
+  if (items.length === 0) return null
+  return (
+    <div className="bg-card border border-border rounded-2xl p-4">
+      <button onClick={() => setOpen(v => !v)} className="w-full flex items-center justify-between">
+        <span className="font-semibold text-sm flex items-center gap-1.5">
+          <ShoppingCart className="w-3.5 h-3.5" /> Lista de la compra ({items.length})
+        </span>
+        {open ? <ChevronUp className="w-4 h-4 text-muted" /> : <ChevronDown className="w-4 h-4 text-muted" />}
+      </button>
+      {open && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <p className="text-xs text-muted mb-2">Así es como la verá tu cliente en su panel.</p>
+          <ul className="space-y-1">
+            {items.map(item => {
+              const qtyLabel = item.totalQty !== null ? `${item.totalQty}${item.unit ? ` ${item.unit}` : ''}` : item.parts.join(' + ')
+              const fiberRounded = Math.round(item.fiberG * 10) / 10
+              return (
+                <li key={item.key} className="flex items-center gap-2 text-sm py-0.5">
+                  <Check className="w-3 h-3 text-muted flex-shrink-0" />
+                  <span className="flex-1">{item.foodName}</span>
+                  {fiberRounded > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${fiberRounded >= 5 ? 'bg-ok/10 text-ok font-semibold' : 'bg-bg-alt text-muted'}`}>
+                      {fiberRounded}g fibra
+                    </span>
+                  )}
+                  <span className="text-xs text-muted">{qtyLabel}</span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }

@@ -14,17 +14,29 @@ import { ProgresoClienteTab } from './ProgresoClienteTab'
 import { AnamnesisForm } from './AnamnesisForm'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { useAccentOverride } from '../../lib/useAccentOverride'
+import {
+  DEMO_CLIENTS, DEMO_NUTRICIONISTA_PROFILE, DEMO_DIET_PLANS,
+  DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS,
+} from '../../lib/demo-data'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'mas'
 type AuthState = 'loading' | 'needs_register' | 'needs_login' | 'authenticated'
 
+// Los enlaces "Copiar enlace del cliente" del panel de demo generan tokens
+// con este prefijo (ver DEMO_CLIENTS) — se resuelven contra los datos de
+// demo en vez de consultar Supabase, para que se puedan abrir sin cuenta
+// real ni datos en la base de datos.
+const DEMO_TOKEN_PREFIX = 'demo-token-'
+
 export function ClientView({ token }: { token: string }) {
-  const [authState, setAuthState] = useState<AuthState>('loading')
-  const [error, setError] = useState('')
+  const demoClient = token.startsWith(DEMO_TOKEN_PREFIX) ? DEMO_CLIENTS.find(c => c.token === token) : undefined
+
+  const [authState, setAuthState] = useState<AuthState>(demoClient ? 'authenticated' : 'loading')
+  const [error, setError] = useState(demoClient === undefined && token.startsWith(DEMO_TOKEN_PREFIX) ? 'Enlace no válido o expirado.' : '')
   const [client, setClient] = useState<ClienteRow | null>(null)
-  const [nutricionistaName, setNutricionistaName] = useState('Tu nutricionista')
-  const [logoUrl, setLogoUrl] = useState<string | null>(null)
-  const [accentColor, setAccentColor] = useState<string | null>(null)
+  const [nutricionistaName, setNutricionistaName] = useState(demoClient ? DEMO_NUTRICIONISTA_PROFILE.displayName : 'Tu nutricionista')
+  const [logoUrl, setLogoUrl] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.logoUrl : null)
+  const [accentColor, setAccentColor] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.accentColor : null)
   const [activeTab, setActiveTab] = useState<Tab>('hoy')
   useAccentOverride(accentColor)
   const loggingOutRef = useRef(false)
@@ -32,6 +44,7 @@ export function ClientView({ token }: { token: string }) {
   authStateRef.current = authState
 
   useEffect(() => {
+    if (demoClient) return
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (loggingOutRef.current) return
       if (session?.user && authStateRef.current === 'needs_login') setAuthState('authenticated')
@@ -66,7 +79,7 @@ export function ClientView({ token }: { token: string }) {
 
   if (error) return <NotFound />
 
-  if (authState === 'loading' || !client) return (
+  if (!demoClient && (authState === 'loading' || !client)) return (
     <div className="min-h-[100dvh] bg-bg flex items-center justify-center">
       <div className="text-center space-y-3">
         <h1 className="text-3xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span></h1>
@@ -79,9 +92,9 @@ export function ClientView({ token }: { token: string }) {
     </div>
   )
 
-  const clientName = `${client.name || ''} ${client.surname || ''}`.trim()
+  const clientName = demoClient ? `${demoClient.name} ${demoClient.surname}` : `${client!.name || ''} ${client!.surname || ''}`.trim()
 
-  if (authState === 'needs_register' || authState === 'needs_login') {
+  if (!demoClient && (authState === 'needs_register' || authState === 'needs_login')) {
     return (
       <ClientRegister
         token={token}
@@ -93,7 +106,7 @@ export function ClientView({ token }: { token: string }) {
     )
   }
 
-  const clientData = clientFromRow(client)
+  const clientData = demoClient || clientFromRow(client!)
 
   const TABS: { id: Tab; icon: typeof Home; label: string }[] = [
     { id: 'hoy', icon: Home, label: 'Hoy' },
@@ -104,6 +117,11 @@ export function ClientView({ token }: { token: string }) {
 
   return (
     <div className="h-[100dvh] overflow-hidden flex flex-col bg-bg">
+      {demoClient && (
+        <div className="bg-accent/10 text-accent text-center text-xs font-semibold py-1.5 flex-shrink-0 z-20">
+          Estás viendo la demo del panel del cliente — los datos son ficticios y los cambios no se guardan.
+        </div>
+      )}
       <header className="bg-card/95 backdrop-blur-sm border-b border-border flex-shrink-0 z-20">
         <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto w-full">
           <div className="flex items-center gap-2.5">
@@ -122,9 +140,18 @@ export function ClientView({ token }: { token: string }) {
 
       <main className="flex-1 overflow-y-auto overscroll-contain max-w-2xl mx-auto w-full relative z-10"
         style={{ paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
-        {activeTab === 'hoy' && <HoyTab client={clientData} />}
-        {activeTab === 'dieta' && <DietaClienteTab client={clientData} />}
-        {activeTab === 'progreso' && <ProgresoClienteTab client={clientData} />}
+        {activeTab === 'hoy' && <HoyTab client={clientData} demoMode={!!demoClient} />}
+        {activeTab === 'dieta' && (
+          <DietaClienteTab client={clientData} demoMode={!!demoClient} demoPlan={demoClient ? DEMO_DIET_PLANS[clientData.id] : undefined} />
+        )}
+        {activeTab === 'progreso' && (
+          <ProgresoClienteTab client={clientData} demoMode={!!demoClient} demoData={demoClient ? {
+            weights: DEMO_WEIGHTS[clientData.id] || [],
+            checkins: DEMO_CHECKINS[clientData.id] || [],
+            photos: DEMO_PHOTOS[clientData.id] || [],
+            mealLogs: DEMO_MEAL_LOGS[clientData.id] || [],
+          } : undefined} />
+        )}
         {activeTab === 'mas' && (
           <div className="px-4 py-6 space-y-4 max-w-xl mx-auto pb-24">
             <h3 className="font-serif font-bold text-xl">Más opciones</h3>
@@ -145,18 +172,24 @@ export function ClientView({ token }: { token: string }) {
                 <p className="text-sm font-semibold">Notificaciones</p>
                 <p className="text-xs text-muted">Avisos cuando tu nutricionista actualice tu plan o confirme una cita</p>
               </div>
-              <PushToggle clientId={clientData.id} />
+              <PushToggle clientId={demoClient ? undefined : clientData.id} />
             </div>
-            <AnamnesisForm clientId={clientData.id} nutricionistaId={clientData.nutricionistaId} />
-            <ChangePasswordCard />
-            <button onClick={async () => {
-              loggingOutRef.current = true
-              setAuthState('needs_login')
-              setTimeout(() => { loggingOutRef.current = false }, 5000)
-              await supabase.auth.signOut()
-            }} className="w-full py-3 border border-border rounded-2xl text-sm font-medium text-muted hover:bg-bg-alt transition-colors">
-              Cerrar sesión
-            </button>
+            <AnamnesisForm clientId={clientData.id} nutricionistaId={clientData.nutricionistaId} demoMode={!!demoClient} />
+            {!demoClient && <ChangePasswordCard />}
+            {demoClient ? (
+              <a href="/" className="block w-full text-center py-3 border border-border rounded-2xl text-sm font-medium text-muted hover:bg-bg-alt transition-colors">
+                Volver al inicio
+              </a>
+            ) : (
+              <button onClick={async () => {
+                loggingOutRef.current = true
+                setAuthState('needs_login')
+                setTimeout(() => { loggingOutRef.current = false }, 5000)
+                await supabase.auth.signOut()
+              }} className="w-full py-3 border border-border rounded-2xl text-sm font-medium text-muted hover:bg-bg-alt transition-colors">
+                Cerrar sesión
+              </button>
+            )}
           </div>
         )}
       </main>
