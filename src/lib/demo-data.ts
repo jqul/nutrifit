@@ -172,13 +172,25 @@ export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
         { id: 'i1', foodName: 'Tostadas integrales', quantity: '2', unit: 'ud', kcal: 180, proteinG: 6, carbsG: 32, fatG: 2 },
         { id: 'i2', foodName: 'Tomate y aceite de oliva', quantity: '1', unit: 'ración', kcal: 100, proteinG: 1, carbsG: 5, fatG: 9 },
       ]},
-      { id: 'm2', name: 'Comida', time: '14:30', kcalTarget: 700, items: [
+      // Pauta flexible por opciones: a Laura le cuesta seguir una pauta
+      // cerrada, así que la comida y la cena tienen dos alternativas
+      // intercambiables cada una — ella elige cuál sigue según el día.
+      { id: 'm2a', name: 'Lentejas estofadas', time: '14:30', kcalTarget: 700, optionGroup: 'demo-og-laura-comida', optionLabel: 'Opción A', items: [
         { id: 'i3', foodName: 'Lentejas estofadas', quantity: '300', unit: 'g', kcal: 350, proteinG: 20, carbsG: 55, fatG: 5 },
         { id: 'i4', foodName: 'Pan', quantity: '40', unit: 'g', kcal: 100, proteinG: 3, carbsG: 20, fatG: 1 },
       ]},
-      { id: 'm3', name: 'Cena', time: '21:00', kcalTarget: 600, items: [
+      { id: 'm2b', name: 'Pasta con atún y tomate', time: '14:30', kcalTarget: 700, optionGroup: 'demo-og-laura-comida', optionLabel: 'Opción B', items: [
+        { id: 'i3b', foodName: 'Pasta integral', quantity: '80', unit: 'g', kcal: 280, proteinG: 10, carbsG: 55, fatG: 2 },
+        { id: 'i4b', foodName: 'Atún al natural', quantity: '100', unit: 'g', kcal: 116, proteinG: 26, carbsG: 0, fatG: 1 },
+        { id: 'i5b', foodName: 'Tomate frito', quantity: '100', unit: 'g', kcal: 70, proteinG: 1, carbsG: 8, fatG: 4 },
+      ]},
+      { id: 'm3a', name: 'Tortilla francesa con espárragos', time: '21:00', kcalTarget: 600, optionGroup: 'demo-og-laura-cena', optionLabel: 'Opción A', items: [
         { id: 'i5', foodName: 'Tortilla francesa', quantity: '2', unit: 'huevos', kcal: 180, proteinG: 14, carbsG: 1, fatG: 13 },
         { id: 'i6', foodName: 'Espárragos trigueros', quantity: '150', unit: 'g', kcal: 40, proteinG: 4, carbsG: 5, fatG: 0 },
+      ]},
+      { id: 'm3b', name: 'Pechuga de pavo con verduras salteadas', time: '21:00', kcalTarget: 600, optionGroup: 'demo-og-laura-cena', optionLabel: 'Opción B', items: [
+        { id: 'i6b', foodName: 'Pechuga de pavo', quantity: '150', unit: 'g', kcal: 165, proteinG: 34, carbsG: 0, fatG: 2 },
+        { id: 'i7b', foodName: 'Verduras salteadas', quantity: '200', unit: 'g', kcal: 90, proteinG: 3, carbsG: 10, fatG: 4 },
       ]},
     ],
     supplements: [

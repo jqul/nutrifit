@@ -9,15 +9,39 @@ function esc(s: string): string {
 }
 
 function mealHtml(meal: DietMeal): string {
+  const labelHtml = meal.optionLabel ? `<span class="option-tag">${esc(meal.optionLabel)}</span>` : ''
   return `
     <div class="meal">
       <div class="meal-head">
-        <strong>${esc(meal.name)}</strong>
+        <strong>${labelHtml}${esc(meal.name)}</strong>
         <span>${meal.time ? esc(meal.time) : ''}${meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</span>
       </div>
       ${meal.items.length ? `<ul>${meal.items.map(i => `<li><span>${esc(i.foodName)}</span><span>${esc(i.quantity)} ${esc(i.unit)}</span></li>`).join('')}</ul>` : ''}
     </div>
   `
+}
+
+/** Agrupa comidas por optionGroup (pauta flexible por opciones) — igual
+ * lógica que en PlanDietaTab/DietaClienteTab, duplicada aquí porque este
+ * módulo genera HTML plano sin depender de los componentes de React. */
+function groupMeals(meals: DietMeal[]): DietMeal[][] {
+  const groups: DietMeal[][] = []
+  const byGroupId = new Map<string, DietMeal[]>()
+  for (const m of meals) {
+    if (m.optionGroup) {
+      let g = byGroupId.get(m.optionGroup)
+      if (!g) { g = []; byGroupId.set(m.optionGroup, g); groups.push(g) }
+      g.push(m)
+    } else {
+      groups.push([m])
+    }
+  }
+  return groups
+}
+
+function mealGroupHtml(group: DietMeal[]): string {
+  if (group.length === 1 && !group[0].optionGroup) return mealHtml(group[0])
+  return `<div class="option-group"><p class="option-group-label">Opciones intercambiables — elige una</p>${group.map(mealHtml).join('')}</div>`
 }
 
 /**
@@ -41,11 +65,11 @@ export function printDietPlan(client: ClientData, plan: DietPlan, branding?: Pri
   // muestran igual que antes, sin cabeceras de día.
   const usesWeeklyMenu = plan.meals.some(m => m.dayOfWeek != null)
   const everyDayMeals = plan.meals.filter(m => m.dayOfWeek == null)
-  const mealsHtml = !usesWeeklyMenu ? plan.meals.map(mealHtml).join('') : (
+  const mealsHtml = !usesWeeklyMenu ? groupMeals(plan.meals).map(mealGroupHtml).join('') : (
     DAY_LABELS.map((label, day) => {
       const dayMeals = plan.meals.filter(m => m.dayOfWeek === day)
       if (dayMeals.length === 0 && everyDayMeals.length === 0) return ''
-      return `<h3>${esc(label)}</h3>${dayMeals.map(mealHtml).join('')}${everyDayMeals.map(mealHtml).join('')}`
+      return `<h3>${esc(label)}</h3>${groupMeals(dayMeals).map(mealGroupHtml).join('')}${groupMeals(everyDayMeals).map(mealGroupHtml).join('')}`
     }).join('')
   )
 
@@ -75,6 +99,11 @@ export function printDietPlan(client: ClientData, plan: DietPlan, branding?: Pri
   .meal { border: 1px solid #e5e0d5; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
   .meal-head { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; color: #8a8278; }
   .meal-head strong { color: #2a2620; }
+  .option-group { border: 1px dashed ${accent}; border-radius: 14px; padding: 10px; margin-bottom: 10px; }
+  .option-group .meal { margin-bottom: 6px; }
+  .option-group .meal:last-child { margin-bottom: 0; }
+  .option-group-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${accent}; margin: 0 0 8px 4px; font-weight: 700; }
+  .option-tag { color: ${accent}; font-weight: 700; margin-right: 6px; }
   ul { list-style: none; padding: 0; margin: 0; }
   ul li { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: #4a463d; }
   .supplements li { border-bottom: 1px solid #e5e0d5; padding: 6px 0; }

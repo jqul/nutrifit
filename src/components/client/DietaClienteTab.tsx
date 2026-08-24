@@ -2,16 +2,46 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow } from '../../lib/supabase-types'
 import { dietPlanFromRows, foodFromRow } from '../../lib/mappers'
-import { DietPlan, ClientData, Food, DietMealItem } from '../../types'
+import { DietPlan, DietMeal, ClientData, Food, DietMealItem } from '../../types'
 import { printDietPlan } from '../../lib/printPlan'
 import { buildShoppingList } from '../../lib/shoppingList'
 import { gramsForAbsoluteMacro, MacroKey } from '../../lib/foodConversion'
-import { Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp } from 'lucide-react'
+import { Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp, Layers } from 'lucide-react'
 
 const MACRO_LABELS: Record<MacroKey, string> = { kcal: 'kcal', proteinG: 'proteína', carbsG: 'carbohidratos', fatG: 'grasas' }
 const DAY_LABELS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 /** JS Date.getDay() es 0=domingo...6=sábado; aquí usamos 0=lunes...6=domingo. */
 function todayDayOfWeek(): number { return (new Date().getDay() + 6) % 7 }
+
+/** Agrupa comidas por optionGroup (pauta flexible por opciones) — cada grupo
+ * es un array de 1+ comidas; sin optionGroup = grupo de 1 (comida fija de
+ * siempre, sin cambios). Mantiene el orden de aparición del array original. */
+function groupMeals(meals: DietMeal[]): DietMeal[][] {
+  const groups: DietMeal[][] = []
+  const byGroupId = new Map<string, DietMeal[]>()
+  for (const m of meals) {
+    if (m.optionGroup) {
+      let g = byGroupId.get(m.optionGroup)
+      if (!g) { g = []; byGroupId.set(m.optionGroup, g); groups.push(g) }
+      g.push(m)
+    } else {
+      groups.push([m])
+    }
+  }
+  return groups
+}
+
+/** Para la lista de la compra: de cada grupo de opciones se queda solo con
+ * la que el cliente ha elegido (o la primera si aún no ha elegido) — no
+ * tiene sentido comprar ingredientes de alternativas que no va a cocinar.
+ * Las comidas sin optionGroup se mantienen todas, sin cambios. */
+function resolveChosenMeals(meals: DietMeal[], choices: Record<string, string>): DietMeal[] {
+  return groupMeals(meals).map(g => {
+    if (g.length === 1) return g[0]
+    const groupId = g[0].optionGroup as string
+    return g.find(m => m.id === choices[groupId]) || g[0]
+  })
+}
 
 export function DietaClienteTab({ client, demoMode, demoPlan }: { client: ClientData; demoMode?: boolean; demoPlan?: DietPlan }) {
   const clientId = client.id
@@ -21,12 +51,33 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
   const [foods, setFoods] = useState<Food[]>([])
   const [selectedDay, setSelectedDay] = useState<number>(todayDayOfWeek())
   const [showWeekSummary, setShowWeekSummary] = useState(false)
+  // Pauta flexible por opciones: qué opción eligió el cliente para cada
+  // optionGroup. Es puramente informativo del lado del cliente — se guarda
+  // en localStorage (no en la BD) para que sobreviva a recargar la página,
+  // igual de "local" que el sistema de intercambios de alimentos.
+  const [optionChoices, setOptionChoices] = useState<Record<string, string>>({})
 
   const toggleChecked = (key: string) => setChecked(prev => {
     const next = new Set(prev)
     next.has(key) ? next.delete(key) : next.add(key)
     return next
   })
+
+  useEffect(() => {
+    if (!plan) { setOptionChoices({}); return }
+    try {
+      const raw = localStorage.getItem(`diet-option-choice:${plan.id}`)
+      setOptionChoices(raw ? JSON.parse(raw) : {})
+    } catch { setOptionChoices({}) }
+  }, [plan?.id])
+
+  const chooseOption = (groupId: string, mealId: string) => {
+    setOptionChoices(prev => {
+      const next = { ...prev, [groupId]: mealId }
+      if (plan) { try { localStorage.setItem(`diet-option-choice:${plan.id}`, JSON.stringify(next)) } catch { /* ignore */ } }
+      return next
+    })
+  }
 
   useEffect(() => {
     supabase.from('foods').select('*').order('name').then(({ data }) => setFoods((data || []).map(foodFromRow)))
@@ -99,18 +150,23 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
             <div className="mt-3 pt-3 border-t border-border space-y-2.5">
               {DAY_LABELS.map((label, day) => {
                 const dayMeals = plan.meals.filter(m => m.dayOfWeek === day || m.dayOfWeek == null)
+                const dayGroups = groupMeals(dayMeals)
                 return (
                   <button key={day} onClick={() => { setSelectedDay(day); setShowWeekSummary(false) }}
                     className={`w-full text-left rounded-xl px-3 py-2 transition-colors ${day === selectedDay ? 'bg-accent/10 border border-accent/30' : 'bg-bg-alt hover:bg-bg-alt/70'}`}>
                     <p className="text-xs font-bold uppercase tracking-wider text-muted mb-1">{label}{day === todayDayOfWeek() ? ' · Hoy' : ''}</p>
-                    {dayMeals.length === 0 ? (
+                    {dayGroups.length === 0 ? (
                       <p className="text-xs text-muted">Sin comidas</p>
                     ) : (
                       <div className="space-y-0.5">
-                        {dayMeals.map(m => (
-                          <p key={m.id} className="text-xs flex justify-between gap-2">
-                            <span className="truncate">{m.name}{m.items.length > 0 ? `: ${m.items.map(i => i.foodName).filter(Boolean).join(', ')}` : ''}</span>
-                            {m.kcalTarget != null && <span className="text-muted flex-shrink-0">{m.kcalTarget} kcal</span>}
+                        {dayGroups.map(g => (
+                          <p key={g[0].optionGroup || g[0].id} className="text-xs flex justify-between gap-2">
+                            <span className="truncate">
+                              {g.length > 1
+                                ? `${g.length} opciones: ${g.map(m => m.name).filter(Boolean).join(' · ')}`
+                                : `${g[0].name}${g[0].items.length > 0 ? `: ${g[0].items.map(i => i.foodName).filter(Boolean).join(', ')}` : ''}`}
+                            </span>
+                            {g.length === 1 && g[0].kcalTarget != null && <span className="text-muted flex-shrink-0">{g[0].kcalTarget} kcal</span>}
                           </p>
                         ))}
                       </div>
@@ -140,24 +196,46 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
         {visibleMeals.length === 0 && (
           <p className="text-sm text-muted text-center py-4">Sin comidas para {DAY_LABELS[selectedDay]}.</p>
         )}
-        {visibleMeals.map(meal => (
-          <div key={meal.id} className="bg-card border border-border rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="font-semibold text-sm">{meal.name}</p>
-              <div className="flex items-center gap-2 text-xs text-muted">
-                {meal.time && <span>{meal.time}</span>}
-                {meal.kcalTarget != null && <span>{meal.kcalTarget} kcal</span>}
+        {groupMeals(visibleMeals).map(group => {
+          const groupId = group[0].optionGroup
+          const isGroup = group.length > 1 && !!groupId
+          const chosenId = isGroup && groupId && optionChoices[groupId] && group.some(m => m.id === optionChoices[groupId])
+            ? optionChoices[groupId] : group[0].id
+          const meal = group.find(m => m.id === chosenId) || group[0]
+          return (
+            <div key={groupId || meal.id} className="bg-card border border-border rounded-2xl p-4">
+              {isGroup && groupId && (
+                <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                  <Layers className="w-3.5 h-3.5 text-accent flex-shrink-0" />
+                  <div className="flex gap-1 flex-wrap">
+                    {group.map((m, i) => (
+                      <button key={m.id} onClick={() => chooseOption(groupId, m.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                          m.id === chosenId ? 'bg-accent text-white' : 'bg-bg-alt text-muted hover:text-ink'
+                        }`}>
+                        {m.optionLabel || `Opción ${String.fromCharCode(65 + i)}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-sm">{meal.name}</p>
+                <div className="flex items-center gap-2 text-xs text-muted">
+                  {meal.time && <span>{meal.time}</span>}
+                  {meal.kcalTarget != null && <span>{meal.kcalTarget} kcal</span>}
+                </div>
               </div>
+              {meal.items.length > 0 && (
+                <ul className="space-y-1">
+                  {meal.items.map(item => (
+                    <MealItemRow key={item.id} item={item} foods={foods} demoMode={demoMode} />
+                  ))}
+                </ul>
+              )}
             </div>
-            {meal.items.length > 0 && (
-              <ul className="space-y-1">
-                {meal.items.map(item => (
-                  <MealItemRow key={item.id} item={item} foods={foods} demoMode={demoMode} />
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {visibleSupplements.length > 0 && (
@@ -174,7 +252,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
         </div>
       )}
 
-      <ShoppingList plan={plan} checked={checked} onToggle={toggleChecked} />
+      <ShoppingList meals={resolveChosenMeals(plan.meals, optionChoices)} checked={checked} onToggle={toggleChecked} />
     </div>
   )
 }
@@ -250,8 +328,8 @@ function MealItemRow({ item, foods, demoMode }: { item: DietMealItem; foods: Foo
   )
 }
 
-function ShoppingList({ plan, checked, onToggle }: { plan: DietPlan; checked: Set<string>; onToggle: (key: string) => void }) {
-  const items = buildShoppingList(plan.meals)
+function ShoppingList({ meals, checked, onToggle }: { meals: DietMeal[]; checked: Set<string>; onToggle: (key: string) => void }) {
+  const items = buildShoppingList(meals)
   if (items.length === 0) return null
   return (
     <div className="bg-card border border-border rounded-2xl p-4">

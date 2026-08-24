@@ -61,6 +61,8 @@ export interface DietMealRow {
   time: string
   kcal_target: number | null
   day_of_week: number | null // 0=lunes...6=domingo, null=todos los días
+  option_group: string | null // comidas con el mismo valor son opciones intercambiables del mismo hueco
+  option_label: string | null
   sort_order: number
 }
 

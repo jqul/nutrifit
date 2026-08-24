@@ -86,6 +86,12 @@ export interface DietMeal {
   time: string
   kcalTarget: number | null
   dayOfWeek?: DayOfWeek | null
+  // Pauta flexible por opciones: las comidas que comparten el mismo
+  // optionGroup son alternativas intercambiables del mismo hueco (ej.
+  // "Comida: Opción A / B / C") — el cliente elige cuál sigue ese día.
+  // null = comida fija, sin opciones (comportamiento de siempre).
+  optionGroup?: string | null
+  optionLabel?: string | null
   items: DietMealItem[]
 }
 
