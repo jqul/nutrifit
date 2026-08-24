@@ -84,6 +84,7 @@ export function mealFromRow(row: DietMealRow, items: DietMealItemRow[]): DietMea
     dayOfWeek: row.day_of_week as DietMeal['dayOfWeek'],
     optionGroup: row.option_group,
     optionLabel: row.option_label,
+    dayType: row.day_type,
     items: items.filter(i => i.meal_id === row.id).map(mealItemFromRow),
   }
 }

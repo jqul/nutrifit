@@ -39,6 +39,7 @@ interface EditableItem {
 interface EditableMeal {
   id: string; name: string; time: string; kcalTarget: string; dayOfWeek: number | null
   optionGroup: string | null; optionLabel: string | null
+  dayType: 'on' | 'off' | null
   items: EditableItem[]
 }
 interface EditableSupplement { id: string; name: string; dose: string; timing: string; visibleToClient: boolean }
@@ -59,6 +60,17 @@ function sumItemMacros(items: EditableItem[]) {
     fatG: acc.fatG + (parseFloat(i.fatG) || 0),
     fiberG: acc.fiberG + (parseFloat(i.fiberG) || 0),
   }), { kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 })
+}
+
+/** Suma de macros de un conjunto de comidas — para las barras de progreso
+ * "objetivo vs. lo sumado en las comidas". Cada comida cuenta una sola vez:
+ * quien llama debe pasar ya solo una comida por hueco (p.ej. una por grupo
+ * de opciones intercambiables), no todas las alternativas a la vez. */
+function sumMealsMacros(meals: EditableMeal[]) {
+  return meals.reduce((acc, m) => {
+    const t = sumItemMacros(m.items)
+    return { kcal: acc.kcal + t.kcal, proteinG: acc.proteinG + t.proteinG, carbsG: acc.carbsG + t.carbsG, fatG: acc.fatG + t.fatG, fiberG: acc.fiberG + t.fiberG }
+  }, { kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 })
 }
 
 const SCALABLE_ITEM_FIELDS: (keyof EditableItem)[] = [
@@ -94,6 +106,7 @@ function demoPlanToEditable(plan: DietPlan) {
     meals: plan.meals.map(m => ({
       id: m.id, name: m.name, time: m.time, kcalTarget: m.kcalTarget != null ? String(m.kcalTarget) : '',
       dayOfWeek: m.dayOfWeek ?? null, optionGroup: m.optionGroup ?? null, optionLabel: m.optionLabel ?? null,
+      dayType: m.dayType ?? null,
       items: m.items.map(i => ({
         id: i.id, foodName: i.foodName, quantity: i.quantity, unit: i.unit,
         kcal: i.kcal != null ? String(i.kcal) : '', proteinG: i.proteinG != null ? String(i.proteinG) : '',
@@ -242,7 +255,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     setAdvice(planRow.advice || '')
     setMeals((mealRows || []).map((m: DietMealRow) => ({
       id: m.id, name: m.name, time: m.time, kcalTarget: m.kcal_target != null ? String(m.kcal_target) : '',
-      dayOfWeek: m.day_of_week, optionGroup: m.option_group, optionLabel: m.option_label,
+      dayOfWeek: m.day_of_week, optionGroup: m.option_group, optionLabel: m.option_label, dayType: m.day_type,
       items: itemRows.filter(i => i.meal_id === m.id).map(i => ({
         id: i.id, foodName: i.food_name, quantity: i.quantity, unit: i.unit,
         kcal: i.kcal != null ? String(i.kcal) : '', proteinG: i.protein_g != null ? String(i.protein_g) : '',
@@ -289,7 +302,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       const { data: insertedMeal } = await supabase.from('diet_meals').insert({
         plan_id: planId, name: meal.name, time: meal.time,
         kcal_target: meal.kcalTarget ? parseFloat(meal.kcalTarget) : null, day_of_week: meal.dayOfWeek,
-        option_group: meal.optionGroup, option_label: meal.optionLabel, sort_order: idx,
+        option_group: meal.optionGroup, option_label: meal.optionLabel, day_type: meal.dayType, sort_order: idx,
       }).select().single()
       if (insertedMeal && meal.items.length) {
         await supabase.from('diet_meal_items').insert(meal.items.map((item, i) => ({
@@ -323,7 +336,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       meals: meals.map(m => ({
         id: m.id, name: m.name, time: m.time, kcalTarget: m.kcalTarget ? parseFloat(m.kcalTarget) : null,
         dayOfWeek: m.dayOfWeek as DietPlan['meals'][number]['dayOfWeek'],
-        optionGroup: m.optionGroup, optionLabel: m.optionLabel,
+        optionGroup: m.optionGroup, optionLabel: m.optionLabel, dayType: m.dayType,
         items: m.items.map(i => ({ id: i.id, foodName: i.foodName, quantity: i.quantity, unit: i.unit, kcal: null, proteinG: null, carbsG: null, fatG: null })),
       })),
       supplements: supplements.map(s => ({ id: s.id, name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
@@ -342,7 +355,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, fiberG: parseFloat(fiberG) || 0, advice,
         meals: meals.map(m => ({
           name: m.name, time: m.time, kcalTarget: m.kcalTarget, dayOfWeek: m.dayOfWeek,
-          optionGroup: m.optionGroup, optionLabel: m.optionLabel, items: m.items,
+          optionGroup: m.optionGroup, optionLabel: m.optionLabel, dayType: m.dayType, items: m.items,
         })),
         supplements: supplements.map(s => ({ name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
       },
@@ -360,7 +373,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     setAdvice(p.advice || '')
     setMeals((p.meals || []).map((m: any) => ({
       id: newId(), name: m.name, time: m.time, kcalTarget: m.kcalTarget || '', dayOfWeek: m.dayOfWeek ?? null,
-      optionGroup: m.optionGroup ?? null, optionLabel: m.optionLabel ?? null,
+      optionGroup: m.optionGroup ?? null, optionLabel: m.optionLabel ?? null, dayType: m.dayType ?? null,
       items: (m.items || []).map((i: any) => ({ ...i, id: newId() })),
     })))
     setSupplements((p.supplements || []).map((s: any) => ({ ...s, id: newId() })))
@@ -372,8 +385,20 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   const [selectedDay, setSelectedDay] = useState<number | 'all'>('all')
   const [copyFromDay, setCopyFromDay] = useState('')
 
+  // ── Carb cycling (día ON/OFF) ──────────────────────────────────
+  // 'all' = ver las comidas de ambos tipos de día a la vez (para editarlas);
+  // solo importa para calcular la suma de macros del día, que si no doblaría
+  // ON+OFF como si se comieran las dos el mismo día.
+  const [selectedDayType, setSelectedDayType] = useState<'all' | 'on' | 'off'>('all')
+  const usesCarbCycling = meals.some(m => m.dayType != null)
+
   const visibleMeals = meals.filter(m => selectedDay === 'all' ? m.dayOfWeek == null : (m.dayOfWeek === selectedDay || m.dayOfWeek == null))
   const usesWeeklyMenu = meals.some(m => m.dayOfWeek != null)
+  // En "Cualquiera" no tiene sentido sumar la variante ON y la OFF de la
+  // misma comida a la vez (se contaría dos veces un mismo hueco) — así que
+  // ahí solo cuentan las comidas sin dayType (las que aplican cualquier
+  // día); hay que elegir ON u OFF para ver el total de ese tipo de día.
+  const macroMeals = selectedDayType === 'all' ? visibleMeals.filter(m => m.dayType == null) : visibleMeals.filter(m => m.dayType === selectedDayType || m.dayType == null)
   // Agrupa visibleMeals por optionGroup para la pauta flexible por opciones
   // — cada grupo es un array de 1+ comidas; las comidas con optionGroup null
   // forman su propio grupo de 1 (comportamiento normal, sin cambios visuales).
@@ -419,7 +444,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     const updated = meal.optionGroup ? meals : meals.map(m => m.id === meal.id ? { ...m, optionGroup: groupId, optionLabel: m.optionLabel || 'Opción A' } : m)
     const newOption: EditableMeal = {
       id: newId(), name: meal.name, time: meal.time, kcalTarget: meal.kcalTarget, dayOfWeek: meal.dayOfWeek,
-      optionGroup: groupId, optionLabel: `Opción ${nextLetter}`, items: [],
+      optionGroup: groupId, optionLabel: `Opción ${nextLetter}`, dayType: meal.dayType, items: [],
     }
     setMeals([...updated, newOption])
   }
@@ -447,7 +472,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
   const addMeal = () => setMeals([...meals, {
     id: newId(), name: 'Comida', time: '', kcalTarget: '', dayOfWeek: selectedDay === 'all' ? null : selectedDay,
-    optionGroup: null, optionLabel: null, items: [],
+    optionGroup: null, optionLabel: null, dayType: null, items: [],
   }])
   const removeMeal = (id: string) => setMeals(meals.filter(m => m.id !== id))
   const updateMeal = (id: string, updates: Partial<EditableMeal>) => setMeals(meals.map(m => m.id === id ? { ...m, ...updates } : m))
@@ -605,6 +630,45 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           <NumInput label="Grasas (g)" value={fatG} onChange={setFatG} />
           <NumInput label="Fibra (g)" value={fiberG} onChange={setFiberG} />
         </div>
+        {(() => {
+          // Solo una comida por hueco: si hay opciones intercambiables,
+          // cuenta la primera — son alternativas del mismo hueco, no
+          // comidas que se suman todas el mismo día. Si hay carb cycling,
+          // solo cuenta el tipo de día elegido en el selector de abajo (si
+          // no, ON y OFF se sumarían como si se comieran las dos a la vez).
+          const oneOptionPerSlot = Array.from(new Map(macroMeals.map(m => [m.optionGroup || m.id, m])).values())
+          const dailyTotals = sumMealsMacros(oneOptionPerSlot)
+          if (dailyTotals.kcal === 0) return null
+          return (
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+                  Suma de {selectedDay === 'all' ? 'las comidas' : `${DAY_LABELS[selectedDay as number]}`} vs. objetivo
+                </p>
+                {usesCarbCycling && (
+                  <div className="flex gap-1">
+                    {(['all', 'on', 'off'] as const).map(v => (
+                      <button key={v} type="button" onClick={() => setSelectedDayType(v)}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors ${
+                          selectedDayType === v ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+                        }`}>
+                        {v === 'all' ? 'Cualquiera' : v === 'on' ? '🔥 ON' : '🌙 OFF'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {usesCarbCycling && selectedDayType === 'all' && (
+                <p className="text-[10px] text-muted -mt-1">Solo cuentan las comidas de "cualquier tipo" — elige ON u OFF para ver el total de ese día.</p>
+              )}
+              <MacroProgressBar label="Kcal" actual={dailyTotals.kcal} target={parseFloat(kcalTarget) || 0} unit="" />
+              <MacroProgressBar label="Proteína" actual={dailyTotals.proteinG} target={parseFloat(proteinG) || 0} unit="g" />
+              <MacroProgressBar label="Carbohidratos" actual={dailyTotals.carbsG} target={parseFloat(carbsG) || 0} unit="g" />
+              <MacroProgressBar label="Grasas" actual={dailyTotals.fatG} target={parseFloat(fatG) || 0} unit="g" />
+              <MacroProgressBar label="Fibra" actual={dailyTotals.fiberG} target={parseFloat(fiberG) || 0} unit="g" />
+            </div>
+          )
+        })()}
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Consejo del nutricionista</label>
           <textarea value={advice} onChange={e => setAdvice(e.target.value)} rows={2}
@@ -692,6 +756,13 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                 className="px-2 py-2 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
                 <option value="">Todos los días</option>
                 {DAY_LABELS.map((label, i) => <option key={i} value={i}>{label}</option>)}
+              </select>
+              <select value={meal.dayType ?? ''} onChange={e => updateMeal(meal.id, { dayType: e.target.value === '' ? null : e.target.value as 'on' | 'off' })}
+                title="Carb cycling: día de entrenamiento (ON) o de descanso (OFF)"
+                className="px-2 py-2 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+                <option value="">Cualquier tipo</option>
+                <option value="on">🔥 Día ON</option>
+                <option value="off">🌙 Día OFF</option>
               </select>
               {isGroup ? (
                 <button onClick={() => removeFromOptionGroup(meal.id)} title="Quitar de opciones" className="p-2 text-muted hover:text-warn"><X className="w-4 h-4" /></button>
@@ -908,6 +979,29 @@ function NumInput({ label, value, onChange }: { label: string; value: string; on
       <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{label}</label>
       <input type="number" value={value} onChange={e => onChange(e.target.value)}
         className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+    </div>
+  )
+}
+
+/** Barra de progreso "objetivo vs. lo sumado en las comidas" para un macro —
+ * se llena hasta el 100% del objetivo; si se pasa, la barra se corta en
+ * 100% pero cambia a rojo y el número muestra el exceso real. Sin objetivo
+ * fijado (0 o vacío) no hay nada que comparar, así que no se pinta barra. */
+function MacroProgressBar({ label, actual, target, unit }: { label: string; actual: number; target: number; unit: string }) {
+  if (!target) return null
+  const pct = (actual / target) * 100
+  const over = pct > 100
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs mb-1">
+        <span className="font-medium text-muted">{label}</span>
+        <span className={over ? 'text-warn font-semibold' : 'text-muted'}>
+          {Math.round(actual * 10) / 10}{unit} / {target}{unit}
+        </span>
+      </div>
+      <div className="h-1.5 bg-bg-alt rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${over ? 'bg-warn' : 'bg-accent'}`} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
+      </div>
     </div>
   )
 }

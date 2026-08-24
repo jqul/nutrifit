@@ -92,6 +92,11 @@ export interface DietMeal {
   // null = comida fija, sin opciones (comportamiento de siempre).
   optionGroup?: string | null
   optionLabel?: string | null
+  // Carb cycling: variante de la comida para día de entrenamiento (ON) o de
+  // descanso (OFF), independiente de dayOfWeek — el cliente elige cada día
+  // qué tipo de día es. null/undefined = aplica cualquier día (comportamiento
+  // de siempre).
+  dayType?: 'on' | 'off' | null
   items: DietMealItem[]
 }
 

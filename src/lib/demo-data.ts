@@ -123,21 +123,29 @@ export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
   'demo-client-002': {
     id: 'demo-plan-carlos', clientId: 'demo-client-002', nutricionistaId: DEMO_NUTRICIONISTA_ID,
     name: 'Plan de dieta', kcalTarget: 2800, proteinG: 180, carbsG: 320, fatG: 80, fiberG: 35,
-    advice: 'Superávit calórico progresivo. Los días de entreno (lunes, miércoles y viernes) no te saltes la merienda post-entreno.',
+    advice: 'Superávit calórico progresivo. Los días de entreno (lunes, miércoles y viernes) no te saltes la merienda post-entreno. La comida tiene dos variantes: marca en tu panel si hoy es día de entreno o de descanso para ver la que te toca.',
     isActive: true,
     // Ejemplo de cuadrante semanal: desayuno/comida/cena se repiten todos
     // los días (dayOfWeek null), y la merienda post-entreno solo aparece
     // los días que entrena (lunes=0, miércoles=2, viernes=4) — el caso de
-    // uso que el propio nutricionista describió.
+    // uso que el propio nutricionista describió. La comida además usa carb
+    // cycling (dayType), independiente del día de la semana porque el
+    // entreno real de Carlos no siempre cae justo lunes/miércoles/viernes:
+    // más carbohidratos en día ON, más grasas saludables en día OFF.
     meals: [
       { id: 'm1', name: 'Desayuno', time: '07:30', kcalTarget: 600, dayOfWeek: null, items: [
         { id: 'i1', foodName: 'Huevos revueltos', quantity: '3', unit: 'ud', kcal: 220, proteinG: 18, carbsG: 2, fatG: 15 },
         { id: 'i2', foodName: 'Pan integral', quantity: '80', unit: 'g', kcal: 200, proteinG: 8, carbsG: 38, fatG: 2 },
         { id: 'i3', foodName: 'Aguacate', quantity: '50', unit: 'g', kcal: 80, proteinG: 1, carbsG: 4, fatG: 7 },
       ]},
-      { id: 'm2', name: 'Comida', time: '13:30', kcalTarget: 800, dayOfWeek: null, items: [
+      { id: 'm2-on', name: 'Comida', time: '13:30', kcalTarget: 800, dayOfWeek: null, dayType: 'on', items: [
         { id: 'i4', foodName: 'Ternera magra', quantity: '200', unit: 'g', kcal: 380, proteinG: 50, carbsG: 0, fatG: 18 },
         { id: 'i5', foodName: 'Pasta integral', quantity: '100', unit: 'g', kcal: 350, proteinG: 13, carbsG: 68, fatG: 2 },
+      ]},
+      { id: 'm2-off', name: 'Comida', time: '13:30', kcalTarget: 750, dayOfWeek: null, dayType: 'off', items: [
+        { id: 'i4-off', foodName: 'Ternera magra', quantity: '200', unit: 'g', kcal: 380, proteinG: 50, carbsG: 0, fatG: 18 },
+        { id: 'i5-off', foodName: 'Verduras salteadas', quantity: '200', unit: 'g', kcal: 90, proteinG: 3, carbsG: 10, fatG: 4 },
+        { id: 'i6-off', foodName: 'Aguacate', quantity: '100', unit: 'g', kcal: 160, proteinG: 2, carbsG: 8.5, fatG: 14.7 },
       ]},
       { id: 'm3-lun', name: 'Post-entreno', time: '18:00', kcalTarget: 400, dayOfWeek: 0, items: [
         { id: 'i6-lun', foodName: 'Batido de proteína', quantity: '1', unit: 'scoop', kcal: 120, proteinG: 24, carbsG: 3, fatG: 1 },

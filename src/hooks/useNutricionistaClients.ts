@@ -3,14 +3,22 @@ import { supabase } from '../lib/supabase'
 import { ClientData, DailyCheckin } from '../types'
 import { clientFromRow, clientToRow, checkinFromRow } from '../lib/mappers'
 import { calcAdherence, calcStreak } from '../lib/adherence'
+import { computeClientHealth, ClientHealthStatus } from '../lib/clientHealth'
 import { toast } from '../components/shared/Toast'
-import { DEMO_CHECKINS } from '../lib/demo-data'
+import { DEMO_CHECKINS, DEMO_INVOICES } from '../lib/demo-data'
+import { InvoiceRow } from '../lib/supabase-types'
 
 export interface ClientWithStats extends ClientData {
   lastCheckin?: string
   doneToday?: boolean
   adherence7d?: number
   streak?: number
+  healthStatus?: ClientHealthStatus
+  healthLabel?: string
+}
+
+function currentPeriod(): string {
+  return new Date().toISOString().slice(0, 7)
 }
 
 interface Options {
@@ -18,18 +26,27 @@ interface Options {
   demoClients?: ClientData[]
 }
 
-function withStats(clients: ClientData[], checkinsMap: Record<string, DailyCheckin[]>): ClientWithStats[] {
+function withStats(
+  clients: ClientData[], checkinsMap: Record<string, DailyCheckin[]>, invoicesMap: Record<string, InvoiceRow[]> = {}
+): ClientWithStats[] {
   const today = new Date()
   const todayStr = toLocalISODate(today)
+  const period = currentPeriod()
   return clients.map(c => {
     const checkins = checkinsMap[c.id] || []
     const sorted = [...checkins].sort((a, b) => b.date.localeCompare(a.date))
+    const lastCheckin = sorted[0]?.date
+    const streak = calcStreak(checkins, today)
+    const hasCurrentPeriodInvoice = (invoicesMap[c.id] || []).some(i => i.period === period)
+    const health = computeClientHealth({ lastCheckin, streak, createdAt: c.createdAt, monthlyPrice: c.monthlyPrice }, hasCurrentPeriodInvoice, today)
     return {
       ...c,
-      lastCheckin: sorted[0]?.date,
-      doneToday: sorted[0]?.date === todayStr,
+      lastCheckin,
+      doneToday: lastCheckin === todayStr,
       adherence7d: calcAdherence(checkins, 7, today),
-      streak: calcStreak(checkins, today),
+      streak,
+      healthStatus: health.status,
+      healthLabel: health.label,
     }
   })
 }
@@ -52,7 +69,7 @@ export interface NewClientInput {
 
 export function useNutricionistaClients({ nutricionistaId, demoClients }: Options) {
   const [clients, setClients] = useState<ClientWithStats[]>(
-    demoClients ? withStats(demoClients, DEMO_CHECKINS) : []
+    demoClients ? withStats(demoClients, DEMO_CHECKINS, DEMO_INVOICES) : []
   )
   const [loading, setLoading] = useState(!demoClients)
 
@@ -65,25 +82,18 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
 
     if (mapped.length) {
       const ids = mapped.map(c => c.id)
-      const { data: checkinRows } = await supabase.from('daily_checkins').select('*').in('client_id', ids)
+      const [{ data: checkinRows }, { data: invoiceRows }] = await Promise.all([
+        supabase.from('daily_checkins').select('*').in('client_id', ids),
+        supabase.from('invoices').select('*').in('client_id', ids),
+      ])
       const checkinsByClient: Record<string, DailyCheckin[]> = {}
       ;(checkinRows || []).forEach((row) => {
         const c = checkinFromRow(row)
         ;(checkinsByClient[c.clientId] ||= []).push(c)
       })
-      const today = new Date()
-      const todayStr = toLocalISODate(today)
-      setClients(mapped.map(c => {
-        const checkins = checkinsByClient[c.id] || []
-        const sorted = [...checkins].sort((a, b) => b.date.localeCompare(a.date))
-        return {
-          ...c,
-          lastCheckin: sorted[0]?.date,
-          doneToday: sorted[0]?.date === todayStr,
-          adherence7d: calcAdherence(checkins, 7, today),
-          streak: calcStreak(checkins, today),
-        }
-      }))
+      const invoicesByClient: Record<string, InvoiceRow[]> = {}
+      ;(invoiceRows || []).forEach((row: InvoiceRow) => { (invoicesByClient[row.client_id] ||= []).push(row) })
+      setClients(withStats(mapped, checkinsByClient, invoicesByClient))
     } else {
       setClients([])
     }

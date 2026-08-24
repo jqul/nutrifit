@@ -15,11 +15,22 @@ import { PlantillasTab } from './PlantillasTab'
 import { AjustesTab } from './AjustesTab'
 import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
-import { Plus, Flame, Copy, LogOut, Search, Crown, Upload, ShieldCheck } from 'lucide-react'
+import { Plus, Flame, Copy, LogOut, Search, Crown, Upload, ShieldCheck, AlertTriangle, Receipt, CheckCircle2 } from 'lucide-react'
+import { ClientHealthStatus } from '../../lib/clientHealth'
 import { toast } from '../shared/Toast'
 
 const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
+}
+
+// Badge de salud del cliente ("semáforo"): un icono + color por estado, para
+// escanear la lista de un vistazo y ver quién necesita atención — ver
+// computeClientHealth para la prioridad entre estados.
+const HEALTH_BADGE: Record<ClientHealthStatus, { icon: typeof AlertTriangle; className: string }> = {
+  attention: { icon: AlertTriangle, className: 'text-warn bg-warn/10 border-warn/20' },
+  billing: { icon: Receipt, className: 'text-notice bg-notice/10 border-notice/20' },
+  streak: { icon: Flame, className: 'text-accent bg-accent/10 border-accent/20' },
+  active: { icon: CheckCircle2, className: 'text-ok bg-ok/10 border-ok/20' },
 }
 
 type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'micronutrientes' | 'plantillas' | 'difusion' | 'ajustes'
@@ -165,6 +176,8 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtered.map(c => {
                   const isTopStreak = topStreak > 0 && (c.streak || 0) === topStreak
+                  const badge = HEALTH_BADGE[c.healthStatus || 'active']
+                  const BadgeIcon = badge.icon
                   return (
                   <div key={c.id} className={`bg-card border rounded-2xl p-5 hover:shadow-sm transition-all cursor-pointer ${
                     isTopStreak ? 'border-accent/50' : 'border-border hover:border-accent/40'
@@ -195,9 +208,10 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
                       </div>
                       <span className="text-xs text-muted">{c.adherence7d || 0}%</span>
                     </div>
-                    {!c.doneToday && (
-                      <p className="text-xs text-warn mt-2">Sin check-in hoy</p>
-                    )}
+                    <div className={`inline-flex items-center gap-1 mt-3 px-2 py-1 rounded-lg border text-xs font-semibold ${badge.className}`}>
+                      <BadgeIcon className="w-3 h-3" />
+                      {c.healthLabel || 'Activo'}
+                    </div>
                   </div>
                 )})}
               </div>

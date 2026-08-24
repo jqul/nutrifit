@@ -6,7 +6,7 @@ import { DietPlan, DietMeal, ClientData, Food, DietMealItem } from '../../types'
 import { printDietPlan } from '../../lib/printPlan'
 import { buildShoppingList } from '../../lib/shoppingList'
 import { gramsForAbsoluteMacro, MacroKey } from '../../lib/foodConversion'
-import { Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp, Layers } from 'lucide-react'
+import { Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp, Layers, Flame, Moon } from 'lucide-react'
 
 const MACRO_LABELS: Record<MacroKey, string> = { kcal: 'kcal', proteinG: 'proteína', carbsG: 'carbohidratos', fatG: 'grasas' }
 const DAY_LABELS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -56,6 +56,10 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
   // en localStorage (no en la BD) para que sobreviva a recargar la página,
   // igual de "local" que el sistema de intercambios de alimentos.
   const [optionChoices, setOptionChoices] = useState<Record<string, string>>({})
+  // Carb cycling: qué tipo de día es hoy para el cliente — día de
+  // entrenamiento (ON) o de descanso (OFF). Igual de local/informativo que
+  // optionChoices: se guarda en localStorage, no en la BD.
+  const [dayType, setDayType] = useState<'on' | 'off'>('on')
 
   const toggleChecked = (key: string) => setChecked(prev => {
     const next = new Set(prev)
@@ -77,6 +81,19 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
       if (plan) { try { localStorage.setItem(`diet-option-choice:${plan.id}`, JSON.stringify(next)) } catch { /* ignore */ } }
       return next
     })
+  }
+
+  useEffect(() => {
+    if (!plan) return
+    try {
+      const raw = localStorage.getItem(`diet-day-type:${plan.id}`)
+      if (raw === 'on' || raw === 'off') setDayType(raw)
+    } catch { /* ignore */ }
+  }, [plan?.id])
+
+  const chooseDayType = (v: 'on' | 'off') => {
+    setDayType(v)
+    if (plan) { try { localStorage.setItem(`diet-day-type:${plan.id}`, v) } catch { /* ignore */ } }
   }
 
   useEffect(() => {
@@ -115,7 +132,10 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
 
   const visibleSupplements = plan.supplements.filter(s => s.visibleToClient)
   const usesWeeklyMenu = plan.meals.some(m => m.dayOfWeek != null)
-  const visibleMeals = !usesWeeklyMenu ? plan.meals : plan.meals.filter(m => m.dayOfWeek === selectedDay || m.dayOfWeek == null)
+  const usesCarbCycling = plan.meals.some(m => m.dayType != null)
+  const matchesDayType = (m: DietMeal) => m.dayType == null || m.dayType === dayType
+  const visibleMeals = (!usesWeeklyMenu ? plan.meals : plan.meals.filter(m => m.dayOfWeek === selectedDay || m.dayOfWeek == null))
+    .filter(matchesDayType)
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
@@ -140,6 +160,26 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
         </div>
       )}
 
+      {usesCarbCycling && (
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2.5">¿Hoy es día de entrenamiento?</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => chooseDayType('on')}
+              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                dayType === 'on' ? 'bg-accent text-white' : 'bg-bg-alt text-muted hover:text-ink'
+              }`}>
+              <Flame className="w-4 h-4" /> Sí, entreno
+            </button>
+            <button onClick={() => chooseDayType('off')}
+              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                dayType === 'off' ? 'bg-accent text-white' : 'bg-bg-alt text-muted hover:text-ink'
+              }`}>
+              <Moon className="w-4 h-4" /> No, descanso
+            </button>
+          </div>
+        </div>
+      )}
+
       {usesWeeklyMenu && (
         <div className="bg-card border border-border rounded-2xl p-4">
           <button onClick={() => setShowWeekSummary(v => !v)} className="w-full flex items-center justify-between">
@@ -149,7 +189,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
           {showWeekSummary && (
             <div className="mt-3 pt-3 border-t border-border space-y-2.5">
               {DAY_LABELS.map((label, day) => {
-                const dayMeals = plan.meals.filter(m => m.dayOfWeek === day || m.dayOfWeek == null)
+                const dayMeals = plan.meals.filter(m => (m.dayOfWeek === day || m.dayOfWeek == null) && matchesDayType(m))
                 const dayGroups = groupMeals(dayMeals)
                 return (
                   <button key={day} onClick={() => { setSelectedDay(day); setShowWeekSummary(false) }}
@@ -252,7 +292,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
         </div>
       )}
 
-      <ShoppingList meals={resolveChosenMeals(plan.meals, optionChoices)} checked={checked} onToggle={toggleChecked} />
+      <ShoppingList meals={resolveChosenMeals(plan.meals.filter(matchesDayType), optionChoices)} checked={checked} onToggle={toggleChecked} />
     </div>
   )
 }

@@ -10,11 +10,13 @@ function esc(s: string): string {
 
 function mealHtml(meal: DietMeal): string {
   const labelHtml = meal.optionLabel ? `<span class="option-tag">${esc(meal.optionLabel)}</span>` : ''
+  const dayTypeHtml = meal.dayType === 'on' ? `<span class="daytype-tag daytype-on">🔥 Día ON</span>`
+    : meal.dayType === 'off' ? `<span class="daytype-tag daytype-off">🌙 Día OFF</span>` : ''
   return `
     <div class="meal">
       <div class="meal-head">
         <strong>${labelHtml}${esc(meal.name)}</strong>
-        <span>${meal.time ? esc(meal.time) : ''}${meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</span>
+        <span>${dayTypeHtml}${meal.time ? esc(meal.time) : ''}${meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</span>
       </div>
       ${meal.items.length ? `<ul>${meal.items.map(i => `<li><span>${esc(i.foodName)}</span><span>${esc(i.quantity)} ${esc(i.unit)}</span></li>`).join('')}</ul>` : ''}
     </div>
@@ -104,6 +106,9 @@ export function printDietPlan(client: ClientData, plan: DietPlan, branding?: Pri
   .option-group .meal:last-child { margin-bottom: 0; }
   .option-group-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${accent}; margin: 0 0 8px 4px; font-weight: 700; }
   .option-tag { color: ${accent}; font-weight: 700; margin-right: 6px; }
+  .daytype-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; margin-right: 6px; }
+  .daytype-on { background: #fbe8d3; color: #a8710a; }
+  .daytype-off { background: #dde6f5; color: #3a5a9c; }
   ul { list-style: none; padding: 0; margin: 0; }
   ul li { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: #4a463d; }
   .supplements li { border-bottom: 1px solid #e5e0d5; padding: 6px 0; }
