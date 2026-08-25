@@ -21,6 +21,7 @@ import { BarcodeScanner } from '../../shared/BarcodeScanner'
 import { RecipePhotoUpload } from '../../shared/RecipePhotoUpload'
 import { RecipeEditorPanel } from '../../shared/RecipeEditorPanel'
 import { toast } from '../../shared/Toast'
+import { FoodConverterDrawer } from '../FoodConverterDrawer'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
   ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, ShoppingCart, Check, Send, Layers,
@@ -560,6 +561,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
   return (
     <div className="max-w-2xl space-y-6">
+      <FoodConverterDrawer nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />
       {templates.length > 0 && (
         <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-2 flex-wrap">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted">Aplicar plantilla:</span>
@@ -740,7 +742,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               )}
               {group.map(meal => (
           <div key={meal.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {isGroup && (
                 <input value={meal.optionLabel || ''} onChange={e => updateMeal(meal.id, { optionLabel: e.target.value })} placeholder="Opción A"
                   className="w-28 px-2.5 py-2 bg-bg border border-border rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-accent/20" />

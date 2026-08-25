@@ -33,9 +33,13 @@ function daysAgo(n: number): string {
 }
 
 // Placeholder de foto de progreso (SVG a color, sin depender de un bucket real).
+// btoa() a pelo trata la cadena como Latin-1 byte a byte, así que una tilde
+// o "ñ" (multibyte en UTF-8) produce un base64 corrupto y la imagen no
+// carga — encodeURIComponent+unescape antes de btoa evita justo eso (mismo
+// arreglo que ya tenía mealPlaceholder más abajo).
 function placeholderPhoto(label: string, color: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="${color}"/><text x="50%" y="50%" font-family="sans-serif" font-size="16" fill="#fff" text-anchor="middle" dominant-baseline="middle">${label}</text></svg>`
-  return `data:image/svg+xml;base64,${btoa(svg)}`
+  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`
 }
 
 // ── Clientes ────────────────────────────────────────────────

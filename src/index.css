@@ -74,9 +74,14 @@
   0%, 100% { transform: scale(1); opacity: 1; }
   50%      { transform: scale(1.14); opacity: 0.85; }
 }
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
 
 .animate-fade-in    { animation: fadeIn  0.2s ease forwards; }
 .animate-glass-pop   { animation: glassPop 0.3s ease; }
 .animate-flame-flicker { animation: flameFlicker 1.6s ease-in-out infinite; }
+.animate-slide-in-right { animation: slideInRight 0.25s ease forwards; }
 .animate-slide-up { animation: slideUp 0.25s ease forwards; }
 .pulse-dot        { animation: pulse-dot 2s infinite; }

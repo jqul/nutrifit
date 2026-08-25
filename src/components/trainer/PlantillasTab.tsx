@@ -7,6 +7,7 @@ import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { Button } from '../shared/Button'
 import { RecipeEditorPanel } from '../shared/RecipeEditorPanel'
+import { FoodConverterDrawer } from './FoodConverterDrawer'
 import { BookmarkPlus, ChefHat, Trash2, Plus, X, Copy } from 'lucide-react'
 
 interface EditableItem {
@@ -183,6 +184,7 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
 
   return (
     <div className="max-w-2xl space-y-8">
+      <FoodConverterDrawer nutricionistaId={nutricionistaId} demoMode={demoMode} />
       <div>
         <div className="flex items-center gap-2 mb-2">
           <BookmarkPlus className="w-5 h-5 text-accent" />
