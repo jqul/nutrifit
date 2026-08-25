@@ -11,8 +11,12 @@ export function FoodConverterDrawer({ nutricionistaId, demoMode }: { nutricionis
   const [open, setOpen] = useState(false)
   return (
     <>
+      {/* En modo demo hay además un aviso fijo al pie de página (DemoCTA, en
+          App.tsx) que en móvil puede ocupar dos líneas — con bottom-6 el FAB
+          quedaba justo detrás y era imposible de tocar. Se sube más en ese
+          caso para no solaparse con él. */}
       <button onClick={() => setOpen(true)} title="Conversor de alimentos"
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-ink text-white shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity">
+        className={`fixed ${demoMode ? 'bottom-24' : 'bottom-6'} right-6 z-40 w-14 h-14 rounded-full bg-ink text-white shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity`}>
         <Calculator className="w-6 h-6" />
       </button>
       {open && (

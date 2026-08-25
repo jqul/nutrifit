@@ -783,8 +783,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                 const hasExtra = item.fiberG || item.sugarG || item.sodiumMg || item.saturatedFatG || item.calciumMg || item.ironMg || item.zincMg
                 return (
                   <div key={item.id}>
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="relative flex-1 min-w-[140px]">
                         <input value={item.foodName}
                           onChange={e => updateItem(meal.id, item.id, { foodName: e.target.value })}
                           onFocus={() => setOpenSuggestFor(item.id)}
@@ -939,9 +939,9 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           <button onClick={addSupplement} className="flex items-center gap-1 text-xs font-bold text-accent"><Plus className="w-3.5 h-3.5" /> Añadir</button>
         </div>
         {supplements.map(sup => (
-          <div key={sup.id} className="bg-card border border-border rounded-2xl p-3 flex items-center gap-2">
+          <div key={sup.id} className="bg-card border border-border rounded-2xl p-3 flex items-center gap-2 flex-wrap">
             <input value={sup.name} onChange={e => updateSupplement(sup.id, { name: e.target.value })} placeholder="Nombre"
-              className="flex-1 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+              className="flex-1 min-w-[120px] px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
             <input value={sup.dose} onChange={e => updateSupplement(sup.id, { dose: e.target.value })} placeholder="Dosis"
               className="w-24 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
             <input value={sup.timing} onChange={e => updateSupplement(sup.id, { timing: e.target.value })} placeholder="Cuándo"

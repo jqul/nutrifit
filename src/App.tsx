@@ -55,10 +55,10 @@ function DemoCTA({ onRegister, onLogin }: { onRegister: () => void; onLogin: () 
   const [dismissed, setDismissed] = useState(false)
   if (dismissed) return null
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-bg border-t border-border shadow-lg px-4 py-3 flex items-center justify-between gap-3">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-bg border-t border-border shadow-lg px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
       <p className="text-sm text-muted hidden sm:block">Estás viendo la demo — los datos son ficticios y los cambios no se guardan.</p>
       <p className="text-sm font-medium sm:hidden">¿Te convence NutriFit?</p>
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
         <button onClick={onLogin} className="text-sm text-muted hover:text-ink px-3 py-1.5 rounded-lg hover:bg-bg-alt transition-colors">Entrar</button>
         <button onClick={onRegister} className="text-sm font-semibold bg-accent text-white px-4 py-1.5 rounded-lg hover:opacity-90 transition-opacity">Solicitar acceso gratis →</button>
         <button onClick={() => setDismissed(true)} className="text-muted/50 hover:text-muted ml-1 text-lg leading-none" aria-label="Cerrar">×</button>
