@@ -14,6 +14,7 @@ export interface NutricionistaRow {
   logo_url: string | null
   accent_color: string | null
   custom_domain: string | null
+  contact_phone: string | null
 }
 
 export interface ClienteRow {

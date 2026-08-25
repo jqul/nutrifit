@@ -26,6 +26,7 @@ export interface UserProfile {
   logoUrl: string | null
   accentColor: string | null
   customDomain: string | null
+  contactPhone: string | null
 }
 
 // Objetivos predefinidos con etiqueta traducida — el campo `goal` del cliente

@@ -1,17 +1,22 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ClientData, FollowedPlan, Appointment } from '../../types'
+import { ClientData, FollowedPlan, Appointment, DietPlan, MealLog, DietMeal } from '../../types'
 import { supabase } from '../../lib/supabase'
 import { logError } from '../../lib/errors'
 import { FOLLOWED_PLAN_LABELS } from '../../lib/constants'
-import { toLocalISODate } from '../../lib/date'
-import { appointmentFromRow } from '../../lib/mappers'
+import { toLocalISODate, todayDayOfWeek } from '../../lib/date'
+import { appointmentFromRow, checkinFromRow, mealLogFromRow, dietPlanFromRows } from '../../lib/mappers'
+import { calcStreak } from '../../lib/adherence'
+import { resolveTodaysMeals, loadOptionChoices, loadDayType } from '../../lib/planMeals'
 import { sendPush } from '../../lib/usePushNotifications'
 import { PendingSurveys } from './PendingSurveys'
-import { DEMO_APPOINTMENTS } from '../../lib/demo-data'
+import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
-import { CheckCircle2, Calendar, Plus, Video } from 'lucide-react'
+import { CheckCircle2, Circle, Calendar, Plus, Video, Flame, Droplet, Camera } from 'lucide-react'
 
 const SCALE = [1, 2, 3, 4, 5]
+const HUNGER_EMOJI = ['😌', '🙂', '😐', '😖', '🤤']
+const ENERGY_EMOJI = ['🥱', '😔', '😐', '🙂', '⚡']
+const MOOD_EMOJI = ['😢', '😕', '😐', '🙂', '😄']
 const BRISTOL_OPTIONS = [
   { value: 1, label: '1', hint: 'Bolitas duras' },
   { value: 2, label: '2', hint: 'Grumosa' },
@@ -24,6 +29,20 @@ const BRISTOL_OPTIONS = [
 const INTENSITY_OPTIONS = [
   { value: 0, label: 'Ninguna' }, { value: 1, label: 'Leve' }, { value: 2, label: 'Moderada' }, { value: 3, label: 'Intensa' },
 ]
+const WATER_GOAL_L = 2.0
+const WATER_GLASSES = 8 // 8 × 250ml = 2.0L
+
+function greeting(): { text: string; icon: string } {
+  const h = new Date().getHours()
+  if (h < 6) return { text: 'Buenas noches', icon: '🌙' }
+  if (h < 13) return { text: 'Buenos días', icon: '☀️' }
+  if (h < 20) return { text: 'Buenas tardes', icon: '🌤️' }
+  return { text: 'Buenas noches', icon: '🌙' }
+}
+
+function newId(): string {
+  return crypto.randomUUID()
+}
 
 export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: boolean }) {
   const today = toLocalISODate(new Date())
@@ -33,58 +52,262 @@ export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: bo
   const [hunger, setHunger] = useState(3)
   const [energy, setEnergy] = useState(3)
   const [mood, setMood] = useState(3)
-  const [waterL, setWaterL] = useState('')
+  const [waterL, setWaterL] = useState(0)
   const [notes, setNotes] = useState('')
   const [showDigestive, setShowDigestive] = useState(false)
   const [bristolScale, setBristolScale] = useState<number | null>(null)
   const [bloating, setBloating] = useState<number | null>(null)
   const [abdominalPain, setAbdominalPain] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
+  const [streak, setStreak] = useState(0)
+
+  // Plan de hoy — mismas tres capas de flexibilidad que Dieta (cuadrante
+  // semanal, carb cycling, opciones intercambiables), leídas de las mismas
+  // claves de localStorage para que las dos pantallas nunca se desincronicen
+  // aunque estén las dos montadas a la vez (ver ClientView).
+  const [plan, setPlan] = useState<DietPlan | null>(demoMode ? (DEMO_DIET_PLANS[client.id] ?? null) : null)
+  const [mealLogsToday, setMealLogsToday] = useState<MealLog[]>(
+    demoMode ? (DEMO_MEAL_LOGS[client.id] || []).filter(m => m.date === today) : []
+  )
+  const [uploadingMeal, setUploadingMeal] = useState<string | null>(null)
+
+  const loadCheckins = useCallback(async () => {
+    if (demoMode) return
+    const [{ data: todayRow }, { data: history }] = await Promise.all([
+      supabase.from('daily_checkins').select('*').eq('client_id', client.id).eq('date', today).maybeSingle(),
+      supabase.from('daily_checkins').select('*').eq('client_id', client.id),
+    ])
+    if (todayRow) {
+      setDoneToday(true)
+      setFollowedPlan(todayRow.followed_plan)
+      setHunger(todayRow.hunger)
+      setEnergy(todayRow.energy)
+      setMood(todayRow.mood)
+      setWaterL(todayRow.water_l ?? 0)
+      setNotes(todayRow.notes || '')
+      setBristolScale(todayRow.bristol_scale)
+      setBloating(todayRow.bloating)
+      setAbdominalPain(todayRow.abdominal_pain)
+      if (todayRow.bristol_scale != null || todayRow.bloating != null || todayRow.abdominal_pain != null) setShowDigestive(true)
+    }
+    setStreak(calcStreak((history || []).map(checkinFromRow)))
+    setLoading(false)
+  }, [client.id, today, demoMode])
+
+  useEffect(() => { loadCheckins() }, [loadCheckins])
 
   useEffect(() => {
     if (demoMode) return
-    supabase.from('daily_checkins').select('*').eq('client_id', client.id).eq('date', today).maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setDoneToday(true)
-          setFollowedPlan(data.followed_plan)
-          setHunger(data.hunger)
-          setEnergy(data.energy)
-          setMood(data.mood)
-          setWaterL(data.water_l != null ? String(data.water_l) : '')
-          setNotes(data.notes || '')
-          setBristolScale(data.bristol_scale)
-          setBloating(data.bloating)
-          setAbdominalPain(data.abdominal_pain)
-          if (data.bristol_scale != null || data.bloating != null || data.abdominal_pain != null) setShowDigestive(true)
-        }
-        setLoading(false)
-      })
+    ;(async () => {
+      const { data: planRow } = await supabase.from('diet_plans').select('*').eq('client_id', client.id).eq('is_active', true).maybeSingle()
+      if (!planRow) { setPlan(null); return }
+      const [{ data: mealRows }, { data: itemRowsRaw }] = await Promise.all([
+        supabase.from('diet_meals').select('*').eq('plan_id', planRow.id).order('sort_order'),
+        supabase.from('diet_meal_items').select('*'),
+      ])
+      const mealIds = new Set((mealRows || []).map((m: { id: string }) => m.id))
+      const itemRows = (itemRowsRaw || []).filter((i: { meal_id: string }) => mealIds.has(i.meal_id))
+      setPlan(dietPlanFromRows(planRow, mealRows || [], itemRows, []))
+    })()
+  }, [client.id, demoMode])
+
+  const loadMealLogs = useCallback(async () => {
+    if (demoMode) return
+    const { data } = await supabase.from('meal_logs').select('*').eq('client_id', client.id).eq('date', today)
+    setMealLogsToday((data || []).map(mealLogFromRow))
   }, [client.id, today, demoMode])
 
-  const handleSave = async () => {
+  useEffect(() => { loadMealLogs() }, [loadMealLogs])
+
+  const todaysMeals: DietMeal[] = plan
+    ? resolveTodaysMeals(plan.meals, todayDayOfWeek(), loadDayType(plan.id), loadOptionChoices(plan.id))
+    : []
+  const allMealsDone = todaysMeals.length > 0 && todaysMeals.every(m => mealLogsToday.some(l => l.mealName === m.name))
+  const waterGoalReached = waterL >= WATER_GOAL_L
+  const dayProgressPct = Math.round(([doneToday, waterGoalReached, allMealsDone].filter(Boolean).length / 3) * 100)
+
+  const saveCheckin = async (overrides: Partial<{
+    followedPlan: FollowedPlan; hunger: number; energy: number; mood: number; waterL: number; notes: string
+    bristolScale: number | null; bloating: number | null; abdominalPain: number | null
+  }> = {}) => {
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); setDoneToday(true); return }
-    setSaving(true)
-    const { error } = await supabase.from('daily_checkins').upsert({
-      client_id: client.id, date: today, followed_plan: followedPlan,
-      hunger, energy, mood, water_l: waterL ? parseFloat(waterL) : null, notes,
-      bristol_scale: bristolScale, bloating, abdominal_pain: abdominalPain,
-    }, { onConflict: 'client_id,date' })
-    setSaving(false)
+    const payload = {
+      client_id: client.id, date: today,
+      followed_plan: overrides.followedPlan ?? followedPlan,
+      hunger: overrides.hunger ?? hunger, energy: overrides.energy ?? energy, mood: overrides.mood ?? mood,
+      water_l: overrides.waterL ?? waterL, notes: overrides.notes ?? notes,
+      bristol_scale: overrides.bristolScale !== undefined ? overrides.bristolScale : bristolScale,
+      bloating: overrides.bloating !== undefined ? overrides.bloating : bloating,
+      abdominal_pain: overrides.abdominalPain !== undefined ? overrides.abdominalPain : abdominalPain,
+    }
+    const { error } = await supabase.from('daily_checkins').upsert(payload, { onConflict: 'client_id,date' })
     if (error) { logError('HoyTab:save', error); return }
     setDoneToday(true)
+    // Recalcula la racha tras el primer check-in del día — así el contador
+    // de llama reacciona al instante, sin esperar a la siguiente carga.
+    if (!doneToday) {
+      const { data } = await supabase.from('daily_checkins').select('*').eq('client_id', client.id)
+      setStreak(calcStreak((data || []).map(checkinFromRow)))
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    await saveCheckin()
+    setSaving(false)
+  }
+
+  const addWaterGlass = (glassIndex: number) => {
+    // Tocar un vaso rellena hasta ahí; tocar el último vaso ya lleno lo vacía
+    // — mismo gesto que un selector de estrellas.
+    const currentGlasses = Math.round(waterL / (WATER_GOAL_L / WATER_GLASSES))
+    const next = glassIndex === currentGlasses - 1 ? glassIndex : glassIndex + 1
+    const nextWaterL = Math.round(next * (WATER_GOAL_L / WATER_GLASSES) * 100) / 100
+    setWaterL(nextWaterL)
+    saveCheckin({ waterL: nextWaterL })
+  }
+
+  const markMealDone = async (meal: DietMeal) => {
+    if (demoMode) {
+      setMealLogsToday(prev => [...prev, { id: newId(), clientId: client.id, date: today, mealName: meal.name, note: '', photoUrl: null, createdAt: Date.now() }])
+      toast('Modo demo: los cambios no se guardan', 'ok')
+      return
+    }
+    const { data, error } = await supabase.from('meal_logs').insert({
+      client_id: client.id, date: today, meal_name: meal.name, note: '', photo_url: null,
+    }).select().single()
+    if (error) { toast('Error al marcar la comida', 'warn'); return }
+    setMealLogsToday(prev => [...prev, mealLogFromRow(data)])
+  }
+
+  const unmarkMealDone = async (meal: DietMeal) => {
+    const log = mealLogsToday.find(l => l.mealName === meal.name)
+    if (!log) return
+    if (demoMode) { setMealLogsToday(prev => prev.filter(l => l.id !== log.id)); toast('Modo demo: los cambios no se guardan', 'ok'); return }
+    await supabase.from('meal_logs').delete().eq('id', log.id)
+    setMealLogsToday(prev => prev.filter(l => l.id !== log.id))
+  }
+
+  const uploadMealPhoto = async (meal: DietMeal, file: File) => {
+    const existing = mealLogsToday.find(l => l.mealName === meal.name)
+    if (demoMode) {
+      const localUrl = URL.createObjectURL(file)
+      setMealLogsToday(prev => existing
+        ? prev.map(l => l.id === existing.id ? { ...l, photoUrl: localUrl } : l)
+        : [...prev, { id: newId(), clientId: client.id, date: today, mealName: meal.name, note: '', photoUrl: localUrl, createdAt: Date.now() }])
+      toast('Modo demo: los cambios no se guardan', 'ok')
+      return
+    }
+    setUploadingMeal(meal.id)
+    const ext = file.name.split('.').pop()
+    const path = `${client.id}/meals/${Date.now()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('photos').upload(path, file, { upsert: true })
+    if (upErr) { toast('Error al subir la foto', 'warn'); setUploadingMeal(null); return }
+    const photoUrl = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl
+    if (existing) {
+      await supabase.from('meal_logs').update({ photo_url: photoUrl }).eq('id', existing.id)
+      setMealLogsToday(prev => prev.map(l => l.id === existing.id ? { ...l, photoUrl } : l))
+    } else {
+      const { data } = await supabase.from('meal_logs').insert({
+        client_id: client.id, date: today, meal_name: meal.name, note: '', photo_url: photoUrl,
+      }).select().single()
+      if (data) setMealLogsToday(prev => [...prev, mealLogFromRow(data)])
+    }
+    setUploadingMeal(null)
+    toast('Foto añadida ✓', 'ok')
   }
 
   if (loading) return null
 
+  const g = greeting()
+
   return (
     <div className="px-4 py-6 space-y-4 max-w-xl mx-auto pb-24">
-      <div>
-        <h2 className="text-xl font-serif font-bold">Hola, {client.name.split(' ')[0]} 👋</h2>
-        <p className="text-sm text-muted mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+      {/* ── Hero: saludo, racha, progreso del día ── */}
+      <div className="bg-gradient-to-br from-accent to-accent2 rounded-2xl p-5 text-white space-y-3 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-serif font-bold">{g.text}, {client.name.split(' ')[0]} {g.icon}</h2>
+            <p className="text-xs text-white/80 mt-0.5">{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          </div>
+          {streak > 0 && (
+            <div className="flex items-center gap-1 bg-white/20 rounded-full px-3 py-1.5 flex-shrink-0">
+              <Flame className="w-4 h-4" />
+              <span className="text-sm font-bold">{streak}d</span>
+            </div>
+          )}
+        </div>
+        <div>
+          <div className="flex items-center justify-between text-xs text-white/90 mb-1">
+            <span>Progreso de hoy</span>
+            <span className="font-bold">{dayProgressPct}%</span>
+          </div>
+          <div className="h-2 bg-white/25 rounded-full overflow-hidden">
+            <div className="h-full bg-white rounded-full transition-all" style={{ width: `${dayProgressPct}%` }} />
+          </div>
+        </div>
       </div>
 
       <PendingSurveys client={client} demoMode={demoMode} />
+
+      {/* ── Tracker de hidratación ── */}
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="font-semibold text-sm flex items-center gap-1.5"><Droplet className="w-4 h-4 text-accent" /> Hidratación</p>
+          <span className="text-xs text-muted">{waterL.toFixed(2).replace(/\.?0+$/, '') || 0}L / {WATER_GOAL_L}L</span>
+        </div>
+        <div className="grid grid-cols-8 gap-1.5">
+          {Array.from({ length: WATER_GLASSES }).map((_, i) => {
+            const filled = i < Math.round(waterL / (WATER_GOAL_L / WATER_GLASSES))
+            return (
+              <button key={i} onClick={() => addWaterGlass(i)} title="+250ml"
+                className={`aspect-[3/4] rounded-lg border-2 flex items-center justify-center transition-all ${
+                  filled ? 'bg-accent/15 border-accent' : 'border-border hover:border-accent/40'
+                }`}>
+                <span className={`text-lg ${filled ? '' : 'opacity-25 grayscale'}`}>💧</span>
+              </button>
+            )
+          })}
+        </div>
+        {waterGoalReached && <p className="text-xs font-semibold text-ok">¡Objetivo de agua alcanzado! 🎉</p>}
+      </div>
+
+      {/* ── Timeline de comidas ── */}
+      {todaysMeals.length > 0 && (
+        <div className="space-y-2.5">
+          <p className="font-semibold text-sm px-1">Tus comidas de hoy</p>
+          {todaysMeals.map(meal => {
+            const log = mealLogsToday.find(l => l.mealName === meal.name)
+            const done = !!log
+            return (
+              <div key={meal.id} className={`bg-card border rounded-2xl p-4 transition-colors ${done ? 'border-ok/40' : 'border-border'}`}>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => done ? unmarkMealDone(meal) : markMealDone(meal)} className="flex-shrink-0">
+                    {done ? <CheckCircle2 className="w-6 h-6 text-ok" /> : <Circle className="w-6 h-6 text-muted" />}
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-semibold ${done ? 'line-through text-muted' : ''}`}>{meal.name}</p>
+                    <p className="text-xs text-muted">{meal.time}{meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</p>
+                  </div>
+                  {log?.photoUrl ? (
+                    <img src={log.photoUrl} alt={meal.name} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <label className="w-11 h-11 rounded-lg bg-bg-alt flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-bg-alt/70">
+                      {uploadingMeal === meal.id ? (
+                        <span className="text-[9px] text-muted">...</span>
+                      ) : (
+                        <Camera className="w-4 h-4 text-muted" />
+                      )}
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadMealPhoto(meal, f) }} />
+                    </label>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-5">
         <div className="flex items-center justify-between">
@@ -96,7 +319,7 @@ export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: bo
           <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">¿Seguiste el plan hoy?</p>
           <div className="flex gap-2">
             {(Object.keys(FOLLOWED_PLAN_LABELS) as FollowedPlan[]).map(v => (
-              <button key={v} onClick={() => setFollowedPlan(v)}
+              <button key={v} onClick={() => { setFollowedPlan(v); saveCheckin({ followedPlan: v }) }}
                 className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
                   followedPlan === v ? 'bg-ink text-white border-ink' : 'border-border text-muted hover:border-accent'
                 }`}>
@@ -106,16 +329,9 @@ export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: bo
           </div>
         </div>
 
-        <ScaleField label="Hambre" value={hunger} onChange={setHunger} />
-        <ScaleField label="Energía" value={energy} onChange={setEnergy} />
-        <ScaleField label="Ánimo" value={mood} onChange={setMood} />
-
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Agua (litros)</label>
-          <input type="number" step="0.1" value={waterL} onChange={e => setWaterL(e.target.value)}
-            placeholder="2.0"
-            className="w-full px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
-        </div>
+        <EmojiScaleField label="Hambre" value={hunger} emoji={HUNGER_EMOJI} onChange={v => { setHunger(v); saveCheckin({ hunger: v }) }} />
+        <EmojiScaleField label="Energía" value={energy} emoji={ENERGY_EMOJI} onChange={v => { setEnergy(v); saveCheckin({ energy: v }) }} />
+        <EmojiScaleField label="Ánimo" value={mood} emoji={MOOD_EMOJI} onChange={v => { setMood(v); saveCheckin({ mood: v }) }} />
 
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Notas (opcional)</label>
@@ -266,17 +482,17 @@ function IntensityField({ label, value, onChange }: { label: string; value: numb
   )
 }
 
-function ScaleField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function EmojiScaleField({ label, value, emoji, onChange }: { label: string; value: number; emoji: string[]; onChange: (v: number) => void }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">{label}</p>
       <div className="flex gap-2">
-        {SCALE.map(n => (
+        {SCALE.map((n, i) => (
           <button key={n} onClick={() => onChange(n)}
-            className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${
-              value === n ? 'bg-accent text-white border-accent' : 'border-border text-muted hover:border-accent'
+            className={`flex-1 py-2 rounded-xl text-lg border transition-all ${
+              value === n ? 'bg-accent/15 border-accent scale-110' : 'border-border hover:border-accent/40'
             }`}>
-            {n}
+            {emoji[i]}
           </button>
         ))}
       </div>

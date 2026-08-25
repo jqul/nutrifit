@@ -7,7 +7,7 @@ import { SurveyManager } from './SurveyManager'
 import { QuestionEditor } from '../shared/QuestionEditor'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { DEMO_CUSTOM_SURVEYS } from '../../lib/demo-data'
-import { Palette, Globe, ClipboardList } from 'lucide-react'
+import { Palette, Globe, ClipboardList, MessageCircle } from 'lucide-react'
 
 export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
   userProfile: UserProfile
@@ -20,6 +20,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
   const [logoUrl, setLogoUrl] = useState(userProfile.logoUrl || '')
   const [accentColor, setAccentColor] = useState(userProfile.accentColor || '#3f7d4f')
   const [customDomain, setCustomDomain] = useState(userProfile.customDomain || '')
+  const [contactPhone, setContactPhone] = useState(userProfile.contactPhone || '')
   const [savingBranding, setSavingBranding] = useState(false)
 
   const saveQuestions = async () => {
@@ -39,10 +40,11 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
       logo_url: logoUrl.trim() || null,
       accent_color: accentColor.trim() || null,
       custom_domain: customDomain.trim() || null,
+      contact_phone: contactPhone.trim() || null,
     }).eq('uid', userProfile.uid)
     setSavingBranding(false)
     if (error) { toast('Error: ' + (error.message.includes('duplicate') ? 'Ese dominio ya está en uso' : error.message), 'warn'); return }
-    onUpdateProfile({ logoUrl: logoUrl.trim() || null, accentColor: accentColor.trim() || null, customDomain: customDomain.trim() || null })
+    onUpdateProfile({ logoUrl: logoUrl.trim() || null, accentColor: accentColor.trim() || null, customDomain: customDomain.trim() || null, contactPhone: contactPhone.trim() || null })
     toast('Marca guardada ✓', 'ok')
   }
 
@@ -94,6 +96,15 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
           <p className="text-[11px] text-muted mt-1">
             Guardar aquí el dominio no lo activa por sí solo: además tienes que apuntar su DNS a Vercel y añadirlo en
             los ajustes del proyecto en Vercel (Settings → Domains). Pídenos ayuda con ese paso si lo necesitas.
+          </p>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5 flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Teléfono de WhatsApp</label>
+          <input value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="+34 600 123 456"
+            className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+          <p className="text-[11px] text-muted mt-1">
+            Le añade a tus clientes un botón de "Escribir por WhatsApp" en la cabecera de su panel, para dudas rápidas
+            sobre el menú.
           </p>
         </div>
         <Button onClick={saveBranding} loading={savingBranding}>Guardar marca</Button>

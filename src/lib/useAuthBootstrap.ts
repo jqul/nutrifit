@@ -20,7 +20,7 @@ export function useAuthBootstrap() {
   const loadProfile = async (uid: string, email: string) => {
     const { data } = await supabase
       .from('nutricionistas')
-      .select('display_name, approved, role, custom_anamnesis_questions, logo_url, accent_color, custom_domain')
+      .select('display_name, approved, role, custom_anamnesis_questions, logo_url, accent_color, custom_domain, contact_phone')
       .eq('uid', uid)
       .maybeSingle()
 
@@ -42,6 +42,7 @@ export function useAuthBootstrap() {
       logoUrl: data.logo_url ?? null,
       accentColor: data.accent_color ?? null,
       customDomain: data.custom_domain ?? null,
+      contactPhone: data.contact_phone ?? null,
     })
     setView('trainer')
   }

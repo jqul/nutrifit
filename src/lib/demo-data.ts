@@ -19,6 +19,7 @@ export const DEMO_NUTRICIONISTA_PROFILE: UserProfile = {
   logoUrl: null,
   accentColor: null,
   customDomain: null,
+  contactPhone: '+34 600 987 654',
 }
 
 function toLocalISODate(d: Date): string {
@@ -383,13 +384,24 @@ export const DEMO_RECIPES: RecipeRow[] = [
 
 export const DEMO_PHOTOS: Record<string, ProgressPhotoSession[]> = {
   'demo-client-001': [],
-  'demo-client-002': [{
-    id: 'ph-carlos-1', clientId: 'demo-client-002', date: daysAgo(14),
-    frontUrl: placeholderPhoto('Frontal', '#3f7d4f'),
-    sideUrl: placeholderPhoto('Perfil', '#8fae6c'),
-    backUrl: placeholderPhoto('Espalda', '#1a6038'),
-    note: 'Semana 8 del plan',
-  }],
+  // Dos sesiones para poder mostrar el comparador antes/después: la primera
+  // (hace 60 días, al empezar el plan) y la más reciente (hace 14 días).
+  'demo-client-002': [
+    {
+      id: 'ph-carlos-2', clientId: 'demo-client-002', date: daysAgo(14),
+      frontUrl: placeholderPhoto('Frontal', '#3f7d4f'),
+      sideUrl: placeholderPhoto('Perfil', '#8fae6c'),
+      backUrl: placeholderPhoto('Espalda', '#1a6038'),
+      note: 'Semana 8 del plan',
+    },
+    {
+      id: 'ph-carlos-1', clientId: 'demo-client-002', date: daysAgo(60),
+      frontUrl: placeholderPhoto('Frontal · inicio', '#9c8a5c'),
+      sideUrl: placeholderPhoto('Perfil · inicio', '#b5a374'),
+      backUrl: placeholderPhoto('Espalda · inicio', '#8a7a4e'),
+      note: 'Día 1 del plan',
+    },
+  ],
   'demo-client-003': [],
 }
 

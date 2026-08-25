@@ -6,8 +6,10 @@ import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClientData } 
 import { calcAdherence, calcStreak } from '../../lib/adherence'
 import { toLocalISODate } from '../../lib/date'
 import { WeightChart } from '../shared/WeightChart'
-import { Camera, Flame, UtensilsCrossed, Plus } from 'lucide-react'
+import { Camera, Flame, UtensilsCrossed, Plus, Images } from 'lucide-react'
 import { toast } from '../shared/Toast'
+
+const HYDRATION_GOAL_L = 2.0
 
 interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[] }
 
@@ -114,6 +116,10 @@ export function ProgresoClienteTab({ client, demoMode, demoData }: { client: Cli
         <StatCard label="Adherencia 30d" value={`${adherence30d}%`} />
       </div>
 
+      <AchievementBadges weights={weights} streak={streak} checkins={checkins} mealLogs={mealLogs} />
+
+      <WeightImpactCard weights={weights} goalKg={client.goalWeightKg} />
+
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <p className="font-semibold text-sm">Peso corporal</p>
         <div className="flex gap-2">
@@ -127,6 +133,8 @@ export function ProgresoClienteTab({ client, demoMode, demoData }: { client: Cli
         </div>
         <WeightChart entries={weights} goalKg={client.goalWeightKg} />
       </div>
+
+      <PhotoComparator sessions={sessions} />
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <div className="flex items-center justify-between">
@@ -211,6 +219,135 @@ export function ProgresoClienteTab({ client, demoMode, demoData }: { client: Cli
             ))}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/** Muro de logros — badges desbloqueables calculados al vuelo a partir de
+ * datos que ya existen (peso, racha, hidratación, fotos de comida), sin
+ * tabla nueva: son hitos, no algo que haya que auditar ni deshacer. */
+function AchievementBadges({ weights, streak, checkins, mealLogs }: {
+  weights: WeightEntry[]; streak: number; checkins: DailyCheckin[]; mealLogs: MealLog[]
+}) {
+  const hydratedDays = checkins.filter(c => (c.waterL || 0) >= HYDRATION_GOAL_L).length
+  const mealPhotoCount = mealLogs.filter(m => m.photoUrl).length
+  const badges = [
+    { icon: '🎯', label: 'Primer pesaje', unlocked: weights.length >= 1 },
+    { icon: '🔥', label: '7 días de racha', unlocked: streak >= 7 },
+    { icon: '💧', label: 'Rey/reina del agua', unlocked: hydratedDays >= 5 },
+    { icon: '🥗', label: '10 fotos de comida', unlocked: mealPhotoCount >= 10 },
+  ]
+  return (
+    <div className="bg-card border border-border rounded-2xl p-5">
+      <p className="font-semibold text-sm mb-3">Tus logros</p>
+      <div className="grid grid-cols-4 gap-2">
+        {badges.map(b => (
+          <div key={b.label} title={b.unlocked ? '¡Desbloqueado!' : 'Todavía bloqueado'}
+            className={`flex flex-col items-center gap-1 py-3 rounded-xl border transition-all ${
+              b.unlocked ? 'border-accent/30 bg-accent/5' : 'border-border opacity-40 grayscale'
+            }`}>
+            <span className="text-2xl">{b.icon}</span>
+            <p className="text-[9px] text-center text-muted leading-tight">{b.label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Tarjeta de impacto: mismo dato que las fichas de WeightChart, pero en un
+ * formato "hero" con barra de progreso hacia la meta — para dar una lectura
+ * de un vistazo y con más gratificación visual que la gráfica en sí. */
+function WeightImpactCard({ weights, goalKg }: { weights: WeightEntry[]; goalKg: number | null }) {
+  if (weights.length === 0) return null
+  const sorted = [...weights].sort((a, b) => a.date.localeCompare(b.date))
+  const initial = sorted[0].weightKg
+  const current = sorted[sorted.length - 1].weightKg
+  const changeKg = current - initial
+  const goalReached = goalKg != null && Math.abs(current - goalKg) < 0.1
+
+  let progressPct: number | null = null
+  let remainingKg: number | null = null
+  if (goalKg != null) {
+    remainingKg = Math.abs(current - goalKg)
+    const totalDistance = Math.abs(initial - goalKg)
+    progressPct = totalDistance > 0 ? Math.min(100, Math.max(0, ((totalDistance - remainingKg) / totalDistance) * 100)) : 100
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-accent to-accent2 rounded-2xl p-5 text-white space-y-3 shadow-sm">
+      <p className="text-xs font-bold uppercase tracking-wider text-white/80">Tu progreso de peso</p>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="text-center">
+          <p className="text-lg font-serif font-bold">{initial}kg</p>
+          <p className="text-[9px] text-white/80 uppercase tracking-wider">Inicial</p>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-serif font-bold">{current}kg</p>
+          <p className="text-[9px] text-white/80 uppercase tracking-wider">Actual</p>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-serif font-bold">{changeKg <= 0 ? '−' : '+'}{Math.abs(changeKg).toFixed(1)}kg</p>
+          <p className="text-[9px] text-white/80 uppercase tracking-wider">Cambio</p>
+        </div>
+      </div>
+      {goalKg != null && progressPct != null && (
+        <div>
+          <div className="flex items-center justify-between text-xs text-white/90 mb-1">
+            <span>{goalReached ? '¡Objetivo alcanzado! 🎉' : `Estás a solo ${remainingKg!.toFixed(1)}kg de tu objetivo`}</span>
+            <span className="font-bold">{Math.round(progressPct)}%</span>
+          </div>
+          <div className="h-2 bg-white/25 rounded-full overflow-hidden">
+            <div className="h-full bg-white rounded-full transition-all" style={{ width: `${progressPct}%` }} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Comparador antes/después: la primera sesión con fotos frente a la más
+ * reciente, con selector de ángulo — solo aparece con 2+ sesiones (si no,
+ * no hay "antes" con el que comparar). */
+function PhotoComparator({ sessions }: { sessions: ProgressPhotoSession[] }) {
+  const [angle, setAngle] = useState<'front' | 'side' | 'back'>('front')
+  if (sessions.length < 2) return null
+  // Vienen ordenadas de más reciente a más antigua (ver load()).
+  const after = sessions[0]
+  const before = sessions[sessions.length - 1]
+  const urlFor = (s: ProgressPhotoSession) => angle === 'front' ? s.frontUrl : angle === 'side' ? s.sideUrl : s.backUrl
+  const ANGLE_LABELS = { front: 'Frontal', side: 'Perfil', back: 'Espalda' } as const
+
+  return (
+    <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <p className="font-semibold text-sm flex items-center gap-1.5"><Images className="w-4 h-4" /> Antes vs. después</p>
+      <div className="flex gap-1.5">
+        {(['front', 'side', 'back'] as const).map(a => (
+          <button key={a} onClick={() => setAngle(a)}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              angle === a ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+            }`}>
+            {ANGLE_LABELS[a]}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {[{ session: before, tag: 'Antes' }, { session: after, tag: 'Después' }].map(({ session, tag }) => {
+          const url = urlFor(session)
+          return (
+            <div key={tag}>
+              <div className="aspect-square bg-bg-alt rounded-xl overflow-hidden flex items-center justify-center">
+                {url ? <img src={url} className="w-full h-full object-cover" alt={`${tag} — ${ANGLE_LABELS[angle]}`} /> : (
+                  <span className="text-xs text-muted">Sin foto</span>
+                )}
+              </div>
+              <p className="text-[10px] text-muted text-center mt-1 font-semibold">
+                {tag} · {new Date(session.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+              </p>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

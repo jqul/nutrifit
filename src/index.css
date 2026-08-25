@@ -16,6 +16,8 @@
   --color-ok:      #1a6038;
   --color-warn:    #b02a20;
   --color-notice:  #a8710a;
+  --color-protein: #2b6cb0;
+  --color-fat:     #8a6d15;
 }
 
 .dark {
@@ -30,6 +32,8 @@
   --color-ok:      #34c97a;
   --color-warn:    #ef6b5e;
   --color-notice:  #e0a530;
+  --color-protein: #6fb1f0;
+  --color-fat:     #e0c860;
 }
 
 @layer base {

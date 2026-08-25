@@ -4,39 +4,28 @@ import { DietMealRow, DietMealItemRow, DietSupplementRow } from '../../lib/supab
 import { dietPlanFromRows, foodFromRow } from '../../lib/mappers'
 import { DietPlan, DietMeal, ClientData, Food, DietMealItem } from '../../types'
 import { printDietPlan } from '../../lib/printPlan'
-import { buildShoppingList } from '../../lib/shoppingList'
+import { buildShoppingList, groupShoppingItemsByAisle } from '../../lib/shoppingList'
 import { gramsForAbsoluteMacro, MacroKey } from '../../lib/foodConversion'
-import { Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp, Layers, Flame, Moon } from 'lucide-react'
+import { todayDayOfWeek } from '../../lib/date'
+import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, saveDayType } from '../../lib/planMeals'
+import { buildWAUrl } from '../../lib/whatsapp'
+import { BottomSheet } from '../shared/BottomSheet'
+import { BarcodeScanner } from '../shared/BarcodeScanner'
+import { ScannedFood } from '../../lib/openFoodFacts'
+import {
+  Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp, Layers, Flame, Moon,
+  Barcode, MessageCircle,
+} from 'lucide-react'
 
 const MACRO_LABELS: Record<MacroKey, string> = { kcal: 'kcal', proteinG: 'proteína', carbsG: 'carbohidratos', fatG: 'grasas' }
 const DAY_LABELS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-/** JS Date.getDay() es 0=domingo...6=sábado; aquí usamos 0=lunes...6=domingo. */
-function todayDayOfWeek(): number { return (new Date().getDay() + 6) % 7 }
-
-/** Agrupa comidas por optionGroup (pauta flexible por opciones) — cada grupo
- * es un array de 1+ comidas; sin optionGroup = grupo de 1 (comida fija de
- * siempre, sin cambios). Mantiene el orden de aparición del array original. */
-function groupMeals(meals: DietMeal[]): DietMeal[][] {
-  const groups: DietMeal[][] = []
-  const byGroupId = new Map<string, DietMeal[]>()
-  for (const m of meals) {
-    if (m.optionGroup) {
-      let g = byGroupId.get(m.optionGroup)
-      if (!g) { g = []; byGroupId.set(m.optionGroup, g); groups.push(g) }
-      g.push(m)
-    } else {
-      groups.push([m])
-    }
-  }
-  return groups
-}
 
 /** Para la lista de la compra: de cada grupo de opciones se queda solo con
  * la que el cliente ha elegido (o la primera si aún no ha elegido) — no
  * tiene sentido comprar ingredientes de alternativas que no va a cocinar.
  * Las comidas sin optionGroup se mantienen todas, sin cambios. */
 function resolveChosenMeals(meals: DietMeal[], choices: Record<string, string>): DietMeal[] {
-  return groupMeals(meals).map(g => {
+  return groupMealsByOption(meals).map(g => {
     if (g.length === 1) return g[0]
     const groupId = g[0].optionGroup as string
     return g.find(m => m.id === choices[groupId]) || g[0]
@@ -60,6 +49,8 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
   // entrenamiento (ON) o de descanso (OFF). Igual de local/informativo que
   // optionChoices: se guarda en localStorage, no en la BD.
   const [dayType, setDayType] = useState<'on' | 'off'>('on')
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const [scannedFood, setScannedFood] = useState<ScannedFood | null>(null)
 
   const toggleChecked = (key: string) => setChecked(prev => {
     const next = new Set(prev)
@@ -68,32 +59,21 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
   })
 
   useEffect(() => {
-    if (!plan) { setOptionChoices({}); return }
-    try {
-      const raw = localStorage.getItem(`diet-option-choice:${plan.id}`)
-      setOptionChoices(raw ? JSON.parse(raw) : {})
-    } catch { setOptionChoices({}) }
+    setOptionChoices(plan ? loadOptionChoices(plan.id) : {})
   }, [plan?.id])
 
   const chooseOption = (groupId: string, mealId: string) => {
-    setOptionChoices(prev => {
-      const next = { ...prev, [groupId]: mealId }
-      if (plan) { try { localStorage.setItem(`diet-option-choice:${plan.id}`, JSON.stringify(next)) } catch { /* ignore */ } }
-      return next
-    })
+    if (!plan) return
+    setOptionChoices(saveOptionChoice(plan.id, groupId, mealId))
   }
 
   useEffect(() => {
-    if (!plan) return
-    try {
-      const raw = localStorage.getItem(`diet-day-type:${plan.id}`)
-      if (raw === 'on' || raw === 'off') setDayType(raw)
-    } catch { /* ignore */ }
+    if (plan) setDayType(loadDayType(plan.id))
   }, [plan?.id])
 
   const chooseDayType = (v: 'on' | 'off') => {
     setDayType(v)
-    if (plan) { try { localStorage.setItem(`diet-day-type:${plan.id}`, v) } catch { /* ignore */ } }
+    if (plan) saveDayType(plan.id, v)
   }
 
   useEffect(() => {
@@ -139,12 +119,28 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center gap-2">
+        <button onClick={() => setScannerOpen(true)} className="flex items-center gap-1.5 text-xs font-bold text-accent">
+          <Barcode className="w-3.5 h-3.5" /> Escanear producto
+        </button>
         <button onClick={() => printDietPlan(client, plan)}
           className="flex items-center gap-1.5 text-xs font-bold text-accent">
           <Download className="w-3.5 h-3.5" /> Descargar PDF
         </button>
       </div>
+
+      <BarcodeScanner open={scannerOpen} onClose={() => setScannerOpen(false)} onFound={food => { setScannerOpen(false); setScannedFood(food) }} />
+      {scannedFood && (
+        <BottomSheet open onClose={() => setScannedFood(null)} title={scannedFood.name}>
+          <div className="grid grid-cols-4 gap-2 mb-3">
+            <MacroCard label="Kcal" value={Math.round(scannedFood.kcal)} />
+            <MacroCard label="Prot." value={Math.round(scannedFood.proteinG * 10) / 10} suffix="g" />
+            <MacroCard label="Carbos" value={Math.round(scannedFood.carbsG * 10) / 10} suffix="g" />
+            <MacroCard label="Grasas" value={Math.round(scannedFood.fatG * 10) / 10} suffix="g" />
+          </div>
+          <p className="text-xs text-muted">Valores por 100g, según Open Food Facts. Comprueba en el envase si encaja en tus macros de hoy.</p>
+        </BottomSheet>
+      )}
       <div className="grid grid-cols-5 gap-2">
         <MacroCard label="Kcal" value={plan.kcalTarget} />
         <MacroCard label="Prot." value={plan.proteinG} suffix="g" />
@@ -190,7 +186,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
             <div className="mt-3 pt-3 border-t border-border space-y-2.5">
               {DAY_LABELS.map((label, day) => {
                 const dayMeals = plan.meals.filter(m => (m.dayOfWeek === day || m.dayOfWeek == null) && matchesDayType(m))
-                const dayGroups = groupMeals(dayMeals)
+                const dayGroups = groupMealsByOption(dayMeals)
                 return (
                   <button key={day} onClick={() => { setSelectedDay(day); setShowWeekSummary(false) }}
                     className={`w-full text-left rounded-xl px-3 py-2 transition-colors ${day === selectedDay ? 'bg-accent/10 border border-accent/30' : 'bg-bg-alt hover:bg-bg-alt/70'}`}>
@@ -236,7 +232,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
         {visibleMeals.length === 0 && (
           <p className="text-sm text-muted text-center py-4">Sin comidas para {DAY_LABELS[selectedDay]}.</p>
         )}
-        {groupMeals(visibleMeals).map(group => {
+        {groupMealsByOption(visibleMeals).map(group => {
           const groupId = group[0].optionGroup
           const isGroup = group.length > 1 && !!groupId
           const chosenId = isGroup && groupId && optionChoices[groupId] && group.some(m => m.id === optionChoices[groupId])
@@ -266,8 +262,9 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
                   {meal.kcalTarget != null && <span>{meal.kcalTarget} kcal</span>}
                 </div>
               </div>
+              {meal.items.length > 0 && <MealMacroPills items={meal.items} />}
               {meal.items.length > 0 && (
-                <ul className="space-y-1">
+                <ul className="space-y-1 mt-2">
                   {meal.items.map(item => (
                     <MealItemRow key={item.id} item={item} foods={foods} demoMode={demoMode} />
                   ))}
@@ -292,7 +289,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
         </div>
       )}
 
-      <ShoppingList meals={resolveChosenMeals(plan.meals.filter(matchesDayType), optionChoices)} checked={checked} onToggle={toggleChecked} />
+      <ShoppingList meals={resolveChosenMeals(plan.meals.filter(matchesDayType), optionChoices)} foods={foods} checked={checked} onToggle={toggleChecked} />
     </div>
   )
 }
@@ -303,17 +300,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
  * manteniendo el mismo macro. El cambio real solo lo hace el nutricionista. */
 function MealItemRow({ item, foods, demoMode }: { item: DietMealItem; foods: Food[]; demoMode?: boolean }) {
   const [open, setOpen] = useState(false)
-  const [matchBy, setMatchBy] = useState<MacroKey>('proteinG')
-  const [query, setQuery] = useState('')
-
-  const itemMacro: Record<MacroKey, number | null> = {
-    kcal: item.kcal, proteinG: item.proteinG, carbsG: item.carbsG, fatG: item.fatG,
-  }
   const canSubstitute = foods.length > 0
-
-  const suggestions = query.trim().length > 0
-    ? foods.filter(f => f.name.toLowerCase().includes(query.toLowerCase()) && f.name !== item.foodName).slice(0, 6)
-    : []
 
   return (
     <li>
@@ -321,89 +308,155 @@ function MealItemRow({ item, foods, demoMode }: { item: DietMealItem; foods: Foo
         <span className="flex-1">{item.foodName}</span>
         <span>{item.quantity} {item.unit}</span>
         {canSubstitute && (
-          <button onClick={() => setOpen(v => !v)} title="Ver alimentos equivalentes"
-            className={`p-1 flex-shrink-0 ${open ? 'text-accent' : 'text-muted hover:text-accent'}`}>
+          <button onClick={() => setOpen(true)} title="¿Qué puedo comer en vez de esto?"
+            className="p-1 flex-shrink-0 text-muted hover:text-accent">
             <Repeat className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
-      {open && (
-        <div className="mt-1.5 mb-1 pl-1 pr-1 pt-2 border-t border-border space-y-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Igualar por</span>
-            {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
-              <button key={k} onClick={() => setMatchBy(k)}
-                className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors ${
-                  matchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
-                }`}>
-                {MACRO_LABELS[k]}
-              </button>
-            ))}
-          </div>
-          <div className="relative">
-            <input value={query} onChange={e => setQuery(e.target.value)}
-              placeholder={`Busca un equivalente a "${item.foodName}"...`}
-              className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-            {suggestions.length > 0 && (
-              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                {suggestions.map(f => {
-                  const target = itemMacro[matchBy]
-                  const grams = target != null ? gramsForAbsoluteMacro(f, target, matchBy) : null
-                  return (
-                    <div key={f.id} className="w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between gap-2">
-                      <span>{f.name}</span>
-                      <span className="text-muted flex-shrink-0">{grams != null ? `≈ ${Math.round(grams * 10) / 10}g` : 'sin ese macro'}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-          <p className="text-[10px] text-muted">
-            Solo orientativo — coméntaselo a tu nutricionista antes de cambiarlo{demoMode ? ' (modo demo)' : ''}.
-          </p>
-        </div>
-      )}
+      {canSubstitute && <SubstituteSheet open={open} onClose={() => setOpen(false)} item={item} foods={foods} demoMode={demoMode} />}
     </li>
   )
 }
 
-function ShoppingList({ meals, checked, onToggle }: { meals: DietMeal[]; checked: Set<string>; onToggle: (key: string) => void }) {
+/** "¿Qué puedo comer en vez de esto?" — hoja inferior con alternativas ya
+ * calculadas en gramos reales para el macro elegido, sin tener que escribir
+ * nada primero; el buscador solo sirve para acotar la lista si hace falta. */
+function SubstituteSheet({ open, onClose, item, foods, demoMode }: { open: boolean; onClose: () => void; item: DietMealItem; foods: Food[]; demoMode?: boolean }) {
+  const [matchBy, setMatchBy] = useState<MacroKey>('proteinG')
+  const [query, setQuery] = useState('')
+
+  const itemMacro: Record<MacroKey, number | null> = {
+    kcal: item.kcal, proteinG: item.proteinG, carbsG: item.carbsG, fatG: item.fatG,
+  }
+  const candidates = foods.filter(f =>
+    f.name !== item.foodName && (query.trim() === '' || f.name.toLowerCase().includes(query.toLowerCase()))
+  ).slice(0, 8)
+
+  return (
+    <BottomSheet open={open} onClose={onClose} title={`En vez de ${item.foodName}...`}>
+      <div className="space-y-3">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Igualar por</span>
+          {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
+            <button key={k} onClick={() => setMatchBy(k)}
+              className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors ${
+                matchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+              }`}>
+              {MACRO_LABELS[k]}
+            </button>
+          ))}
+        </div>
+        <input value={query} onChange={e => setQuery(e.target.value)}
+          placeholder="Buscar otro alimento..."
+          className="w-full px-3 py-2 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20" />
+        <div className="space-y-1.5">
+          {candidates.length === 0 ? (
+            <p className="text-sm text-muted text-center py-4">Sin resultados.</p>
+          ) : candidates.map(f => {
+            const target = itemMacro[matchBy]
+            const grams = target != null ? gramsForAbsoluteMacro(f, target, matchBy) : null
+            return (
+              <div key={f.id} className="flex items-center justify-between gap-2 px-3 py-2.5 bg-bg-alt rounded-xl">
+                <span className="text-sm font-medium">{f.name}</span>
+                <span className="text-sm font-bold text-accent flex-shrink-0">{grams != null ? `≈ ${Math.round(grams * 10) / 10}g` : 'sin ese macro'}</span>
+              </div>
+            )
+          })}
+        </div>
+        <p className="text-[11px] text-muted pt-1">
+          Solo orientativo — coméntaselo a tu nutricionista antes de cambiarlo{demoMode ? ' (modo demo)' : ''}.
+        </p>
+      </div>
+    </BottomSheet>
+  )
+}
+
+function ShoppingList({ meals, foods, checked, onToggle }: { meals: DietMeal[]; foods: Food[]; checked: Set<string>; onToggle: (key: string) => void }) {
   const items = buildShoppingList(meals)
   if (items.length === 0) return null
+  const aisles = groupShoppingItemsByAisle(items, foods)
+
+  const shareText = () => {
+    const lines = aisles.flatMap(a => [
+      `${a.icon} ${a.label}`,
+      ...a.items.map(i => `- ${i.foodName}${i.totalQty !== null ? ` (${i.totalQty}${i.unit ? ' ' + i.unit : ''})` : ''}`),
+    ])
+    return ['🛒 Lista de la compra', '', ...lines].join('\n')
+  }
+
   return (
     <div className="bg-card border border-border rounded-2xl p-4">
-      <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3 flex items-center gap-1.5">
-        <ShoppingCart className="w-3.5 h-3.5" /> Lista de la compra
-      </p>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
+          <ShoppingCart className="w-3.5 h-3.5" /> Lista de la compra
+        </p>
+        <a href={buildWAUrl('', shareText())} target="_blank" rel="noreferrer"
+          className="flex items-center gap-1 text-xs font-bold text-ok flex-shrink-0">
+          <MessageCircle className="w-3.5 h-3.5" /> Compartir
+        </a>
+      </div>
       <p className="text-xs text-muted mb-3">Generada a partir de tu plan de dieta actual. Márcalos según los vayas comprando.</p>
-      <ul className="space-y-1.5">
-        {items.map(item => {
-          const isChecked = checked.has(item.key)
-          const qtyLabel = item.totalQty !== null ? `${item.totalQty}${item.unit ? ` ${item.unit}` : ''}` : item.parts.join(' + ')
-          const fiberRounded = Math.round(item.fiberG * 10) / 10
-          return (
-            <li key={item.key}>
-              <button onClick={() => onToggle(item.key)} className="w-full flex items-center gap-2.5 text-left py-1">
-                <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
-                  isChecked ? 'bg-accent border-accent' : 'border-border'
-                }`}>
-                  {isChecked && <Check className="w-3 h-3 text-white" />}
-                </span>
-                <span className={`text-sm flex-1 ${isChecked ? 'line-through text-muted' : ''}`}>{item.foodName}</span>
-                {fiberRounded > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                    isChecked ? 'text-muted' : fiberRounded >= 5 ? 'bg-ok/10 text-ok font-semibold' : 'bg-bg-alt text-muted'
-                  }`} title="Fibra">
-                    {fiberRounded}g fibra
-                  </span>
-                )}
-                <span className={`text-xs ${isChecked ? 'text-muted' : 'text-muted'}`}>{qtyLabel}</span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+      <div className="space-y-4">
+        {aisles.map(aisle => (
+          <div key={aisle.label}>
+            <p className="text-xs font-semibold text-muted mb-1.5">{aisle.icon} {aisle.label}</p>
+            <ul className="space-y-1.5">
+              {aisle.items.map(item => {
+                const isChecked = checked.has(item.key)
+                const qtyLabel = item.totalQty !== null ? `${item.totalQty}${item.unit ? ` ${item.unit}` : ''}` : item.parts.join(' + ')
+                const fiberRounded = Math.round(item.fiberG * 10) / 10
+                return (
+                  <li key={item.key}>
+                    <button onClick={() => onToggle(item.key)} className="w-full flex items-center gap-2.5 text-left py-1">
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
+                        isChecked ? 'bg-accent border-accent' : 'border-border'
+                      }`}>
+                        {isChecked && <Check className="w-3 h-3 text-white" />}
+                      </span>
+                      <span className={`text-sm flex-1 ${isChecked ? 'line-through text-muted' : ''}`}>{item.foodName}</span>
+                      {fiberRounded > 0 && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                          isChecked ? 'text-muted' : fiberRounded >= 5 ? 'bg-ok/10 text-ok font-semibold' : 'bg-bg-alt text-muted'
+                        }`} title="Fibra">
+                          {fiberRounded}g fibra
+                        </span>
+                      )}
+                      <span className="text-xs text-muted">{qtyLabel}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Pills de colores por macro — proteína en azul, carbohidratos en ámbar,
+ * grasas en dorado, fibra en verde — para leer de un vistazo el perfil
+ * nutricional de la comida sin tener que sumar cada ingrediente. */
+function MealMacroPills({ items }: { items: DietMealItem[] }) {
+  const totals = items.reduce((acc, i) => ({
+    proteinG: acc.proteinG + (i.proteinG || 0), carbsG: acc.carbsG + (i.carbsG || 0),
+    fatG: acc.fatG + (i.fatG || 0), fiberG: acc.fiberG + (i.fiberG || 0),
+  }), { proteinG: 0, carbsG: 0, fatG: 0, fiberG: 0 })
+  const pills = [
+    { label: 'Prot.', value: totals.proteinG, className: 'bg-protein/10 text-protein' },
+    { label: 'Carbos', value: totals.carbsG, className: 'bg-notice/10 text-notice' },
+    { label: 'Grasas', value: totals.fatG, className: 'bg-fat/10 text-fat' },
+    { label: 'Fibra', value: totals.fiberG, className: 'bg-ok/10 text-ok' },
+  ].filter(p => p.value > 0)
+  if (pills.length === 0) return null
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {pills.map(p => (
+        <span key={p.label} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p.className}`}>
+          {Math.round(p.value * 10) / 10}g {p.label}
+        </span>
+      ))}
     </div>
   )
 }

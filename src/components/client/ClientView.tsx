@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { Home, Utensils, BarChart2, MoreHorizontal } from 'lucide-react'
+import { Home, Utensils, BarChart2, MoreHorizontal, MessageCircle } from 'lucide-react'
+import { buildWAUrl } from '../../lib/whatsapp'
 import { supabase } from '../../lib/supabase'
 import { ClienteRow } from '../../lib/supabase-types'
 import { clientFromRow } from '../../lib/mappers'
@@ -37,6 +38,7 @@ export function ClientView({ token }: { token: string }) {
   const [nutricionistaName, setNutricionistaName] = useState(demoClient ? DEMO_NUTRICIONISTA_PROFILE.displayName : 'Tu nutricionista')
   const [logoUrl, setLogoUrl] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.logoUrl : null)
   const [accentColor, setAccentColor] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.accentColor : null)
+  const [contactPhone, setContactPhone] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.contactPhone : null)
   const [activeTab, setActiveTab] = useState<Tab>('hoy')
   useAccentOverride(accentColor)
   const loggingOutRef = useRef(false)
@@ -66,6 +68,7 @@ export function ClientView({ token }: { token: string }) {
     if (branding?.display_name) setNutricionistaName(branding.display_name)
     setLogoUrl(branding?.logo_url || null)
     setAccentColor(branding?.accent_color || null)
+    setContactPhone(branding?.contact_phone || null)
 
     if (!clientData.auth_user_id) { setAuthState('needs_register'); return }
 
@@ -134,7 +137,16 @@ export function ClientView({ token }: { token: string }) {
             )}
             <span className="font-serif font-bold text-base">{nutricionistaName}</span>
           </div>
-          <p className="text-xs font-semibold">{clientName}</p>
+          <div className="flex items-center gap-3">
+            <p className="text-xs font-semibold hidden sm:block">{clientName}</p>
+            {contactPhone && (
+              <a href={buildWAUrl(contactPhone, `Hola ${nutricionistaName.split(' ')[0]}, tengo una duda sobre mi plan`)}
+                target="_blank" rel="noreferrer" title="Escribir a tu nutricionista por WhatsApp"
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-ok/10 text-ok rounded-lg text-xs font-bold flex-shrink-0">
+                <MessageCircle className="w-3.5 h-3.5" /> <span className="hidden sm:inline">WhatsApp</span>
+              </a>
+            )}
+          </div>
         </div>
       </header>
 
