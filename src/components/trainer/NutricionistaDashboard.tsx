@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { UserProfile, ClientData } from '../../types'
 import { useNutricionistaClients, NewClientInput } from '../../hooks/useNutricionistaClients'
 import { goalLabel } from '../../lib/constants'
+import { supabase } from '../../lib/supabase'
+import { toLocalISODate } from '../../lib/date'
+import { DEMO_APPOINTMENTS } from '../../lib/demo-data'
 import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
 import { ThemeToggle } from '../shared/ThemeToggle'
@@ -15,7 +18,7 @@ import { PlantillasTab } from './PlantillasTab'
 import { AjustesTab } from './AjustesTab'
 import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
-import { Plus, Flame, Copy, LogOut, Search, Crown, Upload, ShieldCheck, AlertTriangle, Receipt, CheckCircle2 } from 'lucide-react'
+import { Plus, Flame, Copy, LogOut, Search, Crown, Upload, ShieldCheck, AlertTriangle, Receipt, CheckCircle2, CalendarClock, Tag } from 'lucide-react'
 import { ClientHealthStatus } from '../../lib/clientHealth'
 import { toast } from '../shared/Toast'
 
@@ -60,10 +63,41 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   const [form, setForm] = useState<NewClientInput>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [query, setQuery] = useState('')
+  // 'all' | 'risk' | 'today' | `tag:${nombre}` — filtro rápido de la lista,
+  // se combina con la búsqueda por texto (ambos deben cumplirse).
+  const [quickFilter, setQuickFilter] = useState('all')
+  const [todayApptClientIds, setTodayApptClientIds] = useState<Set<string>>(new Set())
 
-  const filtered = clients.filter(c =>
-    `${c.name} ${c.surname}`.toLowerCase().includes(query.toLowerCase())
-  )
+  useEffect(() => {
+    const todayStr = toLocalISODate(new Date())
+    if (demoClients) {
+      const ids = new Set(
+        DEMO_APPOINTMENTS.filter(a => a.clientId && toLocalISODate(new Date(a.startAt)) === todayStr && a.status !== 'cancelada')
+          .map(a => a.clientId as string)
+      )
+      setTodayApptClientIds(ids)
+      return
+    }
+    const start = new Date(); start.setHours(0, 0, 0, 0)
+    const end = new Date(); end.setHours(23, 59, 59, 999)
+    supabase.from('appointments').select('client_id')
+      .eq('nutricionista_id', userProfile.uid).neq('status', 'cancelada')
+      .gte('start_at', start.toISOString()).lte('start_at', end.toISOString())
+      .then(({ data }) => setTodayApptClientIds(new Set((data || []).map((r: { client_id: string }) => r.client_id).filter(Boolean))))
+  }, [userProfile.uid, demoClients])
+
+  const allTags = Array.from(new Set(clients.flatMap(c => c.tags))).sort()
+  const riskCount = clients.filter(c => c.healthStatus === 'attention').length
+
+  const filtered = clients
+    .filter(c => `${c.name} ${c.surname}`.toLowerCase().includes(query.toLowerCase()))
+    .filter(c => {
+      if (quickFilter === 'all') return true
+      if (quickFilter === 'risk') return c.healthStatus === 'attention'
+      if (quickFilter === 'today') return todayApptClientIds.has(c.id)
+      if (quickFilter.startsWith('tag:')) return c.tags.includes(quickFilter.slice(4))
+      return true
+    })
   const topStreak = Math.max(0, ...clients.map(c => c.streak || 0))
 
   const handleCreate = async () => {
@@ -157,10 +191,20 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             </div>
 
             {clients.length > 0 && (
-              <div className="relative mb-5 max-w-sm">
-                <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
-                <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar cliente..."
-                  className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+              <div className="space-y-3 mb-5">
+                <div className="relative max-w-sm">
+                  <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar cliente..."
+                    className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+                </div>
+                <div className="flex gap-1.5 flex-wrap">
+                  <FilterChip active={quickFilter === 'all'} onClick={() => setQuickFilter('all')} label="Todos" />
+                  <FilterChip active={quickFilter === 'risk'} onClick={() => setQuickFilter('risk')} label={`En riesgo${riskCount > 0 ? ` (${riskCount})` : ''}`} icon={AlertTriangle} />
+                  <FilterChip active={quickFilter === 'today'} onClick={() => setQuickFilter('today')} label={`Con cita hoy${todayApptClientIds.size > 0 ? ` (${todayApptClientIds.size})` : ''}`} icon={CalendarClock} />
+                  {allTags.map(t => (
+                    <FilterChip key={t} active={quickFilter === `tag:${t}`} onClick={() => setQuickFilter(`tag:${t}`)} label={t} icon={Tag} />
+                  ))}
+                </div>
               </div>
             )}
 
@@ -169,11 +213,11 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             ) : filtered.length === 0 ? (
               <div className="bg-card border border-border rounded-2xl p-12 text-center">
                 <p className="text-muted text-sm">
-                  {clients.length === 0 ? 'Todavía no tienes clientes. Crea el primero para empezar.' : 'Ningún cliente coincide con la búsqueda.'}
+                  {clients.length === 0 ? 'Todavía no tienes clientes. Crea el primero para empezar.' : 'Ningún cliente coincide con el filtro.'}
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filtered.map(c => {
                   const isTopStreak = topStreak > 0 && (c.streak || 0) === topStreak
                   const badge = HEALTH_BADGE[c.healthStatus || 'active']
@@ -276,5 +320,17 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
       <ImportClientsModal open={importOpen} onClose={() => setImportOpen(false)} nutricionistaId={userProfile.uid}
         demoMode={!!demoClients} onImported={fetchClients} />
     </div>
+  )
+}
+
+function FilterChip({ active, onClick, label, icon: Icon }: { active: boolean; onClick: () => void; label: string; icon?: typeof AlertTriangle }) {
+  return (
+    <button onClick={onClick}
+      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+        active ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+      }`}>
+      {Icon && <Icon className="w-3 h-3" />}
+      {label}
+    </button>
   )
 }

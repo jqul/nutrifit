@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { UserProfile, ClientData } from '../../types'
 import { useNutricionistaClients } from '../../hooks/useNutricionistaClients'
+import { supabase } from '../../lib/supabase'
 import { PerfilTab } from './client-panel/PerfilTab'
 import { NotasTab } from './client-panel/NotasTab'
 import { PlanDietaTab } from './client-panel/PlanDietaTab'
 import { SeguimientoTab } from './client-panel/SeguimientoTab'
 import { MensajesTab } from './client-panel/MensajesTab'
 import { AnaliticasTab } from './client-panel/AnaliticasTab'
+import { ClientSidebar } from './client-panel/ClientSidebar'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { ArrowLeft } from 'lucide-react'
 import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS } from '../../lib/demo-data'
@@ -33,6 +35,21 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
   const { updateClient, regenerateToken, deleteClient } = useNutricionistaClients({
     nutricionistaId: userProfile.uid, demoClients: demoMode ? [current] : undefined,
   })
+  // Peso actual para la barra lateral (ClientSidebar) — mismo dato que carga
+  // PerfilTab por su cuenta para su propia ficha; se duplica aquí a
+  // propósito para que la barra lateral no dependa de qué pestaña esté
+  // activa (PerfilTab puede estar montado-pero-oculto sin haber cargado
+  // nada todavía la primera vez).
+  const [sidebarWeight, setSidebarWeight] = useState<number | null>(null)
+  useEffect(() => {
+    if (demoMode) {
+      const entries = DEMO_WEIGHTS[current.id] || []
+      setSidebarWeight(entries.length ? entries[entries.length - 1].weightKg : null)
+      return
+    }
+    supabase.from('weight_logs').select('weight_kg').eq('client_id', current.id).order('date', { ascending: false }).limit(1).maybeSingle()
+      .then(({ data }) => setSidebarWeight(data?.weight_kg ?? null))
+  }, [current.id, demoMode])
 
   const handleUpdate = async (updates: Partial<ClientData>) => {
     const ok = await updateClient(current.id, updates)
@@ -76,37 +93,44 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {/* Montadas siempre, solo ocultas con CSS — si no, cambiar de
-            pestaña (ej. a Notas y volver) borra cualquier edición del plan
-            de dieta que no se hubiera guardado todavía. */}
-        <div className={tab === 'perfil' ? '' : 'hidden'}>
-          <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
-            onDelete={handleDelete} demoMode={demoMode} nutricionistaName={userProfile.displayName}
-            customQuestions={userProfile.customAnamnesisQuestions} />
-        </div>
-        <div className={tab === 'dieta' ? '' : 'hidden'}>
-          <PlanDietaTab client={current} nutricionistaId={userProfile.uid} nutricionistaName={userProfile.displayName}
-            nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
-            demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} />
-        </div>
-        <div className={tab === 'seguimiento' ? '' : 'hidden'}>
-          <SeguimientoTab client={current} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
-            demoData={demoMode ? {
-              weights: DEMO_WEIGHTS[current.id] || [],
-              checkins: DEMO_CHECKINS[current.id] || [],
-              photos: DEMO_PHOTOS[current.id] || [],
-              mealLogs: DEMO_MEAL_LOGS[current.id] || [],
-              bloodMarkers: DEMO_BLOOD_MARKERS[current.id] || [],
-            } : undefined} />
-        </div>
-        <div className={tab === 'analiticas' ? '' : 'hidden'}>
-          <AnaliticasTab client={current} demoMode={demoMode} demoMarkers={demoMode ? (DEMO_BLOOD_MARKERS[current.id] || []) : undefined} />
-        </div>
-        <div className={tab === 'mensajes' ? '' : 'hidden'}>
-          <MensajesTab client={current} nutricionistaId={userProfile.uid} onUpdate={handleUpdate} demoMode={demoMode} />
-        </div>
-        <div className={tab === 'notas' ? '' : 'hidden'}>
-          <NotasTab client={current} onUpdate={handleUpdate} />
+        <div className="lg:flex lg:gap-8 lg:items-start">
+          <aside className="mb-6 lg:mb-0 lg:w-72 lg:flex-shrink-0 lg:sticky lg:top-24">
+            <ClientSidebar client={current} currentWeight={sidebarWeight} />
+          </aside>
+          <div className="flex-1 min-w-0">
+            {/* Montadas siempre, solo ocultas con CSS — si no, cambiar de
+                pestaña (ej. a Notas y volver) borra cualquier edición del plan
+                de dieta que no se hubiera guardado todavía. */}
+            <div className={tab === 'perfil' ? '' : 'hidden'}>
+              <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
+                onDelete={handleDelete} demoMode={demoMode} nutricionistaName={userProfile.displayName}
+                customQuestions={userProfile.customAnamnesisQuestions} />
+            </div>
+            <div className={tab === 'dieta' ? '' : 'hidden'}>
+              <PlanDietaTab client={current} nutricionistaId={userProfile.uid} nutricionistaName={userProfile.displayName}
+                nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
+                demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} />
+            </div>
+            <div className={tab === 'seguimiento' ? '' : 'hidden'}>
+              <SeguimientoTab client={current} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
+                demoData={demoMode ? {
+                  weights: DEMO_WEIGHTS[current.id] || [],
+                  checkins: DEMO_CHECKINS[current.id] || [],
+                  photos: DEMO_PHOTOS[current.id] || [],
+                  mealLogs: DEMO_MEAL_LOGS[current.id] || [],
+                  bloodMarkers: DEMO_BLOOD_MARKERS[current.id] || [],
+                } : undefined} />
+            </div>
+            <div className={tab === 'analiticas' ? '' : 'hidden'}>
+              <AnaliticasTab client={current} demoMode={demoMode} demoMarkers={demoMode ? (DEMO_BLOOD_MARKERS[current.id] || []) : undefined} />
+            </div>
+            <div className={tab === 'mensajes' ? '' : 'hidden'}>
+              <MensajesTab client={current} nutricionistaId={userProfile.uid} onUpdate={handleUpdate} demoMode={demoMode} />
+            </div>
+            <div className={tab === 'notas' ? '' : 'hidden'}>
+              <NotasTab client={current} onUpdate={handleUpdate} />
+            </div>
+          </div>
         </div>
       </main>
     </div>

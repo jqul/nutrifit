@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
-import { ClientData, CustomAnamnesisQuestion } from '../../../types'
+import { useState, useEffect, ReactNode } from 'react'
+import { ClientData, CustomAnamnesisQuestion, WeightEntry } from '../../../types'
 import { goalLabel } from '../../../lib/constants'
 import { ANAMNESIS_QUESTIONS } from '../../../lib/anamnesis'
 import { supabase } from '../../../lib/supabase'
 import { printInvoice } from '../../../lib/printInvoice'
 import { InvoiceRow } from '../../../lib/supabase-types'
-import { invoiceFromRow } from '../../../lib/mappers'
+import { invoiceFromRow, weightFromRow } from '../../../lib/mappers'
+import { calcBmi, bmiCategory } from '../../../lib/bmi'
+import { computeWeightProgress } from '../../../lib/weightProgress'
 import { Button } from '../../shared/Button'
 import { Modal } from '../../shared/Modal'
 import { GoalSelect } from '../../shared/GoalSelect'
@@ -13,7 +15,11 @@ import { toast } from '../../shared/Toast'
 import { QuestionAnswerDisplay } from '../../shared/QuestionAnswerDisplay'
 import { exportClientData } from '../../../lib/gdprExport'
 import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
-import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt, Tag, X } from 'lucide-react'
+import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt, Tag, X, AlertTriangle, Scale, Ruler } from 'lucide-react'
+
+const BMI_CATEGORY_CLASS: Record<string, string> = {
+  'bajo peso': 'text-notice', normal: 'text-ok', sobrepeso: 'text-notice', obesidad: 'text-warn',
+}
 
 export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName, customQuestions }: {
   client: ClientData
@@ -33,7 +39,11 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
   const [anamnesisAnswers, setAnamnesisAnswers] = useState<Record<string, string> | null>(null)
   const [invoices, setInvoices] = useState<InvoiceRow[]>([])
   const [generatingInvoice, setGeneratingInvoice] = useState(false)
-  const [currentWeight, setCurrentWeight] = useState<number | null>(null)
+  // Historial completo de peso (no solo el último) — hace falta el primer
+  // registro para poder mostrar "peso inicial → meta" en la tarjeta de
+  // Composición Corporal, con la misma cuenta que usa WeightImpactCard del
+  // lado cliente (computeWeightProgress).
+  const [weights, setWeights] = useState<WeightEntry[]>([])
 
   const loadInvoices = () => {
     if (demoMode) return
@@ -43,19 +53,26 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
 
   useEffect(() => {
     if (demoMode) {
-      const demoEntries = DEMO_WEIGHTS[client.id] || []
-      setCurrentWeight(demoEntries.length ? demoEntries[demoEntries.length - 1].weightKg : null)
+      setWeights(DEMO_WEIGHTS[client.id] || [])
       setAnamnesisAnswers(DEMO_ANAMNESIS[client.id] || null)
       setInvoices(DEMO_INVOICES[client.id] || [])
       return
     }
     supabase.from('anamnesis').select('*').eq('client_id', client.id).maybeSingle()
       .then(({ data }) => setAnamnesisAnswers(data?.completed_at ? data.answers || {} : null))
-    supabase.from('weight_logs').select('weight_kg').eq('client_id', client.id).order('date', { ascending: false }).limit(1).maybeSingle()
-      .then(({ data }) => setCurrentWeight(data?.weight_kg ?? null))
+    supabase.from('weight_logs').select('*').eq('client_id', client.id).order('date', { ascending: true })
+      .then(({ data }) => setWeights((data || []).map(weightFromRow)))
     loadInvoices()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client.id, demoMode])
+
+  const sortedWeights = [...weights].sort((a, b) => a.date.localeCompare(b.date))
+  const initialWeight = sortedWeights.length ? sortedWeights[0].weightKg : null
+  const currentWeight = sortedWeights.length ? sortedWeights[sortedWeights.length - 1].weightKg : null
+  const weightProgress = initialWeight != null && currentWeight != null
+    ? computeWeightProgress(initialWeight, currentWeight, client.goalWeightKg) : null
+  const bmi = currentWeight != null && client.heightCm ? calcBmi(currentWeight, client.heightCm) : null
+  const bmiCat = bmi != null ? bmiCategory(bmi) : null
 
   const currentPeriod = new Date().toISOString().slice(0, 7)
   const hasCurrentInvoice = invoices.some(i => i.period === currentPeriod)
@@ -134,13 +151,9 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         <Field label="Teléfono" value={client.phone || '—'} />
         <Field label="Email" value={client.email || '—'} />
         <Field label="Objetivo" value={goalLabel(client.goal)} />
-        <Field label="Altura" value={client.heightCm ? `${client.heightCm} cm` : '—'} />
         <Field label="Género" value={client.gender || '—'} />
         <Field label="Fecha de nacimiento" value={client.birthDate || '—'} />
-        <Field label="Alergias / intolerancias" value={client.allergies || '—'} />
         <Field label="Precio mensual" value={client.monthlyPrice != null ? `${client.monthlyPrice}€` : '—'} />
-        <Field label="Peso actual" value={currentWeight != null ? `${currentWeight} kg` : '—'} />
-        <Field label="Peso objetivo" value={client.goalWeightKg != null ? `${client.goalWeightKg} kg` : '—'} />
         <div>
           <p className="text-xs uppercase tracking-wider text-muted mb-1">Etiquetas</p>
           {client.tags.length === 0 ? (
@@ -159,6 +172,45 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         <Button variant="outline" onClick={copyLink}><Copy className="w-3.5 h-3.5" /> Copiar enlace</Button>
         <Button variant="outline" onClick={onRegenerateToken}><RefreshCw className="w-3.5 h-3.5" /> Regenerar enlace</Button>
       </div>
+
+      {/* Composición Corporal: peso inicial → meta con barra de progreso,
+          más IMC y altura como mini-métricas — sustituye a la lista plana
+          de texto que había antes (Altura/Peso actual/Peso objetivo). */}
+      {(currentWeight != null || client.heightCm != null) && (
+        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5"><Scale className="w-3.5 h-3.5" /> Composición corporal</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {initialWeight != null && <MiniStat label="Peso inicial" value={`${initialWeight} kg`} />}
+            {currentWeight != null && <MiniStat label="Peso actual" value={`${currentWeight} kg`} />}
+            {client.goalWeightKg != null && <MiniStat label="Meta" value={`${client.goalWeightKg} kg`} />}
+            {client.heightCm != null && <MiniStat label="Altura" value={`${client.heightCm} cm`} icon={<Ruler className="w-3 h-3" />} />}
+            {bmi != null && bmiCat && (
+              <MiniStat label="IMC" value={bmi.toFixed(1)} sublabel={bmiCat} valueClassName={BMI_CATEGORY_CLASS[bmiCat]} />
+            )}
+          </div>
+          {weightProgress && client.goalWeightKg != null && weightProgress.progressPct != null && (
+            <div>
+              <div className="flex items-center justify-between text-xs text-muted mb-1">
+                <span>{weightProgress.goalReached ? 'Meta alcanzada 🎉' : `A ${weightProgress.remainingKg!.toFixed(1)}kg de la meta`}</span>
+                <span className="font-bold text-ink">{Math.round(weightProgress.progressPct)}%</span>
+              </div>
+              <div className="h-2 bg-bg-alt rounded-full overflow-hidden">
+                <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${weightProgress.progressPct}%` }} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {client.allergies && (
+        <div className="bg-warn/10 border border-warn/20 rounded-2xl p-4 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-warn flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-warn mb-0.5">Alertas médicas</p>
+            <p className="text-sm text-ink">{client.allergies}</p>
+          </div>
+        </div>
+      )}
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5" /> Cuestionario de salud</p>
@@ -298,6 +350,17 @@ function Field({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-xs uppercase tracking-wider text-muted">{label}</p>
       <p className="text-sm mt-0.5">{value}</p>
+    </div>
+  )
+}
+
+function MiniStat({ label, value, sublabel, valueClassName = '', icon }: {
+  label: string; value: string; sublabel?: string; valueClassName?: string; icon?: ReactNode
+}) {
+  return (
+    <div className="bg-bg-alt rounded-xl p-2.5 text-center">
+      <p className={`text-sm font-bold flex items-center justify-center gap-1 ${valueClassName}`}>{icon}{value}</p>
+      <p className="text-[9px] text-muted uppercase tracking-wider mt-0.5">{sublabel || label}</p>
     </div>
   )
 }

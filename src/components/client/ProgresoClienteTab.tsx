@@ -4,6 +4,7 @@ import { logError } from '../../lib/errors'
 import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow } from '../../lib/mappers'
 import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClientData } from '../../types'
 import { calcAdherence, calcStreak } from '../../lib/adherence'
+import { computeWeightProgress } from '../../lib/weightProgress'
 import { toLocalISODate } from '../../lib/date'
 import { WeightChart } from '../shared/WeightChart'
 import { Camera, Flame, UtensilsCrossed, Plus, Images } from 'lucide-react'
@@ -264,16 +265,7 @@ function WeightImpactCard({ weights, goalKg }: { weights: WeightEntry[]; goalKg:
   const sorted = [...weights].sort((a, b) => a.date.localeCompare(b.date))
   const initial = sorted[0].weightKg
   const current = sorted[sorted.length - 1].weightKg
-  const changeKg = current - initial
-  const goalReached = goalKg != null && Math.abs(current - goalKg) < 0.1
-
-  let progressPct: number | null = null
-  let remainingKg: number | null = null
-  if (goalKg != null) {
-    remainingKg = Math.abs(current - goalKg)
-    const totalDistance = Math.abs(initial - goalKg)
-    progressPct = totalDistance > 0 ? Math.min(100, Math.max(0, ((totalDistance - remainingKg) / totalDistance) * 100)) : 100
-  }
+  const { changeKg, remainingKg, progressPct, goalReached } = computeWeightProgress(initial, current, goalKg)
 
   return (
     <div className="bg-gradient-to-br from-accent to-accent2 rounded-2xl p-5 text-white space-y-3 shadow-sm">
