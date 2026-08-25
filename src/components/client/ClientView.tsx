@@ -17,7 +17,7 @@ import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { useAccentOverride } from '../../lib/useAccentOverride'
 import {
   DEMO_CLIENTS, DEMO_NUTRICIONISTA_PROFILE, DEMO_DIET_PLANS,
-  DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS,
+  DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS,
 } from '../../lib/demo-data'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'mas'
@@ -167,7 +167,8 @@ export function ClientView({ token }: { token: string }) {
             checkins: DEMO_CHECKINS[clientData.id] || [],
             photos: DEMO_PHOTOS[clientData.id] || [],
             mealLogs: DEMO_MEAL_LOGS[clientData.id] || [],
-          } : undefined} />
+            bloodMarkers: DEMO_BLOOD_MARKERS[clientData.id] || [],
+          } : undefined} nutricionistaLogoUrl={logoUrl} nutricionistaAccentColor={accentColor} />
         </div>
         {activeTab === 'mas' && (
           <div className="px-4 py-6 space-y-4 max-w-xl mx-auto pb-24">

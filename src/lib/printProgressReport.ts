@@ -2,10 +2,48 @@ import { ClientData, WeightEntry, DailyCheckin } from '../types'
 import { BloodMarkerRow } from './supabase-types'
 import { BLOOD_MARKER_MAP, evaluateMarker, adviceForMarker } from './bloodMarkers'
 import { calcAdherence, calcStreak } from './adherence'
+import { calcBmi, bmiCategory, BmiCategory } from './bmi'
 import { PrintBranding } from './printPlan'
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+const BMI_CATEGORY_LABEL: Record<BmiCategory, string> = {
+  'bajo peso': 'Bajo peso', normal: 'Normopeso', sobrepeso: 'Sobrepeso', obesidad: 'Obesidad',
+}
+
+/** Resumen antropométrico: peso inicial vs actual vs objetivo, ritmo medio
+ * de cambio semanal, e IMC inicial vs actual con clasificación OMS — un
+ * vistazo clínico rápido antes de entrar en la gráfica. */
+function anthropometricSummaryHtml(entries: WeightEntry[], goalKg: number | null, heightCm: number | null): string {
+  if (entries.length === 0) return ''
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date))
+  const first = sorted[0], last = sorted[sorted.length - 1]
+  const changeKg = last.weightKg - first.weightKg
+  const days = (new Date(last.date + 'T00:00:00').getTime() - new Date(first.date + 'T00:00:00').getTime()) / 86400000
+  const weeks = days / 7
+  const weeklyRateHtml = weeks >= 1
+    ? `<div class="stat"><b>${changeKg <= 0 ? '−' : '+'}${Math.abs(Math.round((changeKg / weeks) * 100) / 100)}kg</b><span>Ritmo medio/semana</span></div>`
+    : ''
+
+  const bmiFirst = heightCm ? calcBmi(first.weightKg, heightCm) : null
+  const bmiLast = heightCm ? calcBmi(last.weightKg, heightCm) : null
+  const bmiHtml = bmiFirst != null && bmiLast != null ? `
+    <p class="muted-note">
+      IMC inicial: <strong>${bmiFirst.toFixed(1)}</strong> (${esc(BMI_CATEGORY_LABEL[bmiCategory(bmiFirst)])})
+      · IMC actual: <strong>${bmiLast.toFixed(1)}</strong> (${esc(BMI_CATEGORY_LABEL[bmiCategory(bmiLast)])})
+    </p>` : ''
+
+  return `
+    <div class="stats">
+      <div class="stat"><b>${first.weightKg}kg</b><span>Peso inicial</span></div>
+      <div class="stat"><b>${last.weightKg}kg</b><span>Peso actual</span></div>
+      ${goalKg != null ? `<div class="stat"><b>${goalKg}kg</b><span>Peso objetivo</span></div>` : ''}
+      ${weeklyRateHtml}
+    </div>
+    ${bmiHtml}
+  `
 }
 
 /** Gráfica de evolución de peso — SVG dibujado a mano (sin dependencias,
@@ -34,7 +72,7 @@ function weightChartSvg(entries: WeightEntry[], goalKg: number | null, accent: s
       <text x="${PAD}" y="${H - 6}" font-size="10" fill="#8a8278">${esc(new Date(sorted[0].date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }))}</text>
       <text x="${W - PAD}" y="${H - 6}" text-anchor="end" font-size="10" fill="#8a8278">${esc(new Date(sorted[sorted.length - 1].date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }))}</text>
     </svg>
-    <p class="muted-note">Peso inicial: <strong>${first}kg</strong> · Peso actual: <strong>${last}kg</strong> · Variación: <strong>${last - first > 0 ? '+' : ''}${Math.round((last - first) * 10) / 10}kg</strong></p>
+    <p class="muted-note">Variación total: <strong>${last - first > 0 ? '+' : ''}${Math.round((last - first) * 10) / 10}kg</strong></p>
   `
 }
 
@@ -123,7 +161,8 @@ export function printProgressReport(client: ClientData, data: ProgressReportData
   </div>
 
   <div class="card">
-    <h3>Evolución del peso</h3>
+    <h3>Resumen antropométrico</h3>
+    ${anthropometricSummaryHtml(data.weights, client.goalWeightKg, client.heightCm)}
     ${weightChartSvg(data.weights, client.goalWeightKg, accent)}
   </div>
 
@@ -131,6 +170,12 @@ export function printProgressReport(client: ClientData, data: ProgressReportData
     <h3>Analíticas recientes</h3>
     ${markersHtml}
   </div>
+
+  ${client.reportNotes.trim() ? `
+  <div class="card">
+    <h3>Notas y conclusiones del profesional</h3>
+    <p style="font-size:13px; white-space: pre-wrap; margin: 0;">${esc(client.reportNotes.trim())}</p>
+  </div>` : ''}
 
   <footer>NutriFit — informe orientativo, no sustituye la valoración médica.</footer>
 </body>

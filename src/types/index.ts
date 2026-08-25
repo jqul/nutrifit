@@ -48,6 +48,7 @@ export interface ClientData {
   goal: string | null
   allergies: string
   notes: string
+  reportNotes: string
   monthlyPrice: number | null
   goalWeightKg: number | null
   customMessages: Record<string, string>

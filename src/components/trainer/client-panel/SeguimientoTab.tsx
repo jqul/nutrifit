@@ -10,6 +10,7 @@ import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
 import { printProgressReport } from '../../../lib/printProgressReport'
+import { toast } from '../../shared/Toast'
 import { Flame, Camera, UtensilsCrossed, AlertTriangle, FileDown } from 'lucide-react'
 
 const INTENSITY_LABELS = ['Ninguna', 'Leve', 'Moderada', 'Intensa']
@@ -20,9 +21,10 @@ function isConcerningCheckin(c: DailyCheckin): boolean {
 
 interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]; bloodMarkers?: BloodMarkerRow[] }
 
-export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutricionistaAccentColor }: {
+export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, onUpdate }: {
   client: ClientData; demoData?: DemoData
   nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null
+  onUpdate?: (updates: Partial<ClientData>) => Promise<boolean>
 }) {
   const [weights, setWeights] = useState<WeightEntry[]>(demoData?.weights ?? [])
   const [checkins, setCheckins] = useState<DailyCheckin[]>(demoData?.checkins ?? [])
@@ -30,6 +32,20 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
   const [mealLogs, setMealLogs] = useState<MealLog[]>(demoData?.mealLogs ?? [])
   const [bloodMarkers, setBloodMarkers] = useState<BloodMarkerRow[]>(demoData?.bloodMarkers ?? [])
   const [loading, setLoading] = useState(!demoData)
+  // Notas del profesional para el informe en PDF (distintas de las notas
+  // privadas de NotasTab.tsx — estas SÍ se imprimen, y ahora también las
+  // puede descargar el propio cliente, así que van en un campo separado.
+  const [reportNotes, setReportNotes] = useState(client.reportNotes)
+  const [savingNotes, setSavingNotes] = useState(false)
+  const reportNotesDirty = reportNotes !== client.reportNotes
+
+  const handleSaveReportNotes = async () => {
+    if (!onUpdate) return
+    setSavingNotes(true)
+    const ok = await onUpdate({ reportNotes })
+    setSavingNotes(false)
+    if (ok) toast('Notas del informe guardadas ✓', 'ok')
+  }
 
   const load = useCallback(async () => {
     if (demoData) return
@@ -61,12 +77,25 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div className="flex justify-end">
-        <button onClick={() => printProgressReport(client, { weights, checkins, bloodMarkers },
-          { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
-          className="flex items-center gap-1.5 text-xs font-bold text-accent">
-          <FileDown className="w-3.5 h-3.5" /> Informe de evolución (PDF)
-        </button>
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Notas y conclusiones para el informe</p>
+          <button onClick={() => printProgressReport({ ...client, reportNotes }, { weights, checkins, bloodMarkers },
+            { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
+            className="flex items-center gap-1.5 text-xs font-bold text-accent flex-shrink-0">
+            <FileDown className="w-3.5 h-3.5" /> Descargar PDF
+          </button>
+        </div>
+        <p className="text-xs text-muted">Se imprimen tal cual en el informe clínico — el cliente también puede descargarlo desde su móvil.</p>
+        <textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} rows={3}
+          placeholder="Indicaciones y objetivos de cara a la siguiente revisión..."
+          className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm resize-none" />
+        {onUpdate && (
+          <button onClick={handleSaveReportNotes} disabled={!reportNotesDirty || savingNotes}
+            className="px-3 py-1.5 bg-ink text-white rounded-lg text-xs font-bold disabled:opacity-40">
+            {savingNotes ? 'Guardando...' : 'Guardar notas'}
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3">

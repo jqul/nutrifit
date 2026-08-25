@@ -3,23 +3,32 @@ import { supabase } from '../../lib/supabase'
 import { logError } from '../../lib/errors'
 import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow } from '../../lib/mappers'
 import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClientData } from '../../types'
+import { BloodMarkerRow } from '../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../lib/adherence'
 import { computeWeightProgress } from '../../lib/weightProgress'
 import { toLocalISODate } from '../../lib/date'
 import { WeightChart } from '../shared/WeightChart'
-import { Camera, Flame, UtensilsCrossed, Plus, Images } from 'lucide-react'
+import { printProgressReport } from '../../lib/printProgressReport'
+import { Camera, Flame, UtensilsCrossed, Plus, Images, FileDown } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const HYDRATION_GOAL_L = 2.0
 
-interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[] }
+interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]; bloodMarkers?: BloodMarkerRow[] }
 
-export function ProgresoClienteTab({ client, demoMode, demoData }: { client: ClientData; demoMode?: boolean; demoData?: DemoData }) {
+export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLogoUrl, nutricionistaAccentColor }: {
+  client: ClientData; demoMode?: boolean; demoData?: DemoData
+  nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null
+}) {
   const clientId = client.id
   const [weights, setWeights] = useState<WeightEntry[]>(demoData?.weights ?? [])
   const [checkins, setCheckins] = useState<DailyCheckin[]>(demoData?.checkins ?? [])
   const [sessions, setSessions] = useState<ProgressPhotoSession[]>(demoData?.photos ?? [])
   const [mealLogs, setMealLogs] = useState<MealLog[]>(demoData?.mealLogs ?? [])
+  // El cliente puede leer sus propias analíticas por RLS (client_reads_own_blood_markers,
+  // 0017_blood_markers.sql) aunque no tenga una pestaña dedicada para verlas — solo
+  // hacen falta aquí para incluirlas en el informe clínico descargable.
+  const [bloodMarkers, setBloodMarkers] = useState<BloodMarkerRow[]>(demoData?.bloodMarkers ?? [])
   const [newWeight, setNewWeight] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
@@ -31,16 +40,18 @@ export function ProgresoClienteTab({ client, demoMode, demoData }: { client: Cli
 
   const load = useCallback(async () => {
     if (demoMode) return
-    const [{ data: w }, { data: c }, { data: p }, { data: m }] = await Promise.all([
+    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', clientId).order('date'),
       supabase.from('daily_checkins').select('*').eq('client_id', clientId),
       supabase.from('progress_photos').select('*').eq('client_id', clientId).order('date', { ascending: false }),
       supabase.from('meal_logs').select('*').eq('client_id', clientId).order('created_at', { ascending: false }),
+      supabase.from('blood_markers').select('*').eq('client_id', clientId).order('date', { ascending: false }),
     ])
     setWeights((w || []).map(weightFromRow))
     setCheckins((c || []).map(checkinFromRow))
     setSessions((p || []).map(photoSessionFromRow))
     setMealLogs((m || []).map(mealLogFromRow))
+    setBloodMarkers(bm || [])
   }, [clientId, demoMode])
 
   useEffect(() => { load() }, [load])
@@ -111,6 +122,14 @@ export function ProgresoClienteTab({ client, demoMode, demoData }: { client: Cli
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
+      <div className="flex justify-end">
+        <button onClick={() => printProgressReport(client, { weights, checkins, bloodMarkers },
+          { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
+          className="flex items-center gap-1.5 text-xs font-bold text-accent">
+          <FileDown className="w-3.5 h-3.5" /> Informe clínico (PDF)
+        </button>
+      </div>
+
       <div className="grid grid-cols-3 gap-2">
         <StatCard label="Racha" value={`${streak}d`} icon={<Flame className="w-4 h-4 text-accent" />} />
         <StatCard label="Adherencia 7d" value={`${adherence7d}%`} />

@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow, RecipeRow } from '../../../lib/supabase-types'
 import { foodFromRow } from '../../../lib/mappers'
 import { detectAllergenConflict } from '../../../lib/allergens'
+import { DietaryTag, DIETARY_TAG_LABELS, classifyFoodTags, foodMatchesTags } from '../../../lib/dietaryTags'
 import { sendPush } from '../../../lib/usePushNotifications'
 import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../../lib/demo-data'
 import { printDietPlan } from '../../../lib/printPlan'
@@ -144,6 +145,12 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   const [templateName, setTemplateName] = useState('')
   const [foods, setFoods] = useState<Food[]>([])
   const [openSuggestFor, setOpenSuggestFor] = useState<string | null>(null)
+  // Pills de filtro dietoterapéutico (sin gluten, bajo FODMAP...) — un único
+  // filtro compartido por el buscador de "añadir alimento" y el de
+  // "sustituir", así el nutricionista no tiene que repetir la selección.
+  const [activeFoodTags, setActiveFoodTags] = useState<DietaryTag[]>([])
+  const toggleFoodTag = (tag: DietaryTag) =>
+    setActiveFoodTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   const [recipes, setRecipes] = useState<RecipeRow[]>([])
   const [savingRecipeFor, setSavingRecipeFor] = useState<string | null>(null)
   const [recipeNameDraft, setRecipeNameDraft] = useState('')
@@ -777,7 +784,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               {meal.items.map(item => {
                 const allergenHit = detectAllergenConflict(client.allergies, item.foodName)
                 const suggestions = openSuggestFor === item.id && item.foodName.trim().length > 0
-                  ? foods.filter(f => f.name.toLowerCase().includes(item.foodName.toLowerCase())).slice(0, 6)
+                  ? foods.filter(f => f.name.toLowerCase().includes(item.foodName.toLowerCase()) && foodMatchesTags(f, activeFoodTags)).slice(0, 6)
                   : []
                 const isExpanded = expandedItem === item.id
                 const hasExtra = item.fiberG || item.sugarG || item.sodiumMg || item.saturatedFatG || item.calciumMg || item.ironMg || item.zincMg
@@ -791,12 +798,18 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                           onBlur={() => setTimeout(() => setOpenSuggestFor(null), 150)}
                           placeholder="Alimento"
                           className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                        {suggestions.length > 0 && (
-                          <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                            {suggestions.map(f => (
+                        {openSuggestFor === item.id && item.foodName.trim().length > 0 && (
+                          <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                            <FoodTagFilterPills active={activeFoodTags} onToggle={toggleFoodTag} />
+                            {suggestions.length === 0 ? (
+                              <p className="px-2.5 py-2 text-[11px] text-muted">Sin resultados con estos filtros.</p>
+                            ) : suggestions.map(f => (
                               <button key={f.id} type="button" onMouseDown={() => selectFood(meal.id, item.id, f)}
                                 className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
-                                <span>{f.name}</span>
+                                <span className="flex items-center gap-1.5 min-w-0">
+                                  <span className="truncate">{f.name}</span>
+                                  <FoodTagBadges food={f} />
+                                </span>
                                 <span className="text-muted flex-shrink-0">{f.kcal} kcal/100g</span>
                               </button>
                             ))}
@@ -863,13 +876,17 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                             placeholder={`Busca un sustituto para "${item.foodName}"...`} autoFocus
                             className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
                           {subQuery.trim().length > 0 && (
-                            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                              {foods.filter(f => f.name.toLowerCase().includes(subQuery.toLowerCase()) && f.name !== item.foodName).slice(0, 6).map(f => {
+                            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                              <FoodTagFilterPills active={activeFoodTags} onToggle={toggleFoodTag} />
+                              {foods.filter(f => f.name.toLowerCase().includes(subQuery.toLowerCase()) && f.name !== item.foodName && foodMatchesTags(f, activeFoodTags)).slice(0, 6).map(f => {
                                 const grams = gramsForAbsoluteMacro(f, parseFloat(item[subMatchBy]) || 0, subMatchBy)
                                 return (
                                   <button key={f.id} type="button" onMouseDown={() => applySubstitution(meal.id, item, f)}
                                     className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
-                                    <span>{f.name}</span>
+                                    <span className="flex items-center gap-1.5 min-w-0">
+                                      <span className="truncate">{f.name}</span>
+                                      <FoodTagBadges food={f} />
+                                    </span>
                                     <span className="text-muted flex-shrink-0">{grams != null ? `≈ ${Math.round(grams * 10) / 10}g` : 'sin ese macro'}</span>
                                   </button>
                                 )
@@ -1227,6 +1244,45 @@ function ShoppingListPreview({ meals }: { meals: EditableMeal[] }) {
         </div>
       )}
     </div>
+  )
+}
+
+const FOOD_TAG_ORDER: DietaryTag[] = ['sin_gluten', 'sin_lactosa', 'bajo_fodmap', 'vegano', 'alto_proteina']
+const FOOD_TAG_SHORT: Record<DietaryTag, string> = {
+  sin_gluten: 'SG', sin_lactosa: 'SL', bajo_fodmap: 'FODMAP-', vegano: 'V', alto_proteina: 'P+',
+}
+
+/** Pills de filtro rápido dietoterapéutico sobre el buscador de alimentos —
+ * en modo AND: activar varias exige que el alimento cumpla todas a la vez. */
+function FoodTagFilterPills({ active, onToggle }: { active: DietaryTag[]; onToggle: (tag: DietaryTag) => void }) {
+  return (
+    <div className="flex items-center gap-1 flex-wrap px-2 py-1.5 border-b border-border sticky top-0 bg-card">
+      {FOOD_TAG_ORDER.map(tag => (
+        <button key={tag} type="button" onMouseDown={e => e.preventDefault()} onClick={() => onToggle(tag)}
+          className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+            active.includes(tag) ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+          }`}>
+          {DIETARY_TAG_LABELS[tag]}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** Etiquetas cortas junto al nombre del alimento en los resultados, para ver
+ * de un vistazo si encaja sin tener que activar el filtro. */
+function FoodTagBadges({ food }: { food: Food }) {
+  const tags = classifyFoodTags(food)
+  const relevant = FOOD_TAG_ORDER.filter(t => tags.includes(t))
+  if (relevant.length === 0) return null
+  return (
+    <span className="flex items-center gap-0.5 flex-shrink-0">
+      {relevant.map(t => (
+        <span key={t} title={DIETARY_TAG_LABELS[t]} className="px-1 py-0.5 bg-ok/10 text-ok rounded text-[9px] font-bold">
+          {FOOD_TAG_SHORT[t]}
+        </span>
+      ))}
+    </span>
   )
 }
 

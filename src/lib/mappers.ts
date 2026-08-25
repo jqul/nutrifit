@@ -25,6 +25,7 @@ export function clientFromRow(row: ClienteRow): ClientData {
     goal: row.goal || null,
     allergies: row.allergies || '',
     notes: row.notes || '',
+    reportNotes: row.report_notes || '',
     monthlyPrice: row.monthly_price,
     goalWeightKg: row.goal_weight_kg,
     customMessages: row.custom_messages || {},
@@ -47,6 +48,7 @@ export function clientToRow(client: Partial<ClientData>): Partial<ClienteRow> {
   if (client.goal !== undefined) row.goal = client.goal
   if (client.allergies !== undefined) row.allergies = client.allergies
   if (client.notes !== undefined) row.notes = client.notes
+  if (client.reportNotes !== undefined) row.report_notes = client.reportNotes
   if (client.monthlyPrice !== undefined) row.monthly_price = client.monthlyPrice
   if (client.goalWeightKg !== undefined) row.goal_weight_kg = client.goalWeightKg
   if (client.customMessages !== undefined) row.custom_messages = client.customMessages

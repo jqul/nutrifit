@@ -32,6 +32,7 @@ export interface ClienteRow {
   goal: string | null
   allergies: string | null
   notes: string | null
+  report_notes: string | null
   monthly_price: number | null
   goal_weight_kg: number | null
   custom_messages: Record<string, string> | null
