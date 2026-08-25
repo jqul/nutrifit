@@ -9,7 +9,7 @@ import { calcStreak } from '../../lib/adherence'
 import { resolveTodaysMeals, loadOptionChoices, loadDayType } from '../../lib/planMeals'
 import { sendPush } from '../../lib/usePushNotifications'
 import { PendingSurveys } from './PendingSurveys'
-import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS } from '../../lib/demo-data'
+import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS, DEMO_CHECKINS } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { CheckCircle2, Circle, Calendar, Plus, Video, Flame, Droplet, Camera } from 'lucide-react'
 
@@ -46,20 +46,30 @@ function newId(): string {
 
 export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: boolean }) {
   const today = toLocalISODate(new Date())
+  // loadCheckins() corta de inmediato en modo demo (no hay Supabase que
+  // consultar), así que si el check-in de hoy ya viene en los datos de demo
+  // (como el de María) hay que precargarlo aquí mismo — si no, la pantalla
+  // arrancaría siempre como si hoy no se hubiera hecho nada, y la racha se
+  // quedaría en 0 para siempre.
+  const demoTodayCheckin = demoMode ? (DEMO_CHECKINS[client.id] || []).find(c => c.date === today) : undefined
   const [loading, setLoading] = useState(!demoMode)
-  const [doneToday, setDoneToday] = useState(false)
-  const [followedPlan, setFollowedPlan] = useState<FollowedPlan>('si')
-  const [hunger, setHunger] = useState(3)
-  const [energy, setEnergy] = useState(3)
-  const [mood, setMood] = useState(3)
-  const [waterL, setWaterL] = useState(0)
-  const [notes, setNotes] = useState('')
-  const [showDigestive, setShowDigestive] = useState(false)
-  const [bristolScale, setBristolScale] = useState<number | null>(null)
-  const [bloating, setBloating] = useState<number | null>(null)
-  const [abdominalPain, setAbdominalPain] = useState<number | null>(null)
+  const [doneToday, setDoneToday] = useState(!!demoTodayCheckin)
+  const [followedPlan, setFollowedPlan] = useState<FollowedPlan>(demoTodayCheckin?.followedPlan ?? 'si')
+  const [hunger, setHunger] = useState(demoTodayCheckin?.hunger ?? 3)
+  const [energy, setEnergy] = useState(demoTodayCheckin?.energy ?? 3)
+  const [mood, setMood] = useState(demoTodayCheckin?.mood ?? 3)
+  const [waterL, setWaterL] = useState(demoTodayCheckin?.waterL ?? 0)
+  const [notes, setNotes] = useState(demoTodayCheckin?.notes ?? '')
+  const [showDigestive, setShowDigestive] = useState(
+    !!demoTodayCheckin && (demoTodayCheckin.bristolScale != null || demoTodayCheckin.bloating != null || demoTodayCheckin.abdominalPain != null)
+  )
+  const [bristolScale, setBristolScale] = useState<number | null>(demoTodayCheckin?.bristolScale ?? null)
+  const [bloating, setBloating] = useState<number | null>(demoTodayCheckin?.bloating ?? null)
+  const [abdominalPain, setAbdominalPain] = useState<number | null>(demoTodayCheckin?.abdominalPain ?? null)
   const [saving, setSaving] = useState(false)
-  const [streak, setStreak] = useState(0)
+  // Igual que doneToday: loadCheckins() nunca calcula la racha real en modo
+  // demo, así que se calcula aquí a partir de los check-ins de demo.
+  const [streak, setStreak] = useState(() => demoMode ? calcStreak(DEMO_CHECKINS[client.id] || []) : 0)
 
   // Plan de hoy — mismas tres capas de flexibilidad que Dieta (cuadrante
   // semanal, carb cycling, opciones intercambiables), leídas de las mismas
@@ -70,6 +80,7 @@ export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: bo
     demoMode ? (DEMO_MEAL_LOGS[client.id] || []).filter(m => m.date === today) : []
   )
   const [uploadingMeal, setUploadingMeal] = useState<string | null>(null)
+  const [poppedGlass, setPoppedGlass] = useState<number | null>(null)
 
   const loadCheckins = useCallback(async () => {
     if (demoMode) return
@@ -130,7 +141,15 @@ export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: bo
     followedPlan: FollowedPlan; hunger: number; energy: number; mood: number; waterL: number; notes: string
     bristolScale: number | null; bloating: number | null; abdominalPain: number | null
   }> = {}) => {
-    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); setDoneToday(true); return }
+    if (demoMode) {
+      toast('Modo demo: los cambios no se guardan', 'ok')
+      // Si hoy todavía no contaba (el check-in de hoy no venía precargado
+      // de los datos de demo), el primer guardado del día suma un día más
+      // de racha — mismo efecto que el recálculo real en modo no-demo.
+      if (!doneToday) setStreak(s => s + 1)
+      setDoneToday(true)
+      return
+    }
     const payload = {
       client_id: client.id, date: today,
       followed_plan: overrides.followedPlan ?? followedPlan,
@@ -165,6 +184,14 @@ export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: bo
     const nextWaterL = Math.round(next * (WATER_GOAL_L / WATER_GLASSES) * 100) / 100
     setWaterL(nextWaterL)
     saveCheckin({ waterL: nextWaterL })
+    // Pequeña gratificación táctil/visual al tocar un vaso — vibración corta
+    // (con patrón más largo si justo se alcanza la meta) y un "pop" que se
+    // retira solo tras la animación, para no dejar la clase pegada.
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(nextWaterL >= WATER_GOAL_L && waterL < WATER_GOAL_L ? [15, 60, 15] : 15)
+    }
+    setPoppedGlass(glassIndex)
+    setTimeout(() => setPoppedGlass(null), 300)
   }
 
   const markMealDone = async (meal: DietMeal) => {
@@ -232,7 +259,7 @@ export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: bo
           </div>
           {streak > 0 && (
             <div className="flex items-center gap-1 bg-white/20 rounded-full px-3 py-1.5 flex-shrink-0">
-              <Flame className="w-4 h-4" />
+              <Flame className="w-4 h-4 animate-flame-flicker" />
               <span className="text-sm font-bold">{streak}d</span>
             </div>
           )}
@@ -263,7 +290,7 @@ export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: bo
               <button key={i} onClick={() => addWaterGlass(i)} title="+250ml"
                 className={`aspect-[3/4] rounded-lg border-2 flex items-center justify-center transition-all ${
                   filled ? 'bg-accent/15 border-accent' : 'border-border hover:border-accent/40'
-                }`}>
+                } ${poppedGlass === i ? 'animate-glass-pop' : ''}`}>
                 <span className={`text-lg ${filled ? '' : 'opacity-25 grayscale'}`}>💧</span>
               </button>
             )
