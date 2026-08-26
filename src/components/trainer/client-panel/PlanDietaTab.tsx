@@ -1247,9 +1247,10 @@ function ShoppingListPreview({ meals }: { meals: EditableMeal[] }) {
   )
 }
 
-const FOOD_TAG_ORDER: DietaryTag[] = ['sin_gluten', 'sin_lactosa', 'bajo_fodmap', 'vegano', 'alto_proteina']
+const FOOD_TAG_ORDER: DietaryTag[] = ['sin_gluten', 'sin_lactosa', 'bajo_fodmap', 'vegano', 'alto_proteina', 'bajo_sodio', 'alto_omega3']
 const FOOD_TAG_SHORT: Record<DietaryTag, string> = {
   sin_gluten: 'SG', sin_lactosa: 'SL', bajo_fodmap: 'FODMAP-', vegano: 'V', alto_proteina: 'P+',
+  bajo_sodio: 'Na-', alto_omega3: 'Ω3',
 }
 
 /** Pills de filtro rápido dietoterapéutico sobre el buscador de alimentos —

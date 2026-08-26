@@ -4,7 +4,7 @@
 // cada nutricionista da de alta, sin tener que etiquetarlos a mano).
 import { Food } from '../types'
 
-export type DietaryTag = 'sin_gluten' | 'sin_lactosa' | 'bajo_fodmap' | 'vegano' | 'alto_proteina'
+export type DietaryTag = 'sin_gluten' | 'sin_lactosa' | 'bajo_fodmap' | 'vegano' | 'alto_proteina' | 'bajo_sodio' | 'alto_omega3'
 
 export const DIETARY_TAG_LABELS: Record<DietaryTag, string> = {
   sin_gluten: 'Sin gluten',
@@ -12,6 +12,8 @@ export const DIETARY_TAG_LABELS: Record<DietaryTag, string> = {
   bajo_fodmap: 'Bajo en FODMAP',
   vegano: 'Vegano',
   alto_proteina: 'Alto en proteína',
+  bajo_sodio: 'Bajo en sodio',
+  alto_omega3: 'Alto en omega-3',
 }
 
 const GLUTEN_KEYWORDS = ['trigo', 'pan', 'pasta', 'harina', 'cebada', 'centeno', 'cuscús', 'cuscus', 'cerveza', 'seitán', 'seitan']
@@ -31,6 +33,23 @@ const HIGH_FODMAP_KEYWORDS = [
   'garbanzo', 'lenteja', 'alubia', 'judía', 'judia', 'soja',
   'leche', 'yogur', 'queso fresco', 'requesón', 'requeson', 'nata',
   'anacardo', 'pistacho',
+]
+// Alimentos curados/procesados/en salmuera con sodio conocidamente alto —
+// orientativo para dieta baja en sodio (hipertensión), no un cálculo real
+// a partir de sodiumMg (ese dato es opcional y muchas veces no está
+// relleno en el catálogo, así que por palabras clave es más fiable).
+const HIGH_SODIUM_KEYWORDS = [
+  'jamón', 'jamon', 'chorizo', 'salchichón', 'salchichon', 'salami', 'panceta', 'beicon', 'bacon', 'embutido',
+  'queso curado', 'queso azul', 'queso parmesano', 'parmesano',
+  'aceituna', 'encurtido', 'salmuera', 'conserva', 'caldo concentrado', 'pastilla de caldo',
+  'salsa de soja', 'patatas fritas', 'snack', 'aperitivo salado', 'anchoa', 'bacalao salado',
+]
+// Alimentos con omega-3 reconocidamente alto (pescado azul, frutos secos y
+// semillas concretas) — es una lista de inclusión, no de exclusión como
+// las anteriores.
+const OMEGA3_KEYWORDS = [
+  'salmón', 'salmon', 'sardina', 'caballa', 'atún', 'atun', 'boquerón', 'boqueron', 'anchoa',
+  'arenque', 'trucha', 'nuez', 'nueces', 'chía', 'chia', 'lino', 'linaza',
 ]
 
 function hasKeyword(text: string, keywords: string[]): boolean {
@@ -58,6 +77,10 @@ export function classifyFoodTags(food: Pick<Food, 'name' | 'category' | 'protein
   if (!hasKeyword(name, HIGH_FODMAP_KEYWORDS)) tags.push('bajo_fodmap')
 
   if (food.proteinG >= 15) tags.push('alto_proteina')
+
+  if (!hasKeyword(name, HIGH_SODIUM_KEYWORDS)) tags.push('bajo_sodio')
+
+  if (hasKeyword(name, OMEGA3_KEYWORDS)) tags.push('alto_omega3')
 
   return tags
 }

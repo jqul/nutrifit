@@ -45,6 +45,19 @@ describe('classifyFoodTags', () => {
     expect(classifyFoodTags(food('Alimento X', 15))).toContain('alto_proteina')
     expect(classifyFoodTags(food('Alimento Y', 14.9))).not.toContain('alto_proteina')
   })
+
+  it('flags cured/processed/brined foods as high in sodium', () => {
+    expect(classifyFoodTags(food('Jamón serrano'))).not.toContain('bajo_sodio')
+    expect(classifyFoodTags(food('Aceitunas'))).not.toContain('bajo_sodio')
+    expect(classifyFoodTags(food('Pechuga de pollo'))).toContain('bajo_sodio')
+  })
+
+  it('flags oily fish, nuts, and seeds as high in omega-3', () => {
+    expect(classifyFoodTags(food('Salmón'))).toContain('alto_omega3')
+    expect(classifyFoodTags(food('Nueces'))).toContain('alto_omega3')
+    expect(classifyFoodTags(food('Semillas de chía'))).toContain('alto_omega3')
+    expect(classifyFoodTags(food('Pechuga de pollo'))).not.toContain('alto_omega3')
+  })
 })
 
 describe('foodMatchesTags', () => {
