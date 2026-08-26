@@ -15,6 +15,7 @@ export interface NutricionistaRow {
   accent_color: string | null
   custom_domain: string | null
   contact_phone: string | null
+  consent_document_url: string | null
 }
 
 export interface ClienteRow {
@@ -33,6 +34,8 @@ export interface ClienteRow {
   allergies: string | null
   notes: string | null
   report_notes: string | null
+  consent_accepted_at: string | null
+  consent_signed_name: string | null
   monthly_price: number | null
   goal_weight_kg: number | null
   custom_messages: Record<string, string> | null

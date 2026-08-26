@@ -26,6 +26,8 @@ export function clientFromRow(row: ClienteRow): ClientData {
     allergies: row.allergies || '',
     notes: row.notes || '',
     reportNotes: row.report_notes || '',
+    consentAcceptedAt: row.consent_accepted_at,
+    consentSignedName: row.consent_signed_name,
     monthlyPrice: row.monthly_price,
     goalWeightKg: row.goal_weight_kg,
     customMessages: row.custom_messages || {},

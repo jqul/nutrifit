@@ -15,13 +15,13 @@ import { toast } from '../../shared/Toast'
 import { QuestionAnswerDisplay } from '../../shared/QuestionAnswerDisplay'
 import { exportClientData } from '../../../lib/gdprExport'
 import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
-import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt, Tag, X, AlertTriangle, Scale, Ruler } from 'lucide-react'
+import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt, Tag, X, AlertTriangle, Scale, Ruler, ShieldCheck } from 'lucide-react'
 
 const BMI_CATEGORY_CLASS: Record<string, string> = {
   'bajo peso': 'text-notice', normal: 'text-ok', sobrepeso: 'text-notice', obesidad: 'text-warn',
 }
 
-export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName, customQuestions }: {
+export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName, customQuestions, hasConsentDocument }: {
   client: ClientData
   onUpdate: (updates: Partial<ClientData>) => Promise<boolean>
   onRegenerateToken: () => Promise<string | null>
@@ -29,6 +29,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
   demoMode?: boolean
   nutricionistaName?: string
   customQuestions?: CustomAnamnesisQuestion[]
+  hasConsentDocument?: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(client)
@@ -172,6 +173,23 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         <Button variant="outline" onClick={copyLink}><Copy className="w-3.5 h-3.5" /> Copiar enlace</Button>
         <Button variant="outline" onClick={onRegenerateToken}><RefreshCw className="w-3.5 h-3.5" /> Regenerar enlace</Button>
       </div>
+
+      {/* Solo se muestra si has subido un documento de consentimiento en
+          Ajustes — para los que no usan esta función, no añade ruido. */}
+      {hasConsentDocument && (
+        client.consentAcceptedAt ? (
+          <p className="text-xs text-ok flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+            Consentimiento firmado el {new Date(client.consentAcceptedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {client.consentSignedName ? ` por ${client.consentSignedName}` : ''}
+          </p>
+        ) : (
+          <p className="text-xs text-warn flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+            Consentimiento todavía sin firmar
+          </p>
+        )
+      )}
 
       {/* Composición Corporal: peso inicial → meta con barra de progreso,
           más IMC y altura como mini-métricas — sustituye a la lista plana

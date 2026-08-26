@@ -7,6 +7,7 @@ import { clientFromRow } from '../../lib/mappers'
 import { logError } from '../../lib/errors'
 import { NotFound } from '../shared/NotFound'
 import { ClientRegister } from './ClientRegister'
+import { ClientConsent } from './ClientConsent'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { PushToggle } from '../shared/PushToggle'
 import { HoyTab } from './HoyTab'
@@ -21,7 +22,7 @@ import {
 } from '../../lib/demo-data'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'mas'
-type AuthState = 'loading' | 'needs_register' | 'needs_login' | 'authenticated'
+type AuthState = 'loading' | 'needs_register' | 'needs_login' | 'needs_consent' | 'authenticated'
 
 // Los enlaces "Copiar enlace del cliente" del panel de demo generan tokens
 // con este prefijo (ver DEMO_CLIENTS) — se resuelven contra los datos de
@@ -39,6 +40,7 @@ export function ClientView({ token }: { token: string }) {
   const [logoUrl, setLogoUrl] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.logoUrl : null)
   const [accentColor, setAccentColor] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.accentColor : null)
   const [contactPhone, setContactPhone] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.contactPhone : null)
+  const [consentDocumentUrl, setConsentDocumentUrl] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('hoy')
   useAccentOverride(accentColor)
   const loggingOutRef = useRef(false)
@@ -49,7 +51,7 @@ export function ClientView({ token }: { token: string }) {
     if (demoClient) return
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (loggingOutRef.current) return
-      if (session?.user && authStateRef.current === 'needs_login') setAuthState('authenticated')
+      if (session?.user && authStateRef.current === 'needs_login') checkAuth()
     })
     checkAuth()
     return () => subscription.unsubscribe()
@@ -69,14 +71,17 @@ export function ClientView({ token }: { token: string }) {
     setLogoUrl(branding?.logo_url || null)
     setAccentColor(branding?.accent_color || null)
     setContactPhone(branding?.contact_phone || null)
+    setConsentDocumentUrl(branding?.consent_document_url || null)
 
     if (!clientData.auth_user_id) { setAuthState('needs_register'); return }
 
     const { data: { session } } = await supabase.auth.getSession()
-    if (session?.user && session.user.id === clientData.auth_user_id) {
-      setAuthState('authenticated')
+    if (!(session?.user && session.user.id === clientData.auth_user_id)) { setAuthState('needs_login'); return }
+
+    if (branding?.consent_document_url && !clientData.consent_accepted_at) {
+      setAuthState('needs_consent')
     } else {
-      setAuthState('needs_login')
+      setAuthState('authenticated')
     }
   }
 
@@ -104,7 +109,19 @@ export function ClientView({ token }: { token: string }) {
         clientName={clientName}
         nutricionistaName={nutricionistaName}
         initialStep={authState === 'needs_login' ? 'login' : 'register'}
-        onComplete={() => setAuthState('authenticated')}
+        onComplete={checkAuth}
+      />
+    )
+  }
+
+  if (!demoClient && authState === 'needs_consent' && consentDocumentUrl) {
+    return (
+      <ClientConsent
+        token={token}
+        clientName={clientName}
+        nutricionistaName={nutricionistaName}
+        documentUrl={consentDocumentUrl}
+        onComplete={checkAuth}
       />
     )
   }

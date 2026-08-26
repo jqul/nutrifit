@@ -6,8 +6,9 @@ import { toast } from '../shared/Toast'
 import { SurveyManager } from './SurveyManager'
 import { QuestionEditor } from '../shared/QuestionEditor'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
+import { ConsentDocumentUpload } from '../shared/ConsentDocumentUpload'
 import { DEMO_CUSTOM_SURVEYS } from '../../lib/demo-data'
-import { Palette, Globe, ClipboardList, MessageCircle } from 'lucide-react'
+import { Palette, Globe, ClipboardList, MessageCircle, ShieldCheck } from 'lucide-react'
 
 export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
   userProfile: UserProfile
@@ -16,6 +17,16 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
 }) {
   const [questions, setQuestions] = useState<CustomAnamnesisQuestion[]>(userProfile.customAnamnesisQuestions)
   const [savingQuestions, setSavingQuestions] = useState(false)
+
+  const [consentDocumentUrl, setConsentDocumentUrl] = useState(userProfile.consentDocumentUrl)
+
+  const saveConsentDocument = async (url: string | null) => {
+    if (demoMode) { setConsentDocumentUrl(url); return }
+    const { error } = await supabase.from('nutricionistas').update({ consent_document_url: url }).eq('uid', userProfile.uid)
+    if (error) { toast('Error: ' + error.message, 'warn'); return }
+    setConsentDocumentUrl(url)
+    onUpdateProfile({ consentDocumentUrl: url })
+  }
 
   const [logoUrl, setLogoUrl] = useState(userProfile.logoUrl || '')
   const [accentColor, setAccentColor] = useState(userProfile.accentColor || '#3f7d4f')
@@ -108,6 +119,18 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
           </p>
         </div>
         <Button onClick={saveBranding} loading={savingBranding}>Guardar marca</Button>
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+        <p className="font-semibold text-sm flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /> Consentimiento informado</p>
+        <p className="text-xs text-muted">
+          Sube el documento de consentimiento (protección de datos, condiciones del servicio...) que te haya
+          preparado tu propio abogado. Si lo subes, cada cliente nuevo tendrá que leerlo y firmarlo electrónicamente
+          (nombre completo + fecha) antes de poder usar su panel — los que ya tenías dados de alta no se ven
+          afectados salvo que quieras pedírselo tú aparte.
+        </p>
+        <ConsentDocumentUpload nutricionistaId={userProfile.uid} currentUrl={consentDocumentUrl} demoMode={demoMode}
+          onUploaded={url => saveConsentDocument(url)} onRemoved={() => saveConsentDocument(null)} />
       </div>
     </div>
   )

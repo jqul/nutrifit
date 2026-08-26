@@ -27,6 +27,7 @@ export interface UserProfile {
   accentColor: string | null
   customDomain: string | null
   contactPhone: string | null
+  consentDocumentUrl: string | null
 }
 
 // Objetivos predefinidos con etiqueta traducida — el campo `goal` del cliente
@@ -49,6 +50,8 @@ export interface ClientData {
   allergies: string
   notes: string
   reportNotes: string
+  consentAcceptedAt: string | null
+  consentSignedName: string | null
   monthlyPrice: number | null
   goalWeightKg: number | null
   customMessages: Record<string, string>

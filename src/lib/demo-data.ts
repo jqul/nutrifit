@@ -20,6 +20,7 @@ export const DEMO_NUTRICIONISTA_PROFILE: UserProfile = {
   accentColor: null,
   customDomain: null,
   contactPhone: '+34 600 987 654',
+  consentDocumentUrl: null,
 }
 
 function toLocalISODate(d: Date): string {
@@ -57,6 +58,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     allergies: 'Intolerancia a la lactosa',
     notes: 'Prefiere comidas sencillas de preparar entre semana, cocina los domingos para toda la semana.',
     reportNotes: 'Evolución muy buena, ritmo de pérdida sostenible. Mantener la pauta actual y revisar en 4 semanas. Reforzar la hidratación los días de más calor.',
+    consentAcceptedAt: null, consentSignedName: null,
     monthlyPrice: 45, goalWeightKg: 62, customMessages: {}, tags: ['Pérdida de grasa - Nivel 1'],
     createdAt: Date.now() - 60 * 86400000,
   },
@@ -72,6 +74,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     allergies: '',
     notes: 'Entrena 5 días/semana, necesita opciones altas en proteína para llevar al gimnasio.',
     reportNotes: '',
+    consentAcceptedAt: null, consentSignedName: null,
     monthlyPrice: 60, goalWeightKg: 78, customMessages: {}, tags: ['Ganancia muscular', 'Deportista'],
     createdAt: Date.now() - 90 * 86400000,
   },
@@ -87,6 +90,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     allergies: 'Alergia a los frutos secos',
     notes: 'Lleva 10 días sin registrar check-in — pendiente de contactar.',
     reportNotes: '',
+    consentAcceptedAt: null, consentSignedName: null,
     monthlyPrice: 40, goalWeightKg: null, customMessages: {}, tags: ['Pérdida de grasa - Nivel 1', 'Riesgo de abandono'],
     createdAt: Date.now() - 45 * 86400000,
   },

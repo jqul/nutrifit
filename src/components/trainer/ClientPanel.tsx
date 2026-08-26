@@ -104,7 +104,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
             <div className={tab === 'perfil' ? '' : 'hidden'}>
               <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
                 onDelete={handleDelete} demoMode={demoMode} nutricionistaName={userProfile.displayName}
-                customQuestions={userProfile.customAnamnesisQuestions} />
+                customQuestions={userProfile.customAnamnesisQuestions} hasConsentDocument={!!userProfile.consentDocumentUrl} />
             </div>
             <div className={tab === 'dieta' ? '' : 'hidden'}>
               <PlanDietaTab client={current} nutricionistaId={userProfile.uid} nutricionistaName={userProfile.displayName}
