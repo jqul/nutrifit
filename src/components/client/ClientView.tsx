@@ -18,7 +18,7 @@ import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { useAccentOverride } from '../../lib/useAccentOverride'
 import {
   DEMO_CLIENTS, DEMO_NUTRICIONISTA_PROFILE, DEMO_DIET_PLANS,
-  DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS,
+  DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_RECIPES,
 } from '../../lib/demo-data'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'mas'
@@ -176,7 +176,8 @@ export function ClientView({ token }: { token: string }) {
           <HoyTab client={clientData} demoMode={!!demoClient} />
         </div>
         <div className={activeTab === 'dieta' ? '' : 'hidden'}>
-          <DietaClienteTab client={clientData} demoMode={!!demoClient} demoPlan={demoClient ? DEMO_DIET_PLANS[clientData.id] : undefined} />
+          <DietaClienteTab client={clientData} demoMode={!!demoClient} demoPlan={demoClient ? DEMO_DIET_PLANS[clientData.id] : undefined}
+            demoRecipes={demoClient ? DEMO_RECIPES : undefined} />
         </div>
         <div className={activeTab === 'progreso' ? '' : 'hidden'}>
           <ProgresoClienteTab client={clientData} demoMode={!!demoClient} demoData={demoClient ? {

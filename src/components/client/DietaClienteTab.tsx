@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import { DietMealRow, DietMealItemRow, DietSupplementRow } from '../../lib/supabase-types'
+import { DietMealRow, DietMealItemRow, DietSupplementRow, RecipeRow } from '../../lib/supabase-types'
 import { dietPlanFromRows, foodFromRow } from '../../lib/mappers'
 import { DietPlan, DietMeal, ClientData, Food, DietMealItem } from '../../types'
 import { printDietPlan } from '../../lib/printPlan'
@@ -14,7 +14,7 @@ import { BarcodeScanner } from '../shared/BarcodeScanner'
 import { ScannedFood } from '../../lib/openFoodFacts'
 import {
   Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp, Layers, Flame, Moon,
-  Barcode, MessageCircle,
+  Barcode, MessageCircle, ChefHat, BookOpen,
 } from 'lucide-react'
 
 const MACRO_LABELS: Record<MacroKey, string> = { kcal: 'kcal', proteinG: 'proteína', carbsG: 'carbohidratos', fatG: 'grasas' }
@@ -32,12 +32,15 @@ function resolveChosenMeals(meals: DietMeal[], choices: Record<string, string>):
   })
 }
 
-export function DietaClienteTab({ client, demoMode, demoPlan }: { client: ClientData; demoMode?: boolean; demoPlan?: DietPlan }) {
+export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes }: {
+  client: ClientData; demoMode?: boolean; demoPlan?: DietPlan; demoRecipes?: RecipeRow[]
+}) {
   const clientId = client.id
   const [plan, setPlan] = useState<DietPlan | null>(demoPlan ?? null)
   const [loading, setLoading] = useState(!demoPlan)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [foods, setFoods] = useState<Food[]>([])
+  const [recipes, setRecipes] = useState<RecipeRow[]>([])
   const [selectedDay, setSelectedDay] = useState<number>(todayDayOfWeek())
   const [showWeekSummary, setShowWeekSummary] = useState(false)
   // Pauta flexible por opciones: qué opción eligió el cliente para cada
@@ -51,6 +54,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
   const [dayType, setDayType] = useState<'on' | 'off'>('on')
   const [scannerOpen, setScannerOpen] = useState(false)
   const [scannedFood, setScannedFood] = useState<ScannedFood | null>(null)
+  const [viewingRecipe, setViewingRecipe] = useState<RecipeRow | null>(null)
 
   const toggleChecked = (key: string) => setChecked(prev => {
     const next = new Set(prev)
@@ -79,6 +83,17 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
   useEffect(() => {
     supabase.from('foods').select('*').order('name').then(({ data }) => setFoods((data || []).map(foodFromRow)))
   }, [])
+
+  // Recetas (foto + pasos de preparación) de los platos del plan — solo
+  // las realmente usadas (identificadas por recipeId en los ítems), igual
+  // que el recetario dinámico del lado del nutricionista.
+  useEffect(() => {
+    if (!plan) { setRecipes([]); return }
+    const recipeIds = Array.from(new Set(plan.meals.flatMap(m => m.items).map(i => i.recipeId).filter((id): id is string => !!id)))
+    if (recipeIds.length === 0) { setRecipes([]); return }
+    if (demoMode) { setRecipes((demoRecipes || []).filter(r => recipeIds.includes(r.id))); return }
+    supabase.from('recipes').select('*').in('id', recipeIds).then(({ data }) => setRecipes(data || []))
+  }, [plan, demoMode, demoRecipes])
 
   useEffect(() => {
     if (demoPlan) return
@@ -262,6 +277,21 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
                   {meal.kcalTarget != null && <span>{meal.kcalTarget} kcal</span>}
                 </div>
               </div>
+              {(() => {
+                const mealRecipeIds = Array.from(new Set(meal.items.map(i => i.recipeId).filter((id): id is string => !!id)))
+                const mealRecipes = mealRecipeIds.map(id => recipes.find(r => r.id === id)).filter((r): r is RecipeRow => !!r)
+                if (mealRecipes.length === 0) return null
+                return (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {mealRecipes.map(r => (
+                      <button key={r.id} onClick={() => setViewingRecipe(r)}
+                        className="flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-lg text-xs font-semibold">
+                        <BookOpen className="w-3 h-3" /> Ver receta{mealRecipes.length > 1 ? `: ${r.name}` : ''}
+                      </button>
+                    ))}
+                  </div>
+                )
+              })()}
               {meal.items.length > 0 && <MealMacroPills items={meal.items} />}
               {meal.items.length > 0 && (
                 <ul className="space-y-1 mt-2">
@@ -290,6 +320,26 @@ export function DietaClienteTab({ client, demoMode, demoPlan }: { client: Client
       )}
 
       <ShoppingList meals={resolveChosenMeals(plan.meals.filter(matchesDayType), optionChoices)} foods={foods} checked={checked} onToggle={toggleChecked} />
+
+      {viewingRecipe && (
+        <BottomSheet open onClose={() => setViewingRecipe(null)} title={viewingRecipe.name}>
+          <div className="space-y-3">
+            {viewingRecipe.photo_url && (
+              <img src={viewingRecipe.photo_url} alt={viewingRecipe.name} className="w-full aspect-video object-cover rounded-xl" />
+            )}
+            {viewingRecipe.steps ? (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted mb-1.5 flex items-center gap-1.5">
+                  <ChefHat className="w-3.5 h-3.5" /> Preparación
+                </p>
+                <p className="text-sm whitespace-pre-line leading-relaxed">{viewingRecipe.steps}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted">Tu nutricionista todavía no ha añadido los pasos de preparación de esta receta.</p>
+            )}
+          </div>
+        </BottomSheet>
+      )}
     </div>
   )
 }
