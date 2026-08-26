@@ -382,7 +382,8 @@ export const DEMO_RECIPES: RecipeRow[] = [
   },
   {
     id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '',
-    photo_url: placeholderPhoto('Pollo arroz', '#3f6d8f'), steps: null,
+    photo_url: placeholderPhoto('Pollo arroz', '#3f6d8f'),
+    steps: '1. Cuece el arroz integral según las instrucciones del paquete.\n2. Salpimienta la pechuga de pollo y hazla a la plancha 4-5 minutos por cada lado.\n3. Cuece la verdura al vapor 8-10 minutos, hasta que esté tierna pero crujiente.\n4. Sirve el pollo troceado sobre el arroz, con la verdura al lado.',
     items: [
       { id: 'dr2i1', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: '230', proteinG: '45', carbsG: '0', fatG: '5' },
       { id: 'dr2i2', foodName: 'Arroz integral', quantity: '60', unit: 'g', kcal: '210', proteinG: '5', carbsG: '44', fatG: '2' },
