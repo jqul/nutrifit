@@ -123,10 +123,14 @@ function demoPlanToEditable(plan: DietPlan) {
   }
 }
 
-export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutricionistaLogoUrl, nutricionistaAccentColor, demoPlan }: {
+export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutricionistaLogoUrl, nutricionistaAccentColor, demoPlan, personalMode }: {
   client: ClientData; nutricionistaId: string; nutricionistaName?: string
   nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null
   demoPlan?: DietPlan
+  // true en modo personal (ver PersonalModeShell) — el "cliente" es quien
+  // está usando la pantalla, así que los textos en tercera persona
+  // ("este cliente", "para el cliente") se cambian a segunda persona.
+  personalMode?: boolean
 }) {
   const demoEditable = demoPlan ? demoPlanToEditable(demoPlan) : null
   const [loading, setLoading] = useState(!demoPlan)
@@ -561,7 +565,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
   if (!planId) return (
     <div className="bg-card border border-border rounded-2xl p-12 text-center max-w-lg">
-      <p className="text-muted text-sm mb-4">Este cliente no tiene plan de dieta activo.</p>
+      <p className="text-muted text-sm mb-4">{personalMode ? 'Todavía no tienes un plan de dieta activo.' : 'Este cliente no tiene plan de dieta activo.'}</p>
       <Button onClick={handleCreatePlan}>Crear plan de dieta</Button>
     </div>
   )
@@ -607,7 +611,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               </button>
               {dynamicRecetario().length > 0 && (
                 <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', dynamicRecetario(), { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
-                  className="flex items-center gap-1.5 text-xs font-bold text-accent" title="Solo las recetas usadas en este plan, con las cantidades ya ajustadas a este cliente">
+                  className="flex items-center gap-1.5 text-xs font-bold text-accent" title={personalMode ? 'Solo las recetas usadas en este plan, con las cantidades ya ajustadas a tus necesidades' : 'Solo las recetas usadas en este plan, con las cantidades ya ajustadas a este cliente'}>
                   <BookOpen className="w-3.5 h-3.5" /> Recetario de este plan ({dynamicRecetario().length})
                 </button>
               )}
@@ -834,7 +838,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                         <FlaskConical className="w-3.5 h-3.5" />
                       </button>
                       {allergenHit && (
-                        <span title={`Posible alérgeno para este cliente: ${allergenHit.replace('_', ' ')}`} className="flex-shrink-0 text-warn">
+                        <span title={`${personalMode ? 'Posible alérgeno para ti' : 'Posible alérgeno para este cliente'}: ${allergenHit.replace('_', ' ')}`} className="flex-shrink-0 text-warn">
                           <AlertTriangle className="w-3.5 h-3.5" />
                         </span>
                       )}
@@ -981,7 +985,9 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
             <input value={sup.timing} onChange={e => updateSupplement(sup.id, { timing: e.target.value })} placeholder="Cuándo"
               className="w-24 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
             <button onClick={() => updateSupplement(sup.id, { visibleToClient: !sup.visibleToClient })}
-              className="p-1.5 text-muted hover:text-ink" title={sup.visibleToClient ? 'Visible para el cliente' : 'Oculto para el cliente'}>
+              className="p-1.5 text-muted hover:text-ink" title={personalMode
+                ? (sup.visibleToClient ? 'Visible en tu seguimiento diario' : 'Oculto en tu seguimiento diario')
+                : (sup.visibleToClient ? 'Visible para el cliente' : 'Oculto para el cliente')}>
               {sup.visibleToClient ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
             </button>
             <button onClick={() => removeSupplement(sup.id)} className="p-1.5 text-muted hover:text-warn"><Trash2 className="w-3.5 h-3.5" /></button>

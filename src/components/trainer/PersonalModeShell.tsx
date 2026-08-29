@@ -108,18 +108,18 @@ export function PersonalModeShell({ userProfile, onLogout }: {
             ClientPanel/ClientView: cambiar de pestaña no debe borrar una
             edición a medio hacer en el plan. */}
         <div className={tab === 'hoy' ? '' : 'hidden'}><HoyTab client={client} /></div>
-        <div className={tab === 'dieta' ? '' : 'hidden'}><DietaClienteTab client={client} /></div>
+        <div className={tab === 'dieta' ? '' : 'hidden'}><DietaClienteTab client={client} personalMode /></div>
         <div className={tab === 'progreso' ? '' : 'hidden'}>
           <ProgresoClienteTab client={client} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor} />
         </div>
         <div className={tab === 'plan' ? '' : 'hidden'} style={{ padding: '2rem 1.5rem' }}>
           <PlanDietaTab client={client} nutricionistaId={userProfile.uid} nutricionistaName={userProfile.displayName}
-            nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor} />
+            nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor} personalMode />
         </div>
         <div className={tab === 'perfil' ? '' : 'hidden'} style={{ padding: '2rem 1.5rem' }}>
           <PerfilTab client={client} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
             onDelete={handleDeleteAccount} nutricionistaName={userProfile.displayName}
-            customQuestions={userProfile.customAnamnesisQuestions} hasConsentDocument={!!userProfile.consentDocumentUrl} />
+            customQuestions={userProfile.customAnamnesisQuestions} hasConsentDocument={!!userProfile.consentDocumentUrl} personalMode />
         </div>
       </main>
     </div>

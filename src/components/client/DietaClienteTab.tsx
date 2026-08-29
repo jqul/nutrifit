@@ -32,8 +32,12 @@ function resolveChosenMeals(meals: DietMeal[], choices: Record<string, string>):
   })
 }
 
-export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes }: {
+export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, personalMode }: {
   client: ClientData; demoMode?: boolean; demoPlan?: DietPlan; demoRecipes?: RecipeRow[]
+  // true cuando quien ve esto es su propio nutricionista (modo personal,
+  // ver PersonalModeShell) — cambia solo los textos que mencionan "tu
+  // nutricionista" en tercera persona, que sonarían raros siendo la misma persona.
+  personalMode?: boolean
 }) {
   const clientId = client.id
   const [plan, setPlan] = useState<DietPlan | null>(demoPlan ?? null)
@@ -121,7 +125,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes }: {
     <div className="flex flex-col items-center justify-center py-24 px-6 text-center text-muted">
       <Utensils className="w-12 h-12 mx-auto mb-4 opacity-20" />
       <p className="font-serif text-xl font-bold mb-2">Sin plan de dieta</p>
-      <p className="text-sm">Tu nutricionista aún no ha creado tu plan. ¡Pronto lo tendrás!</p>
+      <p className="text-sm">{personalMode ? 'Todavía no has creado tu plan — ve a "Editar plan" para montarlo.' : 'Tu nutricionista aún no ha creado tu plan. ¡Pronto lo tendrás!'}</p>
     </div>
   )
 
@@ -166,7 +170,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes }: {
 
       {plan.advice && (
         <div className="bg-accent/10 border border-accent/20 rounded-2xl p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1.5">Consejo de tu nutricionista</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1.5">{personalMode ? 'Tu nota' : 'Consejo de tu nutricionista'}</p>
           <p className="text-sm leading-relaxed">{plan.advice}</p>
         </div>
       )}
@@ -296,7 +300,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes }: {
               {meal.items.length > 0 && (
                 <ul className="space-y-1 mt-2">
                   {meal.items.map(item => (
-                    <MealItemRow key={item.id} item={item} foods={foods} demoMode={demoMode} />
+                    <MealItemRow key={item.id} item={item} foods={foods} demoMode={demoMode} personalMode={personalMode} />
                   ))}
                 </ul>
               )}
@@ -335,7 +339,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes }: {
                 <p className="text-sm whitespace-pre-line leading-relaxed">{viewingRecipe.steps}</p>
               </div>
             ) : (
-              <p className="text-sm text-muted">Tu nutricionista todavía no ha añadido los pasos de preparación de esta receta.</p>
+              <p className="text-sm text-muted">{personalMode ? 'Todavía no has añadido los pasos de preparación de esta receta.' : 'Tu nutricionista todavía no ha añadido los pasos de preparación de esta receta.'}</p>
             )}
           </div>
         </BottomSheet>
@@ -348,7 +352,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes }: {
  * equivalentes ("sistema de intercambios") — puramente informativo: no
  * modifica el plan real, solo muestra por cuánto se podría cambiar
  * manteniendo el mismo macro. El cambio real solo lo hace el nutricionista. */
-function MealItemRow({ item, foods, demoMode }: { item: DietMealItem; foods: Food[]; demoMode?: boolean }) {
+function MealItemRow({ item, foods, demoMode, personalMode }: { item: DietMealItem; foods: Food[]; demoMode?: boolean; personalMode?: boolean }) {
   const [open, setOpen] = useState(false)
   const canSubstitute = foods.length > 0
 
@@ -364,7 +368,7 @@ function MealItemRow({ item, foods, demoMode }: { item: DietMealItem; foods: Foo
           </button>
         )}
       </div>
-      {canSubstitute && <SubstituteSheet open={open} onClose={() => setOpen(false)} item={item} foods={foods} demoMode={demoMode} />}
+      {canSubstitute && <SubstituteSheet open={open} onClose={() => setOpen(false)} item={item} foods={foods} demoMode={demoMode} personalMode={personalMode} />}
     </li>
   )
 }
@@ -372,7 +376,9 @@ function MealItemRow({ item, foods, demoMode }: { item: DietMealItem; foods: Foo
 /** "¿Qué puedo comer en vez de esto?" — hoja inferior con alternativas ya
  * calculadas en gramos reales para el macro elegido, sin tener que escribir
  * nada primero; el buscador solo sirve para acotar la lista si hace falta. */
-function SubstituteSheet({ open, onClose, item, foods, demoMode }: { open: boolean; onClose: () => void; item: DietMealItem; foods: Food[]; demoMode?: boolean }) {
+function SubstituteSheet({ open, onClose, item, foods, demoMode, personalMode }: {
+  open: boolean; onClose: () => void; item: DietMealItem; foods: Food[]; demoMode?: boolean; personalMode?: boolean
+}) {
   const [matchBy, setMatchBy] = useState<MacroKey>('proteinG')
   const [query, setQuery] = useState('')
 
@@ -418,7 +424,7 @@ function SubstituteSheet({ open, onClose, item, foods, demoMode }: { open: boole
           ))}
         </div>
         <p className="text-[11px] text-muted pt-1">
-          Solo orientativo — coméntaselo a tu nutricionista antes de cambiarlo{demoMode ? ' (modo demo)' : ''}.
+          Solo orientativo — {personalMode ? 'piénsalo bien antes de cambiarlo' : 'coméntaselo a tu nutricionista antes de cambiarlo'}{demoMode ? ' (modo demo)' : ''}.
         </p>
       </div>
     </BottomSheet>

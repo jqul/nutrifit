@@ -21,7 +21,7 @@ const BMI_CATEGORY_CLASS: Record<string, string> = {
   'bajo peso': 'text-notice', normal: 'text-ok', sobrepeso: 'text-notice', obesidad: 'text-warn',
 }
 
-export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName, customQuestions, hasConsentDocument }: {
+export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName, customQuestions, hasConsentDocument, personalMode }: {
   client: ClientData
   onUpdate: (updates: Partial<ClientData>) => Promise<boolean>
   onRegenerateToken: () => Promise<string | null>
@@ -30,6 +30,10 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
   nutricionistaName?: string
   customQuestions?: CustomAnamnesisQuestion[]
   hasConsentDocument?: boolean
+  // true en modo personal (ver PersonalModeShell): "el cliente" es quien
+  // está mirando esta ficha, así que los textos en tercera persona pasan a
+  // segunda persona.
+  personalMode?: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(client)
@@ -80,7 +84,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
 
   const handleGenerateInvoice = async () => {
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
-    if (client.monthlyPrice == null) { toast('Ponle un precio mensual a este cliente primero', 'warn'); return }
+    if (client.monthlyPrice == null) { toast(personalMode ? 'Ponte un precio mensual primero' : 'Ponle un precio mensual a este cliente primero', 'warn'); return }
     setGeneratingInvoice(true)
     const { error } = await supabase.from('invoices').insert({
       nutricionista_id: client.nutricionistaId, client_id: client.id,
@@ -248,7 +252,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
             ) : null)}
           </div>
         ) : (
-          <p className="text-sm text-muted">El cliente todavía no ha completado el cuestionario.</p>
+          <p className="text-sm text-muted">{personalMode ? 'Todavía no has completado el cuestionario.' : 'El cliente todavía no ha completado el cuestionario.'}</p>
         )}
       </div>
 
@@ -260,10 +264,12 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
           </Button>
         </div>
         {client.monthlyPrice == null && (
-          <p className="text-xs text-warn">Ponle un precio mensual a este cliente (arriba, en "Editar") para poder generarle facturas.</p>
+          <p className="text-xs text-warn">{personalMode
+            ? 'Ponte un precio mensual (arriba, en "Editar") para poder generarte facturas.'
+            : 'Ponle un precio mensual a este cliente (arriba, en "Editar") para poder generarle facturas.'}</p>
         )}
         {invoices.length === 0 ? (
-          <p className="text-sm text-muted">Todavía no hay facturas para este cliente.</p>
+          <p className="text-sm text-muted">{personalMode ? 'Todavía no tienes facturas.' : 'Todavía no hay facturas para este cliente.'}</p>
         ) : (
           <div className="divide-y divide-border">
             {invoices.map(inv => (
@@ -287,19 +293,22 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted">Datos del cliente (RGPD)</p>
-        <p className="text-xs text-muted">Descarga toda la información guardada de este cliente, o elimínala por completo si te lo solicita.</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted">{personalMode ? 'Tus datos (RGPD)' : 'Datos del cliente (RGPD)'}</p>
+        <p className="text-xs text-muted">{personalMode
+          ? 'Descarga toda tu información guardada, o pídenos que la eliminemos por completo.'
+          : 'Descarga toda la información guardada de este cliente, o elimínala por completo si te lo solicita.'}</p>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={handleExport} loading={exporting}><Download className="w-3.5 h-3.5" /> Exportar datos</Button>
-          <Button variant="danger" onClick={() => setConfirmDeleteOpen(true)}><Trash2 className="w-3.5 h-3.5" /> Eliminar cliente y sus datos</Button>
+          <Button variant="danger" onClick={() => setConfirmDeleteOpen(true)}><Trash2 className="w-3.5 h-3.5" /> {personalMode ? 'Eliminar mi cuenta y mis datos' : 'Eliminar cliente y sus datos'}</Button>
         </div>
       </div>
 
-      <Modal open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} title="Eliminar cliente">
+      <Modal open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} title={personalMode ? 'Eliminar cuenta' : 'Eliminar cliente'}>
         <div className="space-y-4">
           <p className="text-sm text-muted">
-            ¿Eliminar a <strong className="text-ink">{client.name} {client.surname}</strong> y todos sus datos
-            (plan de dieta, peso, fotos, check-ins)? Esta acción no se puede deshacer.
+            {personalMode
+              ? '¿Eliminar tu cuenta y todos tus datos (plan de dieta, peso, fotos, check-ins)? Esta acción no se puede deshacer.'
+              : <>¿Eliminar a <strong className="text-ink">{client.name} {client.surname}</strong> y todos sus datos (plan de dieta, peso, fotos, check-ins)? Esta acción no se puede deshacer.</>}
           </p>
           <div className="flex gap-2">
             <Button variant="danger" onClick={handleDelete} loading={deleting}>Sí, eliminar</Button>
