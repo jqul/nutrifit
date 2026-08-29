@@ -163,7 +163,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
           <h2 className="text-5xl font-serif font-bold leading-tight mb-6">Tu consulta de<br /><span className="text-accent italic">nutrición</span><br />en un solo lugar</h2>
           <p className="text-white/50 text-sm leading-relaxed max-w-sm">Planes de dieta, seguimiento de peso y adherencia de tus clientes.</p>
         </div>
-        <button onClick={() => setView('landing')} className="text-white/40 text-xs hover:text-white/70 transition-colors text-left">← Volver a la página principal</button>
+        <button onClick={() => setView('landing')} className="text-white/60 text-sm font-medium hover:text-white transition-colors text-left">← Volver a la página principal</button>
       </div>
       <div className="flex-1 flex items-center justify-center p-8" style={{ paddingTop: 'max(2rem, env(safe-area-inset-top, 0px))' }}>
         <div className="w-full max-w-sm">
