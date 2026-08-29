@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Eye, EyeOff, Check, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Check, ArrowRight, Briefcase, User } from 'lucide-react'
 
 interface AuthProps { onAuth: () => void; onDemo?: () => void }
 
@@ -23,6 +23,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
   const [error, setError] = useState('')
   const [registered, setRegistered] = useState(false)
   const [forgotSent, setForgotSent] = useState(false)
+  const [accountMode, setAccountMode] = useState<'professional' | 'personal'>('professional')
 
   const handleLogin = async () => {
     setError(''); setLoading(true)
@@ -47,7 +48,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
     setError(''); setLoading(true)
     const { error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { display_name: name, signup_type: 'nutricionista' } },
+      options: { data: { display_name: name, signup_type: 'nutricionista', account_mode: accountMode } },
     })
     if (error) { setError(error.message); setLoading(false); return }
     setLoading(false); setRegistered(true)
@@ -113,8 +114,12 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
         <h1 className="text-4xl font-serif font-bold mb-8">Nutri<span className="text-accent italic">Fit</span></h1>
         <div className="bg-card border border-border rounded-2xl p-8">
           <div className="w-14 h-14 bg-ok/10 rounded-full flex items-center justify-center mx-auto mb-4"><Check className="w-7 h-7 text-ok" /></div>
-          <h2 className="font-serif font-bold text-xl mb-2">Solicitud enviada</h2>
-          <p className="text-muted text-sm leading-relaxed">Tu cuenta ha sido creada. Recibirás confirmación de acceso en breve.</p>
+          <h2 className="font-serif font-bold text-xl mb-2">{accountMode === 'personal' ? 'Cuenta creada' : 'Solicitud enviada'}</h2>
+          <p className="text-muted text-sm leading-relaxed">
+            {accountMode === 'personal'
+              ? 'Ya puedes entrar y empezar a montar tu plan.'
+              : 'Tu cuenta ha sido creada. Recibirás confirmación de acceso en breve.'}
+          </p>
           <button onClick={() => { setRegistered(false); setView('login') }} className="mt-6 w-full py-3 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90">Ir al inicio de sesión</button>
         </div>
       </div>
@@ -174,6 +179,29 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
           <h2 className="text-2xl font-serif font-bold mb-2">{view === 'login' ? 'Bienvenido de nuevo' : 'Solicitar acceso'}</h2>
           <p className="text-muted text-sm mb-8">{view === 'login' ? 'Entra a tu panel de nutricionista.' : 'Crea tu cuenta y empieza a gestionar clientes.'}</p>
           <div className="space-y-4">
+            {view === 'register' && (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">¿Cómo quieres usar NutriFit?</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setAccountMode('professional')}
+                    className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border text-center transition-colors ${
+                      accountMode === 'professional' ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/40'
+                    }`}>
+                    <Briefcase className={`w-5 h-5 ${accountMode === 'professional' ? 'text-accent' : 'text-muted'}`} />
+                    <span className="text-xs font-semibold">Soy profesional</span>
+                    <span className="text-[10px] text-muted leading-tight">Gestiono clientes</span>
+                  </button>
+                  <button type="button" onClick={() => setAccountMode('personal')}
+                    className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border text-center transition-colors ${
+                      accountMode === 'personal' ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/40'
+                    }`}>
+                    <User className={`w-5 h-5 ${accountMode === 'personal' ? 'text-accent' : 'text-muted'}`} />
+                    <span className="text-xs font-semibold">Uso personal</span>
+                    <span className="text-[10px] text-muted leading-tight">Llevo mi propia dieta</span>
+                  </button>
+                </div>
+              </div>
+            )}
             {view === 'register' && (
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Nombre completo</label>

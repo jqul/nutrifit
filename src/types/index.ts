@@ -28,6 +28,7 @@ export interface UserProfile {
   customDomain: string | null
   contactPhone: string | null
   consentDocumentUrl: string | null
+  accountMode: 'professional' | 'personal'
 }
 
 // Objetivos predefinidos con etiqueta traducida — el campo `goal` del cliente

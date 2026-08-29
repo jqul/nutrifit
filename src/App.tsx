@@ -13,6 +13,7 @@ const NutricionistaDashboard = lazy(() => import('./components/trainer/Nutricion
 const ClientPanel = lazy(() => import('./components/trainer/ClientPanel').then(m => ({ default: m.ClientPanel })))
 const ClientView = lazy(() => import('./components/client/ClientView').then(m => ({ default: m.ClientView })))
 const SuperAdminPanel = lazy(() => import('./components/trainer/SuperAdminPanel').then(m => ({ default: m.SuperAdminPanel })))
+const PersonalModeShell = lazy(() => import('./components/trainer/PersonalModeShell').then(m => ({ default: m.PersonalModeShell })))
 
 function LoadingScreen() {
   return (
@@ -133,7 +134,9 @@ export default function App() {
       )}
 
       {view === 'trainer' && userProfile && (
-        userProfile.role === 'super_admin' && adminSubview === 'admin' ? (
+        userProfile.accountMode === 'personal' ? (
+          <PersonalModeShell userProfile={userProfile} onLogout={logout} />
+        ) : userProfile.role === 'super_admin' && adminSubview === 'admin' ? (
           <SuperAdminPanel onLogout={logout} onSwitchToTrainer={() => setAdminSubview('trainer')} />
         ) : selectedClient ? (
           <ClientPanel

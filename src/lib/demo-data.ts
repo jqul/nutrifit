@@ -21,6 +21,7 @@ export const DEMO_NUTRICIONISTA_PROFILE: UserProfile = {
   customDomain: null,
   contactPhone: '+34 600 987 654',
   consentDocumentUrl: null,
+  accountMode: 'professional',
 }
 
 function toLocalISODate(d: Date): string {
