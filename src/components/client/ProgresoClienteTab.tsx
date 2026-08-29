@@ -16,9 +16,13 @@ const HYDRATION_GOAL_L = 2.0
 
 interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]; bloodMarkers?: BloodMarkerRow[] }
 
-export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLogoUrl, nutricionistaAccentColor }: {
+export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, personalMode }: {
   client: ClientData; demoMode?: boolean; demoData?: DemoData
   nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null
+  // true en modo personal (ver PersonalModeShell) — "adherencia al plan"
+  // solo tiene sentido cuando alguien más lo marca; para uno mismo se
+  // oculta y se deja solo la racha.
+  personalMode?: boolean
 }) {
   const clientId = client.id
   const [weights, setWeights] = useState<WeightEntry[]>(demoData?.weights ?? [])
@@ -130,10 +134,10 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid gap-2 ${personalMode ? 'grid-cols-1 max-w-[160px]' : 'grid-cols-3'}`}>
         <StatCard label="Racha" value={`${streak}d`} icon={<Flame className="w-4 h-4 text-accent" />} />
-        <StatCard label="Adherencia 7d" value={`${adherence7d}%`} />
-        <StatCard label="Adherencia 30d" value={`${adherence30d}%`} />
+        {!personalMode && <StatCard label="Adherencia 7d" value={`${adherence7d}%`} />}
+        {!personalMode && <StatCard label="Adherencia 30d" value={`${adherence30d}%`} />}
       </div>
 
       <AchievementBadges weights={weights} streak={streak} checkins={checkins} mealLogs={mealLogs} />

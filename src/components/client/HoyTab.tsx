@@ -44,7 +44,13 @@ function newId(): string {
   return crypto.randomUUID()
 }
 
-export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: boolean }) {
+export function HoyTab({ client, demoMode, personalMode }: {
+  client: ClientData; demoMode?: boolean
+  // true en modo personal (ver PersonalModeShell) — oculta "Próximas
+  // citas / Pedir cita", que no tiene sentido cuando no hay un
+  // profesional distinto al que pedirle una.
+  personalMode?: boolean
+}) {
   const today = toLocalISODate(new Date())
   // loadCheckins() corta de inmediato en modo demo (no hay Supabase que
   // consultar), así que si el check-in de hoy ya viene en los datos de demo
@@ -397,7 +403,11 @@ export function HoyTab({ client, demoMode }: { client: ClientData; demoMode?: bo
         </button>
       </div>
 
-      <ProximasCitas client={client} demoMode={demoMode} demoCitas={demoMode ? DEMO_APPOINTMENTS.filter(a => a.clientId === client.id) : undefined} />
+      {/* Sin sentido en modo personal: no hay un profesional distinto al
+          que pedirle cita. */}
+      {!personalMode && (
+        <ProximasCitas client={client} demoMode={demoMode} demoCitas={demoMode ? DEMO_APPOINTMENTS.filter(a => a.clientId === client.id) : undefined} />
+      )}
     </div>
   )
 }

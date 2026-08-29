@@ -107,10 +107,10 @@ export function PersonalModeShell({ userProfile, onLogout }: {
         {/* Montadas siempre, solo ocultas con CSS — mismo motivo que en
             ClientPanel/ClientView: cambiar de pestaña no debe borrar una
             edición a medio hacer en el plan. */}
-        <div className={tab === 'hoy' ? '' : 'hidden'}><HoyTab client={client} /></div>
+        <div className={tab === 'hoy' ? '' : 'hidden'}><HoyTab client={client} personalMode /></div>
         <div className={tab === 'dieta' ? '' : 'hidden'}><DietaClienteTab client={client} personalMode /></div>
         <div className={tab === 'progreso' ? '' : 'hidden'}>
-          <ProgresoClienteTab client={client} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor} />
+          <ProgresoClienteTab client={client} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor} personalMode />
         </div>
         <div className={tab === 'plan' ? '' : 'hidden'} style={{ padding: '2rem 1.5rem' }}>
           <PlanDietaTab client={client} nutricionistaId={userProfile.uid} nutricionistaName={userProfile.displayName}
