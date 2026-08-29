@@ -87,6 +87,44 @@ export function gramsForAbsoluteMacro(toFood: Food, targetAbsolute: number, matc
   return (targetAbsolute * 100) / toPer100g
 }
 
+export interface RankedSubstitute { food: Food; grams: number }
+
+/**
+ * Sugerencias de sustitución ordenadas por similitud nutricional — no solo
+ * igualando `matchBy` (eso ya lo hace cualquier candidato con
+ * gramsForAbsoluteMacro), sino minimizando cuánto se desvían los OTROS
+ * macros a esa cantidad, para que la primera sugerencia sea de verdad "un
+ * cambio parecido" y no, por ejemplo, un alimento con el mismo aporte de
+ * proteína pero el triple de grasa. Antes de que el nutricionista/cliente
+ * tenga que buscar uno por su cuenta.
+ */
+export function rankSubstitutesByMacros(
+  originalMacros: { kcal: number; proteinG: number; carbsG: number; fatG: number },
+  excludeName: string,
+  candidates: Food[],
+  matchBy: MacroKey,
+): RankedSubstitute[] {
+  const target = originalMacros[matchBy]
+  return candidates
+    .filter(f => f.name !== excludeName)
+    .map(f => {
+      const grams = gramsForAbsoluteMacro(f, target, matchBy)
+      if (grams == null) return null
+      const scale = grams / 100
+      const kcalDiff = Math.abs(f.kcal * scale - originalMacros.kcal)
+      const proteinDiff = Math.abs(f.proteinG * scale - originalMacros.proteinG)
+      const carbsDiff = Math.abs(f.carbsG * scale - originalMacros.carbsG)
+      const fatDiff = Math.abs(f.fatG * scale - originalMacros.fatG)
+      // Se pasan proteína/carbos/grasas a "kcal equivalentes" (4/4/9 kcal por
+      // gramo) antes de sumar, para no comparar peras con manzanas.
+      const score = kcalDiff + proteinDiff * 4 + carbsDiff * 4 + fatDiff * 9
+      return { food: f, grams, score }
+    })
+    .filter((x): x is { food: Food; grams: number; score: number } => x !== null)
+    .sort((a, b) => a.score - b.score)
+    .map(({ food, grams }) => ({ food, grams }))
+}
+
 export interface MacroDiff { kcal: number; proteinG: number; carbsG: number; fatG: number }
 
 /**

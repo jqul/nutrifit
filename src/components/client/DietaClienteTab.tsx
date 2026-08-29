@@ -5,7 +5,7 @@ import { dietPlanFromRows, foodFromRow } from '../../lib/mappers'
 import { DietPlan, DietMeal, ClientData, Food, DietMealItem } from '../../types'
 import { printDietPlan } from '../../lib/printPlan'
 import { buildShoppingList, groupShoppingItemsByAisle } from '../../lib/shoppingList'
-import { gramsForAbsoluteMacro, MacroKey } from '../../lib/foodConversion'
+import { gramsForAbsoluteMacro, rankSubstitutesByMacros, MacroKey } from '../../lib/foodConversion'
 import { todayDayOfWeek } from '../../lib/date'
 import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, saveDayType } from '../../lib/planMeals'
 import { buildWAUrl } from '../../lib/whatsapp'
@@ -379,9 +379,16 @@ function SubstituteSheet({ open, onClose, item, foods, demoMode }: { open: boole
   const itemMacro: Record<MacroKey, number | null> = {
     kcal: item.kcal, proteinG: item.proteinG, carbsG: item.carbsG, fatG: item.fatG,
   }
-  const candidates = foods.filter(f =>
-    f.name !== item.foodName && (query.trim() === '' || f.name.toLowerCase().includes(query.toLowerCase()))
-  ).slice(0, 8)
+  // Sin nada escrito, se sugieren directamente los más parecidos por macros
+  // (no solo el mismo macro igualado, también los demás lo más cerca
+  // posible) — el buscador de abajo es solo para cuando ninguno convence.
+  const ranked = query.trim() === ''
+    ? rankSubstitutesByMacros(
+        { kcal: item.kcal || 0, proteinG: item.proteinG || 0, carbsG: item.carbsG || 0, fatG: item.fatG || 0 },
+        item.foodName, foods, matchBy,
+      ).slice(0, 8)
+    : foods.filter(f => f.name !== item.foodName && f.name.toLowerCase().includes(query.toLowerCase()))
+        .slice(0, 8).map(f => ({ food: f, grams: itemMacro[matchBy] != null ? gramsForAbsoluteMacro(f, itemMacro[matchBy]!, matchBy) : null }))
 
   return (
     <BottomSheet open={open} onClose={onClose} title={`En vez de ${item.foodName}...`}>
@@ -401,18 +408,14 @@ function SubstituteSheet({ open, onClose, item, foods, demoMode }: { open: boole
           placeholder="Buscar otro alimento..."
           className="w-full px-3 py-2 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20" />
         <div className="space-y-1.5">
-          {candidates.length === 0 ? (
+          {ranked.length === 0 ? (
             <p className="text-sm text-muted text-center py-4">Sin resultados.</p>
-          ) : candidates.map(f => {
-            const target = itemMacro[matchBy]
-            const grams = target != null ? gramsForAbsoluteMacro(f, target, matchBy) : null
-            return (
-              <div key={f.id} className="flex items-center justify-between gap-2 px-3 py-2.5 bg-bg-alt rounded-xl">
-                <span className="text-sm font-medium">{f.name}</span>
-                <span className="text-sm font-bold text-accent flex-shrink-0">{grams != null ? `≈ ${Math.round(grams * 10) / 10}g` : 'sin ese macro'}</span>
-              </div>
-            )
-          })}
+          ) : ranked.map(({ food: f, grams }) => (
+            <div key={f.id} className="flex items-center justify-between gap-2 px-3 py-2.5 bg-bg-alt rounded-xl">
+              <span className="text-sm font-medium">{f.name}</span>
+              <span className="text-sm font-bold text-accent flex-shrink-0">{grams != null ? `≈ ${Math.round(grams * 10) / 10}g` : 'sin ese macro'}</span>
+            </div>
+          ))}
         </div>
         <p className="text-[11px] text-muted pt-1">
           Solo orientativo — coméntaselo a tu nutricionista antes de cambiarlo{demoMode ? ' (modo demo)' : ''}.

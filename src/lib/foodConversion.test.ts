@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { convertQuantity, computeMacros, computeSubstitution, computeSubstitutionDiff, gramsForAbsoluteMacro } from './foodConversion'
+import { convertQuantity, computeMacros, computeSubstitution, computeSubstitutionDiff, gramsForAbsoluteMacro, rankSubstitutesByMacros } from './foodConversion'
 import { Food } from '../types'
 
 const pollo: Food = { id: '1', name: 'Pechuga de pollo', category: 'Proteína', kcal: 165, proteinG: 31, carbsG: 0, fatG: 3.6 }
@@ -90,6 +90,32 @@ describe('gramsForAbsoluteMacro', () => {
 
   it('returns null when the substitute food has none of the matched macro', () => {
     expect(gramsForAbsoluteMacro(aceite, 31, 'proteinG')).toBeNull()
+  })
+})
+
+describe('rankSubstitutesByMacros', () => {
+  const originalMacros = { kcal: 165, proteinG: 31, carbsG: 0, fatG: 3.6 } // 100g pollo
+
+  it('ranks a similarly-lean food above one that matches the target macro but is far fattier', () => {
+    const pavo: Food = { id: '10', name: 'Pavo', category: 'Proteína', kcal: 135, proteinG: 30, carbsG: 0, fatG: 1.7 }
+    const panceta: Food = { id: '11', name: 'Panceta', category: 'Proteína', kcal: 541, proteinG: 37, carbsG: 0, fatG: 42 }
+    const ranked = rankSubstitutesByMacros(originalMacros, 'Pechuga de pollo', [panceta, pavo], 'proteinG')
+    expect(ranked.map(r => r.food.name)).toEqual(['Pavo', 'Panceta'])
+  })
+
+  it('excludes the food being replaced by name', () => {
+    const ranked = rankSubstitutesByMacros(originalMacros, 'Pechuga de pollo', [pollo, tofu], 'proteinG')
+    expect(ranked.map(r => r.food.name)).toEqual(['Tofu'])
+  })
+
+  it('excludes candidates that have none of the matched macro', () => {
+    const ranked = rankSubstitutesByMacros(originalMacros, 'Pechuga de pollo', [aceite, tofu], 'proteinG')
+    expect(ranked.map(r => r.food.name)).toEqual(['Tofu'])
+  })
+
+  it('returns the equivalent grams alongside each ranked food', () => {
+    const ranked = rankSubstitutesByMacros(originalMacros, 'Pechuga de pollo', [tofu], 'proteinG')
+    expect(ranked[0].grams).toBeCloseTo(387.5)
   })
 })
 

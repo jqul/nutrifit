@@ -10,7 +10,7 @@ import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../../lib/demo-data'
 import { printDietPlan } from '../../../lib/printPlan'
 import { printRecipeBook } from '../../../lib/printRecipeBook'
 import { ScannedFood } from '../../../lib/openFoodFacts'
-import { gramsForAbsoluteMacro, computeMacros, MacroKey } from '../../../lib/foodConversion'
+import { gramsForAbsoluteMacro, computeMacros, rankSubstitutesByMacros, MacroKey } from '../../../lib/foodConversion'
 import { buildShoppingList } from '../../../lib/shoppingList'
 import { buildWAUrl } from '../../../lib/whatsapp'
 import {
@@ -875,10 +875,27 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                           <input value={subQuery} onChange={e => setSubQuery(e.target.value)}
                             placeholder={`Busca un sustituto para "${item.foodName}"...`} autoFocus
                             className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
-                          {subQuery.trim().length > 0 && (
-                            <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
-                              <FoodTagFilterPills active={activeFoodTags} onToggle={toggleFoodTag} />
-                              {foods.filter(f => f.name.toLowerCase().includes(subQuery.toLowerCase()) && f.name !== item.foodName && foodMatchesTags(f, activeFoodTags)).slice(0, 6).map(f => {
+                          <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                            <FoodTagFilterPills active={activeFoodTags} onToggle={toggleFoodTag} />
+                            {subQuery.trim().length === 0 ? (
+                              <>
+                                <p className="px-2.5 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted">Sugeridos por macros parecidos</p>
+                                {rankSubstitutesByMacros(
+                                  { kcal: parseFloat(item.kcal) || 0, proteinG: parseFloat(item.proteinG) || 0, carbsG: parseFloat(item.carbsG) || 0, fatG: parseFloat(item.fatG) || 0 },
+                                  item.foodName, foods.filter(f => foodMatchesTags(f, activeFoodTags)), subMatchBy,
+                                ).slice(0, 6).map(({ food: f, grams }) => (
+                                  <button key={f.id} type="button" onMouseDown={() => applySubstitution(meal.id, item, f)}
+                                    className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
+                                    <span className="flex items-center gap-1.5 min-w-0">
+                                      <span className="truncate">{f.name}</span>
+                                      <FoodTagBadges food={f} />
+                                    </span>
+                                    <span className="text-muted flex-shrink-0">≈ {Math.round(grams * 10) / 10}g</span>
+                                  </button>
+                                ))}
+                              </>
+                            ) : (
+                              foods.filter(f => f.name.toLowerCase().includes(subQuery.toLowerCase()) && f.name !== item.foodName && foodMatchesTags(f, activeFoodTags)).slice(0, 6).map(f => {
                                 const grams = gramsForAbsoluteMacro(f, parseFloat(item[subMatchBy]) || 0, subMatchBy)
                                 return (
                                   <button key={f.id} type="button" onMouseDown={() => applySubstitution(meal.id, item, f)}
@@ -890,9 +907,9 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                                     <span className="text-muted flex-shrink-0">{grams != null ? `≈ ${Math.round(grams * 10) / 10}g` : 'sin ese macro'}</span>
                                   </button>
                                 )
-                              })}
-                            </div>
-                          )}
+                              })
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
