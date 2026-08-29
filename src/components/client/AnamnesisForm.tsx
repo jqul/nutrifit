@@ -7,11 +7,18 @@ import { toast } from '../shared/Toast'
 import { QuestionInput } from '../shared/QuestionInput'
 import { ClipboardList, Check } from 'lucide-react'
 
-export function AnamnesisForm({ clientId, nutricionistaId, demoMode }: { clientId: string; nutricionistaId: string; demoMode?: boolean }) {
+export function AnamnesisForm({ clientId, nutricionistaId, demoMode, personalMode, openByDefault }: {
+  clientId: string; nutricionistaId: string; demoMode?: boolean
+  // true en modo personal (ver PersonalModeShell) — cambia el texto de
+  // presentación, que en tercera persona ("tu nutricionista") suena raro
+  // siendo la misma persona.
+  personalMode?: boolean
+  openByDefault?: boolean
+}) {
   const [answers, setAnswers] = useState<Record<string, string>>(demoMode ? (DEMO_ANAMNESIS[clientId] || {}) : {})
   const [completedAt, setCompletedAt] = useState<string | null>(demoMode && DEMO_ANAMNESIS[clientId] ? new Date().toISOString() : null)
   const [customQuestions, setCustomQuestions] = useState<CustomAnamnesisQuestion[]>(demoMode ? DEMO_NUTRICIONISTA_PROFILE.customAnamnesisQuestions : [])
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(!!openByDefault)
   const [loading, setLoading] = useState(!demoMode)
   const [saving, setSaving] = useState(false)
 
@@ -53,7 +60,7 @@ export function AnamnesisForm({ clientId, nutricionistaId, demoMode }: { clientI
           <p className="text-xs text-muted mt-0.5">
             {completedAt
               ? `Completado el ${new Date(completedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`
-              : 'Ayuda a tu nutricionista a conocerte mejor antes de la primera consulta.'}
+              : personalMode ? 'Te ayuda a tener claro tu punto de partida.' : 'Ayuda a tu nutricionista a conocerte mejor antes de la primera consulta.'}
           </p>
         </div>
         <button onClick={() => setOpen(v => !v)} className="flex-shrink-0 text-xs font-bold text-accent">

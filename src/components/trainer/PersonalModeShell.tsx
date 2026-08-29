@@ -9,6 +9,8 @@ import { DietaClienteTab } from '../client/DietaClienteTab'
 import { ProgresoClienteTab } from '../client/ProgresoClienteTab'
 import { PlanDietaTab } from './client-panel/PlanDietaTab'
 import { PerfilTab } from './client-panel/PerfilTab'
+import { PersonalOnboarding } from './PersonalOnboarding'
+import { AnamnesisForm } from '../client/AnamnesisForm'
 import { LogOut } from 'lucide-react'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'plan' | 'perfil'
@@ -38,6 +40,7 @@ export function PersonalModeShell({ userProfile, onLogout }: {
 }) {
   const [client, setClient] = useState<ClientData | null | undefined>(undefined)
   const [tab, setTab] = useState<Tab>('hoy')
+  const [onboardingDone, setOnboardingDone] = useState(false)
 
   useEffect(() => {
     supabase.from('clientes').select('*').eq('auth_user_id', userProfile.uid).maybeSingle()
@@ -79,6 +82,18 @@ export function PersonalModeShell({ userProfile, onLogout }: {
     </div>
   )
 
+  // heightCm null es la señal de "todavía no ha rellenado sus datos" — se
+  // pide una vez por sesión de navegador como mucho ("Ahora no" lo salta
+  // vía localStorage); si de verdad rellena su altura, no vuelve a salir.
+  let skippedThisSession = false
+  try { skippedThisSession = localStorage.getItem(`nutrifit-onboarding-skipped-${client.id}`) === '1' } catch { /* localStorage puede fallar en privado */ }
+  if (client.heightCm == null && !skippedThisSession && !onboardingDone) {
+    return (
+      <PersonalOnboarding client={client} nutricionistaId={userProfile.uid}
+        onUpdate={handleUpdate} onDone={() => setOnboardingDone(true)} />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border bg-bg/90 backdrop-blur-sm sticky top-0 z-10" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
@@ -117,6 +132,13 @@ export function PersonalModeShell({ userProfile, onLogout }: {
             nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor} personalMode />
         </div>
         <div className={tab === 'perfil' ? '' : 'hidden'} style={{ padding: '2rem 1.5rem' }}>
+          <div className="max-w-lg mb-6">
+            {/* Editable — el "Cuestionario de salud" de PerfilTab, más
+                abajo, solo enseña un resumen de solo lectura de estas
+                mismas respuestas (pensado para que el nutricionista
+                revise las del cliente, no para rellenarlas). */}
+            <AnamnesisForm clientId={client.id} nutricionistaId={userProfile.uid} personalMode />
+          </div>
           <PerfilTab client={client} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
             onDelete={handleDeleteAccount} nutricionistaName={userProfile.displayName}
             customQuestions={userProfile.customAnamnesisQuestions} hasConsentDocument={!!userProfile.consentDocumentUrl} personalMode />
