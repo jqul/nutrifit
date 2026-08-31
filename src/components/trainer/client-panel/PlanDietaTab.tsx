@@ -23,12 +23,13 @@ import { RecipePhotoUpload } from '../../shared/RecipePhotoUpload'
 import { RecipeEditorPanel } from '../../shared/RecipeEditorPanel'
 import { toast } from '../../shared/Toast'
 import { FoodConverterDrawer } from '../FoodConverterDrawer'
+import { ImportDietPlanModal } from './ImportDietPlanModal'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
-  ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, ShoppingCart, Check, Send, Layers,
+  ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, ShoppingCart, Check, Send, Layers, FileSpreadsheet,
 } from 'lucide-react'
 
-interface EditableItem {
+export interface EditableItem {
   id: string; foodName: string; quantity: string; unit: string
   kcal: string; proteinG: string; carbsG: string; fatG: string
   fiberG: string; sugarG: string; sodiumMg: string; saturatedFatG: string
@@ -38,7 +39,7 @@ interface EditableItem {
 // 0=lunes...6=domingo. null = todos los días (comportamiento anterior al
 // cuadrante semanal — los planes ya creados siguen así hasta que se les
 // asigne un día concreto a alguna comida).
-interface EditableMeal {
+export interface EditableMeal {
   id: string; name: string; time: string; kcalTarget: string; dayOfWeek: number | null
   optionGroup: string | null; optionLabel: string | null
   dayType: 'on' | 'off' | null
@@ -517,6 +518,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   }
 
   const [scanningFor, setScanningFor] = useState<{ mealId: string; itemId: string } | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
   const handleScanned = (food: ScannedFood) => {
     if (!scanningFor) return
     updateItem(scanningFor.mealId, scanningFor.itemId, {
@@ -703,6 +705,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               </select>
             )}
             <button onClick={addMeal} className="flex items-center gap-1 text-xs font-bold text-accent"><Plus className="w-3.5 h-3.5" /> Añadir comida</button>
+            <button onClick={() => setImportOpen(true)} title="Importar comidas desde un Excel o CSV, en vez de meterlas a mano"
+              className="flex items-center gap-1 text-xs font-bold text-muted hover:text-accent"><FileSpreadsheet className="w-3.5 h-3.5" /> Importar</button>
           </div>
         </div>
 
@@ -1011,6 +1015,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       </div>
 
       <BarcodeScanner open={!!scanningFor} onClose={() => setScanningFor(null)} onFound={handleScanned} />
+      <ImportDietPlanModal open={importOpen} onClose={() => setImportOpen(false)} foods={foods}
+        onImport={imported => setMeals(prev => [...prev, ...imported])} />
     </div>
   )
 }
