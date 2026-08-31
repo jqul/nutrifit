@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Eye, EyeOff, Check, ArrowRight, Briefcase, User } from 'lucide-react'
+import { InstallAppButton } from './InstallAppButton'
 
 interface AuthProps { onAuth: () => void; onDemo?: () => void }
 
@@ -60,6 +61,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="text-xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span></span>
           <div className="flex items-center gap-3">
+            <div className="hidden sm:block"><InstallAppButton variant="link" /></div>
             {onDemo && (
               <button onClick={onDemo} className="hidden sm:block px-3 py-2 text-sm text-muted hover:text-ink transition-colors">Ver demo</button>
             )}

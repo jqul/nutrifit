@@ -10,6 +10,8 @@ import { ClientRegister } from './ClientRegister'
 import { ClientConsent } from './ClientConsent'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { PushToggle } from '../shared/PushToggle'
+import { InstallAppButton } from '../shared/InstallAppButton'
+import { useInstallPrompt } from '../../lib/useInstallPrompt'
 import { HoyTab } from './HoyTab'
 import { DietaClienteTab } from './DietaClienteTab'
 import { ProgresoClienteTab } from './ProgresoClienteTab'
@@ -210,6 +212,7 @@ export function ClientView({ token }: { token: string }) {
               </div>
               <PushToggle clientId={demoClient ? undefined : clientData.id} />
             </div>
+            <InstallAppCard />
             <AnamnesisForm clientId={clientData.id} nutricionistaId={clientData.nutricionistaId} demoMode={!!demoClient} />
             {!demoClient && <ChangePasswordCard />}
             {demoClient ? (
@@ -243,6 +246,23 @@ export function ClientView({ token }: { token: string }) {
           ))}
         </div>
       </nav>
+    </div>
+  )
+}
+
+/** Se oculta sola (vía useInstallPrompt) si ya está instalada o si el
+ * navegador no ofrece ninguna vía — así el bloque entero, no solo el
+ * botón, desaparece de "Más" en vez de dejar una tarjeta vacía. */
+function InstallAppCard() {
+  const { show } = useInstallPrompt()
+  if (!show) return null
+  return (
+    <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between gap-3">
+      <div>
+        <p className="text-sm font-semibold">Instalar app</p>
+        <p className="text-xs text-muted">Añade NutriFit a tu pantalla de inicio, como una app</p>
+      </div>
+      <InstallAppButton />
     </div>
   )
 }

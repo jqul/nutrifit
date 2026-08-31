@@ -9,6 +9,7 @@ import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { PushToggle } from '../shared/PushToggle'
+import { InstallAppButton } from '../shared/InstallAppButton'
 import { GoalSelect } from '../shared/GoalSelect'
 import { CalendarTab } from './CalendarTab'
 import { BusinessDashboard } from './BusinessDashboard'
@@ -133,6 +134,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
                 <ShieldCheck className="w-3.5 h-3.5" /> Admin
               </button>
             )}
+            <div className="hidden sm:block"><InstallAppButton variant="link" /></div>
             <PushToggle nutricionistaId={demoClients ? undefined : userProfile.uid} />
             <ThemeToggle />
             <span className="text-sm text-muted hidden sm:inline">{userProfile.displayName}</span>

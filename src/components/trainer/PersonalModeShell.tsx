@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { clientFromRow, clientToRow } from '../../lib/mappers'
 import { toast } from '../shared/Toast'
 import { ThemeToggle } from '../shared/ThemeToggle'
+import { InstallAppButton } from '../shared/InstallAppButton'
 import { HoyTab } from '../client/HoyTab'
 import { DietaClienteTab } from '../client/DietaClienteTab'
 import { ProgresoClienteTab } from '../client/ProgresoClienteTab'
@@ -100,6 +101,7 @@ export function PersonalModeShell({ userProfile, onLogout }: {
         <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="font-serif font-bold text-lg">Nutri<span className="text-accent italic">Fit</span></span>
           <div className="flex items-center gap-2">
+            <div className="hidden sm:block"><InstallAppButton variant="link" /></div>
             <ThemeToggle />
             <button onClick={onLogout} className="p-2 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors" title="Cerrar sesión">
               <LogOut className="w-4 h-4" />
