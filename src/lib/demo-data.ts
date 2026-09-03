@@ -578,6 +578,11 @@ export const DEMO_BLOOD_MARKERS: Record<string, BloodMarkerRow[]> = {
     { id: 'demo-bm-4', client_id: 'demo-client-001', date: daysAgo(20), marker_key: 'hdl', value: 52, created_at: '' },
     { id: 'demo-bm-5', client_id: 'demo-client-001', date: daysAgo(20), marker_key: 'trigliceridos', value: 98, created_at: '' },
     { id: 'demo-bm-6', client_id: 'demo-client-001', date: daysAgo(20), marker_key: 'vitamina_d', value: 18, created_at: '' },
+    // Extracción anterior — para que la comparativa histórica (HoloRangeBar)
+    // tenga algo real que mostrar en la demo, no solo el valor actual.
+    { id: 'demo-bm-14', client_id: 'demo-client-001', date: daysAgo(110), marker_key: 'glucosa', value: 101, created_at: '' },
+    { id: 'demo-bm-15', client_id: 'demo-client-001', date: daysAgo(110), marker_key: 'colesterol_total', value: 232, created_at: '' },
+    { id: 'demo-bm-16', client_id: 'demo-client-001', date: daysAgo(110), marker_key: 'ldl', value: 141, created_at: '' },
   ],
   'demo-client-002': [
     { id: 'demo-bm-7', client_id: 'demo-client-002', date: daysAgo(35), marker_key: 'got_ast', value: 68, created_at: '' },
