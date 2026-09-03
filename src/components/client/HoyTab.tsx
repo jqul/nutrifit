@@ -87,6 +87,11 @@ export function HoyTab({ client, demoMode, personalMode }: {
   )
   const [uploadingMeal, setUploadingMeal] = useState<string | null>(null)
   const [poppedGlass, setPoppedGlass] = useState<number | null>(null)
+  // "Tomado hoy" es solo de esta sesión (como el checklist de la lista de
+  // la compra) — no hay tabla de "toma de suplementos" en la base de
+  // datos; el objetivo es el recordatorio visual del momento, no auditar
+  // el cumplimiento.
+  const [supplementsTaken, setSupplementsTaken] = useState<Set<string>>(new Set())
 
   const loadCheckins = useCallback(async () => {
     if (demoMode) return
@@ -140,6 +145,12 @@ export function HoyTab({ client, demoMode, personalMode }: {
     ? resolveTodaysMeals(plan.meals, todayDayOfWeek(), loadDayType(plan.id), loadOptionChoices(plan.id))
     : []
   const allMealsDone = todaysMeals.length > 0 && todaysMeals.every(m => mealLogsToday.some(l => l.mealName === m.name))
+  const visibleSupplements = plan?.supplements.filter(s => s.visibleToClient) || []
+  const toggleSupplementTaken = (id: string) => setSupplementsTaken(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
   const waterGoalReached = waterL >= WATER_GOAL_L
   const dayProgressPct = Math.round(([doneToday, waterGoalReached, allMealsDone].filter(Boolean).length / 3) * 100)
 
@@ -198,6 +209,18 @@ export function HoyTab({ client, demoMode, personalMode }: {
     }
     setPoppedGlass(glassIndex)
     setTimeout(() => setPoppedGlass(null), 300)
+  }
+
+  // Atajos para quien no quiere ir tocando vaso a vaso — mismo mecanismo de
+  // guardado y vibración que addWaterGlass, pero por una cantidad fija en
+  // vez de "hasta este vaso". Nunca baja de 0.
+  const adjustWater = (deltaL: number) => {
+    const nextWaterL = Math.max(0, Math.round((waterL + deltaL) * 100) / 100)
+    setWaterL(nextWaterL)
+    saveCheckin({ waterL: nextWaterL })
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(deltaL > 0 && nextWaterL >= WATER_GOAL_L && waterL < WATER_GOAL_L ? [15, 60, 15] : 15)
+    }
   }
 
   const markMealDone = async (meal: DietMeal) => {
@@ -281,6 +304,14 @@ export function HoyTab({ client, demoMode, personalMode }: {
         </div>
       </div>
 
+      {/* ── Pauta activa del nutricionista ── */}
+      {plan?.advice && (
+        <div className="bg-accent/10 border border-accent/20 rounded-2xl p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1.5">{personalMode ? 'Tu nota' : 'Consejo de tu nutricionista'}</p>
+          <p className="text-sm leading-relaxed">{plan.advice}</p>
+        </div>
+      )}
+
       <PendingSurveys client={client} demoMode={demoMode} />
 
       {/* ── Tracker de hidratación ── */}
@@ -302,6 +333,18 @@ export function HoyTab({ client, demoMode, personalMode }: {
             )
           })}
         </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => adjustWater(0.25)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-accent/10 hover:text-accent transition-colors">
+            💧 +250 ml <span className="text-muted font-normal">(vaso)</span>
+          </button>
+          <button onClick={() => adjustWater(0.5)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-accent/10 hover:text-accent transition-colors">
+            💧 +500 ml <span className="text-muted font-normal">(botella)</span>
+          </button>
+          <button onClick={() => adjustWater(-0.25)} disabled={waterL <= 0}
+            className="px-3 py-2 bg-bg-alt rounded-xl text-xs font-bold text-muted hover:text-warn transition-colors disabled:opacity-30">
+            −250 ml
+          </button>
+        </div>
         {waterGoalReached && <p className="text-xs font-semibold text-ok">¡Objetivo de agua alcanzado! 🎉</p>}
       </div>
 
@@ -321,6 +364,11 @@ export function HoyTab({ client, demoMode, personalMode }: {
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm font-semibold ${done ? 'line-through text-muted' : ''}`}>{meal.name}</p>
                     <p className="text-xs text-muted">{meal.time}{meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</p>
+                    {meal.items.length > 0 && (
+                      <p className="text-xs text-muted mt-1 leading-snug">
+                        {meal.items.map(i => `${i.foodName}${i.quantity ? ` (${i.quantity}${i.unit})` : ''}`).join(' · ')}
+                      </p>
+                    )}
                   </div>
                   {log?.photoUrl ? (
                     <img src={log.photoUrl} alt={meal.name} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
@@ -337,6 +385,26 @@ export function HoyTab({ client, demoMode, personalMode }: {
                   )}
                 </div>
               </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ── Suplementación ── */}
+      {visibleSupplements.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
+          <p className="font-semibold text-sm px-1 mb-1">Suplementación</p>
+          {visibleSupplements.map(s => {
+            const taken = supplementsTaken.has(s.id)
+            return (
+              <button key={s.id} onClick={() => toggleSupplementTaken(s.id)}
+                className="w-full flex items-center gap-3 py-1.5 text-left">
+                {taken ? <CheckCircle2 className="w-5 h-5 text-ok flex-shrink-0" /> : <Circle className="w-5 h-5 text-muted flex-shrink-0" />}
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-medium ${taken ? 'line-through text-muted' : ''}`}>{s.name}</p>
+                  <p className="text-xs text-muted">{s.dose}{s.timing ? ` · ${s.timing}` : ''}</p>
+                </div>
+              </button>
             )
           })}
         </div>
