@@ -113,6 +113,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
             </div>
             <div className={tab === 'seguimiento' ? '' : 'hidden'}>
               <SeguimientoTab client={current} onUpdate={handleUpdate} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
+                nutricionistaName={userProfile.displayName}
                 demoData={demoMode ? {
                   weights: DEMO_WEIGHTS[current.id] || [],
                   checkins: DEMO_CHECKINS[current.id] || [],

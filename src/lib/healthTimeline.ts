@@ -1,9 +1,9 @@
 // Línea de Vida Clínica (HealthTimeline): unifica en un único eje
 // cronológico todos los eventos de salud del cliente — analíticas, pesajes,
-// fotos de progreso, notas clínicas del profesional e hitos de racha/diario
-// de comidas — para que tanto el nutricionista (Seguimiento) como el propio
-// cliente (Progreso) tengan una narrativa de un vistazo en vez de tener que
-// cruzar varias secciones sueltas.
+// fotos de progreso, notas clínicas del profesional, comidas del diario e
+// hitos de racha — para que tanto el nutricionista (Seguimiento) como el
+// propio cliente (Progreso) tengan una narrativa de un vistazo en vez de
+// tener que cruzar varias secciones sueltas.
 //
 // Este módulo solo construye la lista de eventos y los agrupa por mes; el
 // renderizado vive en components/shared/HealthTimeline.tsx.
@@ -12,7 +12,7 @@ import { WeightEntry, ProgressPhotoSession, MealLog, DailyCheckin, ClinicalNote 
 import { BloodMarkerRow } from './supabase-types'
 import { BLOOD_MARKER_MAP, evaluateMarker, BloodMarkerDef, MarkerStatus } from './bloodMarkers'
 
-export type TimelineEventType = 'analitica' | 'peso' | 'foto' | 'nota' | 'hito'
+export type TimelineEventType = 'analitica' | 'peso' | 'foto' | 'nota' | 'comida' | 'hito'
 
 interface BaseEvent { id: string; date: string }
 
@@ -33,13 +33,19 @@ export interface NotaEvent extends BaseEvent {
   type: 'nota'
   note: string
 }
+export interface ComidaEvent extends BaseEvent {
+  type: 'comida'
+  mealName: string
+  note: string
+  photoUrl: string | null
+}
 export interface HitoEvent extends BaseEvent {
   type: 'hito'
   label: string
   icon: string
 }
 
-export type TimelineEvent = AnaliticaEvent | PesoEvent | FotoEvent | NotaEvent | HitoEvent
+export type TimelineEvent = AnaliticaEvent | PesoEvent | FotoEvent | NotaEvent | ComidaEvent | HitoEvent
 
 function toDateOnly(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -65,29 +71,12 @@ function streakMilestones(checkins: DailyCheckin[]): HitoEvent[] {
     if (runLength % 7 === 0) {
       milestones.push({
         id: `hito-racha-${dateStr}`, type: 'hito', date: dateStr,
-        label: `${runLength} días seguidos de seguimiento`, icon: '🔥',
+        label: `Racha activa de ${runLength} días consecutivos`, icon: '🔥',
       })
     }
     prevDate = d
   }
   return milestones
-}
-
-/** Hitos del diario de comidas: un evento por día con comidas registradas
- * resumiendo qué platos se apuntaron ese día — no uno por plato, para que
- * un usuario muy activo no llene el feed de entradas casi idénticas. */
-function mealMilestones(mealLogs: MealLog[]): HitoEvent[] {
-  const byDate = new Map<string, MealLog[]>()
-  for (const m of mealLogs) {
-    const list = byDate.get(m.date) || []
-    list.push(m)
-    byDate.set(m.date, list)
-  }
-  return [...byDate.entries()].map(([date, logs]) => ({
-    id: `hito-comidas-${date}`, type: 'hito' as const, date,
-    label: `${logs.length} comida${logs.length > 1 ? 's' : ''} registrada${logs.length > 1 ? 's' : ''}: ${logs.map(l => l.mealName).join(', ')}`,
-    icon: '🍽️',
-  }))
 }
 
 export function buildHealthTimeline({ weights, bloodMarkers, photos, clinicalNotes, mealLogs, checkins }: {
@@ -129,7 +118,8 @@ export function buildHealthTimeline({ weights, bloodMarkers, photos, clinicalNot
 
   for (const s of photos) events.push({ id: `foto-${s.id}`, type: 'foto', date: s.date, session: s })
   for (const n of clinicalNotes) events.push({ id: `nota-${n.id}`, type: 'nota', date: n.date, note: n.note })
-  events.push(...streakMilestones(checkins), ...mealMilestones(mealLogs))
+  for (const m of mealLogs) events.push({ id: `comida-${m.id}`, type: 'comida', date: m.date, mealName: m.mealName, note: m.note, photoUrl: m.photoUrl })
+  events.push(...streakMilestones(checkins))
 
   return events.sort((a, b) => b.date.localeCompare(a.date))
 }
@@ -152,6 +142,6 @@ export function groupTimelineByMonth(events: TimelineEvent[]): TimelineMonthGrou
     .sort((a, b) => b[0].localeCompare(a[0]))
     .map(([key, evs]) => {
       const [y, m] = key.split('-')
-      return { key, label: `${MONTH_LABELS[parseInt(m, 10) - 1]} ${y}`, events: evs }
+      return { key, label: `${MONTH_LABELS[parseInt(m, 10) - 1]} de ${y}`, events: evs }
     })
 }

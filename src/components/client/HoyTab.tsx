@@ -11,26 +11,29 @@ import { sendPush } from '../../lib/usePushNotifications'
 import { PendingSurveys } from './PendingSurveys'
 import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS, DEMO_CHECKINS } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
-import { CheckCircle2, Circle, Calendar, Plus, Video, Flame, Droplet, Camera } from 'lucide-react'
+import { CheckCircle2, CheckSquare, Square, Calendar, Plus, Video, Flame, Droplet, Camera, UtensilsCrossed, Pill } from 'lucide-react'
 
 const SCALE = [1, 2, 3, 4, 5]
-const HUNGER_EMOJI = ['😌', '🙂', '😐', '😖', '🤤']
-const ENERGY_EMOJI = ['🥱', '😔', '😐', '🙂', '⚡']
-const MOOD_EMOJI = ['😢', '😕', '😐', '🙂', '😄']
-const BRISTOL_OPTIONS = [
-  { value: 1, label: '1', hint: 'Bolitas duras' },
-  { value: 2, label: '2', hint: 'Grumosa' },
-  { value: 3, label: '3', hint: 'Agrietada' },
-  { value: 4, label: '4', hint: 'Normal' },
-  { value: 5, label: '5', hint: 'Blanda' },
-  { value: 6, label: '6', hint: 'Pastosa' },
-  { value: 7, label: '7', hint: 'Líquida' },
-]
-const INTENSITY_OPTIONS = [
-  { value: 0, label: 'Ninguna' }, { value: 1, label: 'Leve' }, { value: 2, label: 'Moderada' }, { value: 3, label: 'Intensa' },
-]
 const WATER_GOAL_L = 2.0
-const WATER_GLASSES = 8 // 8 × 250ml = 2.0L
+
+// Selector simplificado de digestión: en vez de pedir 3 campos sueltos
+// (escala de Bristol + hinchazón + dolor abdominal) al cliente, un único
+// toque elige uno de 3 estados con valores preestablecidos para esos
+// mismos campos — el nutricionista sigue viendo la misma señal en
+// SeguimientoTab (isConcerningCheckin lee bristol/bloating/abdominalPain
+// tal cual), solo que el cliente ya no rellena cada campo por separado.
+type DigestionOption = 'ligera' | 'normal' | 'hinchazon'
+const DIGESTION_PRESETS: Record<DigestionOption, { bristolScale: number; bloating: number; abdominalPain: number; label: string }> = {
+  ligera: { bristolScale: 4, bloating: 0, abdominalPain: 0, label: 'Ligera & Buena' },
+  normal: { bristolScale: 4, bloating: 1, abdominalPain: 0, label: 'Normal' },
+  hinchazon: { bristolScale: 4, bloating: 2, abdominalPain: 1, label: 'Hinchazón / Pesada' },
+}
+function digestionFromFields(bloating: number | null, abdominalPain: number | null): DigestionOption | null {
+  if (bloating == null && abdominalPain == null) return null
+  if ((bloating ?? 0) >= 2 || (abdominalPain ?? 0) >= 1) return 'hinchazon'
+  if ((bloating ?? 0) === 1) return 'normal'
+  return 'ligera'
+}
 
 function greeting(): { text: string; icon: string } {
   const h = new Date().getHours()
@@ -66,9 +69,6 @@ export function HoyTab({ client, demoMode, personalMode }: {
   const [mood, setMood] = useState(demoTodayCheckin?.mood ?? 3)
   const [waterL, setWaterL] = useState(demoTodayCheckin?.waterL ?? 0)
   const [notes, setNotes] = useState(demoTodayCheckin?.notes ?? '')
-  const [showDigestive, setShowDigestive] = useState(
-    !!demoTodayCheckin && (demoTodayCheckin.bristolScale != null || demoTodayCheckin.bloating != null || demoTodayCheckin.abdominalPain != null)
-  )
   const [bristolScale, setBristolScale] = useState<number | null>(demoTodayCheckin?.bristolScale ?? null)
   const [bloating, setBloating] = useState<number | null>(demoTodayCheckin?.bloating ?? null)
   const [abdominalPain, setAbdominalPain] = useState<number | null>(demoTodayCheckin?.abdominalPain ?? null)
@@ -86,7 +86,6 @@ export function HoyTab({ client, demoMode, personalMode }: {
     demoMode ? (DEMO_MEAL_LOGS[client.id] || []).filter(m => m.date === today) : []
   )
   const [uploadingMeal, setUploadingMeal] = useState<string | null>(null)
-  const [poppedGlass, setPoppedGlass] = useState<number | null>(null)
   // "Tomado hoy" es solo de esta sesión (como el checklist de la lista de
   // la compra) — no hay tabla de "toma de suplementos" en la base de
   // datos; el objetivo es el recordatorio visual del momento, no auditar
@@ -110,7 +109,6 @@ export function HoyTab({ client, demoMode, personalMode }: {
       setBristolScale(todayRow.bristol_scale)
       setBloating(todayRow.bloating)
       setAbdominalPain(todayRow.abdominal_pain)
-      if (todayRow.bristol_scale != null || todayRow.bloating != null || todayRow.abdominal_pain != null) setShowDigestive(true)
     }
     setStreak(calcStreak((history || []).map(checkinFromRow)))
     setLoading(false)
@@ -144,7 +142,11 @@ export function HoyTab({ client, demoMode, personalMode }: {
   const todaysMeals: DietMeal[] = plan
     ? resolveTodaysMeals(plan.meals, todayDayOfWeek(), loadDayType(plan.id), loadOptionChoices(plan.id))
     : []
-  const allMealsDone = todaysMeals.length > 0 && todaysMeals.every(m => mealLogsToday.some(l => l.mealName === m.name))
+  const mealsDoneCount = todaysMeals.filter(m => mealLogsToday.some(l => l.mealName === m.name)).length
+  const allMealsDone = todaysMeals.length > 0 && mealsDoneCount === todaysMeals.length
+  const totalKcalTarget = todaysMeals.length > 0 && todaysMeals.every(m => m.kcalTarget != null)
+    ? todaysMeals.reduce((sum, m) => sum + (m.kcalTarget || 0), 0)
+    : null
   const visibleSupplements = plan?.supplements.filter(s => s.visibleToClient) || []
   const toggleSupplementTaken = (id: string) => setSupplementsTaken(prev => {
     const next = new Set(prev)
@@ -153,6 +155,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
   })
   const waterGoalReached = waterL >= WATER_GOAL_L
   const dayProgressPct = Math.round(([doneToday, waterGoalReached, allMealsDone].filter(Boolean).length / 3) * 100)
+  const digestionValue = digestionFromFields(bloating, abdominalPain)
 
   const saveCheckin = async (overrides: Partial<{
     followedPlan: FollowedPlan; hunger: number; energy: number; mood: number; waterL: number; notes: string
@@ -193,27 +196,8 @@ export function HoyTab({ client, demoMode, personalMode }: {
     setSaving(false)
   }
 
-  const addWaterGlass = (glassIndex: number) => {
-    // Tocar un vaso rellena hasta ahí; tocar el último vaso ya lleno lo vacía
-    // — mismo gesto que un selector de estrellas.
-    const currentGlasses = Math.round(waterL / (WATER_GOAL_L / WATER_GLASSES))
-    const next = glassIndex === currentGlasses - 1 ? glassIndex : glassIndex + 1
-    const nextWaterL = Math.round(next * (WATER_GOAL_L / WATER_GLASSES) * 100) / 100
-    setWaterL(nextWaterL)
-    saveCheckin({ waterL: nextWaterL })
-    // Pequeña gratificación táctil/visual al tocar un vaso — vibración corta
-    // (con patrón más largo si justo se alcanza la meta) y un "pop" que se
-    // retira solo tras la animación, para no dejar la clase pegada.
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(nextWaterL >= WATER_GOAL_L && waterL < WATER_GOAL_L ? [15, 60, 15] : 15)
-    }
-    setPoppedGlass(glassIndex)
-    setTimeout(() => setPoppedGlass(null), 300)
-  }
-
-  // Atajos para quien no quiere ir tocando vaso a vaso — mismo mecanismo de
-  // guardado y vibración que addWaterGlass, pero por una cantidad fija en
-  // vez de "hasta este vaso". Nunca baja de 0.
+  // Ajuste rápido de hidratación por cantidad fija (vaso/botella/deshacer).
+  // Nunca baja de 0.
   const adjustWater = (deltaL: number) => {
     const nextWaterL = Math.max(0, Math.round((waterL + deltaL) * 100) / 100)
     setWaterL(nextWaterL)
@@ -221,6 +205,12 @@ export function HoyTab({ client, demoMode, personalMode }: {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate(deltaL > 0 && nextWaterL >= WATER_GOAL_L && waterL < WATER_GOAL_L ? [15, 60, 15] : 15)
     }
+  }
+
+  const setDigestion = (opt: DigestionOption) => {
+    const preset = DIGESTION_PRESETS[opt]
+    setBristolScale(preset.bristolScale); setBloating(preset.bloating); setAbdominalPain(preset.abdominalPain)
+    saveCheckin({ bristolScale: preset.bristolScale, bloating: preset.bloating, abdominalPain: preset.abdominalPain })
   }
 
   const markMealDone = async (meal: DietMeal) => {
@@ -316,68 +306,82 @@ export function HoyTab({ client, demoMode, personalMode }: {
 
       {/* ── Tracker de hidratación ── */}
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="font-semibold text-sm flex items-center gap-1.5"><Droplet className="w-4 h-4 text-accent" /> Hidratación</p>
-          <span className="text-xs font-bold text-accent">{Math.round(Math.min(100, (waterL / WATER_GOAL_L) * 100))}%</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-500 flex-shrink-0">
+              <Droplet className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Hidratación de precisión</p>
+              <p className="text-xs text-muted">Meta diaria recomendada: {WATER_GOAL_L} L</p>
+            </div>
+          </div>
+          <span className="text-sm font-bold text-sky-600 dark:text-sky-400 flex-shrink-0">{waterL.toFixed(2).replace(/\.?0+$/, '') || 0} L / {WATER_GOAL_L} L</span>
         </div>
         <div className="h-2 rounded-full bg-bg-alt overflow-hidden">
-          <div className="h-full bg-accent rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (waterL / WATER_GOAL_L) * 100)}%` }} />
+          <div className="h-full bg-sky-500 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (waterL / WATER_GOAL_L) * 100)}%` }} />
         </div>
-        <p className="text-xs text-muted -mt-1.5">{waterL.toFixed(2).replace(/\.?0+$/, '') || 0}L de {WATER_GOAL_L}L objetivo</p>
-        <div className="grid grid-cols-8 gap-1.5">
-          {Array.from({ length: WATER_GLASSES }).map((_, i) => {
-            const filled = i < Math.round(waterL / (WATER_GOAL_L / WATER_GLASSES))
-            return (
-              <button key={i} onClick={() => addWaterGlass(i)} title="+250ml"
-                className={`aspect-[3/4] rounded-lg border-2 flex items-center justify-center transition-all ${
-                  filled ? 'bg-accent/15 border-accent' : 'border-border hover:border-accent/40'
-                } ${poppedGlass === i ? 'animate-glass-pop' : ''}`}>
-                <span className={`text-lg ${filled ? '' : 'opacity-25 grayscale'}`}>💧</span>
-              </button>
-            )
-          })}
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted">{Math.round(Math.min(100, (waterL / WATER_GOAL_L) * 100))}% de la meta</span>
+          {waterGoalReached && <span className="font-semibold text-ok">🎉 ¡Meta alcanzada!</span>}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => adjustWater(0.25)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-accent/10 hover:text-accent transition-colors">
-            💧 +250 ml <span className="text-muted font-normal">(vaso)</span>
+          <button onClick={() => adjustWater(0.25)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-sky-500/10 hover:text-sky-600 transition-colors">
+            + 250 ml <span className="text-muted font-normal">(Vaso)</span>
           </button>
-          <button onClick={() => adjustWater(0.5)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-accent/10 hover:text-accent transition-colors">
-            💧 +500 ml <span className="text-muted font-normal">(botella)</span>
+          <button onClick={() => adjustWater(0.5)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-sky-500/10 hover:text-sky-600 transition-colors">
+            + 500 ml <span className="text-muted font-normal">(Botella)</span>
           </button>
           <button onClick={() => adjustWater(-0.25)} disabled={waterL <= 0}
             className="px-3 py-2 bg-bg-alt rounded-xl text-xs font-bold text-muted hover:text-warn transition-colors disabled:opacity-30">
             −250 ml
           </button>
         </div>
-        {waterGoalReached && <p className="text-xs font-semibold text-ok">¡Objetivo de agua alcanzado! 🎉</p>}
       </div>
 
-      {/* ── Timeline de comidas ── */}
+      {/* ── Comidas del día ── */}
       {todaysMeals.length > 0 && (
-        <div className="space-y-2.5">
-          <p className="font-semibold text-sm px-1">Tus comidas de hoy</p>
-          {todaysMeals.map(meal => {
-            const log = mealLogsToday.find(l => l.mealName === meal.name)
-            const done = !!log
-            return (
-              <div key={meal.id} className={`bg-card border rounded-2xl p-4 transition-colors ${done ? 'border-ok/40' : 'border-border'}`}>
-                <div className="flex items-center gap-3">
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+                <UtensilsCrossed className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Comidas del día</p>
+                <p className="text-xs text-muted">{mealsDoneCount} de {todaysMeals.length} completadas</p>
+              </div>
+            </div>
+            {totalKcalTarget != null && <span className="text-xs font-semibold text-muted flex-shrink-0">Objetivo: {totalKcalTarget} kcal</span>}
+          </div>
+          <div className="divide-y divide-border">
+            {todaysMeals.map(meal => {
+              const log = mealLogsToday.find(l => l.mealName === meal.name)
+              const done = !!log
+              return (
+                <div key={meal.id} className="flex items-center gap-3 py-2.5">
                   <button onClick={() => done ? unmarkMealDone(meal) : markMealDone(meal)} className="flex-shrink-0">
-                    {done ? <CheckCircle2 className="w-6 h-6 text-ok" /> : <Circle className="w-6 h-6 text-muted" />}
+                    {done ? <CheckSquare className="w-5 h-5 text-ok" /> : <Square className="w-5 h-5 text-muted" />}
                   </button>
                   <div className="min-w-0 flex-1">
-                    <p className={`text-sm font-semibold ${done ? 'line-through text-muted' : ''}`}>{meal.name}</p>
-                    <p className="text-xs text-muted">{meal.time}{meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className={`text-sm font-semibold truncate ${done ? 'line-through text-muted' : ''}`}>
+                        {meal.name} <span className="font-normal text-muted">· {meal.time}</span>
+                      </p>
+                      {meal.kcalTarget != null && (
+                        <span className="text-[11px] font-semibold text-muted bg-bg-alt px-2 py-0.5 rounded-full flex-shrink-0">{meal.kcalTarget} kcal</span>
+                      )}
+                    </div>
                     {meal.items.length > 0 && (
-                      <p className="text-xs text-muted mt-1 leading-snug">
-                        {meal.items.map(i => `${i.foodName}${i.quantity ? ` (${i.quantity}${i.unit})` : ''}`).join(' · ')}
+                      <p className="text-xs text-muted mt-0.5 truncate">
+                        {meal.items.map(i => `${i.foodName}${i.quantity ? ` (${i.quantity}${i.unit})` : ''}`).join(', ')}
                       </p>
                     )}
                   </div>
                   {log?.photoUrl ? (
-                    <img src={log.photoUrl} alt={meal.name} className="w-11 h-11 rounded-lg object-cover flex-shrink-0" />
+                    <img src={log.photoUrl} alt={meal.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                   ) : (
-                    <label className="w-11 h-11 rounded-lg bg-bg-alt flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-bg-alt/70">
+                    <label className="w-10 h-10 rounded-lg bg-bg-alt flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-bg-alt/70">
                       {uploadingMeal === meal.id ? (
                         <span className="text-[9px] text-muted">...</span>
                       ) : (
@@ -388,36 +392,54 @@ export function HoyTab({ client, demoMode, personalMode }: {
                     </label>
                   )}
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
 
-      {/* ── Suplementación ── */}
+      {/* ── Pauta de suplementos ── */}
       {visibleSupplements.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
-          <p className="font-semibold text-sm px-1 mb-1">Suplementación</p>
-          {visibleSupplements.map(s => {
-            const taken = supplementsTaken.has(s.id)
-            return (
-              <button key={s.id} onClick={() => toggleSupplementTaken(s.id)}
-                className="w-full flex items-center gap-3 py-1.5 text-left">
-                {taken ? <CheckCircle2 className="w-5 h-5 text-ok flex-shrink-0" /> : <Circle className="w-5 h-5 text-muted flex-shrink-0" />}
-                <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-medium ${taken ? 'line-through text-muted' : ''}`}>{s.name}</p>
-                  <p className="text-xs text-muted">{s.dose}{s.timing ? ` · ${s.timing}` : ''}</p>
-                </div>
-              </button>
-            )
-          })}
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 flex-shrink-0">
+              <Pill className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Pauta de suplementos</p>
+              <p className="text-xs text-muted">Marcar cuando los hayas tomado hoy</p>
+            </div>
+          </div>
+          <div className="divide-y divide-border">
+            {visibleSupplements.map(s => {
+              const taken = supplementsTaken.has(s.id)
+              return (
+                <button key={s.id} onClick={() => toggleSupplementTaken(s.id)}
+                  className="w-full flex items-center gap-3 py-2 text-left">
+                  {taken ? <CheckSquare className="w-5 h-5 text-ok flex-shrink-0" /> : <Square className="w-5 h-5 text-muted flex-shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-medium ${taken ? 'line-through text-muted' : ''}`}>{s.name}</p>
+                    <p className="text-xs text-muted">{s.dose}{s.timing ? ` · ${s.timing}` : ''}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-5">
-        <div className="flex items-center justify-between">
-          <p className="font-semibold text-sm">Check-in diario</p>
-          {doneToday && <span className="flex items-center gap-1 text-xs font-bold text-ok"><CheckCircle2 className="w-3.5 h-3.5" /> Hecho hoy</span>}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-ok/10 flex items-center justify-center text-ok flex-shrink-0">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Check-in de sensaciones</p>
+              <p className="text-xs text-muted">Evaluación de hábitos diarios</p>
+            </div>
+          </div>
+          {doneToday && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-ok/10 text-xs font-bold text-ok flex-shrink-0"><CheckCircle2 className="w-3.5 h-3.5" /> Registrado hoy</span>}
         </div>
 
         <div>
@@ -434,44 +456,34 @@ export function HoyTab({ client, demoMode, personalMode }: {
           </div>
         </div>
 
-        <EmojiScaleField label="Hambre" value={hunger} emoji={HUNGER_EMOJI} onChange={v => { setHunger(v); saveCheckin({ hunger: v }) }} />
-        <EmojiScaleField label="Energía" value={energy} emoji={ENERGY_EMOJI} onChange={v => { setEnergy(v); saveCheckin({ energy: v }) }} />
-        <EmojiScaleField label="Ánimo" value={mood} emoji={MOOD_EMOJI} onChange={v => { setMood(v); saveCheckin({ mood: v }) }} />
+        <NumberScaleField label="Nivel de hambre" value={hunger} onChange={v => { setHunger(v); saveCheckin({ hunger: v }) }} />
+        <NumberScaleField label="Energía & vitalidad" value={energy} onChange={v => { setEnergy(v); saveCheckin({ energy: v }) }} />
+        <NumberScaleField label="Estado de ánimo" value={mood} onChange={v => { setMood(v); saveCheckin({ mood: v }) }} />
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Notas (opcional)</label>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Digestión del día</p>
+          <div className="flex gap-1.5">
+            {(Object.keys(DIGESTION_PRESETS) as DigestionOption[]).map(opt => (
+              <button key={opt} onClick={() => setDigestion(opt)}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
+                  digestionValue === opt ? 'bg-accent text-white border-accent' : 'border-border text-muted hover:border-accent'
+                }`}>
+                {DIGESTION_PRESETS[opt].label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Sensaciones o notas para tu nutricionista (opcional)</label>
           <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+            placeholder="¿Cómo te has sentido hoy? ¿Alguna comida fuera de pauta o entrenamiento especial?"
             className="w-full px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
         </div>
 
-        {!showDigestive ? (
-          <button onClick={() => setShowDigestive(true)} className="text-xs font-bold text-accent">
-            + Añadir diario digestivo (opcional)
-          </button>
-        ) : (
-          <div className="pt-3 border-t border-border space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Diario digestivo (opcional)</p>
-            <div>
-              <p className="text-xs text-muted mb-2">Forma de las heces hoy (escala de Bristol)</p>
-              <div className="flex gap-1.5 flex-wrap">
-                {BRISTOL_OPTIONS.map(o => (
-                  <button key={o.value} onClick={() => setBristolScale(bristolScale === o.value ? null : o.value)} title={o.hint}
-                    className={`flex-1 min-w-[38px] py-2 rounded-xl text-xs font-semibold border transition-all ${
-                      bristolScale === o.value ? 'bg-accent text-white border-accent' : 'border-border text-muted hover:border-accent'
-                    }`}>
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <IntensityField label="Hinchazón" value={bloating} onChange={setBloating} />
-            <IntensityField label="Dolor abdominal" value={abdominalPain} onChange={setAbdominalPain} />
-          </div>
-        )}
-
         <button onClick={handleSave} disabled={saving}
           className="w-full py-3.5 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50">
-          {saving ? 'Guardando...' : doneToday ? 'Actualizar check-in' : 'Guardar check-in'}
+          {saving ? 'Guardando...' : 'Actualizar check-in de hoy'}
         </button>
       </div>
 
@@ -573,35 +585,17 @@ function ProximasCitas({ client, demoMode, demoCitas }: { client: ClientData; de
   )
 }
 
-function IntensityField({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
-  return (
-    <div>
-      <p className="text-xs text-muted mb-2">{label}</p>
-      <div className="flex gap-1.5">
-        {INTENSITY_OPTIONS.map(o => (
-          <button key={o.value} onClick={() => onChange(value === o.value ? null : o.value)}
-            className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-all ${
-              value === o.value ? 'bg-accent text-white border-accent' : 'border-border text-muted hover:border-accent'
-            }`}>
-            {o.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function EmojiScaleField({ label, value, emoji, onChange }: { label: string; value: number; emoji: string[]; onChange: (v: number) => void }) {
+function NumberScaleField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">{label}</p>
       <div className="flex gap-2">
-        {SCALE.map((n, i) => (
+        {SCALE.map(n => (
           <button key={n} onClick={() => onChange(n)}
-            className={`flex-1 py-2 rounded-xl text-lg border transition-all ${
-              value === n ? 'bg-accent/15 border-accent scale-110' : 'border-border hover:border-accent/40'
+            className={`flex-1 py-2 rounded-xl text-sm font-bold border transition-all ${
+              value === n ? 'bg-accent text-white border-accent' : 'border-border text-muted hover:border-accent/40'
             }`}>
-            {emoji[i]}
+            {n}
           </button>
         ))}
       </div>

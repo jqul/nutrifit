@@ -20,9 +20,9 @@ interface DemoData {
   bloodMarkers?: BloodMarkerRow[]; clinicalNotes?: ClinicalNote[]
 }
 
-export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, personalMode }: {
+export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, nutricionistaName, personalMode }: {
   client: ClientData; demoMode?: boolean; demoData?: DemoData
-  nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null
+  nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null; nutricionistaName?: string
   // true en modo personal (ver PersonalModeShell) — "adherencia al plan"
   // solo tiene sentido cuando alguien más lo marca; para uno mismo se
   // oculta y se deja solo la racha.
@@ -152,7 +152,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
       <WeightImpactCard weights={weights} goalKg={client.goalWeightKg} />
 
       <HealthTimeline weights={weights} bloodMarkers={bloodMarkers} photos={sessions} clinicalNotes={clinicalNotes}
-        mealLogs={mealLogs} checkins={checkins} variant="client" />
+        mealLogs={mealLogs} checkins={checkins} variant="client" nutricionistaName={nutricionistaName} goalWeightKg={client.goalWeightKg} />
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <p className="font-semibold text-sm">Peso corporal</p>

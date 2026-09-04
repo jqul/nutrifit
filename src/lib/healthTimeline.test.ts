@@ -34,7 +34,7 @@ describe('buildHealthTimeline', () => {
   it('marks a streak milestone only on the 7th consecutive day, not every day', () => {
     const checkins = Array.from({ length: 8 }, (_, i) => checkin(`2026-01-0${i + 1}`, `c${i}`))
     const events = buildHealthTimeline({ weights: [], bloodMarkers: [], photos: [], clinicalNotes: [], mealLogs: [], checkins })
-    const hitos = events.filter(e => e.type === 'hito' && e.label.includes('seguidos'))
+    const hitos = events.filter(e => e.type === 'hito' && e.label.includes('Racha activa'))
     expect(hitos).toHaveLength(1)
     expect(hitos[0].date).toBe('2026-01-07')
   })
@@ -42,17 +42,18 @@ describe('buildHealthTimeline', () => {
   it('does not award a streak milestone when the run breaks before 7 days', () => {
     const checkins = ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-05', '2026-01-06'].map((d, i) => checkin(d, `c${i}`))
     const events = buildHealthTimeline({ weights: [], bloodMarkers: [], photos: [], clinicalNotes: [], mealLogs: [], checkins })
-    expect(events.filter(e => e.type === 'hito' && e.label.includes('seguidos'))).toHaveLength(0)
+    expect(events.filter(e => e.type === 'hito' && e.label.includes('Racha activa'))).toHaveLength(0)
   })
 
-  it('collapses same-day meal logs into a single milestone event', () => {
+  it('emits one comida event per meal log entry, not collapsed by day', () => {
     const mealLogs: MealLog[] = [
       { id: 'm1', clientId: 'c1', date: '2026-01-05', mealName: 'Desayuno', photoUrl: null, note: '', createdAt: 1 },
       { id: 'm2', clientId: 'c1', date: '2026-01-05', mealName: 'Comida', photoUrl: null, note: '', createdAt: 2 },
     ]
     const events = buildHealthTimeline({ weights: [], bloodMarkers: [], photos: [], clinicalNotes: [], mealLogs, checkins: [] })
-    const hito = events.find(e => e.id === 'hito-comidas-2026-01-05')
-    expect(hito?.type === 'hito' && hito.label).toContain('2 comidas registradas')
+    const comidas = events.filter(e => e.type === 'comida')
+    expect(comidas).toHaveLength(2)
+    expect(comidas.map(e => e.type === 'comida' && e.mealName).sort()).toEqual(['Comida', 'Desayuno'])
   })
 
   it('sorts events across all types most-recent-first', () => {
@@ -74,7 +75,7 @@ describe('groupTimelineByMonth', () => {
       bloodMarkers: [], photos: [], clinicalNotes: [], mealLogs: [], checkins: [],
     })
     const groups = groupTimelineByMonth(events)
-    expect(groups.map(g => g.label)).toEqual(['febrero 2026', 'enero 2026'])
+    expect(groups.map(g => g.label)).toEqual(['febrero de 2026', 'enero de 2026'])
     expect(groups[0].events).toHaveLength(1)
   })
 })

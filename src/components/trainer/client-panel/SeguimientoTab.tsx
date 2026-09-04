@@ -26,9 +26,9 @@ interface DemoData {
   bloodMarkers?: BloodMarkerRow[]; clinicalNotes?: ClinicalNote[]
 }
 
-export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, onUpdate }: {
+export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, nutricionistaName, onUpdate }: {
   client: ClientData; demoData?: DemoData
-  nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null
+  nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null; nutricionistaName?: string
   onUpdate?: (updates: Partial<ClientData>) => Promise<boolean>
 }) {
   const [weights, setWeights] = useState<WeightEntry[]>(demoData?.weights ?? [])
@@ -156,7 +156,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
       </div>
 
       <HealthTimeline weights={weights} bloodMarkers={bloodMarkers} photos={sessions} clinicalNotes={clinicalNotes}
-        mealLogs={mealLogs} checkins={checkins} variant="trainer" />
+        mealLogs={mealLogs} checkins={checkins} variant="trainer" nutricionistaName={nutricionistaName} goalWeightKg={client.goalWeightKg} />
 
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-card border border-border rounded-2xl p-4 text-center">

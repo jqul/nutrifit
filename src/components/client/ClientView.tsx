@@ -189,7 +189,7 @@ export function ClientView({ token }: { token: string }) {
             mealLogs: DEMO_MEAL_LOGS[clientData.id] || [],
             bloodMarkers: DEMO_BLOOD_MARKERS[clientData.id] || [],
             clinicalNotes: DEMO_CLINICAL_NOTES[clientData.id] || [],
-          } : undefined} nutricionistaLogoUrl={logoUrl} nutricionistaAccentColor={accentColor} />
+          } : undefined} nutricionistaLogoUrl={logoUrl} nutricionistaAccentColor={accentColor} nutricionistaName={nutricionistaName} />
         </div>
         {activeTab === 'mas' && (
           <div className="px-4 py-6 space-y-4 max-w-xl mx-auto pb-24">
