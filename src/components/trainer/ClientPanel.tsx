@@ -9,8 +9,9 @@ import { SeguimientoTab } from './client-panel/SeguimientoTab'
 import { MensajesTab } from './client-panel/MensajesTab'
 import { AnaliticasTab } from './client-panel/AnaliticasTab'
 import { ClientSidebar } from './client-panel/ClientSidebar'
+import { TrainerClientPreview } from './TrainerClientPreview'
 import { ThemeToggle } from '../shared/ThemeToggle'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Smartphone } from 'lucide-react'
 import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_CLINICAL_NOTES } from '../../lib/demo-data'
 
 type Tab = 'perfil' | 'dieta' | 'seguimiento' | 'analiticas' | 'mensajes' | 'notas'
@@ -32,6 +33,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
 }) {
   const [tab, setTab] = useState<Tab>('perfil')
   const [current, setCurrent] = useState(client)
+  const [previewing, setPreviewing] = useState(false)
   const { updateClient, regenerateToken, deleteClient } = useNutricionistaClients({
     nutricionistaId: userProfile.uid, demoClients: demoMode ? [current] : undefined,
   })
@@ -68,6 +70,10 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
     if (ok) onClose()
   }
 
+  if (previewing) {
+    return <TrainerClientPreview client={current} userProfile={userProfile} demoMode={demoMode} onClose={() => setPreviewing(false)} />
+  }
+
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border bg-bg/90 backdrop-blur-sm sticky top-0 z-10" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
@@ -78,7 +84,13 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
             </button>
             <span className="font-serif font-bold text-lg">{current.name} {current.surname}</span>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <button onClick={() => setPreviewing(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-muted hover:text-ink hover:bg-bg-alt transition-colors">
+              <Smartphone className="w-3.5 h-3.5" /> Vista previa cliente
+            </button>
+            <ThemeToggle />
+          </div>
         </div>
         <div className="max-w-5xl mx-auto px-6 flex gap-1 overflow-x-auto">
           {TABS.map(t => (
