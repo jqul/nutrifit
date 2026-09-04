@@ -1,12 +1,12 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
   WeightLogRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
-  AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow,
+  AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, ClinicalNoteRow,
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
   WeightEntry, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
-  Appointment, MealLog, Anamnesis, Invoice, CustomSurvey, SurveyResponse, BloodMarker,
+  Appointment, MealLog, Anamnesis, Invoice, CustomSurvey, SurveyResponse, BloodMarker, ClinicalNote,
 } from '../types'
 
 export function clientFromRow(row: ClienteRow): ClientData {
@@ -175,6 +175,10 @@ export function mealLogFromRow(row: MealLogRow): MealLog {
     id: row.id, clientId: row.client_id, date: row.date, mealName: row.meal_name,
     photoUrl: row.photo_url, note: row.note || '', createdAt: new Date(row.created_at).getTime(),
   }
+}
+
+export function clinicalNoteFromRow(row: ClinicalNoteRow): ClinicalNote {
+  return { id: row.id, clientId: row.client_id, date: row.date, note: row.note, createdAt: new Date(row.created_at).getTime() }
 }
 
 export function anamnesisFromRow(row: AnamnesisRow): Anamnesis {

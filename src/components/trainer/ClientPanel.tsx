@@ -11,7 +11,7 @@ import { AnaliticasTab } from './client-panel/AnaliticasTab'
 import { ClientSidebar } from './client-panel/ClientSidebar'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { ArrowLeft } from 'lucide-react'
-import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS } from '../../lib/demo-data'
+import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_CLINICAL_NOTES } from '../../lib/demo-data'
 
 type Tab = 'perfil' | 'dieta' | 'seguimiento' | 'analiticas' | 'mensajes' | 'notas'
 
@@ -119,6 +119,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
                   photos: DEMO_PHOTOS[current.id] || [],
                   mealLogs: DEMO_MEAL_LOGS[current.id] || [],
                   bloodMarkers: DEMO_BLOOD_MARKERS[current.id] || [],
+                  clinicalNotes: DEMO_CLINICAL_NOTES[current.id] || [],
                 } : undefined} />
             </div>
             <div className={tab === 'analiticas' ? '' : 'hidden'}>

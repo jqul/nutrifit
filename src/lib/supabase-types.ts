@@ -240,6 +240,14 @@ export interface BloodMarkerRow {
   created_at: string
 }
 
+export interface ClinicalNoteRow {
+  id: string
+  client_id: string
+  date: string
+  note: string
+  created_at: string
+}
+
 export interface InvoiceRow {
   id: string
   nutricionista_id: string

@@ -1,17 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ClientData } from '../../../types'
 import { supabase } from '../../../lib/supabase'
-import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow } from '../../../lib/mappers'
-import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog } from '../../../types'
+import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow, clinicalNoteFromRow } from '../../../lib/mappers'
+import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClinicalNote } from '../../../types'
 import { BloodMarkerRow } from '../../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../../lib/adherence'
 import { WeightChart } from '../../shared/WeightChart'
+import { HealthTimeline } from '../../shared/HealthTimeline'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
 import { printProgressReport } from '../../../lib/printProgressReport'
+import { toLocalISODate } from '../../../lib/date'
 import { toast } from '../../shared/Toast'
-import { Flame, Camera, UtensilsCrossed, AlertTriangle, FileDown } from 'lucide-react'
+import { Flame, Camera, UtensilsCrossed, AlertTriangle, FileDown, Plus } from 'lucide-react'
 
 const INTENSITY_LABELS = ['Ninguna', 'Leve', 'Moderada', 'Intensa']
 function isConcerningCheckin(c: DailyCheckin): boolean {
@@ -19,7 +21,10 @@ function isConcerningCheckin(c: DailyCheckin): boolean {
     || (c.bloating != null && c.bloating >= 2) || (c.abdominalPain != null && c.abdominalPain >= 2)
 }
 
-interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]; bloodMarkers?: BloodMarkerRow[] }
+interface DemoData {
+  weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]
+  bloodMarkers?: BloodMarkerRow[]; clinicalNotes?: ClinicalNote[]
+}
 
 export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, onUpdate }: {
   client: ClientData; demoData?: DemoData
@@ -31,13 +36,24 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
   const [sessions, setSessions] = useState<ProgressPhotoSession[]>(demoData?.photos ?? [])
   const [mealLogs, setMealLogs] = useState<MealLog[]>(demoData?.mealLogs ?? [])
   const [bloodMarkers, setBloodMarkers] = useState<BloodMarkerRow[]>(demoData?.bloodMarkers ?? [])
+  const [clinicalNotes, setClinicalNotes] = useState<ClinicalNote[]>(demoData?.clinicalNotes ?? [])
   const [loading, setLoading] = useState(!demoData)
+  const demoMode = !!demoData
   // Notas del profesional para el informe en PDF (distintas de las notas
   // privadas de NotasTab.tsx — estas SÍ se imprimen, y ahora también las
   // puede descargar el propio cliente, así que van en un campo separado.
   const [reportNotes, setReportNotes] = useState(client.reportNotes)
   const [savingNotes, setSavingNotes] = useState(false)
   const reportNotesDirty = reportNotes !== client.reportNotes
+
+  // Nota clínica fechada para la Línea de vida clínica (HealthTimeline) —
+  // distinta tanto de reportNotes (un único bloque para el PDF) como de las
+  // notas privadas de NotasTab.tsx: esto es un historial cronológico visible
+  // para el cliente.
+  const [addingNote, setAddingNote] = useState(false)
+  const [noteDate, setNoteDate] = useState(toLocalISODate(new Date()))
+  const [noteText, setNoteText] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
 
   const handleSaveReportNotes = async () => {
     if (!onUpdate) return
@@ -50,22 +66,36 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
   const load = useCallback(async () => {
     if (demoData) return
     setLoading(true)
-    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }] = await Promise.all([
+    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', client.id).order('date'),
       supabase.from('daily_checkins').select('*').eq('client_id', client.id).order('date', { ascending: false }),
       supabase.from('progress_photos').select('*').eq('client_id', client.id).order('date', { ascending: false }),
       supabase.from('meal_logs').select('*').eq('client_id', client.id).order('created_at', { ascending: false }),
       supabase.from('blood_markers').select('*').eq('client_id', client.id).order('date', { ascending: false }),
+      supabase.from('client_clinical_notes').select('*').eq('client_id', client.id).order('date', { ascending: false }),
     ])
     setWeights((w || []).map(weightFromRow))
     setCheckins((c || []).map(checkinFromRow))
     setSessions((p || []).map(photoSessionFromRow))
     setMealLogs((m || []).map(mealLogFromRow))
     setBloodMarkers(bm || [])
+    setClinicalNotes((cn || []).map(clinicalNoteFromRow))
     setLoading(false)
   }, [client.id, demoData])
 
   useEffect(() => { load() }, [load])
+
+  const handleAddNote = async () => {
+    if (!noteText.trim()) { toast('Escribe algo antes de guardar', 'warn'); return }
+    if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); setAddingNote(false); setNoteText(''); return }
+    setSavingNote(true)
+    const { error } = await supabase.from('client_clinical_notes').insert({ client_id: client.id, date: noteDate, note: noteText.trim() })
+    setSavingNote(false)
+    if (error) { toast('Error al guardar la nota', 'warn'); return }
+    toast('Nota clínica añadida ✓', 'ok')
+    setAddingNote(false); setNoteText(''); setNoteDate(toLocalISODate(new Date()))
+    await load()
+  }
 
   if (loading) return <p className="text-muted text-sm">Cargando...</p>
 
@@ -97,6 +127,36 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
           </button>
         )}
       </div>
+
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Nota clínica</p>
+          <button onClick={() => setAddingNote(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
+            <Plus className="w-3.5 h-3.5" /> Añadir
+          </button>
+        </div>
+        {addingNote && (
+          <div className="border border-dashed border-border rounded-xl p-3 space-y-2">
+            <p className="text-xs text-muted">Se guarda con fecha y queda visible para el cliente en su Línea de vida clínica.</p>
+            <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
+              className="px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none" />
+            <textarea value={noteText} onChange={e => setNoteText(e.target.value)} rows={2}
+              placeholder="Observaciones, cambios de pauta, ajustes..."
+              className="w-full px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none resize-none" />
+            <div className="flex gap-2">
+              <button onClick={() => { setAddingNote(false); setNoteText('') }}
+                className="flex-1 py-1.5 border border-border rounded-lg text-xs text-muted">Cancelar</button>
+              <button onClick={handleAddNote} disabled={savingNote}
+                className="flex-1 py-1.5 bg-ink text-white rounded-lg text-xs font-semibold disabled:opacity-50">
+                {savingNote ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <HealthTimeline weights={weights} bloodMarkers={bloodMarkers} photos={sessions} clinicalNotes={clinicalNotes}
+        mealLogs={mealLogs} checkins={checkins} variant="trainer" />
 
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-card border border-border rounded-2xl p-4 text-center">

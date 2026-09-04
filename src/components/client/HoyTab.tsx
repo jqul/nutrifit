@@ -318,8 +318,12 @@ export function HoyTab({ client, demoMode, personalMode }: {
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <div className="flex items-center justify-between">
           <p className="font-semibold text-sm flex items-center gap-1.5"><Droplet className="w-4 h-4 text-accent" /> Hidratación</p>
-          <span className="text-xs text-muted">{waterL.toFixed(2).replace(/\.?0+$/, '') || 0}L / {WATER_GOAL_L}L</span>
+          <span className="text-xs font-bold text-accent">{Math.round(Math.min(100, (waterL / WATER_GOAL_L) * 100))}%</span>
         </div>
+        <div className="h-2 rounded-full bg-bg-alt overflow-hidden">
+          <div className="h-full bg-accent rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (waterL / WATER_GOAL_L) * 100)}%` }} />
+        </div>
+        <p className="text-xs text-muted -mt-1.5">{waterL.toFixed(2).replace(/\.?0+$/, '') || 0}L de {WATER_GOAL_L}L objetivo</p>
         <div className="grid grid-cols-8 gap-1.5">
           {Array.from({ length: WATER_GLASSES }).map((_, i) => {
             const filled = i < Math.round(waterL / (WATER_GOAL_L / WATER_GLASSES))

@@ -1,20 +1,24 @@
 import { useState, useEffect, useCallback, ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logError } from '../../lib/errors'
-import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow } from '../../lib/mappers'
-import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClientData } from '../../types'
+import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow, clinicalNoteFromRow } from '../../lib/mappers'
+import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClientData, ClinicalNote } from '../../types'
 import { BloodMarkerRow } from '../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../lib/adherence'
 import { computeWeightProgress } from '../../lib/weightProgress'
 import { toLocalISODate } from '../../lib/date'
 import { WeightChart } from '../shared/WeightChart'
+import { HealthTimeline } from '../shared/HealthTimeline'
 import { printProgressReport } from '../../lib/printProgressReport'
 import { Camera, Flame, UtensilsCrossed, Plus, Images, FileDown } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const HYDRATION_GOAL_L = 2.0
 
-interface DemoData { weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]; bloodMarkers?: BloodMarkerRow[] }
+interface DemoData {
+  weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]
+  bloodMarkers?: BloodMarkerRow[]; clinicalNotes?: ClinicalNote[]
+}
 
 export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, personalMode }: {
   client: ClientData; demoMode?: boolean; demoData?: DemoData
@@ -33,6 +37,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
   // 0017_blood_markers.sql) aunque no tenga una pestaña dedicada para verlas — solo
   // hacen falta aquí para incluirlas en el informe clínico descargable.
   const [bloodMarkers, setBloodMarkers] = useState<BloodMarkerRow[]>(demoData?.bloodMarkers ?? [])
+  const [clinicalNotes, setClinicalNotes] = useState<ClinicalNote[]>(demoData?.clinicalNotes ?? [])
   const [newWeight, setNewWeight] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
@@ -44,18 +49,20 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
 
   const load = useCallback(async () => {
     if (demoMode) return
-    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }] = await Promise.all([
+    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', clientId).order('date'),
       supabase.from('daily_checkins').select('*').eq('client_id', clientId),
       supabase.from('progress_photos').select('*').eq('client_id', clientId).order('date', { ascending: false }),
       supabase.from('meal_logs').select('*').eq('client_id', clientId).order('created_at', { ascending: false }),
       supabase.from('blood_markers').select('*').eq('client_id', clientId).order('date', { ascending: false }),
+      supabase.from('client_clinical_notes').select('*').eq('client_id', clientId).order('date', { ascending: false }),
     ])
     setWeights((w || []).map(weightFromRow))
     setCheckins((c || []).map(checkinFromRow))
     setSessions((p || []).map(photoSessionFromRow))
     setMealLogs((m || []).map(mealLogFromRow))
     setBloodMarkers(bm || [])
+    setClinicalNotes((cn || []).map(clinicalNoteFromRow))
   }, [clientId, demoMode])
 
   useEffect(() => { load() }, [load])
@@ -143,6 +150,9 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
       <AchievementBadges weights={weights} streak={streak} checkins={checkins} mealLogs={mealLogs} />
 
       <WeightImpactCard weights={weights} goalKg={client.goalWeightKg} />
+
+      <HealthTimeline weights={weights} bloodMarkers={bloodMarkers} photos={sessions} clinicalNotes={clinicalNotes}
+        mealLogs={mealLogs} checkins={checkins} variant="client" />
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
         <p className="font-semibold text-sm">Peso corporal</p>

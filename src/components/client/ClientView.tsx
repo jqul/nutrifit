@@ -20,7 +20,7 @@ import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { useAccentOverride } from '../../lib/useAccentOverride'
 import {
   DEMO_CLIENTS, DEMO_NUTRICIONISTA_PROFILE, DEMO_DIET_PLANS,
-  DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_RECIPES,
+  DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_CLINICAL_NOTES, DEMO_RECIPES,
 } from '../../lib/demo-data'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'mas'
@@ -188,6 +188,7 @@ export function ClientView({ token }: { token: string }) {
             photos: DEMO_PHOTOS[clientData.id] || [],
             mealLogs: DEMO_MEAL_LOGS[clientData.id] || [],
             bloodMarkers: DEMO_BLOOD_MARKERS[clientData.id] || [],
+            clinicalNotes: DEMO_CLINICAL_NOTES[clientData.id] || [],
           } : undefined} nutricionistaLogoUrl={logoUrl} nutricionistaAccentColor={accentColor} />
         </div>
         {activeTab === 'mas' && (

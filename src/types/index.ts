@@ -267,6 +267,14 @@ export interface BloodMarker {
   createdAt: number
 }
 
+export interface ClinicalNote {
+  id: string
+  clientId: string
+  date: string
+  note: string
+  createdAt: number
+}
+
 export type InvoiceStatus = 'pendiente' | 'pagado'
 
 export interface Invoice {

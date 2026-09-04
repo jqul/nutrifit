@@ -5,6 +5,7 @@ const STATUS_LABEL: Record<MarkerStatus, string> = { bajo: 'Bajo', normal: 'Ópt
 const STATUS_CLASS: Record<MarkerStatus, string> = {
   bajo: 'bg-warn/10 text-warn', alto: 'bg-warn/10 text-warn', normal: 'bg-ok/10 text-ok',
 }
+const STATUS_TEXT_CLASS: Record<MarkerStatus, string> = { bajo: 'text-warn', alto: 'text-warn', normal: 'text-ok' }
 
 function clampPct(value: number, min: number, max: number): number {
   return Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100))
@@ -49,7 +50,7 @@ export function HoloRangeBar({ def, value, previousValue }: {
               {Math.abs(delta)} {def.unit}
             </span>
           )}
-          <span className="text-sm font-bold tabular-nums">{value} <span className="text-xs font-normal text-muted">{def.unit}</span></span>
+          <span className={`text-sm font-bold tabular-nums ${STATUS_TEXT_CLASS[status]}`}>{value} <span className="text-xs font-normal text-muted">{def.unit}</span></span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${STATUS_CLASS[status]}`}>{STATUS_LABEL[status]}</span>
         </div>
       </div>

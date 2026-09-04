@@ -1,4 +1,4 @@
-import { UserProfile, ClientData, DietPlan, WeightEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment } from '../types'
+import { UserProfile, ClientData, DietPlan, WeightEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment, ClinicalNote } from '../types'
 import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow } from './supabase-types'
 import { periodKeyFor } from './surveyPeriod'
 
@@ -396,7 +396,24 @@ export const DEMO_RECIPES: RecipeRow[] = [
 // ── Fotos de progreso ───────────────────────────────────────
 
 export const DEMO_PHOTOS: Record<string, ProgressPhotoSession[]> = {
-  'demo-client-001': [],
+  // Dos sesiones para que el comparador antes/después y la Línea de vida
+  // clínica (HealthTimeline) tengan algo real que mostrar en la demo.
+  'demo-client-001': [
+    {
+      id: 'ph-maria-2', clientId: 'demo-client-001', date: daysAgo(5),
+      frontUrl: placeholderPhoto('Frontal', '#c9748f'),
+      sideUrl: placeholderPhoto('Perfil', '#d99aad'),
+      backUrl: placeholderPhoto('Espalda', '#b25a76'),
+      note: 'Mes 3 del plan',
+    },
+    {
+      id: 'ph-maria-1', clientId: 'demo-client-001', date: daysAgo(90),
+      frontUrl: placeholderPhoto('Frontal · inicio', '#e0b8c4'),
+      sideUrl: placeholderPhoto('Perfil · inicio', '#ecd0d9'),
+      backUrl: placeholderPhoto('Espalda · inicio', '#d49fae'),
+      note: 'Día 1 del plan',
+    },
+  ],
   // Dos sesiones para poder mostrar el comparador antes/después: la primera
   // (hace 60 días, al empezar el plan) y la más reciente (hace 14 días).
   'demo-client-002': [
@@ -595,4 +612,30 @@ export const DEMO_BLOOD_MARKERS: Record<string, BloodMarkerRow[]> = {
     { id: 'demo-bm-12', client_id: 'demo-client-003', date: daysAgo(10), marker_key: 'glucosa', value: 85, created_at: '' },
     { id: 'demo-bm-13', client_id: 'demo-client-003', date: daysAgo(10), marker_key: 'colesterol_total', value: 178, created_at: '' },
   ],
+}
+
+// ── Notas clínicas del profesional ─────────────────────────
+// Historial cronológico y visible para el cliente (distinto de notes, la
+// nota privada) — alimenta la Línea de Vida Clínica (HealthTimeline).
+export const DEMO_CLINICAL_NOTES: Record<string, ClinicalNote[]> = {
+  'demo-client-001': [
+    {
+      id: 'demo-note-1', clientId: 'demo-client-001', date: daysAgo(19),
+      note: 'Revisamos la analítica: colesterol total y LDL algo elevados. Ajustamos la pauta — más fibra soluble (avena, legumbres) y menos grasa saturada. Vitamina D baja, valorar suplementación en la próxima revisión.',
+      createdAt: Date.now() - 19 * 86400000,
+    },
+    {
+      id: 'demo-note-2', clientId: 'demo-client-001', date: daysAgo(3),
+      note: 'Muy buena evolución con la nueva pauta — sigue así. Seguimos con hidratación y fuentes de proteína como prioridad esta semana.',
+      createdAt: Date.now() - 3 * 86400000,
+    },
+  ],
+  'demo-client-002': [
+    {
+      id: 'demo-note-3', clientId: 'demo-client-002', date: daysAgo(30),
+      note: 'Transaminasas ligeramente elevadas — reducimos ultraprocesados y azúcar, aumentamos verdura. A vigilar en la siguiente analítica.',
+      createdAt: Date.now() - 30 * 86400000,
+    },
+  ],
+  'demo-client-003': [],
 }
