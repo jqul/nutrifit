@@ -7,6 +7,7 @@ import { BloodMarkerRow } from '../../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../../lib/adherence'
 import { WeightChart } from '../../shared/WeightChart'
 import { HealthTimeline } from '../../shared/HealthTimeline'
+import { StoragePhoto } from '../../shared/StoragePhoto'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
@@ -190,7 +191,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
                 <div className="grid grid-cols-3 gap-2">
                   {[s.frontUrl, s.sideUrl, s.backUrl].map((url, i) => (
                     <div key={i} className="aspect-square bg-bg-alt rounded-lg overflow-hidden flex items-center justify-center">
-                      {url ? <img src={url} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-muted">—</span>}
+                      {url ? <StoragePhoto path={url} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-muted">—</span>}
                     </div>
                   ))}
                 </div>
@@ -209,7 +210,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
             {mealLogs.slice(0, 10).map(m => (
               <div key={m.id} className="flex items-center gap-3 border border-border rounded-xl p-2.5">
                 {m.photoUrl ? (
-                  <img src={m.photoUrl} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" alt={m.mealName} />
+                  <StoragePhoto path={m.photoUrl} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" alt={m.mealName} />
                 ) : (
                   <div className="w-10 h-10 rounded-lg bg-bg-alt flex items-center justify-center flex-shrink-0">
                     <UtensilsCrossed className="w-4 h-4 text-muted" />

@@ -9,6 +9,7 @@ import { computeWeightProgress } from '../../lib/weightProgress'
 import { toLocalISODate } from '../../lib/date'
 import { WeightChart } from '../shared/WeightChart'
 import { HealthTimeline } from '../shared/HealthTimeline'
+import { StoragePhoto } from '../shared/StoragePhoto'
 import { printProgressReport } from '../../lib/printProgressReport'
 import { Camera, Flame, UtensilsCrossed, Plus, Images, FileDown } from 'lucide-react'
 import { toast } from '../shared/Toast'
@@ -97,9 +98,10 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
     const path = `${clientId}/${sessionId}/${angle}_${Date.now()}.${ext}`
     const { error: upErr } = await supabase.storage.from('photos').upload(path, file, { upsert: true })
     if (upErr) { toast('Error al subir la foto', 'warn'); setUploading(null); return }
-    const { data: pub } = supabase.storage.from('photos').getPublicUrl(path)
+    // Se guarda la ruta del objeto, no una URL pública — el bucket `photos`
+    // es privado; StoragePhoto pide una URL firmada al mostrarla.
     const column = angle === 'front' ? 'front_url' : angle === 'side' ? 'side_url' : 'back_url'
-    await supabase.from('progress_photos').update({ [column]: pub.publicUrl }).eq('id', sessionId)
+    await supabase.from('progress_photos').update({ [column]: path }).eq('id', sessionId)
     setUploading(null)
     await load()
   }
@@ -114,7 +116,8 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
       const path = `${clientId}/meals/${Date.now()}.${ext}`
       const { error: upErr } = await supabase.storage.from('photos').upload(path, mealFile, { upsert: true })
       if (upErr) { toast('Error al subir la foto', 'warn'); setSavingMeal(false); return }
-      photoUrl = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl
+      // Ruta del objeto, no URL pública — ver nota en handleUpload.
+      photoUrl = path
     }
     const { error } = await supabase.from('meal_logs').insert({
       client_id: clientId, date: toLocalISODate(new Date()), meal_name: mealName.trim(), note: mealNote.trim(), photo_url: photoUrl,
@@ -190,7 +193,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
                     const key = `${s.id}-${angle}`
                     return (
                       <label key={angle} className="aspect-square bg-bg-alt rounded-lg overflow-hidden flex items-center justify-center cursor-pointer relative">
-                        {url ? <img src={url} className="w-full h-full object-cover" alt={angle} /> : (
+                        {url ? <StoragePhoto path={url} className="w-full h-full object-cover" alt={angle} /> : (
                           <span className="text-[10px] text-muted uppercase">{uploading === key ? '...' : angle}</span>
                         )}
                         <input type="file" accept="image/*" className="hidden"
@@ -239,7 +242,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
             {mealLogs.map(m => (
               <div key={m.id} className="flex items-center gap-3 border border-border rounded-xl p-2.5">
                 {m.photoUrl ? (
-                  <img src={m.photoUrl} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" alt={m.mealName} />
+                  <StoragePhoto path={m.photoUrl} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" alt={m.mealName} />
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-bg-alt flex items-center justify-center flex-shrink-0">
                     <UtensilsCrossed className="w-4 h-4 text-muted" />
@@ -363,7 +366,7 @@ function PhotoComparator({ sessions }: { sessions: ProgressPhotoSession[] }) {
           return (
             <div key={tag}>
               <div className="aspect-square bg-bg-alt rounded-xl overflow-hidden flex items-center justify-center">
-                {url ? <img src={url} className="w-full h-full object-cover" alt={`${tag} — ${ANGLE_LABELS[angle]}`} /> : (
+                {url ? <StoragePhoto path={url} className="w-full h-full object-cover" alt={`${tag} — ${ANGLE_LABELS[angle]}`} /> : (
                   <span className="text-xs text-muted">Sin foto</span>
                 )}
               </div>

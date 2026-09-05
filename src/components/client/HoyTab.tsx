@@ -9,6 +9,7 @@ import { calcStreak } from '../../lib/adherence'
 import { resolveTodaysMeals, loadOptionChoices, loadDayType } from '../../lib/planMeals'
 import { sendPush } from '../../lib/usePushNotifications'
 import { PendingSurveys } from './PendingSurveys'
+import { StoragePhoto } from '../shared/StoragePhoto'
 import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS, DEMO_CHECKINS } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { CheckCircle2, CheckSquare, Square, Calendar, Plus, Video, Flame, Droplet, Camera, UtensilsCrossed, Pill } from 'lucide-react'
@@ -249,7 +250,9 @@ export function HoyTab({ client, demoMode, personalMode }: {
     const path = `${client.id}/meals/${Date.now()}.${ext}`
     const { error: upErr } = await supabase.storage.from('photos').upload(path, file, { upsert: true })
     if (upErr) { toast('Error al subir la foto', 'warn'); setUploadingMeal(null); return }
-    const photoUrl = supabase.storage.from('photos').getPublicUrl(path).data.publicUrl
+    // Ruta del objeto, no URL pública — el bucket `photos` es privado;
+    // StoragePhoto pide una URL firmada al mostrarla.
+    const photoUrl = path
     if (existing) {
       await supabase.from('meal_logs').update({ photo_url: photoUrl }).eq('id', existing.id)
       setMealLogsToday(prev => prev.map(l => l.id === existing.id ? { ...l, photoUrl } : l))
@@ -379,7 +382,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
                     )}
                   </div>
                   {log?.photoUrl ? (
-                    <img src={log.photoUrl} alt={meal.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                    <StoragePhoto path={log.photoUrl} alt={meal.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                   ) : (
                     <label className="w-10 h-10 rounded-lg bg-bg-alt flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-bg-alt/70">
                       {uploadingMeal === meal.id ? (

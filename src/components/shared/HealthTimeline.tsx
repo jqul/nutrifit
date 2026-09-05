@@ -6,6 +6,7 @@ import {
   AnaliticaEvent, PesoEvent, FotoEvent, NotaEvent, ComidaEvent, HitoEvent,
 } from '../../lib/healthTimeline'
 import { calcAdherence } from '../../lib/adherence'
+import { StoragePhoto } from './StoragePhoto'
 import { Activity, Scale, Camera, FileText, UtensilsCrossed, Flame, X, History, Sparkles, ChevronDown } from 'lucide-react'
 
 const FILTERS: { key: TimelineEventType | 'all'; label: string; emoji?: string }[] = [
@@ -110,7 +111,7 @@ export function HealthTimeline({
           <button className="absolute top-4 right-4 text-white/80 hover:text-white" onClick={() => setLightbox(null)}>
             <X className="w-6 h-6" />
           </button>
-          <img src={lightbox.url} alt={lightbox.label} className="max-w-full max-h-full rounded-xl object-contain" />
+          <StoragePhoto path={lightbox.url} alt={lightbox.label} className="max-w-full max-h-full rounded-xl object-contain" />
         </div>
       )}
     </div>
@@ -219,7 +220,7 @@ function FotoCardBody({ event, onOpenPhoto }: { event: FotoEvent; onOpenPhoto: (
         {([['front', event.session.frontUrl, 'Frontal'], ['side', event.session.sideUrl, 'Perfil'], ['back', event.session.backUrl, 'Espalda']] as const).map(([key, url, label]) => (
           <button key={key} disabled={!url} onClick={() => url && onOpenPhoto(url, label)}
             className="aspect-square bg-bg-alt rounded-lg overflow-hidden flex items-center justify-center disabled:cursor-default">
-            {url ? <img src={url} alt={label} className="w-full h-full object-cover" /> : <span className="text-[9px] text-muted">—</span>}
+            {url ? <StoragePhoto path={url} alt={label} className="w-full h-full object-cover" /> : <span className="text-[9px] text-muted">—</span>}
           </button>
         ))}
       </div>
@@ -235,7 +236,7 @@ function ComidaCardBody({ event }: { event: ComidaEvent }) {
   return (
     <div className="flex items-center gap-3">
       {event.photoUrl ? (
-        <img src={event.photoUrl} alt={event.mealName} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+        <StoragePhoto path={event.photoUrl} alt={event.mealName} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
       ) : (
         <div className="w-14 h-14 rounded-xl bg-bg-alt flex items-center justify-center flex-shrink-0">
           <UtensilsCrossed className="w-5 h-5 text-muted" />
