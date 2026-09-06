@@ -25,6 +25,12 @@ export function ClientView({ token }: { token: string }) {
 
   const [authState, setAuthState] = useState<AuthState>(demoClient ? 'authenticated' : 'loading')
   const [error, setError] = useState(demoClient === undefined && token.startsWith(DEMO_TOKEN_PREFIX) ? 'Enlace no válido o expirado.' : '')
+  // Datos mínimos del cliente ANTES de autenticarse (nombre para el
+  // saludo + los 3 flags que deciden registro/login/consentimiento) —
+  // vienen de get_client_auth_status_by_token, un RPC público deliberadamente
+  // estrecho. La ficha COMPLETA (client, más abajo) solo se carga una vez
+  // autenticado de verdad, con una consulta normal protegida por RLS.
+  const [authStatus, setAuthStatus] = useState<{ id: string; name: string; surname: string } | null>(null)
   const [client, setClient] = useState<ClienteRow | null>(null)
   const [nutricionistaName, setNutricionistaName] = useState(demoClient ? DEMO_NUTRICIONISTA_PROFILE.displayName : 'Tu nutricionista')
   const [logoUrl, setLogoUrl] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.logoUrl : null)
@@ -47,13 +53,13 @@ export function ClientView({ token }: { token: string }) {
 
   const checkAuth = async () => {
     const [{ data: rows, error: cErr }, { data: brandingRows }] = await Promise.all([
-      supabase.rpc('get_client_by_token', { p_token: token }),
+      supabase.rpc('get_client_auth_status_by_token', { p_token: token }),
       supabase.rpc('get_nutricionista_branding_by_token', { p_token: token }),
     ])
     if (cErr) logError('ClientView:loadClient', cErr)
-    const clientData = rows?.[0] || null
-    if (!clientData) { setError('Enlace no válido o expirado.'); return }
-    setClient(clientData)
+    const status = rows?.[0] || null
+    if (!status) { setError('Enlace no válido o expirado.'); return }
+    setAuthStatus({ id: status.id, name: status.name, surname: status.surname })
     const branding = brandingRows?.[0]
     if (branding?.display_name) setNutricionistaName(branding.display_name)
     setLogoUrl(branding?.logo_url || null)
@@ -61,21 +67,28 @@ export function ClientView({ token }: { token: string }) {
     setContactPhone(branding?.contact_phone || null)
     setConsentDocumentUrl(branding?.consent_document_url || null)
 
-    if (!clientData.auth_user_id) { setAuthState('needs_register'); return }
+    if (!status.auth_user_id) { setAuthState('needs_register'); return }
 
     const { data: { session } } = await supabase.auth.getSession()
-    if (!(session?.user && session.user.id === clientData.auth_user_id)) { setAuthState('needs_login'); return }
+    if (!(session?.user && session.user.id === status.auth_user_id)) { setAuthState('needs_login'); return }
 
-    if (branding?.consent_document_url && !clientData.consent_accepted_at) {
+    if (branding?.consent_document_url && !status.consent_accepted_at) {
       setAuthState('needs_consent')
-    } else {
-      setAuthState('authenticated')
+      return
     }
+
+    // Autenticado de verdad — a partir de aquí la RLS normal
+    // (auth_user_id = auth.uid()) ya protege la fila completa, sin
+    // necesitar ningún RPC ampliado.
+    const { data: fullRow, error: fullErr } = await supabase.from('clientes').select('*').eq('id', status.id).single()
+    if (fullErr || !fullRow) { setError('No se pudo cargar tu perfil.'); return }
+    setClient(fullRow)
+    setAuthState('authenticated')
   }
 
   if (error) return <NotFound />
 
-  if (!demoClient && (authState === 'loading' || !client)) return (
+  if (!demoClient && (authState === 'loading' || !authStatus)) return (
     <div className="min-h-[100dvh] bg-bg flex items-center justify-center">
       <div className="text-center space-y-3">
         <h1 className="text-3xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span></h1>
@@ -88,7 +101,7 @@ export function ClientView({ token }: { token: string }) {
     </div>
   )
 
-  const clientName = demoClient ? `${demoClient.name} ${demoClient.surname}` : `${client!.name || ''} ${client!.surname || ''}`.trim()
+  const clientName = demoClient ? `${demoClient.name} ${demoClient.surname}` : `${authStatus!.name || ''} ${authStatus!.surname || ''}`.trim()
 
   if (!demoClient && (authState === 'needs_register' || authState === 'needs_login')) {
     return (
