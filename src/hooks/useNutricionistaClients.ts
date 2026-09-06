@@ -3,10 +3,11 @@ import { supabase } from '../lib/supabase'
 import { ClientData, DailyCheckin } from '../types'
 import { clientFromRow, clientToRow, checkinFromRow } from '../lib/mappers'
 import { calcAdherence, calcStreak } from '../lib/adherence'
-import { computeClientHealth, ClientHealthStatus } from '../lib/clientHealth'
+import { computeClientHealth, hasUnreviewedActivity, ClientHealthStatus } from '../lib/clientHealth'
+import { hasAnyMarkerOutOfRange } from '../lib/bloodMarkers'
 import { toast } from '../components/shared/Toast'
-import { DEMO_CHECKINS, DEMO_INVOICES } from '../lib/demo-data'
-import { InvoiceRow } from '../lib/supabase-types'
+import { DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES } from '../lib/demo-data'
+import { InvoiceRow, BloodMarkerRow, SurveyResponseRow } from '../lib/supabase-types'
 
 export interface ClientWithStats extends ClientData {
   lastCheckin?: string
@@ -27,7 +28,8 @@ interface Options {
 }
 
 function withStats(
-  clients: ClientData[], checkinsMap: Record<string, DailyCheckin[]>, invoicesMap: Record<string, InvoiceRow[]> = {}
+  clients: ClientData[], checkinsMap: Record<string, DailyCheckin[]>, invoicesMap: Record<string, InvoiceRow[]> = {},
+  bloodMarkersMap: Record<string, BloodMarkerRow[]> = {}, surveyResponsesMap: Record<string, SurveyResponseRow[]> = {},
 ): ClientWithStats[] {
   const today = new Date()
   const todayStr = toLocalISODate(today)
@@ -38,7 +40,13 @@ function withStats(
     const lastCheckin = sorted[0]?.date
     const streak = calcStreak(checkins, today)
     const hasCurrentPeriodInvoice = (invoicesMap[c.id] || []).some(i => i.period === period)
-    const health = computeClientHealth({ lastCheckin, streak, createdAt: c.createdAt, monthlyPrice: c.monthlyPrice }, hasCurrentPeriodInvoice, today)
+    const hasBiomarkerAlert = hasAnyMarkerOutOfRange(bloodMarkersMap[c.id] || [])
+    const lastSurveySubmittedAt = [...(surveyResponsesMap[c.id] || [])].sort((a, b) => b.submitted_at.localeCompare(a.submitted_at))[0]?.submitted_at
+    const unreviewed = hasUnreviewedActivity(c.lastReviewedAt, lastCheckin, lastSurveySubmittedAt)
+    const health = computeClientHealth({
+      lastCheckin, streak, createdAt: c.createdAt, monthlyPrice: c.monthlyPrice,
+      hasBiomarkerAlert, hasUnreviewedActivity: unreviewed,
+    }, hasCurrentPeriodInvoice, today)
     return {
       ...c,
       lastCheckin,
@@ -69,7 +77,7 @@ export interface NewClientInput {
 
 export function useNutricionistaClients({ nutricionistaId, demoClients }: Options) {
   const [clients, setClients] = useState<ClientWithStats[]>(
-    demoClients ? withStats(demoClients, DEMO_CHECKINS, DEMO_INVOICES) : []
+    demoClients ? withStats(demoClients, DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES) : []
   )
   const [loading, setLoading] = useState(!demoClients)
 
@@ -82,9 +90,11 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
 
     if (mapped.length) {
       const ids = mapped.map(c => c.id)
-      const [{ data: checkinRows }, { data: invoiceRows }] = await Promise.all([
+      const [{ data: checkinRows }, { data: invoiceRows }, { data: bloodMarkerRows }, { data: surveyResponseRows }] = await Promise.all([
         supabase.from('daily_checkins').select('*').in('client_id', ids),
         supabase.from('invoices').select('*').in('client_id', ids),
+        supabase.from('blood_markers').select('*').in('client_id', ids),
+        supabase.from('survey_responses').select('*').in('client_id', ids),
       ])
       const checkinsByClient: Record<string, DailyCheckin[]> = {}
       ;(checkinRows || []).forEach((row) => {
@@ -93,7 +103,11 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
       })
       const invoicesByClient: Record<string, InvoiceRow[]> = {}
       ;(invoiceRows || []).forEach((row: InvoiceRow) => { (invoicesByClient[row.client_id] ||= []).push(row) })
-      setClients(withStats(mapped, checkinsByClient, invoicesByClient))
+      const bloodMarkersByClient: Record<string, BloodMarkerRow[]> = {}
+      ;(bloodMarkerRows || []).forEach((row: BloodMarkerRow) => { (bloodMarkersByClient[row.client_id] ||= []).push(row) })
+      const surveyResponsesByClient: Record<string, SurveyResponseRow[]> = {}
+      ;(surveyResponseRows || []).forEach((row: SurveyResponseRow) => { (surveyResponsesByClient[row.client_id] ||= []).push(row) })
+      setClients(withStats(mapped, checkinsByClient, invoicesByClient, bloodMarkersByClient, surveyResponsesByClient))
     } else {
       setClients([])
     }
@@ -120,7 +134,7 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
         gender: newClient.gender || null, birthDate: newClient.birthDate || null,
         allergies: newClient.allergies.trim(), notes: '', reportNotes: '', consentAcceptedAt: null, consentSignedName: null,
         monthlyPrice: null, goalWeightKg: null, customMessages: {}, tags: [],
-        createdAt: Date.now(),
+        createdAt: Date.now(), lastReviewedAt: null,
       }
       setClients(prev => [...prev, ...withStats([demoClient], {})])
       toast('Cliente añadido (modo demo — no se guarda)', 'ok')
@@ -187,5 +201,17 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
     return token
   }
 
-  return { clients, loading, fetchClients, addClient, updateClient, deleteClient, regenerateToken }
+  // Marca la ficha como revisada ahora mismo — se llama sola al abrir
+  // Seguimiento (ver ClientPanel.tsx), sin toast ni confirmación, para que
+  // el aviso de "check-in o encuesta sin revisar" desaparezca en cuanto el
+  // nutricionista de verdad la mira. Actualiza el estado local al momento
+  // (no espera a un refetch) para que el badge se quite sin parpadeos.
+  const markClientReviewed = async (id: string) => {
+    const now = new Date().toISOString()
+    setClients(prev => prev.map(c => c.id === id ? { ...c, lastReviewedAt: now } : c))
+    if (demoClients) return
+    await supabase.from('clientes').update({ last_reviewed_at: now }).eq('id', id)
+  }
+
+  return { clients, loading, fetchClients, addClient, updateClient, deleteClient, regenerateToken, markClientReviewed }
 }

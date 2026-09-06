@@ -6,6 +6,7 @@ import { BloodMarkerRow, RecipeRow } from '../../lib/supabase-types'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { PushToggle } from '../shared/PushToggle'
 import { InstallAppButton } from '../shared/InstallAppButton'
+import { InstallBanner } from '../shared/InstallBanner'
 import { useInstallPrompt } from '../../lib/useInstallPrompt'
 import { HoyTab } from './HoyTab'
 import { DietaClienteTab } from './DietaClienteTab'
@@ -75,6 +76,11 @@ export function ClientAppShell({
           {bannerText}
         </div>
       )}
+      {/* Aviso de instalación PWA de una sola vez — sin sentido en la demo
+          pública (nadie va a instalarse un dispositivo ajeno) ni en la
+          vista previa del nutricionista (es su propio dispositivo, no el
+          del cliente). */}
+      {!demoMode && !previewMode && <InstallBanner />}
       <header className="bg-card/95 backdrop-blur-sm border-b border-border flex-shrink-0 z-20">
         <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto w-full">
           <div className="flex items-center gap-2.5">

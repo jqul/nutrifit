@@ -7,6 +7,7 @@ import {
   adviceForMarker, markerTier, MarkerCategory,
 } from '../../../lib/bloodMarkers'
 import { HoloRangeBar } from '../../shared/HoloRangeBar'
+import { LabReportAttachment } from './LabReportAttachment'
 import { toLocalISODate } from '../../../lib/date'
 import { toast } from '../../shared/Toast'
 import { Button } from '../../shared/Button'
@@ -207,6 +208,13 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
                   <Clock className="w-3.5 h-3.5" /> Comparando vs: {fmtDate(compareDate, { day: 'numeric', month: 'short' })}
                 </span>
               )}
+            </div>
+          )}
+
+          {effectiveDate && (
+            <div className="flex items-center justify-between gap-3 flex-wrap bg-card border border-border rounded-2xl px-3.5 py-2.5">
+              <span className="text-xs text-muted">Informe de laboratorio · {fmtDate(effectiveDate)}</span>
+              <LabReportAttachment clientId={client.id} date={effectiveDate} demoMode={demoMode} />
             </div>
           )}
 

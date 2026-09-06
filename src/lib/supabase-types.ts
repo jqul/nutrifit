@@ -41,6 +41,7 @@ export interface ClienteRow {
   custom_messages: Record<string, string> | null
   tags: string[]
   created_at: string
+  last_reviewed_at: string | null
 }
 
 export interface DietPlanRow {
@@ -238,6 +239,15 @@ export interface BloodMarkerRow {
   marker_key: string
   value: number
   created_at: string
+}
+
+export interface LabReportRow {
+  id: string
+  client_id: string
+  date: string
+  file_path: string
+  file_name: string
+  uploaded_at: string
 }
 
 export interface ClinicalNoteRow {

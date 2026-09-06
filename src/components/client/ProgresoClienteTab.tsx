@@ -340,12 +340,22 @@ function WeightImpactCard({ weights, goalKg }: { weights: WeightEntry[]; goalKg:
  * no hay "antes" con el que comparar). */
 function PhotoComparator({ sessions }: { sessions: ProgressPhotoSession[] }) {
   const [angle, setAngle] = useState<'front' | 'side' | 'back'>('front')
+  // Vienen ordenadas de más reciente a más antigua (ver load()) — por
+  // defecto se comparan los dos extremos (la primera sesión vs. la más
+  // reciente), pero cualquiera de los dos lados se puede cambiar a
+  // cualquier otra fecha con fotos (ej. "Día 1" vs. "Semana 8" concretas).
+  const oldest = sessions[sessions.length - 1]
+  const newest = sessions[0]
+  const [beforeId, setBeforeId] = useState<string | undefined>(oldest?.id)
+  const [afterId, setAfterId] = useState<string | undefined>(newest?.id)
+
   if (sessions.length < 2) return null
-  // Vienen ordenadas de más reciente a más antigua (ver load()).
-  const after = sessions[0]
-  const before = sessions[sessions.length - 1]
+
+  const before = sessions.find(s => s.id === beforeId) || oldest
+  const after = sessions.find(s => s.id === afterId) || newest
   const urlFor = (s: ProgressPhotoSession) => angle === 'front' ? s.frontUrl : angle === 'side' ? s.sideUrl : s.backUrl
   const ANGLE_LABELS = { front: 'Frontal', side: 'Perfil', back: 'Espalda' } as const
+  const fmtDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
 
   return (
     <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
@@ -359,6 +369,16 @@ function PhotoComparator({ sessions }: { sessions: ProgressPhotoSession[] }) {
             {ANGLE_LABELS[a]}
           </button>
         ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <select value={beforeId} onChange={e => setBeforeId(e.target.value)}
+          className="px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+          {sessions.map(s => <option key={s.id} value={s.id}>Antes: {fmtDate(s.date)}</option>)}
+        </select>
+        <select value={afterId} onChange={e => setAfterId(e.target.value)}
+          className="px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+          {sessions.map(s => <option key={s.id} value={s.id}>Después: {fmtDate(s.date)}</option>)}
+        </select>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {[{ session: before, tag: 'Antes' }, { session: after, tag: 'Después' }].map(({ session, tag }) => {

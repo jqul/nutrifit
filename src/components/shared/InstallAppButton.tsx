@@ -27,19 +27,28 @@ export function InstallAppButton({ variant = 'button' }: { variant?: 'button' | 
       <button onClick={handleClick} className={className}>
         <Download className="w-4 h-4" /> Instalar app
       </button>
-      <Modal open={showIosHelp} onClose={() => setShowIosHelp(false)} title="Instalar NutriFit">
-        <div className="space-y-4 text-sm">
-          <p className="text-muted">En Safari (no funciona desde Chrome en iPhone):</p>
-          <div className="flex items-center gap-3 bg-bg-alt rounded-xl p-3">
-            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center font-bold text-xs">1</span>
-            <span className="flex items-center gap-1.5">Toca <Share className="w-4 h-4 inline text-accent" /> <strong>Compartir</strong>, abajo del todo</span>
-          </div>
-          <div className="flex items-center gap-3 bg-bg-alt rounded-xl p-3">
-            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center font-bold text-xs">2</span>
-            <span className="flex items-center gap-1.5">Elige <SquarePlus className="w-4 h-4 inline text-accent" /> <strong>Añadir a pantalla de inicio</strong></span>
-          </div>
-        </div>
-      </Modal>
+      <IosInstallHelpModal open={showIosHelp} onClose={() => setShowIosHelp(false)} />
     </>
+  )
+}
+
+/** Instrucciones de "Compartir → Añadir a pantalla de inicio" — Safari en
+ * iOS no soporta el prompt nativo, así que es la única vía ahí. Compartida
+ * entre InstallAppButton y InstallBanner para no duplicar el texto. */
+export function IosInstallHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Modal open={open} onClose={onClose} title="Instalar NutriFit">
+      <div className="space-y-4 text-sm">
+        <p className="text-muted">En Safari (no funciona desde Chrome en iPhone):</p>
+        <div className="flex items-center gap-3 bg-bg-alt rounded-xl p-3">
+          <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center font-bold text-xs">1</span>
+          <span className="flex items-center gap-1.5">Toca <Share className="w-4 h-4 inline text-accent" /> <strong>Compartir</strong>, abajo del todo</span>
+        </div>
+        <div className="flex items-center gap-3 bg-bg-alt rounded-xl p-3">
+          <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center font-bold text-xs">2</span>
+          <span className="flex items-center gap-1.5">Elige <SquarePlus className="w-4 h-4 inline text-accent" /> <strong>Añadir a pantalla de inicio</strong></span>
+        </div>
+      </div>
+    </Modal>
   )
 }

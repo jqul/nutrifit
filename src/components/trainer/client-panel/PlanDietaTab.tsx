@@ -358,25 +358,50 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     printDietPlan(client, printable, { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })
   }
 
+  // Payload compartido por "Guardar como plantilla" y "Duplicar plan" — el
+  // mismo snapshot de la estructura actual (comidas, alimentos,
+  // suplementos, macros), solo cambia el nombre con el que se guarda.
+  const buildTemplatePayload = () => ({
+    kcalTarget: parseFloat(kcalTarget) || 0, proteinG: parseFloat(proteinG) || 0,
+    carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, fiberG: parseFloat(fiberG) || 0, advice,
+    meals: meals.map(m => ({
+      name: m.name, time: m.time, kcalTarget: m.kcalTarget, dayOfWeek: m.dayOfWeek,
+      optionGroup: m.optionGroup, optionLabel: m.optionLabel, dayType: m.dayType, items: m.items,
+    })),
+    supplements: supplements.map(s => ({ name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
+  })
+
+  const saveTemplateAs = async (name: string) => {
+    if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); return true }
+    const { error } = await supabase.from('diet_templates').insert({
+      nutricionista_id: nutricionistaId, name, plan: buildTemplatePayload(),
+    })
+    if (error) { toast('Error: ' + error.message, 'warn'); return false }
+    await loadTemplates()
+    return true
+  }
+
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) { toast('Ponle un nombre a la plantilla', 'warn'); return }
-    if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); setTemplateName(''); return }
-    const { error } = await supabase.from('diet_templates').insert({
-      nutricionista_id: nutricionistaId, name: templateName.trim(),
-      plan: {
-        kcalTarget: parseFloat(kcalTarget) || 0, proteinG: parseFloat(proteinG) || 0,
-        carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0, fiberG: parseFloat(fiberG) || 0, advice,
-        meals: meals.map(m => ({
-          name: m.name, time: m.time, kcalTarget: m.kcalTarget, dayOfWeek: m.dayOfWeek,
-          optionGroup: m.optionGroup, optionLabel: m.optionLabel, dayType: m.dayType, items: m.items,
-        })),
-        supplements: supplements.map(s => ({ name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
-      },
-    })
-    if (error) { toast('Error: ' + error.message, 'warn'); return }
+    const ok = await saveTemplateAs(templateName.trim())
+    if (!ok) return
     toast('Plantilla guardada ✓', 'ok')
     setTemplateName('')
-    await loadTemplates()
+  }
+
+  // "Duplicar plan": guarda la estructura actual como plantilla con un
+  // nombre automático (fecha de hoy), lista para aplicarla de inmediato
+  // sobre este mismo plan y ajustar solo lo que cambie en la nueva fase
+  // (ej. Definición 1800kcal → Ajuste 1650kcal) sin volver a montarla
+  // comida a comida. No crea un plan activo nuevo aparte — esta app solo
+  // tiene un plan activo por cliente a la vez — pero evita el tecleo
+  // repetitivo, que es el verdadero coste de "empezar de cero".
+  const handleDuplicatePlan = async () => {
+    if (meals.length === 0) { toast('No hay nada que duplicar todavía', 'warn'); return }
+    const stamp = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+    const ok = await saveTemplateAs(`Copia de ${client.name} — ${stamp}`)
+    if (!ok) return
+    toast('Plan duplicado ✓ — aplícalo desde "Plantillas" para ajustar la nueva fase', 'ok')
   }
 
   const applyTemplate = (tpl: DietTemplateRow) => {
@@ -1001,6 +1026,9 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
       <div className="flex items-center gap-2 flex-wrap">
         <Button onClick={handleSave} loading={saving}>Guardar plan</Button>
+        <Button variant="outline" onClick={handleDuplicatePlan} title="Guarda esta estructura como plantilla para una nueva fase (ej. otro objetivo de kcal) sin volver a montarla desde cero">
+          <Copy className="w-3.5 h-3.5" /> Duplicar plan
+        </Button>
         <Button variant="outline" onClick={handlePrint}><Download className="w-3.5 h-3.5" /> Descargar PDF</Button>
         <Button variant="outline" onClick={() => {
           const url = `${window.location.origin}/?c=${client.token}`

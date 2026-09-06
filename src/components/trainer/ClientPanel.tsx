@@ -34,9 +34,16 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
   const [tab, setTab] = useState<Tab>('perfil')
   const [current, setCurrent] = useState(client)
   const [previewing, setPreviewing] = useState(false)
-  const { updateClient, regenerateToken, deleteClient } = useNutricionistaClients({
+  const { updateClient, regenerateToken, deleteClient, markClientReviewed } = useNutricionistaClients({
     nutricionistaId: userProfile.uid, demoClients: demoMode ? [current] : undefined,
   })
+  // Marca la ficha como revisada en cuanto se abre Seguimiento — así el
+  // aviso de "check-in o encuesta sin revisar" del dashboard desaparece
+  // sin que el nutricionista tenga que hacer nada aparte de mirar.
+  useEffect(() => {
+    if (tab === 'seguimiento') markClientReviewed(current.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, current.id])
   // Peso actual para la barra lateral (ClientSidebar) — mismo dato que carga
   // PerfilTab por su cuenta para su propia ficha; se duplica aquí a
   // propósito para que la barra lateral no dependa de qué pestaña esté

@@ -58,6 +58,7 @@ export interface ClientData {
   customMessages: Record<string, string>
   tags: string[]
   createdAt: number
+  lastReviewedAt: string | null
 }
 
 export interface DietMealItem {

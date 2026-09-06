@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeClientHealth } from './clientHealth'
+import { computeClientHealth, hasUnreviewedActivity } from './clientHealth'
 
 function dateStr(daysAgo: number, ref = new Date()): string {
   const d = new Date(ref)
@@ -61,5 +61,62 @@ describe('computeClientHealth', () => {
   it('prioritizes billing over streak', () => {
     const h = computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: 45, streak: 10 }, false, ref)
     expect(h.status).toBe('billing')
+  })
+
+  it('flags attention for a biomarker alert even when everything else looks fine', () => {
+    const h = computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: 45, streak: 5, hasBiomarkerAlert: true }, true, ref)
+    expect(h.status).toBe('attention')
+    expect(h.label).toBe('Analítica en alerta')
+  })
+
+  it('prioritizes inactivity over a biomarker alert', () => {
+    const h = computeClientHealth({ ...oldClient, lastCheckin: dateStr(10, ref), monthlyPrice: 45, hasBiomarkerAlert: true }, true, ref)
+    expect(h.label).toBe('Sin check-in hace 10d')
+  })
+
+  it('shows the biomarker alert once inactivity no longer applies', () => {
+    const h = computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: 45, hasBiomarkerAlert: true }, true, ref)
+    expect(h.label).toBe('Analítica en alerta')
+  })
+
+  it('flags attention for unreviewed activity when nothing more urgent applies', () => {
+    const h = computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: 45, streak: 5, hasUnreviewedActivity: true }, true, ref)
+    expect(h.status).toBe('attention')
+    expect(h.label).toBe('Check-in o encuesta sin revisar')
+  })
+
+  it('prioritizes inactivity over unreviewed activity', () => {
+    const h = computeClientHealth({ ...oldClient, lastCheckin: dateStr(10, ref), monthlyPrice: 45, hasUnreviewedActivity: true }, true, ref)
+    expect(h.label).toBe('Sin check-in hace 10d')
+  })
+})
+
+describe('hasUnreviewedActivity', () => {
+  it('returns false when there is no activity at all', () => {
+    expect(hasUnreviewedActivity(null, undefined, undefined)).toBe(false)
+  })
+
+  it('returns true when there is activity but it has never been reviewed', () => {
+    expect(hasUnreviewedActivity(null, '2026-06-10', undefined)).toBe(true)
+  })
+
+  it('returns true when the last check-in is newer than the last review', () => {
+    expect(hasUnreviewedActivity('2026-06-05T10:00:00Z', '2026-06-10', undefined)).toBe(true)
+  })
+
+  it('returns false when the last check-in is older than the last review', () => {
+    expect(hasUnreviewedActivity('2026-06-15T10:00:00Z', '2026-06-10', undefined)).toBe(false)
+  })
+
+  it('treats a check-in on the same day as the review as already reviewed', () => {
+    expect(hasUnreviewedActivity('2026-06-10T20:00:00', '2026-06-10', undefined)).toBe(false)
+  })
+
+  it('returns true when a survey response is newer than the last review', () => {
+    expect(hasUnreviewedActivity('2026-06-05T10:00:00Z', undefined, '2026-06-10T09:00:00Z')).toBe(true)
+  })
+
+  it('returns false when both check-in and survey are older than the last review', () => {
+    expect(hasUnreviewedActivity('2026-06-20T00:00:00Z', '2026-06-10', '2026-06-11T09:00:00Z')).toBe(false)
   })
 })

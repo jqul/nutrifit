@@ -62,6 +62,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     consentAcceptedAt: null, consentSignedName: null,
     monthlyPrice: 45, goalWeightKg: 62, customMessages: {}, tags: ['Pérdida de grasa - Nivel 1'],
     createdAt: Date.now() - 60 * 86400000,
+    lastReviewedAt: null,
   },
   {
     id: 'demo-client-002',
@@ -78,6 +79,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     consentAcceptedAt: null, consentSignedName: null,
     monthlyPrice: 60, goalWeightKg: 78, customMessages: {}, tags: ['Ganancia muscular', 'Deportista'],
     createdAt: Date.now() - 90 * 86400000,
+    lastReviewedAt: null,
   },
   {
     id: 'demo-client-003',
@@ -94,6 +96,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     consentAcceptedAt: null, consentSignedName: null,
     monthlyPrice: 40, goalWeightKg: null, customMessages: {}, tags: ['Pérdida de grasa - Nivel 1', 'Riesgo de abandono'],
     createdAt: Date.now() - 45 * 86400000,
+    lastReviewedAt: null,
   },
 ]
 

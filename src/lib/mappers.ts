@@ -33,6 +33,7 @@ export function clientFromRow(row: ClienteRow): ClientData {
     customMessages: row.custom_messages || {},
     tags: row.tags || [],
     createdAt: new Date(row.created_at).getTime(),
+    lastReviewedAt: row.last_reviewed_at,
   }
 }
 

@@ -126,6 +126,25 @@ export function adviceForMarker(def: BloodMarkerDef, value: number): string {
   return ''
 }
 
+/**
+ * Para el semáforo de salud del dashboard: ¿tiene este cliente algún
+ * marcador fuera de rango en su lectura MÁS RECIENTE (por marcador — no
+ * hace falta que todos vengan de la misma extracción)? Ignora marcadores
+ * que ya no existen en BLOOD_MARKERS (ej. si se retirase alguno).
+ */
+export function hasAnyMarkerOutOfRange(rows: { date: string; marker_key: string; value: number }[]): boolean {
+  const latestByKey = new Map<string, { date: string; value: number }>()
+  for (const r of rows) {
+    const existing = latestByKey.get(r.marker_key)
+    if (!existing || r.date > existing.date) latestByKey.set(r.marker_key, { date: r.date, value: r.value })
+  }
+  for (const [key, { value }] of latestByKey) {
+    const def = BLOOD_MARKER_MAP[key]
+    if (def && evaluateMarker(def, value) !== 'normal') return true
+  }
+  return false
+}
+
 export type MarkerTier = 'optimo' | 'normal' | 'atencion'
 
 /**
