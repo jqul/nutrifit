@@ -1,8 +1,38 @@
 import { useEffect, useRef, useState } from 'react'
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts'
-import { Scale } from 'lucide-react'
-import { WeightEntry } from '../../types'
+import { Scale, Moon } from 'lucide-react'
+import { WeightEntry, CycleEntry } from '../../types'
 import { movingAverage } from '../../lib/trendLine'
+
+// Días antes de cada inicio de ciclo que cuentan como "fase lútea tardía" —
+// la ventana en la que la retención de líquidos premenstrual puede sumar
+// 1-2.5kg fisiológicos que no son grasa. No es una regla clínica exacta,
+// solo una aproximación razonable para no confundir al cliente.
+const LUTEAL_WINDOW_DAYS = 7
+const LUTEAL_COLOR = '#a855f7'
+
+/** ¿Cae esta fecha en los 7 días previos a algún inicio de ciclo? Un punto
+ * de peso, no un tramo — los pesajes son esporádicos (semanales, no
+ * diarios), así que sombrear un ReferenceArea entre dos categorías del eje
+ * no es fiable aquí (si solo hay UN pesaje dentro de la ventana, x1 y x2
+ * coinciden y recharts no dibuja nada sobre un eje de categorías). Marcar
+ * el propio punto con un color distinto funciona con cualquier cantidad de
+ * pesajes dentro de la ventana, incluido uno solo. */
+function isInLutealWindow(dateStr: string, cycles: CycleEntry[]): boolean {
+  const t = new Date(dateStr + 'T00:00:00').getTime()
+  return cycles.some(c => {
+    const startMs = new Date(c.startDate + 'T00:00:00').getTime()
+    return t >= startMs - LUTEAL_WINDOW_DAYS * 86400000 && t < startMs
+  })
+}
+
+function WeightDot(props: { cx?: number; cy?: number; payload?: { enLuteo?: boolean } }) {
+  const { cx, cy, payload } = props
+  if (cx == null || cy == null) return <></>
+  return payload?.enLuteo
+    ? <circle cx={cx} cy={cy} r={5} fill={LUTEAL_COLOR} stroke="#fff" strokeWidth={1.5} />
+    : <circle cx={cx} cy={cy} r={3} fill="#3f7d4f" />
+}
 
 // Tolerancia de la banda sombreada alrededor del peso meta — el peso
 // fluctúa día a día (agua, digestión...), así que "estar en el objetivo" no
@@ -35,7 +65,7 @@ function useRemountOnFirstVisible<T extends HTMLElement>() {
   return { ref, key }
 }
 
-export function WeightChart({ entries, goalKg }: { entries: WeightEntry[]; goalKg?: number | null }) {
+export function WeightChart({ entries, goalKg, cycleEntries }: { entries: WeightEntry[]; goalKg?: number | null; cycleEntries?: CycleEntry[] }) {
   const { ref: chartContainerRef, key: chartKey } = useRemountOnFirstVisible<HTMLDivElement>()
 
   if (entries.length < 2) {
@@ -53,7 +83,9 @@ export function WeightChart({ entries, goalKg }: { entries: WeightEntry[]; goalK
     fecha: new Date(w.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
     kg: w.weightKg,
     tendencia: trend[i],
+    enLuteo: isInLutealWindow(w.date, cycleEntries || []),
   }))
+  const hasLutealPoints = data.some(d => d.enLuteo)
   const values = data.map(d => d.kg).concat(goalKg ? [goalKg - GOAL_BAND_KG, goalKg + GOAL_BAND_KG] : [])
   const min = Math.min(...values)
   const max = Math.max(...values)
@@ -99,11 +131,17 @@ export function WeightChart({ entries, goalKg }: { entries: WeightEntry[]; goalK
               <ReferenceLine y={goalKg} stroke="#c17f3e" strokeDasharray="4 4" strokeWidth={1.5}
                 label={{ value: `Meta: ${goalKg}kg`, position: 'insideTopRight', fontSize: 10, fill: '#c17f3e' }} />
             )}
-            <Area type="monotone" dataKey="kg" name="Peso" stroke="#3f7d4f" strokeWidth={2.5} fill="url(#gPeso)" dot={{ fill: '#3f7d4f', r: 3 }} activeDot={{ r: 5 }} />
+            <Area type="monotone" dataKey="kg" name="Peso" stroke="#3f7d4f" strokeWidth={2.5} fill="url(#gPeso)" dot={<WeightDot />} activeDot={{ r: 5 }} />
             <Line type="monotone" dataKey="tendencia" name="Tendencia" stroke="#8fae6c" strokeWidth={2} strokeDasharray="5 3" dot={false} activeDot={false} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+      {hasLutealPoints && (
+        <p className="flex items-center gap-1.5 text-[11px] text-muted">
+          <Moon className="w-3 h-3 flex-shrink-0" style={{ color: LUTEAL_COLOR }} />
+          Puntos marcados en la semana previa al periodo — el peso puede subir 1-2.5kg por retención de líquidos, no por grasa.
+        </p>
+      )}
     </div>
   )
 }

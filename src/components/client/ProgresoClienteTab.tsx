@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logError } from '../../lib/errors'
-import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow, clinicalNoteFromRow } from '../../lib/mappers'
-import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClientData, ClinicalNote } from '../../types'
+import { weightFromRow, cycleEntryFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow, clinicalNoteFromRow } from '../../lib/mappers'
+import { WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClientData, ClinicalNote } from '../../types'
 import { BloodMarkerRow } from '../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../lib/adherence'
 import { computeWeightProgress } from '../../lib/weightProgress'
@@ -11,14 +11,14 @@ import { WeightChart } from '../shared/WeightChart'
 import { HealthTimeline } from '../shared/HealthTimeline'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { printProgressReport } from '../../lib/printProgressReport'
-import { Camera, Flame, UtensilsCrossed, Plus, Images, FileDown } from 'lucide-react'
+import { Camera, Flame, UtensilsCrossed, Plus, Images, FileDown, Moon } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const HYDRATION_GOAL_L = 2.0
 
 interface DemoData {
   weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]
-  bloodMarkers?: BloodMarkerRow[]; clinicalNotes?: ClinicalNote[]
+  bloodMarkers?: BloodMarkerRow[]; clinicalNotes?: ClinicalNote[]; cycles?: CycleEntry[]
 }
 
 export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, nutricionistaName, personalMode }: {
@@ -39,6 +39,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
   // hacen falta aquí para incluirlas en el informe clínico descargable.
   const [bloodMarkers, setBloodMarkers] = useState<BloodMarkerRow[]>(demoData?.bloodMarkers ?? [])
   const [clinicalNotes, setClinicalNotes] = useState<ClinicalNote[]>(demoData?.clinicalNotes ?? [])
+  const [cycles, setCycles] = useState<CycleEntry[]>(demoData?.cycles ?? [])
   const [newWeight, setNewWeight] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
@@ -50,13 +51,14 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
 
   const load = useCallback(async () => {
     if (demoMode) return
-    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }] = await Promise.all([
+    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }, { data: cy }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', clientId).order('date'),
       supabase.from('daily_checkins').select('*').eq('client_id', clientId),
       supabase.from('progress_photos').select('*').eq('client_id', clientId).order('date', { ascending: false }),
       supabase.from('meal_logs').select('*').eq('client_id', clientId).order('created_at', { ascending: false }),
       supabase.from('blood_markers').select('*').eq('client_id', clientId).order('date', { ascending: false }),
       supabase.from('client_clinical_notes').select('*').eq('client_id', clientId).order('date', { ascending: false }),
+      supabase.from('cycle_logs').select('*').eq('client_id', clientId).order('start_date'),
     ])
     setWeights((w || []).map(weightFromRow))
     setCheckins((c || []).map(checkinFromRow))
@@ -64,6 +66,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
     setMealLogs((m || []).map(mealLogFromRow))
     setBloodMarkers(bm || [])
     setClinicalNotes((cn || []).map(clinicalNoteFromRow))
+    setCycles((cy || []).map(cycleEntryFromRow))
   }, [clientId, demoMode])
 
   useEffect(() => { load() }, [load])
@@ -79,6 +82,24 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
     setSaving(false)
     if (error) { logError('ProgresoClienteTab:weight', error); toast('Error al guardar el peso', 'warn'); return }
     setNewWeight('')
+    await load()
+  }
+
+  // "Hoy empieza mi periodo" — un único toque, sin más datos que la fecha
+  // (ver CycleEntry). Solo sirve para sombrear la semana previa en el
+  // gráfico de peso (WeightChart) y evitar que una subida por retención de
+  // líquidos se lea como "he ganado grasa" — nada clínico más allá de eso.
+  const todayStr = toLocalISODate(new Date())
+  const loggedTodayAsCycleStart = cycles.some(c => c.startDate === todayStr)
+  const handleLogPeriodStart = async () => {
+    if (demoMode) {
+      toast('Modo demo: los cambios no se guardan', 'ok')
+      setCycles(prev => prev.some(c => c.startDate === todayStr) ? prev : [...prev, { id: `demo-cycle-${todayStr}`, clientId, startDate: todayStr }])
+      return
+    }
+    const { error } = await supabase.from('cycle_logs').upsert({ client_id: clientId, start_date: todayStr }, { onConflict: 'client_id,start_date' })
+    if (error) { toast('Error al guardar', 'warn'); return }
+    toast('Registrado ✓', 'ok')
     await load()
   }
 
@@ -158,7 +179,16 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
         mealLogs={mealLogs} checkins={checkins} variant="client" nutricionistaName={nutricionistaName} goalWeightKg={client.goalWeightKg} />
 
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-        <p className="font-semibold text-sm">Peso corporal</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-semibold text-sm">Peso corporal</p>
+          {client.gender?.trim().toLowerCase() === 'mujer' && (
+            <button onClick={handleLogPeriodStart} disabled={loggedTodayAsCycleStart}
+              title="Marca la semana previa en la gráfica de peso, para no confundir la retención de líquidos con grasa"
+              className="flex items-center gap-1 text-xs font-bold text-accent disabled:text-muted disabled:cursor-default">
+              <Moon className="w-3.5 h-3.5" /> {loggedTodayAsCycleStart ? 'Periodo registrado hoy' : 'Hoy empieza mi periodo'}
+            </button>
+          )}
+        </div>
         <div className="flex gap-2">
           <input type="number" step="0.1" value={newWeight} onChange={e => setNewWeight(e.target.value)}
             placeholder="Peso de hoy (kg)"
@@ -168,7 +198,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
             Guardar
           </button>
         </div>
-        <WeightChart entries={weights} goalKg={client.goalWeightKg} />
+        <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} />
       </div>
 
       <PhotoComparator sessions={sessions} />

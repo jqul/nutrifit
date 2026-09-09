@@ -1,4 +1,4 @@
-import { UserProfile, ClientData, DietPlan, WeightEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment, ClinicalNote } from '../types'
+import { UserProfile, ClientData, DietPlan, WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment, ClinicalNote } from '../types'
 import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow } from './supabase-types'
 import { periodKeyFor } from './surveyPeriod'
 
@@ -242,6 +242,18 @@ export const DEMO_WEIGHTS: Record<string, WeightEntry[]> = {
     id: `w-laura-${i}`, clientId: 'demo-client-003', date: daysAgo(d), note: '',
     weightKg: [75.4, 75.1, 75.2][i],
   })),
+}
+
+// María — dos ciclos registrados (ver CycleEntry): la ventana de 7 días
+// antes de cada uno cae justo sobre un pesaje real (daysAgo 42 y 14), que es
+// donde el gráfico de peso (WeightChart) sombrea la fase lútea — pensado
+// para que la demo enseñe el caso real que motiva la feature (una subida
+// de 0.7-0.8kg entre pesajes que no es grasa, es retención).
+export const DEMO_CYCLES: Record<string, CycleEntry[]> = {
+  'demo-client-001': [
+    { id: 'cycle-maria-1', clientId: 'demo-client-001', startDate: daysAgo(35) },
+    { id: 'cycle-maria-2', clientId: 'demo-client-001', startDate: daysAgo(7) },
+  ],
 }
 
 // ── Check-ins diarios ───────────────────────────────────────
@@ -505,6 +517,17 @@ export const DEMO_ANAMNESIS: Record<string, Record<string, string>> = {
     actividad: 'Alta (6-7 días/semana)',
     sueno: '8',
     agua: '3',
+  },
+  // Laura toma Sintrom — su plan ya incluye espárragos (ricos en vitamina K),
+  // así que al abrir su editor de dieta se ve la alerta fármaco-nutriente
+  // (ver drugNutrientInteractions.ts) sin tener que montar un caso nuevo.
+  'demo-client-003': {
+    motivo: 'Mejorar hábitos generales de alimentación.',
+    condiciones: 'Trombosis venosa profunda (pierna izquierda) hace 2 años.',
+    medicacion: 'Sintrom (acenocumarol) — anticoagulante desde la trombosis. Revisión de INR mensual con su médico.',
+    actividad: 'Sedentario (poco o ningún ejercicio)',
+    sueno: '6',
+    agua: '1',
   },
 }
 

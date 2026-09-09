@@ -12,9 +12,10 @@ import { buildWAUrl } from '../../lib/whatsapp'
 import { BottomSheet } from '../shared/BottomSheet'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
 import { ScannedFood } from '../../lib/openFoodFacts'
+import { EATING_OUT_GUIDES, getEatingOutGuide } from '../../lib/eatingOutGuides'
 import {
   Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp, Layers, Flame, Moon,
-  Barcode, MessageCircle, ChefHat, BookOpen,
+  Barcode, MessageCircle, ChefHat, BookOpen, UtensilsCrossed,
 } from 'lucide-react'
 
 const MACRO_LABELS: Record<MacroKey, string> = { kcal: 'kcal', proteinG: 'proteína', carbsG: 'carbohidratos', fatG: 'grasas' }
@@ -59,6 +60,10 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   const [scannerOpen, setScannerOpen] = useState(false)
   const [scannedFood, setScannedFood] = useState<ScannedFood | null>(null)
   const [viewingRecipe, setViewingRecipe] = useState<RecipeRow | null>(null)
+  // "¿Vas a comer fuera?" — null = eligiendo tipo de restaurante, id = viendo
+  // sus pautas. Puramente informativo, no depende del plan ni se guarda.
+  const [eatingOutOpen, setEatingOutOpen] = useState(false)
+  const [eatingOutGuideId, setEatingOutGuideId] = useState<string | null>(null)
 
   const toggleChecked = (key: string) => setChecked(prev => {
     const next = new Set(prev)
@@ -138,17 +143,50 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
-      <div className="flex justify-between items-center gap-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <button onClick={() => setScannerOpen(true)} className="flex items-center gap-1.5 text-xs font-bold text-accent">
           <Barcode className="w-3.5 h-3.5" /> Escanear producto
         </button>
+        <button onClick={() => { setEatingOutOpen(true); setEatingOutGuideId(null) }} className="flex items-center gap-1.5 text-xs font-bold text-accent">
+          <UtensilsCrossed className="w-3.5 h-3.5" /> ¿Vas a comer fuera?
+        </button>
         <button onClick={() => printDietPlan(client, plan)}
-          className="flex items-center gap-1.5 text-xs font-bold text-accent">
+          className="flex items-center gap-1.5 text-xs font-bold text-accent ml-auto">
           <Download className="w-3.5 h-3.5" /> Descargar PDF
         </button>
       </div>
 
       <BarcodeScanner open={scannerOpen} onClose={() => setScannerOpen(false)} onFound={food => { setScannerOpen(false); setScannedFood(food) }} />
+
+      {eatingOutOpen && (
+        <BottomSheet open onClose={() => setEatingOutOpen(false)}
+          title={eatingOutGuideId ? getEatingOutGuide(eatingOutGuideId)?.label : '¿Dónde vas a comer?'}>
+          {!eatingOutGuideId ? (
+            <div className="grid grid-cols-2 gap-2">
+              {EATING_OUT_GUIDES.map(g => (
+                <button key={g.id} onClick={() => setEatingOutGuideId(g.id)}
+                  className="flex flex-col items-center gap-1.5 bg-bg-alt hover:bg-accent/10 rounded-xl py-4 px-2 text-center transition-colors">
+                  <span className="text-2xl">{g.emoji}</span>
+                  <span className="text-xs font-semibold">{g.label}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <button onClick={() => setEatingOutGuideId(null)} className="text-xs font-bold text-accent">← Elegir otro tipo</button>
+              <ul className="space-y-2.5">
+                {getEatingOutGuide(eatingOutGuideId)?.tips.map((tip, i) => (
+                  <li key={i} className="flex gap-2 text-sm leading-relaxed">
+                    <span className="text-accent font-bold flex-shrink-0">{i + 1}.</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-muted italic">Pautas generales — no sustituyen a lo que te haya indicado {personalMode ? 'en tu plan' : 'tu nutricionista'} para tu caso concreto.</p>
+            </div>
+          )}
+        </BottomSheet>
+      )}
       {scannedFood && (
         <BottomSheet open onClose={() => setScannedFood(null)} title={scannedFood.name}>
           <div className="grid grid-cols-4 gap-2 mb-3">

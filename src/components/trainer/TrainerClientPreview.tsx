@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { ClientData, UserProfile, DietPlan, WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClinicalNote } from '../../types'
+import { ClientData, UserProfile, DietPlan, WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClinicalNote } from '../../types'
 import { BloodMarkerRow, RecipeRow, DietMealRow, DietMealItemRow, DietSupplementRow } from '../../lib/supabase-types'
 import { supabase } from '../../lib/supabase'
 import {
-  weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow, clinicalNoteFromRow, dietPlanFromRows,
+  weightFromRow, cycleEntryFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow, clinicalNoteFromRow, dietPlanFromRows,
 } from '../../lib/mappers'
 import { ClientAppShell } from '../client/ClientAppShell'
 import {
-  DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_CLINICAL_NOTES, DEMO_RECIPES,
+  DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_CLINICAL_NOTES, DEMO_CYCLES, DEMO_RECIPES,
 } from '../../lib/demo-data'
 import { X, Smartphone } from 'lucide-react'
 
@@ -20,6 +20,7 @@ interface PreviewData {
   mealLogs: MealLog[]
   bloodMarkers: BloodMarkerRow[]
   clinicalNotes: ClinicalNote[]
+  cycles: CycleEntry[]
 }
 
 /**
@@ -49,12 +50,13 @@ export function TrainerClientPreview({ client, userProfile, demoMode, onClose }:
     mealLogs: DEMO_MEAL_LOGS[client.id] || [],
     bloodMarkers: DEMO_BLOOD_MARKERS[client.id] || [],
     clinicalNotes: DEMO_CLINICAL_NOTES[client.id] || [],
+    cycles: DEMO_CYCLES[client.id] || [],
   } : null)
 
   useEffect(() => {
     if (demoMode) return
     (async () => {
-      const [{ data: planRow }, { data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }, { data: recipeRows }] = await Promise.all([
+      const [{ data: planRow }, { data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }, { data: cy }, { data: recipeRows }] = await Promise.all([
         supabase.from('diet_plans').select('*').eq('client_id', client.id).eq('is_active', true).maybeSingle(),
         supabase.from('weight_logs').select('*').eq('client_id', client.id).order('date'),
         supabase.from('daily_checkins').select('*').eq('client_id', client.id),
@@ -62,6 +64,7 @@ export function TrainerClientPreview({ client, userProfile, demoMode, onClose }:
         supabase.from('meal_logs').select('*').eq('client_id', client.id).order('created_at', { ascending: false }),
         supabase.from('blood_markers').select('*').eq('client_id', client.id).order('date', { ascending: false }),
         supabase.from('client_clinical_notes').select('*').eq('client_id', client.id).order('date', { ascending: false }),
+        supabase.from('cycle_logs').select('*').eq('client_id', client.id).order('start_date'),
         // Todas las recetas visibles para este nutricionista (propias + del
         // sistema) — el propio DietaClienteTab filtra luego por las que de
         // verdad usa el plan, igual que hace con demoRecipes en la demo.
@@ -90,6 +93,7 @@ export function TrainerClientPreview({ client, userProfile, demoMode, onClose }:
         mealLogs: (m || []).map(mealLogFromRow),
         bloodMarkers: bm || [],
         clinicalNotes: (cn || []).map(clinicalNoteFromRow),
+        cycles: (cy || []).map(cycleEntryFromRow),
       })
     })()
   }, [client.id, demoMode])
@@ -129,7 +133,7 @@ export function TrainerClientPreview({ client, userProfile, demoMode, onClose }:
             demoRecipes={data.recipes}
             demoData={{
               weights: data.weights, checkins: data.checkins, photos: data.photos, mealLogs: data.mealLogs,
-              bloodMarkers: data.bloodMarkers, clinicalNotes: data.clinicalNotes,
+              bloodMarkers: data.bloodMarkers, clinicalNotes: data.clinicalNotes, cycles: data.cycles,
             }}
           />
         )}

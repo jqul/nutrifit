@@ -148,6 +148,16 @@ export interface WeightEntry {
   note: string
 }
 
+// Registro de inicio de ciclo menstrual — solo la fecha en que empieza cada
+// periodo, para poder sombrear en el gráfico de peso la semana previa
+// (fase lútea tardía), donde 1-2.5kg de fluctuación por retención de
+// líquidos es fisiológico y no debería leerse como "he ganado grasa".
+export interface CycleEntry {
+  id: string
+  clientId: string
+  startDate: string
+}
+
 export interface ProgressPhotoSession {
   id: string
   clientId: string

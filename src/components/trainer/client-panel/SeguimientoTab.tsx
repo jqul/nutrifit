@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ClientData } from '../../../types'
 import { supabase } from '../../../lib/supabase'
-import { weightFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow, clinicalNoteFromRow } from '../../../lib/mappers'
-import { WeightEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClinicalNote } from '../../../types'
+import { weightFromRow, cycleEntryFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow, clinicalNoteFromRow } from '../../../lib/mappers'
+import { WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClinicalNote } from '../../../types'
 import { BloodMarkerRow } from '../../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../../lib/adherence'
 import { WeightChart } from '../../shared/WeightChart'
@@ -24,7 +24,7 @@ function isConcerningCheckin(c: DailyCheckin): boolean {
 
 interface DemoData {
   weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]
-  bloodMarkers?: BloodMarkerRow[]; clinicalNotes?: ClinicalNote[]
+  bloodMarkers?: BloodMarkerRow[]; clinicalNotes?: ClinicalNote[]; cycles?: CycleEntry[]
 }
 
 export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, nutricionistaName, onUpdate }: {
@@ -38,6 +38,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
   const [mealLogs, setMealLogs] = useState<MealLog[]>(demoData?.mealLogs ?? [])
   const [bloodMarkers, setBloodMarkers] = useState<BloodMarkerRow[]>(demoData?.bloodMarkers ?? [])
   const [clinicalNotes, setClinicalNotes] = useState<ClinicalNote[]>(demoData?.clinicalNotes ?? [])
+  const [cycles, setCycles] = useState<CycleEntry[]>(demoData?.cycles ?? [])
   const [loading, setLoading] = useState(!demoData)
   const demoMode = !!demoData
   // Notas del profesional para el informe en PDF (distintas de las notas
@@ -67,13 +68,14 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
   const load = useCallback(async () => {
     if (demoData) return
     setLoading(true)
-    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }] = await Promise.all([
+    const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }, { data: cy }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', client.id).order('date'),
       supabase.from('daily_checkins').select('*').eq('client_id', client.id).order('date', { ascending: false }),
       supabase.from('progress_photos').select('*').eq('client_id', client.id).order('date', { ascending: false }),
       supabase.from('meal_logs').select('*').eq('client_id', client.id).order('created_at', { ascending: false }),
       supabase.from('blood_markers').select('*').eq('client_id', client.id).order('date', { ascending: false }),
       supabase.from('client_clinical_notes').select('*').eq('client_id', client.id).order('date', { ascending: false }),
+      supabase.from('cycle_logs').select('*').eq('client_id', client.id).order('start_date'),
     ])
     setWeights((w || []).map(weightFromRow))
     setCheckins((c || []).map(checkinFromRow))
@@ -81,6 +83,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
     setMealLogs((m || []).map(mealLogFromRow))
     setBloodMarkers(bm || [])
     setClinicalNotes((cn || []).map(clinicalNoteFromRow))
+    setCycles((cy || []).map(cycleEntryFromRow))
     setLoading(false)
   }, [client.id, demoData])
 
@@ -176,7 +179,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
 
       <div className="bg-card border border-border rounded-2xl p-5">
         <p className="font-semibold text-sm mb-3">Peso corporal</p>
-        <WeightChart entries={weights} goalKg={client.goalWeightKg} />
+        <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} />
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-5">

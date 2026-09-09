@@ -4,9 +4,10 @@ import { supabase } from '../../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow, RecipeRow } from '../../../lib/supabase-types'
 import { foodFromRow } from '../../../lib/mappers'
 import { detectAllergenConflict } from '../../../lib/allergens'
+import { detectDrugInteraction } from '../../../lib/drugNutrientInteractions'
 import { DietaryTag, DIETARY_TAG_LABELS, classifyFoodTags, foodMatchesTags } from '../../../lib/dietaryTags'
 import { sendPush } from '../../../lib/usePushNotifications'
-import { DEMO_DIET_TEMPLATES, DEMO_RECIPES } from '../../../lib/demo-data'
+import { DEMO_DIET_TEMPLATES, DEMO_RECIPES, DEMO_ANAMNESIS } from '../../../lib/demo-data'
 import { printDietPlan } from '../../../lib/printPlan'
 import { printRecipeBook } from '../../../lib/printRecipeBook'
 import { ScannedFood } from '../../../lib/openFoodFacts'
@@ -26,7 +27,7 @@ import { FoodConverterDrawer } from '../FoodConverterDrawer'
 import { ImportDietPlanModal } from './ImportDietPlanModal'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
-  ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, ShoppingCart, Check, Send, Layers, FileSpreadsheet,
+  ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, ShoppingCart, Check, Send, Layers, FileSpreadsheet, Pill,
 } from 'lucide-react'
 
 export interface EditableItem {
@@ -164,6 +165,17 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   useEffect(() => {
     supabase.from('foods').select('*').order('name').then(({ data }) => setFoods((data || []).map(foodFromRow)))
   }, [])
+
+  // Alertas de seguridad fármaco-nutriente (Sintrom+verduras de hoja verde,
+  // Eutirox+café/lácteos/calcio, estatinas+pomelo...): se cruzan contra la
+  // medicación de la anamnesis, igual que las alergias se cruzan contra
+  // client.allergies — ver detectDrugInteraction.
+  const [medicacion, setMedicacion] = useState('')
+  useEffect(() => {
+    if (demoPlan) { setMedicacion(DEMO_ANAMNESIS[client.id]?.medicacion || ''); return }
+    supabase.from('anamnesis').select('answers').eq('client_id', client.id).maybeSingle()
+      .then(({ data }) => setMedicacion((data?.answers as Record<string, string> | null)?.medicacion || ''))
+  }, [client.id, demoPlan])
 
   const loadRecipes = useCallback(async () => {
     if (demoPlan) { setRecipes(DEMO_RECIPES); return }
@@ -816,6 +828,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
             <div className="space-y-2">
               {meal.items.map(item => {
                 const allergenHit = detectAllergenConflict(client.allergies, item.foodName)
+                const drugHit = detectDrugInteraction(medicacion, item.foodName)
                 const suggestions = openSuggestFor === item.id && item.foodName.trim().length > 0
                   ? foods.filter(f => f.name.toLowerCase().includes(item.foodName.toLowerCase()) && foodMatchesTags(f, activeFoodTags)).slice(0, 6)
                   : []
@@ -869,6 +882,11 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                       {allergenHit && (
                         <span title={`${personalMode ? 'Posible alérgeno para ti' : 'Posible alérgeno para este cliente'}: ${allergenHit.replace('_', ' ')}`} className="flex-shrink-0 text-warn">
                           <AlertTriangle className="w-3.5 h-3.5" />
+                        </span>
+                      )}
+                      {drugHit && (
+                        <span title={drugHit.warning} className="flex-shrink-0 text-warn">
+                          <Pill className="w-3.5 h-3.5" />
                         </span>
                       )}
                       <button onClick={() => removeItem(meal.id, item.id)} className="p-1.5 text-muted hover:text-warn"><Trash2 className="w-3.5 h-3.5" /></button>

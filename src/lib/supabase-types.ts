@@ -118,6 +118,12 @@ export interface WeightLogRow {
   note: string | null
 }
 
+export interface CycleLogRow {
+  id: string
+  client_id: string
+  start_date: string
+}
+
 export interface ProgressPhotoRow {
   id: string
   client_id: string
