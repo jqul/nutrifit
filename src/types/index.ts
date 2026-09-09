@@ -158,6 +158,20 @@ export interface CycleEntry {
   startDate: string
 }
 
+// Guía de la biblioteca de recursos educativos ("Más" → Guías en la app del
+// cliente) — la escribe el nutricionista una vez y la ven TODOS sus
+// clientes, no es contenido por cliente. body es texto libre sin formato,
+// se muestra con saltos de línea tal cual (igual que DietPlan.advice).
+export interface Guide {
+  id: string
+  nutricionistaId: string
+  title: string
+  emoji: string
+  body: string
+  sortOrder: number
+  createdAt: number
+}
+
 export interface ProgressPhotoSession {
   id: string
   clientId: string

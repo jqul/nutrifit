@@ -1,5 +1,5 @@
 import { UserProfile, ClientData, DietPlan, WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment, ClinicalNote } from '../types'
-import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow } from './supabase-types'
+import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, GuideRow } from './supabase-types'
 import { periodKeyFor } from './surveyPeriod'
 
 export const DEMO_NUTRICIONISTA_ID = 'demo-nutri-001'
@@ -328,6 +328,48 @@ export const DEMO_DIET_TEMPLATES: DietTemplateRow[] = [
         { name: 'Creatina', dose: '5g', timing: 'Cualquier momento', visibleToClient: true },
       ],
     },
+  },
+]
+
+// Biblioteca de guías del nutricionista (ver GuidesManager.tsx / GuidesLibrary.tsx) —
+// la ve todo su cliente, no es contenido por cliente.
+export const DEMO_GUIDES: GuideRow[] = [
+  {
+    id: 'demo-guide-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, sort_order: 0, created_at: '',
+    emoji: '✋', title: 'Guía visual de raciones con la palma de la mano',
+    body: `Sin báscula, sin complicarte: usa tu propia mano como referencia rápida.
+
+🥩 Proteína (carne, pescado, tofu): 1 palma de tu mano, grosor de la palma.
+🍚 Carbohidratos (arroz, pasta, patata): 1 puño cerrado.
+🥑 Grasas (aceite, frutos secos, aguacate): 1 pulgar entero.
+🥦 Verdura: 2 puños, o más — aquí no hay límite.
+
+No es exacto al gramo, pero para el día a día (comer fuera, no tener báscula a mano) es más que suficiente.`,
+  },
+  {
+    id: 'demo-guide-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, sort_order: 1, created_at: '',
+    emoji: '🏷️', title: 'Cómo elegir un buen pan o yogur en el súper',
+    body: `PAN
+Mira la lista de ingredientes, no la palabra "integral" del envase:
+- El primer ingrediente debe ser harina integral (no "harina de trigo" a secas).
+- Cuantos menos ingredientes, mejor — pan, agua, sal, levadura es lo ideal.
+- Desconfía de "pan multicereales" con azúcar o jarabes en los primeros puestos.
+
+YOGUR
+- Busca que ponga simplemente "leche y fermentos" — nada más.
+- Los "yogures 0%" a veces compensan el sabor con más azúcar: mira azúcares en la etiqueta, no solo "0% grasa".
+- El yogur griego natural suele tener más proteína y menos aditivos que los de sabores.`,
+  },
+  {
+    id: 'demo-guide-003', nutricionista_id: DEMO_NUTRICIONISTA_ID, sort_order: 2, created_at: '',
+    emoji: '🧺', title: 'Batch cooking: cocina 2 horas para toda la semana',
+    body: `1. Elige 2-3 proteínas (pollo, legumbre, pescado) y 2 carbohidratos (arroz, patata) para toda la semana.
+2. Cocina las bases por separado, sin mezclar aún con las salsas — así puedes combinarlas de formas distintas cada día.
+3. Verdura: mitad cruda para ensaladas, mitad asada/salteada — se conserva mejor y da variedad.
+4. Reparte en tarteras por ración justo después de cocinar, cuando aún está caliente pero no hirviendo.
+5. Congela lo que no vayas a comer en 3-4 días — la nevera no aguanta bien más que eso.
+
+Con esto tienes comidas listas de lunes a viernes en una sola sesión de cocina el domingo.`,
   },
 ]
 

@@ -124,6 +124,16 @@ export interface CycleLogRow {
   start_date: string
 }
 
+export interface GuideRow {
+  id: string
+  nutricionista_id: string
+  title: string
+  emoji: string
+  body: string
+  sort_order: number
+  created_at: string
+}
+
 export interface ProgressPhotoRow {
   id: string
   client_id: string

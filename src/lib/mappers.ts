@@ -1,11 +1,11 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
-  WeightLogRow, CycleLogRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
+  WeightLogRow, CycleLogRow, GuideRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
   AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, ClinicalNoteRow,
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
-  WeightEntry, CycleEntry, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
+  WeightEntry, CycleEntry, Guide, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
   Appointment, MealLog, Anamnesis, Invoice, CustomSurvey, SurveyResponse, BloodMarker, ClinicalNote,
 } from '../types'
 
@@ -132,6 +132,13 @@ export function weightFromRow(row: WeightLogRow): WeightEntry {
 
 export function cycleEntryFromRow(row: CycleLogRow): CycleEntry {
   return { id: row.id, clientId: row.client_id, startDate: row.start_date }
+}
+
+export function guideFromRow(row: GuideRow): Guide {
+  return {
+    id: row.id, nutricionistaId: row.nutricionista_id, title: row.title, emoji: row.emoji || '📄',
+    body: row.body || '', sortOrder: row.sort_order, createdAt: new Date(row.created_at).getTime(),
+  }
 }
 
 export function photoSessionFromRow(row: ProgressPhotoRow): ProgressPhotoSession {

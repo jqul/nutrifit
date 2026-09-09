@@ -11,6 +11,7 @@ import { useInstallPrompt } from '../../lib/useInstallPrompt'
 import { HoyTab } from './HoyTab'
 import { DietaClienteTab } from './DietaClienteTab'
 import { ProgresoClienteTab } from './ProgresoClienteTab'
+import { GuidesLibrary } from './GuidesLibrary'
 import { AnamnesisForm } from './AnamnesisForm'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { useAccentOverride } from '../../lib/useAccentOverride'
@@ -129,6 +130,7 @@ export function ClientAppShell({
               <p className="text-sm"><span className="text-muted">Nombre:</span> <span className="font-semibold">{clientName}</span></p>
               <p className="text-sm"><span className="text-muted">Nutricionista:</span> <span className="font-semibold">{nutricionistaName}</span></p>
             </div>
+            <GuidesLibrary nutricionistaId={clientData.nutricionistaId} demoMode={demoMode} />
             <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold">Modo oscuro</p>

@@ -8,6 +8,7 @@ import { toast } from '../shared/Toast'
 import { Button } from '../shared/Button'
 import { RecipeEditorPanel } from '../shared/RecipeEditorPanel'
 import { FoodConverterDrawer } from './FoodConverterDrawer'
+import { GuidesManager } from './GuidesManager'
 import { BookmarkPlus, ChefHat, Trash2, Plus, X, Copy } from 'lucide-react'
 
 interface EditableItem {
@@ -362,6 +363,8 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
           )
         })()}
       </div>
+
+      <GuidesManager nutricionistaId={nutricionistaId} demoMode={demoMode} />
     </div>
   )
 }
