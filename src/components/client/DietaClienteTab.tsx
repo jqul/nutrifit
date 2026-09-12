@@ -12,7 +12,9 @@ import { buildWAUrl } from '../../lib/whatsapp'
 import { BottomSheet } from '../shared/BottomSheet'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
 import { ScannedFood } from '../../lib/openFoodFacts'
-import { EATING_OUT_GUIDES, getEatingOutGuide } from '../../lib/eatingOutGuides'
+import { DEFAULT_EATING_OUT_GUIDES, DefaultEatingOutGuide } from '../../lib/eatingOutGuides'
+import { eatingOutGuideFromRow } from '../../lib/mappers'
+import { DEMO_EATING_OUT_GUIDES } from '../../lib/demo-data'
 import {
   Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp, Layers, Flame, Moon,
   Barcode, MessageCircle, ChefHat, BookOpen, UtensilsCrossed,
@@ -64,6 +66,15 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   // sus pautas. Puramente informativo, no depende del plan ni se guarda.
   const [eatingOutOpen, setEatingOutOpen] = useState(false)
   const [eatingOutGuideId, setEatingOutGuideId] = useState<string | null>(null)
+  // Guías propias del nutricionista si las ha creado (EatingOutGuidesManager),
+  // si no, el contenido genérico por defecto (eatingOutGuides.ts).
+  const [eatingOutGuides, setEatingOutGuides] = useState<DefaultEatingOutGuide[]>(DEFAULT_EATING_OUT_GUIDES)
+
+  useEffect(() => {
+    if (demoMode) { setEatingOutGuides(DEMO_EATING_OUT_GUIDES.length > 0 ? DEMO_EATING_OUT_GUIDES.map(eatingOutGuideFromRow) : DEFAULT_EATING_OUT_GUIDES); return }
+    supabase.from('eating_out_guides').select('*').eq('nutricionista_id', client.nutricionistaId).order('sort_order').order('created_at')
+      .then(({ data }) => setEatingOutGuides(data && data.length > 0 ? data.map(eatingOutGuideFromRow) : DEFAULT_EATING_OUT_GUIDES))
+  }, [client.nutricionistaId, demoMode])
 
   const toggleChecked = (key: string) => setChecked(prev => {
     const next = new Set(prev)
@@ -158,35 +169,38 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
 
       <BarcodeScanner open={scannerOpen} onClose={() => setScannerOpen(false)} onFound={food => { setScannerOpen(false); setScannedFood(food) }} />
 
-      {eatingOutOpen && (
-        <BottomSheet open onClose={() => setEatingOutOpen(false)}
-          title={eatingOutGuideId ? getEatingOutGuide(eatingOutGuideId)?.label : '¿Dónde vas a comer?'}>
-          {!eatingOutGuideId ? (
-            <div className="grid grid-cols-2 gap-2">
-              {EATING_OUT_GUIDES.map(g => (
-                <button key={g.id} onClick={() => setEatingOutGuideId(g.id)}
-                  className="flex flex-col items-center gap-1.5 bg-bg-alt hover:bg-accent/10 rounded-xl py-4 px-2 text-center transition-colors">
-                  <span className="text-2xl">{g.emoji}</span>
-                  <span className="text-xs font-semibold">{g.label}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <button onClick={() => setEatingOutGuideId(null)} className="text-xs font-bold text-accent">← Elegir otro tipo</button>
-              <ul className="space-y-2.5">
-                {getEatingOutGuide(eatingOutGuideId)?.tips.map((tip, i) => (
-                  <li key={i} className="flex gap-2 text-sm leading-relaxed">
-                    <span className="text-accent font-bold flex-shrink-0">{i + 1}.</span>
-                    <span>{tip}</span>
-                  </li>
+      {eatingOutOpen && (() => {
+        const selectedGuide = eatingOutGuideId ? eatingOutGuides.find(g => g.id === eatingOutGuideId) : null
+        return (
+          <BottomSheet open onClose={() => setEatingOutOpen(false)}
+            title={selectedGuide ? selectedGuide.label : '¿Dónde vas a comer?'}>
+            {!selectedGuide ? (
+              <div className="grid grid-cols-2 gap-2">
+                {eatingOutGuides.map(g => (
+                  <button key={g.id} onClick={() => setEatingOutGuideId(g.id)}
+                    className="flex flex-col items-center gap-1.5 bg-bg-alt hover:bg-accent/10 rounded-xl py-4 px-2 text-center transition-colors">
+                    <span className="text-2xl">{g.emoji}</span>
+                    <span className="text-xs font-semibold">{g.label}</span>
+                  </button>
                 ))}
-              </ul>
-              <p className="text-xs text-muted italic">Pautas generales — no sustituyen a lo que te haya indicado {personalMode ? 'en tu plan' : 'tu nutricionista'} para tu caso concreto.</p>
-            </div>
-          )}
-        </BottomSheet>
-      )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <button onClick={() => setEatingOutGuideId(null)} className="text-xs font-bold text-accent">← Elegir otro tipo</button>
+                <ul className="space-y-2.5">
+                  {selectedGuide.tips.map((tip, i) => (
+                    <li key={i} className="flex gap-2 text-sm leading-relaxed">
+                      <span className="text-accent font-bold flex-shrink-0">{i + 1}.</span>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted italic">Pautas generales — no sustituyen a lo que te haya indicado {personalMode ? 'en tu plan' : 'tu nutricionista'} para tu caso concreto.</p>
+              </div>
+            )}
+          </BottomSheet>
+        )
+      })()}
       {scannedFood && (
         <BottomSheet open onClose={() => setScannedFood(null)} title={scannedFood.name}>
           <div className="grid grid-cols-4 gap-2 mb-3">

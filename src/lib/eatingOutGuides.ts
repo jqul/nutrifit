@@ -1,17 +1,18 @@
 // "¿Vas a comer fuera?" — guía rápida por tipo de restaurante para que el
-// cliente no llegue a la mesa sin ninguna pauta. Contenido fijo y genérico
-// (no sustituye ni conoce el plan concreto del cliente) — pensado para
-// bajar la ansiedad social de la comida fuera de casa, no para sustituir el
-// criterio del nutricionista en casos concretos.
+// cliente no llegue a la mesa sin ninguna pauta. Este es el contenido POR
+// DEFECTO, genérico — el nutricionista puede sustituirlo por el suyo
+// propio (tabla eating_out_guides, ver EatingOutGuidesManager.tsx): si no
+// ha creado ninguna guía propia, el cliente ve esta lista; en cuanto crea
+// al menos una, se usa la suya en vez de esta.
 
-export interface EatingOutGuide {
+export interface DefaultEatingOutGuide {
   id: string
   emoji: string
   label: string
   tips: string[]
 }
 
-export const EATING_OUT_GUIDES: EatingOutGuide[] = [
+export const DEFAULT_EATING_OUT_GUIDES: DefaultEatingOutGuide[] = [
   {
     id: 'italiano', emoji: '🍝', label: 'Italiano',
     tips: [
@@ -68,6 +69,6 @@ export const EATING_OUT_GUIDES: EatingOutGuide[] = [
   },
 ]
 
-export function getEatingOutGuide(id: string): EatingOutGuide | undefined {
-  return EATING_OUT_GUIDES.find(g => g.id === id)
+export function getDefaultEatingOutGuide(id: string): DefaultEatingOutGuide | undefined {
+  return DEFAULT_EATING_OUT_GUIDES.find(g => g.id === id)
 }

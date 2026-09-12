@@ -9,6 +9,7 @@ import { Button } from '../shared/Button'
 import { RecipeEditorPanel } from '../shared/RecipeEditorPanel'
 import { FoodConverterDrawer } from './FoodConverterDrawer'
 import { GuidesManager } from './GuidesManager'
+import { EatingOutGuidesManager } from './EatingOutGuidesManager'
 import { BookmarkPlus, ChefHat, Trash2, Plus, X, Copy } from 'lucide-react'
 
 interface EditableItem {
@@ -365,6 +366,8 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
       </div>
 
       <GuidesManager nutricionistaId={nutricionistaId} demoMode={demoMode} />
+
+      <EatingOutGuidesManager nutricionistaId={nutricionistaId} demoMode={demoMode} />
     </div>
   )
 }

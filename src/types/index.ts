@@ -172,6 +172,20 @@ export interface Guide {
   createdAt: number
 }
 
+// "¿Vas a comer fuera?" personalizable — igual que Guide, pero con una
+// lista de pautas (tips) en vez de un cuerpo de texto libre. Si el
+// nutricionista no ha creado ninguna, el cliente ve el contenido genérico
+// por defecto (ver lib/eatingOutGuides.ts DEFAULT_EATING_OUT_GUIDES).
+export interface EatingOutGuide {
+  id: string
+  nutricionistaId: string
+  emoji: string
+  label: string
+  tips: string[]
+  sortOrder: number
+  createdAt: number
+}
+
 export interface ProgressPhotoSession {
   id: string
   clientId: string

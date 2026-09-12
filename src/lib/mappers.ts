@@ -1,11 +1,11 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
-  WeightLogRow, CycleLogRow, GuideRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
+  WeightLogRow, CycleLogRow, GuideRow, EatingOutGuideRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
   AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, ClinicalNoteRow,
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
-  WeightEntry, CycleEntry, Guide, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
+  WeightEntry, CycleEntry, Guide, EatingOutGuide, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
   Appointment, MealLog, Anamnesis, Invoice, CustomSurvey, SurveyResponse, BloodMarker, ClinicalNote,
 } from '../types'
 
@@ -138,6 +138,14 @@ export function guideFromRow(row: GuideRow): Guide {
   return {
     id: row.id, nutricionistaId: row.nutricionista_id, title: row.title, emoji: row.emoji || '📄',
     body: row.body || '', sortOrder: row.sort_order, createdAt: new Date(row.created_at).getTime(),
+  }
+}
+
+export function eatingOutGuideFromRow(row: EatingOutGuideRow): EatingOutGuide {
+  return {
+    id: row.id, nutricionistaId: row.nutricionista_id, emoji: row.emoji || '🍽️', label: row.label,
+    tips: Array.isArray(row.tips) ? row.tips as string[] : [], sortOrder: row.sort_order,
+    createdAt: new Date(row.created_at).getTime(),
   }
 }
 

@@ -1,5 +1,5 @@
 import { UserProfile, ClientData, DietPlan, WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment, ClinicalNote } from '../types'
-import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, GuideRow } from './supabase-types'
+import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, GuideRow, EatingOutGuideRow } from './supabase-types'
 import { periodKeyFor } from './surveyPeriod'
 
 export const DEMO_NUTRICIONISTA_ID = 'demo-nutri-001'
@@ -370,6 +370,40 @@ YOGUR
 5. Congela lo que no vayas a comer en 3-4 días — la nevera no aguanta bien más que eso.
 
 Con esto tienes comidas listas de lunes a viernes en una sola sesión de cocina el domingo.`,
+  },
+]
+
+// "¿Vas a comer fuera?" personalizado por Alex (en vez del genérico de
+// eatingOutGuides.ts) — demuestra que, en cuanto el nutricionista crea sus
+// propias guías (EatingOutGuidesManager.tsx), esas sustituyen a las de
+// serie en el portal del cliente.
+export const DEMO_EATING_OUT_GUIDES: EatingOutGuideRow[] = [
+  {
+    id: 'demo-eo-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, sort_order: 0, created_at: '',
+    emoji: '🍝', label: 'Italiano',
+    tips: [
+      'Pasta con tomate, marisco o verduras antes que salsas cremosas — si tienes dudas, pregúntame antes de pedir el plato.',
+      'Una ración de proteína (pollo, pescado, o un carpaccio) como entrante ayuda a no llegar con demasiada hambre a la pasta.',
+      'El pan de la cesta no hace falta terminarlo — pide que lo retiren si ya vas servido.',
+    ],
+  },
+  {
+    id: 'demo-eo-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, sort_order: 1, created_at: '',
+    emoji: '🍣', label: 'Japonés',
+    tips: [
+      'Sashimi y nigiri son la opción más ligera — cuidado con los rolls tempurizados o con salsas dulces.',
+      'El edamame de entrante sacia y aporta proteína vegetal antes del plato principal.',
+      'No hace falta empapar cada pieza en soja — con mojar la punta ya tienes sabor de sobra.',
+    ],
+  },
+  {
+    id: 'demo-eo-003', nutricionista_id: DEMO_NUTRICIONISTA_ID, sort_order: 2, created_at: '',
+    emoji: '🍤', label: 'Tapeo',
+    tips: [
+      'Prioriza marisco, pescado a la plancha, jamón o tortilla antes que fritos — un par están bien, no hace falta que sea toda la mesa.',
+      'Comparte raciones en vez de pedir individual, es lo normal en tapeo y ayuda a moderar sin que se note.',
+      'Ojo con el alcohol entre tapa y tapa: sube las calorías más rápido de lo que parece.',
+    ],
   },
 ]
 

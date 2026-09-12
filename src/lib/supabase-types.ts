@@ -134,6 +134,16 @@ export interface GuideRow {
   created_at: string
 }
 
+export interface EatingOutGuideRow {
+  id: string
+  nutricionista_id: string
+  emoji: string
+  label: string
+  tips: unknown // jsonb string[]
+  sort_order: number
+  created_at: string
+}
+
 export interface ProgressPhotoRow {
   id: string
   client_id: string
