@@ -38,7 +38,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   alimentos · Nivel 3 herramientas agrupadas (Calculadora/Importar/Escáner) y acciones
   del plan (Guardar plantilla/Duplicar/PDF) en menús, no sueltas.
   *Primer paso:* separar el fichero en subcomponentes sin cambiar comportamiento.
-- [ ] **UX-13 · "Hoy" del cliente con jerarquía** (M) — prioridad 4 (7 → 9,5)
+- [x] **UX-13 · "Hoy" del cliente con jerarquía** (M) — prioridad 4 (7 → 9,5)
   `HoyTab` (607 líneas). Orden fijo: saludo + adherencia/racha → comidas de hoy
   (hecha/actual/pendiente) → check-in → agua → próxima cita. Entenderla en 3 segundos.
 

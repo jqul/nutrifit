@@ -74,6 +74,9 @@ export function HoyTab({ client, demoMode, personalMode }: {
   const [bloating, setBloating] = useState<number | null>(demoTodayCheckin?.bloating ?? null)
   const [abdominalPain, setAbdominalPain] = useState<number | null>(demoTodayCheckin?.abdominalPain ?? null)
   const [saving, setSaving] = useState(false)
+  // Check-in plegado si ya está registrado hoy: se decide una sola vez al terminar de
+  // cargar (null = aún sin decidir) para que no se pliegue mientras se rellena.
+  const [checkinOpen, setCheckinOpen] = useState<boolean | null>(null)
   // Igual que doneToday: loadCheckins() nunca calcula la racha real en modo
   // demo, así que se calcula aquí a partir de los check-ins de demo.
   const [streak, setStreak] = useState(() => demoMode ? calcStreak(DEMO_CHECKINS[client.id] || []) : 0)
@@ -116,6 +119,10 @@ export function HoyTab({ client, demoMode, personalMode }: {
   }, [client.id, today, demoMode])
 
   useEffect(() => { loadCheckins() }, [loadCheckins])
+  useEffect(() => {
+    if (!loading) setCheckinOpen(prev => prev ?? !doneToday)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
   useEffect(() => {
     if (demoMode) return
@@ -155,6 +162,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
     return next
   })
   const waterGoalReached = waterL >= WATER_GOAL_L
+  const nextMealId = todaysMeals.find(m => !mealLogsToday.some(l => l.mealName === m.name))?.id
   const dayProgressPct = Math.round(([doneToday, waterGoalReached, allMealsDone].filter(Boolean).length / 3) * 100)
   const digestionValue = digestionFromFields(bloating, abdominalPain)
 
@@ -297,50 +305,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
         </div>
       </div>
 
-      {/* ── Pauta activa del nutricionista ── */}
-      {plan?.advice && (
-        <div className="card-featured p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1.5">{personalMode ? 'Tu nota' : 'Consejo de tu nutricionista'}</p>
-          <p className="text-sm leading-relaxed">{plan.advice}</p>
-        </div>
-      )}
-
       <PendingSurveys client={client} demoMode={demoMode} />
-
-      {/* ── Tracker de hidratación ── */}
-      <div className="card p-5 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-500 flex-shrink-0">
-              <Droplet className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="font-semibold text-sm">Hidratación de precisión</p>
-              <p className="text-xs text-muted">Meta diaria recomendada: {WATER_GOAL_L} L</p>
-            </div>
-          </div>
-          <span className="text-sm font-bold text-sky-600 dark:text-sky-400 flex-shrink-0">{waterL.toFixed(2).replace(/\.?0+$/, '') || 0} L / {WATER_GOAL_L} L</span>
-        </div>
-        <div className="h-2 rounded-full bg-bg-alt overflow-hidden">
-          <div className="h-full bg-sky-500 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (waterL / WATER_GOAL_L) * 100)}%` }} />
-        </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted">{Math.round(Math.min(100, (waterL / WATER_GOAL_L) * 100))}% de la meta</span>
-          {waterGoalReached && <span className="font-semibold text-ok">🎉 ¡Meta alcanzada!</span>}
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => adjustWater(0.25)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-sky-500/10 hover:text-sky-600 transition-colors">
-            + 250 ml <span className="text-muted font-normal">(Vaso)</span>
-          </button>
-          <button onClick={() => adjustWater(0.5)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-sky-500/10 hover:text-sky-600 transition-colors">
-            + 500 ml <span className="text-muted font-normal">(Botella)</span>
-          </button>
-          <button onClick={() => adjustWater(-0.25)} disabled={waterL <= 0}
-            className="px-3 py-2 bg-bg-alt rounded-xl text-xs font-bold text-muted hover:text-warn transition-colors disabled:opacity-30">
-            −250 ml
-          </button>
-        </div>
-      </div>
 
       {/* ── Comidas del día ── */}
       {todaysMeals.length > 0 && (
@@ -357,12 +322,13 @@ export function HoyTab({ client, demoMode, personalMode }: {
             </div>
             {totalKcalTarget != null && <span className="text-xs font-semibold text-muted flex-shrink-0">Objetivo: {totalKcalTarget} kcal</span>}
           </div>
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border/60">
             {todaysMeals.map(meal => {
               const log = mealLogsToday.find(l => l.mealName === meal.name)
               const done = !!log
+              const isNext = !done && meal.id === nextMealId
               return (
-                <div key={meal.id} className="flex items-center gap-3 py-2.5">
+                <div key={meal.id} className={`flex items-center gap-3 py-2.5 px-2 rounded-xl ${isNext ? 'bg-accent/10' : ''}`}>
                   <button onClick={() => done ? unmarkMealDone(meal) : markMealDone(meal)} className="flex-shrink-0">
                     {done ? <CheckSquare className="w-5 h-5 text-ok" /> : <Square className="w-5 h-5 text-muted" />}
                   </button>
@@ -370,6 +336,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
                     <div className="flex items-center justify-between gap-2">
                       <p className={`text-sm font-semibold truncate ${done ? 'line-through text-muted' : ''}`}>
                         {meal.name} <span className="font-normal text-muted">· {meal.time}</span>
+                        {isNext && <span className="ml-1.5 align-middle text-xs font-bold px-2 py-0.5 rounded-full bg-accent text-white no-underline">Siguiente</span>}
                       </p>
                       {meal.kcalTarget != null && (
                         <span className="text-xs font-semibold text-muted bg-bg-alt px-2 py-0.5 rounded-full flex-shrink-0">{meal.kcalTarget} kcal</span>
@@ -401,6 +368,42 @@ export function HoyTab({ client, demoMode, personalMode }: {
         </div>
       )}
 
+      {/* ── Pauta activa del nutricionista ── */}
+      {plan?.advice && (
+        <div className="card-featured p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1.5">{personalMode ? 'Tu nota' : 'Consejo de tu nutricionista'}</p>
+          <p className="text-sm leading-relaxed">{plan.advice}</p>
+        </div>
+      )}
+
+      {/* ── Agua: toques rápidos repetidos a lo largo del día ── */}
+      <div className="card p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-500 flex-shrink-0">
+              <Droplet className="w-4 h-4" />
+            </div>
+            <p className="font-semibold text-sm">Agua {waterGoalReached && <span className="text-xs font-semibold text-ok ml-1">🎉 ¡Meta alcanzada!</span>}</p>
+          </div>
+          <span className="text-sm font-bold text-sky-600 dark:text-sky-400 flex-shrink-0">{waterL.toFixed(2).replace(/\.?0+$/, '') || 0} L / {WATER_GOAL_L} L</span>
+        </div>
+        <div className="h-2 rounded-full bg-bg-alt overflow-hidden">
+          <div className="h-full bg-sky-500 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (waterL / WATER_GOAL_L) * 100)}%` }} />
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => adjustWater(0.25)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-sky-500/10 hover:text-sky-600 transition-colors">
+            + 250 ml <span className="text-muted font-normal">(Vaso)</span>
+          </button>
+          <button onClick={() => adjustWater(0.5)} className="flex-1 py-2 bg-bg-alt rounded-xl text-xs font-bold text-ink hover:bg-sky-500/10 hover:text-sky-600 transition-colors">
+            + 500 ml <span className="text-muted font-normal">(Botella)</span>
+          </button>
+          <button onClick={() => adjustWater(-0.25)} disabled={waterL <= 0}
+            className="px-3 py-2 bg-bg-alt rounded-xl text-xs font-bold text-muted hover:text-warn transition-colors disabled:opacity-30">
+            −250 ml
+          </button>
+        </div>
+      </div>
+
       {/* ── Pauta de suplementos ── */}
       {visibleSupplements.length > 0 && (
         <div className="card p-4">
@@ -431,64 +434,81 @@ export function HoyTab({ client, demoMode, personalMode }: {
         </div>
       )}
 
-      <div className="card p-5 space-y-5">
-        <div className="flex items-center justify-between gap-2">
+      {!checkinOpen && doneToday && (
+        <div className="card p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-ok/10 flex items-center justify-center text-ok flex-shrink-0">
               <CheckCircle2 className="w-4 h-4" />
             </div>
             <div>
-              <p className="font-semibold text-sm">Check-in de sensaciones</p>
-              <p className="text-xs text-muted">Evaluación de hábitos diarios</p>
+              <p className="font-semibold text-sm">Check-in de hoy</p>
+              <p className="text-xs text-ok font-semibold">Registrado ✓</p>
             </div>
           </div>
-          {doneToday && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-ok/10 text-xs font-bold text-ok flex-shrink-0"><CheckCircle2 className="w-3.5 h-3.5" /> Registrado hoy</span>}
+          <button onClick={() => setCheckinOpen(true)} className="text-xs font-bold text-accent px-2 py-1 rounded-lg hover:bg-accent/10 transition-colors">Ver o editar</button>
         </div>
+      )}
 
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">¿Seguiste el plan hoy?</p>
-          <div className="flex gap-2">
-            {(Object.keys(FOLLOWED_PLAN_LABELS) as FollowedPlan[]).map(v => (
-              <button key={v} onClick={() => { setFollowedPlan(v); saveCheckin({ followedPlan: v }) }}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
-                  followedPlan === v ? 'bg-ink text-white border-ink' : 'border-border text-muted hover:border-accent'
-                }`}>
-                {FOLLOWED_PLAN_LABELS[v]}
-              </button>
-            ))}
+      {(checkinOpen || !doneToday) && (
+        <div className="card p-5 space-y-5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-ok/10 flex items-center justify-center text-ok flex-shrink-0">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Check-in de sensaciones</p>
+                <p className="text-xs text-muted">Evaluación de hábitos diarios</p>
+              </div>
+            </div>
+            {doneToday && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-ok/10 text-xs font-bold text-ok flex-shrink-0"><CheckCircle2 className="w-3.5 h-3.5" /> Registrado hoy</span>}
           </div>
-        </div>
 
-        <NumberScaleField label="Nivel de hambre" value={hunger} onChange={v => { setHunger(v); saveCheckin({ hunger: v }) }} />
-        <NumberScaleField label="Energía & vitalidad" value={energy} onChange={v => { setEnergy(v); saveCheckin({ energy: v }) }} />
-        <NumberScaleField label="Estado de ánimo" value={mood} onChange={v => { setMood(v); saveCheckin({ mood: v }) }} />
-
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Digestión del día</p>
-          <div className="flex gap-1.5">
-            {(Object.keys(DIGESTION_PRESETS) as DigestionOption[]).map(opt => (
-              <button key={opt} onClick={() => setDigestion(opt)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
-                  digestionValue === opt ? 'bg-accent text-white border-accent' : 'border-border text-muted hover:border-accent'
-                }`}>
-                {DIGESTION_PRESETS[opt].label}
-              </button>
-            ))}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">¿Seguiste el plan hoy?</p>
+            <div className="flex gap-2">
+              {(Object.keys(FOLLOWED_PLAN_LABELS) as FollowedPlan[]).map(v => (
+                <button key={v} onClick={() => { setFollowedPlan(v); saveCheckin({ followedPlan: v }) }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
+                    followedPlan === v ? 'bg-ink text-white border-ink' : 'border-border text-muted hover:border-accent'
+                  }`}>
+                  {FOLLOWED_PLAN_LABELS[v]}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Sensaciones o notas para tu nutricionista (opcional)</label>
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-            placeholder="¿Cómo te has sentido hoy? ¿Alguna comida fuera de pauta o entrenamiento especial?"
-            className="w-full px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
-        </div>
+          <NumberScaleField label="Nivel de hambre" value={hunger} onChange={v => { setHunger(v); saveCheckin({ hunger: v }) }} />
+          <NumberScaleField label="Energía & vitalidad" value={energy} onChange={v => { setEnergy(v); saveCheckin({ energy: v }) }} />
+          <NumberScaleField label="Estado de ánimo" value={mood} onChange={v => { setMood(v); saveCheckin({ mood: v }) }} />
 
-        <button onClick={handleSave} disabled={saving}
-          className="w-full py-3.5 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50">
-          {saving ? 'Guardando...' : 'Actualizar check-in de hoy'}
-        </button>
-      </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Digestión del día</p>
+            <div className="flex gap-1.5">
+              {(Object.keys(DIGESTION_PRESETS) as DigestionOption[]).map(opt => (
+                <button key={opt} onClick={() => setDigestion(opt)}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
+                    digestionValue === opt ? 'bg-accent text-white border-accent' : 'border-border text-muted hover:border-accent'
+                  }`}>
+                  {DIGESTION_PRESETS[opt].label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Sensaciones o notas para tu nutricionista (opcional)</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+              placeholder="¿Cómo te has sentido hoy? ¿Alguna comida fuera de pauta o entrenamiento especial?"
+              className="w-full px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+          </div>
+
+          <button onClick={handleSave} disabled={saving}
+            className="w-full py-3.5 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50">
+            {saving ? 'Guardando...' : 'Actualizar check-in de hoy'}
+          </button>
+        </div>
+      )}
 
       {/* Sin sentido en modo personal: no hay un profesional distinto al
           que pedirle cita. */}
