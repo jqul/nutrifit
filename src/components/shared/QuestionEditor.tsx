@@ -75,7 +75,7 @@ function QuestionRow({ question, index, total, onUpdate, onDelete, onMove }: {
             <ChevronDown className="w-3 h-3" />
           </button>
           <button type="button" onClick={() => onUpdate({ required: !question.required })}
-            className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-all ${question.required ? 'bg-accent text-white border-accent' : 'border-border text-muted'}`}>
+            className={`px-1.5 py-0.5 rounded text-xs font-bold border transition-all ${question.required ? 'bg-accent text-white border-accent' : 'border-border text-muted'}`}>
             {question.required ? 'OBLIG.' : 'OPC.'}
           </button>
           <button type="button" onClick={onDelete} className="p-1 text-muted hover:text-warn"><Trash2 className="w-3 h-3" /></button>
@@ -104,7 +104,7 @@ function QuestionRow({ question, index, total, onUpdate, onDelete, onMove }: {
             className="px-2 py-1 border border-dashed border-border rounded-lg text-xs outline-none w-28 text-muted focus:border-accent" />
         </div>
       )}
-      <p className="text-[10px] text-muted pl-6">{QUESTION_TYPE_LABELS[type]}</p>
+      <p className="text-xs text-muted pl-6">{QUESTION_TYPE_LABELS[type]}</p>
     </div>
   )
 }

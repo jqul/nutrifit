@@ -84,7 +84,7 @@ export function SuperAdminPanel({ onLogout, onSwitchToTrainer }: { onLogout: () 
                 {activos.map(n => (
                   <div key={n.uid} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-sm">{n.display_name} {n.role === 'super_admin' && <span className="text-[10px] text-accent font-bold uppercase ml-1">Admin</span>}</p>
+                      <p className="font-semibold text-sm">{n.display_name} {n.role === 'super_admin' && <span className="text-xs text-accent font-bold uppercase ml-1">Admin</span>}</p>
                       <p className="text-xs text-muted">{n.email}</p>
                     </div>
                     {n.role !== 'super_admin' && (

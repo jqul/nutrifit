@@ -452,10 +452,10 @@ function SubstituteSheet({ open, onClose, item, foods, demoMode, personalMode }:
     <BottomSheet open={open} onClose={onClose} title={`En vez de ${item.foodName}...`}>
       <div className="space-y-3">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Igualar por</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted">Igualar por</span>
           {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
             <button key={k} onClick={() => setMatchBy(k)}
-              className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors ${
+              className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                 matchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
               }`}>
               {MACRO_LABELS[k]}
@@ -475,7 +475,7 @@ function SubstituteSheet({ open, onClose, item, foods, demoMode, personalMode }:
             </div>
           ))}
         </div>
-        <p className="text-[11px] text-muted pt-1">
+        <p className="text-xs text-muted pt-1">
           Solo orientativo — {personalMode ? 'piénsalo bien antes de cambiarlo' : 'coméntaselo a tu nutricionista antes de cambiarlo'}{demoMode ? ' (modo demo)' : ''}.
         </p>
       </div>
@@ -527,7 +527,7 @@ function ShoppingList({ meals, foods, checked, onToggle }: { meals: DietMeal[]; 
                       </span>
                       <span className={`text-sm flex-1 ${isChecked ? 'line-through text-muted' : ''}`}>{item.foodName}</span>
                       {fiberRounded > 0 && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                           isChecked ? 'text-muted' : fiberRounded >= 5 ? 'bg-ok/10 text-ok font-semibold' : 'bg-bg-alt text-muted'
                         }`} title="Fibra">
                           {fiberRounded}g fibra
@@ -564,7 +564,7 @@ function MealMacroPills({ items }: { items: DietMealItem[] }) {
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
       {pills.map(p => (
-        <span key={p.label} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${p.className}`}>
+        <span key={p.label} className={`px-2 py-0.5 rounded-full text-xs font-semibold ${p.className}`}>
           {Math.round(p.value * 10) / 10}g {p.label}
         </span>
       ))}
@@ -576,7 +576,7 @@ function MacroCard({ label, value, suffix = '' }: { label: string; value: number
   return (
     <div className="bg-card border border-border rounded-xl px-2 py-3 text-center">
       <p className="text-lg font-serif font-bold">{value}{suffix}</p>
-      <p className="text-[10px] text-muted uppercase tracking-wider">{label}</p>
+      <p className="text-xs text-muted">{label}</p>
     </div>
   )
 }

@@ -165,15 +165,15 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-card border border-border rounded-2xl p-4 text-center">
           <div className="flex items-center justify-center gap-1"><Flame className="w-4 h-4 text-accent" /><p className="text-xl font-serif font-bold">{streak}d</p></div>
-          <p className="text-[10px] text-muted uppercase tracking-wider mt-0.5">Racha</p>
+          <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Racha</p>
         </div>
         <div className="bg-card border border-border rounded-2xl p-4 text-center">
           <p className="text-xl font-serif font-bold">{adherence7d}%</p>
-          <p className="text-[10px] text-muted uppercase tracking-wider mt-0.5">Adherencia 7d</p>
+          <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Adherencia 7d</p>
         </div>
         <div className="bg-card border border-border rounded-2xl p-4 text-center">
           <p className="text-xl font-serif font-bold">{adherence30d}%</p>
-          <p className="text-[10px] text-muted uppercase tracking-wider mt-0.5">Adherencia 30d</p>
+          <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Adherencia 30d</p>
         </div>
       </div>
 
@@ -194,7 +194,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
                 <div className="grid grid-cols-3 gap-2">
                   {[s.frontUrl, s.sideUrl, s.backUrl].map((url, i) => (
                     <div key={i} className="aspect-square bg-bg-alt rounded-lg overflow-hidden flex items-center justify-center">
-                      {url ? <StoragePhoto path={url} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] text-muted">—</span>}
+                      {url ? <StoragePhoto path={url} className="w-full h-full object-cover" alt="" /> : <span className="text-xs text-muted">—</span>}
                     </div>
                   ))}
                 </div>
@@ -247,7 +247,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
                   <span className="text-xs text-muted">🍽 {c.hunger} · ⚡ {c.energy} · 🙂 {c.mood}</span>
                 </div>
                 {(c.bristolScale != null || c.bloating != null || c.abdominalPain != null) && (
-                  <div className={`flex items-center gap-1.5 flex-wrap text-[11px] ${isConcerningCheckin(c) ? 'text-warn' : 'text-muted'}`}>
+                  <div className={`flex items-center gap-1.5 flex-wrap text-xs ${isConcerningCheckin(c) ? 'text-warn' : 'text-muted'}`}>
                     {isConcerningCheckin(c) && <AlertTriangle className="w-3 h-3 flex-shrink-0" />}
                     {c.bristolScale != null && <span>Bristol {c.bristolScale}</span>}
                     {c.bloating != null && <span>Hinchazón: {INTENSITY_LABELS[c.bloating]}</span>}

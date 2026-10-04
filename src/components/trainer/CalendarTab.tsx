@@ -164,10 +164,10 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
                     <p className="text-xs font-semibold">
                       {new Date(a.startAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · {a.title}
                     </p>
-                    {a.clientId && <p className="text-[10px] text-muted">{clients.find(c => c.id === a.clientId)?.name || 'Cliente'}</p>}
-                    <p className={`text-[10px] font-semibold ${STATUS_COLOR[a.status]}`}>{STATUS_LABEL[a.status]}</p>
+                    {a.clientId && <p className="text-xs text-muted">{clients.find(c => c.id === a.clientId)?.name || 'Cliente'}</p>}
+                    <p className={`text-xs font-semibold ${STATUS_COLOR[a.status]}`}>{STATUS_LABEL[a.status]}</p>
                     {a.videoLink && (
-                      <a href={a.videoLink} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] font-semibold text-accent hover:underline">
+                      <a href={a.videoLink} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-semibold text-accent hover:underline">
                         <Video className="w-3 h-3" /> Videollamada
                       </a>
                     )}

@@ -192,7 +192,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
         <div className="flex gap-2">
           <input type="number" step="0.1" value={newWeight} onChange={e => setNewWeight(e.target.value)}
             placeholder="Peso de hoy (kg)"
-            className="flex-1 px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+            className="flex-1 min-w-0 px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
           <button onClick={handleAddWeight} disabled={saving}
             className="px-4 py-2.5 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50">
             Guardar
@@ -224,7 +224,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
                     return (
                       <label key={angle} className="aspect-square bg-bg-alt rounded-lg overflow-hidden flex items-center justify-center cursor-pointer relative">
                         {url ? <StoragePhoto path={url} className="w-full h-full object-cover" alt={angle} /> : (
-                          <span className="text-[10px] text-muted uppercase">{uploading === key ? '...' : angle}</span>
+                          <span className="text-xs text-muted uppercase">{uploading === key ? '...' : angle}</span>
                         )}
                         <input type="file" accept="image/*" className="hidden"
                           onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(s.id, angle, f) }} />
@@ -315,7 +315,7 @@ function AchievementBadges({ weights, streak, checkins, mealLogs }: {
               b.unlocked ? 'border-accent/30 bg-accent/5' : 'border-border opacity-40 grayscale'
             }`}>
             <span className="text-2xl">{b.icon}</span>
-            <p className="text-[9px] text-center text-muted leading-tight">{b.label}</p>
+            <p className="text-xs text-center text-muted leading-tight">{b.label}</p>
           </div>
         ))}
       </div>
@@ -339,15 +339,15 @@ function WeightImpactCard({ weights, goalKg }: { weights: WeightEntry[]; goalKg:
       <div className="grid grid-cols-3 gap-2">
         <div className="text-center">
           <p className="text-lg font-serif font-bold">{initial}kg</p>
-          <p className="text-[9px] text-white/80 uppercase tracking-wider">Inicial</p>
+          <p className="text-xs text-white/80 uppercase tracking-wider">Inicial</p>
         </div>
         <div className="text-center">
           <p className="text-lg font-serif font-bold">{current}kg</p>
-          <p className="text-[9px] text-white/80 uppercase tracking-wider">Actual</p>
+          <p className="text-xs text-white/80 uppercase tracking-wider">Actual</p>
         </div>
         <div className="text-center">
           <p className="text-lg font-serif font-bold">{changeKg <= 0 ? '−' : '+'}{Math.abs(changeKg).toFixed(1)}kg</p>
-          <p className="text-[9px] text-white/80 uppercase tracking-wider">Cambio</p>
+          <p className="text-xs text-white/80 uppercase tracking-wider">Cambio</p>
         </div>
       </div>
       {goalKg != null && progressPct != null && (
@@ -420,7 +420,7 @@ function PhotoComparator({ sessions }: { sessions: ProgressPhotoSession[] }) {
                   <span className="text-xs text-muted">Sin foto</span>
                 )}
               </div>
-              <p className="text-[10px] text-muted text-center mt-1 font-semibold">
+              <p className="text-xs text-muted text-center mt-1 font-semibold">
                 {tag} · {new Date(session.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
               </p>
             </div>
@@ -438,7 +438,7 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon?:
         {icon}
         <p className="text-lg font-serif font-bold">{value}</p>
       </div>
-      <p className="text-[9px] text-muted uppercase tracking-wider mt-0.5">{label}</p>
+      <p className="text-xs text-muted uppercase tracking-wider mt-0.5">{label}</p>
     </div>
   )
 }

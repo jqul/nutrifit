@@ -277,7 +277,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
                 <span>{new Date(inv.period + '-01').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>
                 <span className="font-semibold">{inv.amount}€</span>
                 <button onClick={() => toggleInvoiceStatus(inv)}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                  className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${
                     inv.status === 'pagado' ? 'bg-ok/10 text-ok' : 'bg-warn/10 text-warn'
                   }`}>
                   {inv.status}
@@ -387,7 +387,7 @@ function MiniStat({ label, value, sublabel, valueClassName = '', icon }: {
   return (
     <div className="bg-bg-alt rounded-xl p-2.5 text-center">
       <p className={`text-sm font-bold flex items-center justify-center gap-1 ${valueClassName}`}>{icon}{value}</p>
-      <p className="text-[9px] text-muted uppercase tracking-wider mt-0.5">{sublabel || label}</p>
+      <p className="text-xs text-muted uppercase tracking-wider mt-0.5">{sublabel || label}</p>
     </div>
   )
 }

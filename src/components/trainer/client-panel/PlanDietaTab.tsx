@@ -694,14 +694,14 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           return (
             <div className="space-y-2 pt-1">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted">
                   Suma de {selectedDay === 'all' ? 'las comidas' : `${DAY_LABELS[selectedDay as number]}`} vs. objetivo
                 </p>
                 {usesCarbCycling && (
                   <div className="flex gap-1">
                     {(['all', 'on', 'off'] as const).map(v => (
                       <button key={v} type="button" onClick={() => setSelectedDayType(v)}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors ${
+                        className={`px-2 py-0.5 rounded-md text-xs font-semibold transition-colors ${
                           selectedDayType === v ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
                         }`}>
                         {v === 'all' ? 'Cualquiera' : v === 'on' ? '🔥 ON' : '🌙 OFF'}
@@ -711,7 +711,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                 )}
               </div>
               {usesCarbCycling && selectedDayType === 'all' && (
-                <p className="text-[10px] text-muted -mt-1">Solo cuentan las comidas de "cualquier tipo" — elige ON u OFF para ver el total de ese día.</p>
+                <p className="text-xs text-muted -mt-1">Solo cuentan las comidas de "cualquier tipo" — elige ON u OFF para ver el total de ese día.</p>
               )}
               <MacroProgressBar label="Kcal" actual={dailyTotals.kcal} target={parseFloat(kcalTarget) || 0} unit="" />
               <MacroProgressBar label="Proteína" actual={dailyTotals.proteinG} target={parseFloat(proteinG) || 0} unit="g" />
@@ -764,7 +764,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           ))}
         </div>
         {selectedDay !== 'all' && usesWeeklyMenu && (
-          <p className="text-[11px] text-muted -mt-1.5">
+          <p className="text-xs text-muted -mt-1.5">
             Se muestran las comidas de {DAY_LABELS[selectedDay as number]}, más las de "Todos los días" si las hay.
           </p>
         )}
@@ -848,7 +848,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                           <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
                             <FoodTagFilterPills active={activeFoodTags} onToggle={toggleFoodTag} />
                             {suggestions.length === 0 ? (
-                              <p className="px-2.5 py-2 text-[11px] text-muted">Sin resultados con estos filtros.</p>
+                              <p className="px-2.5 py-2 text-xs text-muted">Sin resultados con estos filtros.</p>
                             ) : suggestions.map(f => (
                               <button key={f.id} type="button" onMouseDown={() => selectFood(meal.id, item.id, f)}
                                 className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
@@ -904,7 +904,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                       </div>
                     )}
                     {!isExpanded && hasExtra && (
-                      <button onClick={() => setExpandedItem(item.id)} className="flex items-center gap-1 text-[10px] text-muted hover:text-accent mt-0.5 pl-1">
+                      <button onClick={() => setExpandedItem(item.id)} className="flex items-center gap-1 text-xs text-muted hover:text-accent mt-0.5 pl-1">
                         <ChevronDown className="w-3 h-3" /> fibra {item.fiberG || 0}g · azúc. {item.sugarG || 0}g · sodio {item.sodiumMg || 0}mg · sat. {item.saturatedFatG || 0}g
                         {(item.calciumMg || item.ironMg || item.zincMg) ? ` · Ca ${item.calciumMg || 0}mg · Fe ${item.ironMg || 0}mg · Zn ${item.zincMg || 0}mg` : ''}
                       </button>
@@ -912,10 +912,10 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                     {substitutingFor?.itemId === item.id && (
                       <div className="mt-1.5 pl-1 pr-1 pt-2 border-t border-border space-y-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">Igualar por</span>
+                          <span className="text-xs font-semibold uppercase tracking-wider text-muted">Igualar por</span>
                           {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
                             <button key={k} onClick={() => setSubMatchBy(k)}
-                              className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors ${
+                              className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                                 subMatchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
                               }`}>
                               {MACRO_LABELS[k]}
@@ -930,7 +930,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                             <FoodTagFilterPills active={activeFoodTags} onToggle={toggleFoodTag} />
                             {subQuery.trim().length === 0 ? (
                               <>
-                                <p className="px-2.5 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted">Sugeridos por macros parecidos</p>
+                                <p className="px-2.5 pt-1.5 pb-1 text-xs font-semibold uppercase tracking-wider text-muted">Sugeridos por macros parecidos</p>
                                 {rankSubstitutesByMacros(
                                   { kcal: parseFloat(item.kcal) || 0, proteinG: parseFloat(item.proteinG) || 0, carbsG: parseFloat(item.carbsG) || 0, fatG: parseFloat(item.fatG) || 0 },
                                   item.foodName, foods.filter(f => foodMatchesTags(f, activeFoodTags)), subMatchBy,
@@ -974,7 +974,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               const totals = sumItemMacros(meal.items)
               return (
                 <div className="flex items-center gap-3 text-xs bg-bg-alt rounded-xl px-3 py-2">
-                  <span className="font-semibold uppercase tracking-wider text-muted text-[10px]">Total comida</span>
+                  <span className="font-semibold uppercase tracking-wider text-muted text-xs">Total comida</span>
                   <span><strong>{Math.round(totals.kcal)}</strong> kcal</span>
                   <span><strong>{Math.round(totals.proteinG * 10) / 10}</strong>g prot.</span>
                   <span><strong>{Math.round(totals.carbsG * 10) / 10}</strong>g carbos</span>
@@ -1130,7 +1130,7 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto, onEdit, nut
                   ) : null}
                   <div className="min-w-0">
                     <p className="text-xs font-semibold truncate">{r.name}</p>
-                    <p className="text-[11px] text-muted">
+                    <p className="text-xs text-muted">
                       {Math.round(totals.kcal)} kcal · {Math.round(totals.proteinG * 10) / 10}g prot. · {Math.round(totals.carbsG * 10) / 10}g carbos · {Math.round(totals.fatG * 10) / 10}g grasas · {Math.round(totals.fiberG * 10) / 10}g fibra
                     </p>
                   </div>
@@ -1152,12 +1152,12 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto, onEdit, nut
               </div>
               {stepsOpenFor === r.id && r.steps && (
                 <div className="mt-2 pt-2 border-t border-border">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Preparación</p>
-                  <p className="text-[11px] whitespace-pre-line">{r.steps}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Preparación</p>
+                  <p className="text-xs whitespace-pre-line">{r.steps}</p>
                 </div>
               )}
               {onEdit && (
-                <p className="text-[10px] text-accent mt-1.5">Toca para ver/editar la receta completa</p>
+                <p className="text-xs text-accent mt-1.5">Toca para ver/editar la receta completa</p>
               )}
             </div>
           )
@@ -1199,7 +1199,7 @@ function MetabolicCalculatorPanel({ client, onClose, onApply }: {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Fórmula</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Fórmula</label>
           <select value={formula} onChange={e => setFormula(e.target.value as Formula)}
             className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
             <option value="mifflin">Mifflin-St Jeor</option>
@@ -1208,7 +1208,7 @@ function MetabolicCalculatorPanel({ client, onClose, onApply }: {
           </select>
         </div>
         <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Sexo</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Sexo</label>
           <select value={sex} onChange={e => setSex(e.target.value as Sex)}
             className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
             <option value="hombre">Hombre</option>
@@ -1220,14 +1220,14 @@ function MetabolicCalculatorPanel({ client, onClose, onApply }: {
         <CalcNumInput label="Edad" value={age} onChange={setAge} />
         {formula === 'katch' && <CalcNumInput label="% grasa corporal" value={bodyFatPct} onChange={setBodyFatPct} />}
         <div className="col-span-2 sm:col-span-3">
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Actividad</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Actividad</label>
           <select value={activity} onChange={e => setActivity(e.target.value as ActivityLevel)}
             className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
             {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map(k => <option key={k} value={k}>{ACTIVITY_LABELS[k]}</option>)}
           </select>
         </div>
         <div className="col-span-2 sm:col-span-3">
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Objetivo</label>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Objetivo</label>
           <select value={goal} onChange={e => setGoal(e.target.value as Goal)}
             className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
             {(Object.keys(GOAL_LABELS) as Goal[]).map(k => <option key={k} value={k}>{GOAL_LABELS[k]}</option>)}
@@ -1253,7 +1253,7 @@ function MetabolicCalculatorPanel({ client, onClose, onApply }: {
           <Button size="sm" onClick={() => onApply(result)}>Aplicar al plan</Button>
         </div>
       ) : (
-        <p className="text-[11px] text-muted pt-1">
+        <p className="text-xs text-muted pt-1">
           Rellena peso, altura y edad {formula === 'katch' ? '(y % de grasa corporal) ' : ''}para calcular.
         </p>
       )}
@@ -1264,7 +1264,7 @@ function MetabolicCalculatorPanel({ client, onClose, onApply }: {
 function CalcNumInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
+      <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
       <input type="number" value={value} onChange={e => onChange(e.target.value)}
         className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
     </div>
@@ -1274,7 +1274,7 @@ function CalcNumInput({ label, value, onChange }: { label: string; value: string
 function MacroPreview({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-bg rounded-lg py-2">
-      <p className="text-[9px] font-semibold uppercase tracking-wider text-muted">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted">{label}</p>
       <p className="text-xs font-bold mt-0.5">{value}</p>
     </div>
   )
@@ -1307,7 +1307,7 @@ function ShoppingListPreview({ meals }: { meals: EditableMeal[] }) {
                   <Check className="w-3 h-3 text-muted flex-shrink-0" />
                   <span className="flex-1">{item.foodName}</span>
                   {fiberRounded > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${fiberRounded >= 5 ? 'bg-ok/10 text-ok font-semibold' : 'bg-bg-alt text-muted'}`}>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${fiberRounded >= 5 ? 'bg-ok/10 text-ok font-semibold' : 'bg-bg-alt text-muted'}`}>
                       {fiberRounded}g fibra
                     </span>
                   )}
@@ -1335,7 +1335,7 @@ function FoodTagFilterPills({ active, onToggle }: { active: DietaryTag[]; onTogg
     <div className="flex items-center gap-1 flex-wrap px-2 py-1.5 border-b border-border sticky top-0 bg-card">
       {FOOD_TAG_ORDER.map(tag => (
         <button key={tag} type="button" onMouseDown={e => e.preventDefault()} onClick={() => onToggle(tag)}
-          className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+          className={`px-1.5 py-0.5 rounded-full text-xs font-semibold transition-colors ${
             active.includes(tag) ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
           }`}>
           {DIETARY_TAG_LABELS[tag]}
@@ -1354,7 +1354,7 @@ function FoodTagBadges({ food }: { food: Food }) {
   return (
     <span className="flex items-center gap-0.5 flex-shrink-0">
       {relevant.map(t => (
-        <span key={t} title={DIETARY_TAG_LABELS[t]} className="px-1 py-0.5 bg-ok/10 text-ok rounded text-[9px] font-bold">
+        <span key={t} title={DIETARY_TAG_LABELS[t]} className="px-1 py-0.5 bg-ok/10 text-ok rounded text-xs font-bold">
           {FOOD_TAG_SHORT[t]}
         </span>
       ))}
@@ -1365,9 +1365,9 @@ function FoodTagBadges({ food }: { food: Food }) {
 function MicroInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div className="flex items-center gap-1">
-      <label className="text-[10px] text-muted whitespace-nowrap">{label}</label>
+      <label className="text-xs text-muted whitespace-nowrap">{label}</label>
       <input type="number" value={value} onChange={e => onChange(e.target.value)}
-        className="w-14 px-1.5 py-1 bg-bg border border-border rounded-md text-[11px] outline-none focus:ring-2 focus:ring-accent/20" />
+        className="w-14 px-1.5 py-1 bg-bg border border-border rounded-md text-xs outline-none focus:ring-2 focus:ring-accent/20" />
     </div>
   )
 }

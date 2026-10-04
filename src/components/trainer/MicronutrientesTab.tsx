@@ -91,7 +91,7 @@ export function MicronutrientesTab() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-[11px] text-muted pt-1">
+        <div className="flex items-center gap-3 text-xs text-muted pt-1">
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-ok inline-block" /> Rico en {highlightMeta.label.toLowerCase()}</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-warn inline-block" /> Moderado</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-border inline-block" /> Bajo o sin dato</span>
@@ -100,7 +100,7 @@ export function MicronutrientesTab() {
         <div className="overflow-x-auto -mx-5 px-5">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted border-b border-border">
+              <tr className="text-left text-xs font-semibold uppercase tracking-wider text-muted border-b border-border">
                 <th className="py-2 pr-3">Alimento</th>
                 <th className="py-2 pr-3">Grupo</th>
                 {MINERALS.map(m => (
@@ -127,7 +127,7 @@ export function MicronutrientesTab() {
             </tbody>
           </table>
         </div>
-        <p className="text-[11px] text-muted">Valores aproximados por 100g. Colores relativos al rango de {highlightMeta.label.toLowerCase()} entre todos los alimentos del catálogo.</p>
+        <p className="text-xs text-muted">Valores aproximados por 100g. Colores relativos al rango de {highlightMeta.label.toLowerCase()} entre todos los alimentos del catálogo.</p>
       </div>
     </div>
   )

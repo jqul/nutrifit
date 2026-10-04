@@ -94,7 +94,7 @@ export function BarcodeScanner({ open, onClose, onFound }: {
             <Search className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-[11px] text-muted">Datos nutricionales de OpenFoodFacts (base de datos pública y colaborativa).</p>
+        <p className="text-xs text-muted">Datos nutricionales de OpenFoodFacts (base de datos pública y colaborativa).</p>
       </div>
     </Modal>
   )

@@ -117,7 +117,7 @@ export function DifusionTab({ clients, nutricionistaId, demoMode }: {
                 <button
                   onClick={() => window.open(buildWAUrl(c.phone, resolveMessage(text, c.name)), '_blank')}
                   disabled={!text.trim()}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-[#25D366] text-white rounded-lg text-[10px] font-bold disabled:opacity-40">
+                  className="flex items-center gap-1 px-2.5 py-1 bg-[#25D366] text-white rounded-lg text-xs font-bold disabled:opacity-40">
                   📱 Enviar
                 </button>
               </div>

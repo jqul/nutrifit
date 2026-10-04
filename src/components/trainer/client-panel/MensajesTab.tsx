@@ -88,13 +88,13 @@ export function MensajesTab({ client, nutricionistaId, onUpdate, demoMode }: {
                   <p className="text-sm italic">"{resolveMessage(effectiveText, client.name)}"</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     {override !== undefined
-                      ? <span className="text-[10px] text-accent font-semibold flex items-center gap-1"><Check className="w-3 h-3" /> Personalizado para {client.name}</span>
-                      : <button onClick={() => { setEditingClient(t.id); setDraft(t.texto) }} className="text-[10px] text-muted hover:text-accent underline">Personalizar para {client.name}</button>}
+                      ? <span className="text-xs text-accent font-semibold flex items-center gap-1"><Check className="w-3 h-3" /> Personalizado para {client.name}</span>
+                      : <button onClick={() => { setEditingClient(t.id); setDraft(t.texto) }} className="text-xs text-muted hover:text-accent underline">Personalizar para {client.name}</button>}
                     {override !== undefined && (
-                      <button onClick={() => removeOverride(t.id)} className="text-[10px] text-muted hover:text-warn underline">Quitar personalización</button>
+                      <button onClick={() => removeOverride(t.id)} className="text-xs text-muted hover:text-warn underline">Quitar personalización</button>
                     )}
                     <button onClick={() => sendWhatsApp(effectiveText)}
-                      className="ml-auto flex items-center gap-1 px-2.5 py-1 bg-[#25D366] text-white rounded-lg text-[10px] font-bold">📱 Enviar</button>
+                      className="ml-auto flex items-center gap-1 px-2.5 py-1 bg-[#25D366] text-white rounded-lg text-xs font-bold">📱 Enviar</button>
                   </div>
                 </>
               )}

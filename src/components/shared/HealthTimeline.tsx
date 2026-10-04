@@ -65,7 +65,7 @@ export function HealthTimeline({
       <div>
         <p className="font-serif font-bold text-lg flex items-center gap-2">
           <History className="w-4 h-4 text-accent" /> Health Timeline
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-accent/10 text-accent">Estilo Holo</span>
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-accent/10 text-accent">Estilo Holo</span>
         </p>
         <p className="text-xs text-muted mt-0.5">Línea cronológica unificada de hitos clínicos, biomarcadores, peso, fotos y notas.</p>
       </div>
@@ -137,8 +137,8 @@ function TimelineEventCard({ event, checkins, goalWeightKg, nutricionistaName, o
       </div>
       <div className="flex-1 min-w-0 bg-card border border-border rounded-2xl p-4">
         <div className="flex items-center justify-between gap-2 mb-1.5">
-          <p className={`text-[10px] font-bold uppercase tracking-wider ${accent.label}`}>{accent.text} · {fmtDate(event.date)}</p>
-          {event.type === 'nota' && <span className="text-[10px] text-muted flex-shrink-0">Por {nutricionistaName}</span>}
+          <p className={`text-xs font-bold uppercase tracking-wider ${accent.label}`}>{accent.text} · {fmtDate(event.date)}</p>
+          {event.type === 'nota' && <span className="text-xs text-muted flex-shrink-0">Por {nutricionistaName}</span>}
         </div>
 
         {event.type === 'analitica' && <AnaliticaCardBody event={event} />}
@@ -159,9 +159,9 @@ function AnaliticaCardBody({ event }: { event: AnaliticaEvent }) {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="font-semibold text-sm">Extracción clínica ({event.markers.length} biomarcador{event.markers.length > 1 ? 'es' : ''} analizados)</p>
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 whitespace-nowrap ${outOfRange > 0 ? 'bg-warn/10 text-warn' : 'bg-ok/10 text-ok'}`}>
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+        <p className="font-semibold text-sm flex-1 min-w-[10rem]">Extracción clínica ({event.markers.length} biomarcador{event.markers.length > 1 ? 'es' : ''} analizados)</p>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 whitespace-nowrap ${outOfRange > 0 ? 'bg-warn/10 text-warn' : 'bg-ok/10 text-ok'}`}>
           {outOfRange > 0 ? `⚠ ${outOfRange} fuera de rango` : '✓ Todo en rango'}
         </span>
       </div>
@@ -197,14 +197,14 @@ function PesoCardBody({ event, goalWeightKg }: { event: PesoEvent; goalWeightKg?
       <div className="flex items-baseline gap-2 flex-wrap">
         <span className="text-2xl font-serif font-bold">{event.weightKg} kg</span>
         {event.deltaKg != null && event.deltaKg !== 0 && (
-          <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${deltaClass}`}>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${deltaClass}`}>
             {event.deltaKg > 0 ? '↗' : '↘'} {event.deltaKg > 0 ? '+' : ''}{event.deltaKg} kg vs anterior
           </span>
         )}
       </div>
       {goalWeightKg != null && (
         <div className="text-right flex-shrink-0">
-          <p className="text-[10px] text-muted uppercase tracking-wide">Meta: {goalWeightKg} kg</p>
+          <p className="text-xs text-muted uppercase tracking-wide">Meta: {goalWeightKg} kg</p>
           <p className="text-xs font-semibold text-ok">{distance === 0 ? '¡Objetivo alcanzado! 🎉' : `A ${distance} kg de la meta`}</p>
         </div>
       )}
@@ -220,7 +220,7 @@ function FotoCardBody({ event, onOpenPhoto }: { event: FotoEvent; onOpenPhoto: (
         {([['front', event.session.frontUrl, 'Frontal'], ['side', event.session.sideUrl, 'Perfil'], ['back', event.session.backUrl, 'Espalda']] as const).map(([key, url, label]) => (
           <button key={key} disabled={!url} onClick={() => url && onOpenPhoto(url, label)}
             className="aspect-square bg-bg-alt rounded-lg overflow-hidden flex items-center justify-center disabled:cursor-default">
-            {url ? <StoragePhoto path={url} alt={label} className="w-full h-full object-cover" /> : <span className="text-[9px] text-muted">—</span>}
+            {url ? <StoragePhoto path={url} alt={label} className="w-full h-full object-cover" /> : <span className="text-xs text-muted">—</span>}
           </button>
         ))}
       </div>
@@ -261,7 +261,7 @@ function HitoCard({ event, checkins }: { event: HitoEvent; checkins: DailyChecki
       </div>
       <div className="flex-1 min-w-0 bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Hito de adherencia</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Hito de adherencia</p>
           <p className="font-semibold text-sm">{event.label}</p>
           <p className="text-xs text-muted mt-0.5">Adherencia al plan de nutrición y check-ins registrada en el {pct}%.</p>
         </div>

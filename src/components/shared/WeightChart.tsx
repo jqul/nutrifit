@@ -106,7 +106,7 @@ export function WeightChart({ entries, goalKg, cycleEntries }: { entries: Weight
         {cards.map((k, i) => (
           <div key={i} className="bg-bg-alt rounded-xl p-3 text-center">
             <p className={`text-lg font-bold ${k.color}`}>{k.value}</p>
-            <p className="text-[9px] text-muted uppercase tracking-wider mt-0.5">{k.label}</p>
+            <p className="text-xs text-muted uppercase tracking-wider mt-0.5">{k.label}</p>
           </div>
         ))}
       </div>
@@ -137,7 +137,7 @@ export function WeightChart({ entries, goalKg, cycleEntries }: { entries: Weight
         </ResponsiveContainer>
       </div>
       {hasLutealPoints && (
-        <p className="flex items-center gap-1.5 text-[11px] text-muted">
+        <p className="flex items-center gap-1.5 text-xs text-muted">
           <Moon className="w-3 h-3 flex-shrink-0" style={{ color: LUTEAL_COLOR }} />
           Puntos marcados en la semana previa al periodo — el peso puede subir 1-2.5kg por retención de líquidos, no por grasa.
         </p>

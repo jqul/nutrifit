@@ -145,7 +145,7 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
                 </select>
                 <button onClick={closeAddFood} className="p-1.5 text-muted hover:text-warn flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
               </div>
-              <p className="text-[10px] text-muted">Todos los valores son por 100g. Kcal/proteína/carbohidratos/grasas son obligatorios, el resto es opcional.</p>
+              <p className="text-xs text-muted">Todos los valores son por 100g. Kcal/proteína/carbohidratos/grasas son obligatorios, el resto es opcional.</p>
               <div className="grid grid-cols-4 gap-2">
                 <FoodNumInput label="Kcal *" value={newFood.kcal} onChange={v => setNewFood({ ...newFood, kcal: v })} />
                 <FoodNumInput label="Prot. (g) *" value={newFood.proteinG} onChange={v => setNewFood({ ...newFood, proteinG: v })} />
@@ -211,7 +211,7 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
                 </div>
               )}
               {selected.reference && (
-                <p className="text-[11px] text-muted">Fuente: {selected.reference}</p>
+                <p className="text-xs text-muted">Fuente: {selected.reference}</p>
               )}
               {equivalents.length > 0 && (
                 <div>
@@ -329,7 +329,7 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
 function FoodNumInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
+      <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
       <input type="number" value={value} onChange={e => onChange(e.target.value)}
         className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
     </div>
@@ -339,7 +339,7 @@ function FoodNumInput({ label, value, onChange }: { label: string; value: string
 function MacroBox({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-bg-alt rounded-xl py-2.5">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted">{label}</p>
       <p className="text-sm font-bold mt-0.5">{value}</p>
     </div>
   )
@@ -349,7 +349,7 @@ function DiffBox({ label, value, unit = '', matched }: { label: string; value: n
   const sign = value > 0 ? '+' : ''
   return (
     <div className={`rounded-xl py-2.5 ${matched ? 'bg-bg-alt' : value > 0 ? 'bg-warn/10' : value < 0 ? 'bg-ok/10' : 'bg-bg-alt'}`}>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted">{label}</p>
       <p className={`text-sm font-bold mt-0.5 ${matched ? 'text-muted' : value > 0 ? 'text-warn' : value < 0 ? 'text-ok' : ''}`}>
         {matched ? '≈0' : `${sign}${value}${unit}`}
       </p>

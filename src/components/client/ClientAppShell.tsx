@@ -177,7 +177,7 @@ export function ClientAppShell({
               className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors"
               style={{ minHeight: '56px' }} aria-label={label}>
               <Icon className={`w-5 h-5 transition-colors ${activeTab === id ? 'text-ink' : 'text-muted'}`} />
-              <span className={`text-[10px] font-medium ${activeTab === id ? 'text-ink font-bold' : 'text-muted'}`}>{label}</span>
+              <span className={`text-xs font-medium ${activeTab === id ? 'text-ink font-bold' : 'text-muted'}`}>{label}</span>
             </button>
           ))}
         </div>

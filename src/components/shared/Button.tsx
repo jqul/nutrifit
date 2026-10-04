@@ -15,7 +15,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       danger:  'bg-warn/10 border border-warn/30 text-warn hover:bg-warn hover:text-white active:scale-[0.98]',
     }
     const sizes = {
-      sm: 'text-[11px] px-3 py-1.5 tracking-wide uppercase font-semibold gap-1.5',
+      sm: 'text-xs px-3 py-1.5 tracking-wide uppercase font-semibold gap-1.5',
       md: 'text-sm px-4 py-2.5 gap-2',
       lg: 'text-base px-6 py-3 gap-2',
     }

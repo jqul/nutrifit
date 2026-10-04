@@ -191,7 +191,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
                     }`}>
                     <Briefcase className={`w-5 h-5 ${accountMode === 'professional' ? 'text-accent' : 'text-muted'}`} />
                     <span className="text-xs font-semibold">Soy profesional</span>
-                    <span className="text-[10px] text-muted leading-tight">Gestiono clientes</span>
+                    <span className="text-xs text-muted leading-tight">Gestiono clientes</span>
                   </button>
                   <button type="button" onClick={() => setAccountMode('personal')}
                     className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border text-center transition-colors ${
@@ -199,7 +199,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
                     }`}>
                     <User className={`w-5 h-5 ${accountMode === 'personal' ? 'text-accent' : 'text-muted'}`} />
                     <span className="text-xs font-semibold">Uso personal</span>
-                    <span className="text-[10px] text-muted leading-tight">Llevo mi propia dieta</span>
+                    <span className="text-xs text-muted leading-tight">Llevo mi propia dieta</span>
                   </button>
                 </div>
               </div>

@@ -70,7 +70,7 @@ function MiniStat({ label, value, sublabel, valueClassName = '' }: { label: stri
   return (
     <div className="bg-bg-alt rounded-xl p-2.5 text-center">
       <p className={`text-sm font-bold ${valueClassName}`}>{value}</p>
-      <p className="text-[9px] text-muted uppercase tracking-wider mt-0.5">{sublabel || label}</p>
+      <p className="text-xs text-muted uppercase tracking-wider mt-0.5">{sublabel || label}</p>
     </div>
   )
 }

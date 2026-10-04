@@ -249,11 +249,11 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
                         <input value={item.foodName} onChange={e => updateTplItem(meal.id, item.id, { foodName: e.target.value })}
                           onFocus={() => setTplSuggestFor(item.id)} onBlur={() => setTimeout(() => setTplSuggestFor(null), 150)}
                           placeholder="Alimento"
-                          className="flex-1 px-2 py-1 bg-bg border border-border rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-accent/20" />
+                          className="flex-1 px-2 py-1 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
                         <input value={item.quantity} onChange={e => updateTplItem(meal.id, item.id, { quantity: e.target.value })} placeholder="Cant."
-                          className="w-12 px-2 py-1 bg-bg border border-border rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-accent/20" />
+                          className="w-12 px-2 py-1 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
                         <input value={item.unit} onChange={e => updateTplItem(meal.id, item.id, { unit: e.target.value })} placeholder="Unidad"
-                          className="w-14 px-2 py-1 bg-bg border border-border rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-accent/20" />
+                          className="w-14 px-2 py-1 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
                         <button onClick={() => removeTplItem(meal.id, item.id)} className="p-1 text-muted hover:text-warn flex-shrink-0"><Trash2 className="w-3 h-3" /></button>
                         {suggestions.length > 0 && (
                           <div className="absolute z-10 top-full left-3 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
@@ -269,7 +269,7 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
                       </div>
                     )
                   })}
-                  <button onClick={() => addTplItem(meal.id)} className="flex items-center gap-1 text-[11px] text-muted hover:text-accent pl-3">
+                  <button onClick={() => addTplItem(meal.id)} className="flex items-center gap-1 text-xs text-muted hover:text-accent pl-3">
                     <Plus className="w-3 h-3" /> Añadir alimento
                   </button>
                 </div>
@@ -410,7 +410,7 @@ function RecipeListCard({ recipe: r, onClick, onDelete, onCopy }: {
 function TplNumInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
+      <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
       <input type="number" value={value} onChange={e => onChange(e.target.value)}
         className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
     </div>

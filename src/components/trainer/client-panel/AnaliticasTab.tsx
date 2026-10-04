@@ -108,7 +108,7 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
         <div>
           <p className="font-serif font-bold text-lg flex items-center gap-2">
             <Activity className="w-4 h-4 text-accent" /> Biomarcadores &amp; Longevidad
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-accent/10 text-accent">Estilo Holo</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-accent/10 text-accent">Estilo Holo</span>
           </p>
           <p className="text-xs text-muted mt-0.5">Visualización de precisión mediante barras de rango calibradas (zonas subóptimas, normales y de longevidad óptima) con comparativas históricas directas.</p>
         </div>
@@ -119,21 +119,21 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
         <div className="grid grid-cols-4 gap-2">
           <div className="bg-card border border-border rounded-2xl p-3 text-center">
             <p className="text-lg font-serif font-bold">{sessionKeys.length}</p>
-            <p className="text-[9px] text-muted uppercase tracking-wider mt-0.5">Analizados</p>
+            <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Analizados</p>
           </div>
           <div className="bg-ok/10 border border-ok/20 rounded-2xl p-3 text-center">
             <p className="text-lg font-serif font-bold text-ok flex items-center justify-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {tierCounts.optimo}</p>
-            <p className="text-[9px] text-ok/80 uppercase tracking-wider mt-0.5">Rango óptimo</p>
+            <p className="text-xs text-ok/80 uppercase tracking-wider mt-0.5">Rango óptimo</p>
           </div>
           <div className="bg-card border border-border rounded-2xl p-3 text-center">
             <p className="text-lg font-serif font-bold">{tierCounts.normal}</p>
-            <p className="text-[9px] text-muted uppercase tracking-wider mt-0.5">Normales</p>
+            <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Normales</p>
           </div>
           <div className={`rounded-2xl p-3 text-center border ${tierCounts.atencion > 0 ? 'bg-warn/10 border-warn/20' : 'bg-card border-border'}`}>
             <p className={`text-lg font-serif font-bold flex items-center justify-center gap-1 ${tierCounts.atencion > 0 ? 'text-warn' : ''}`}>
               {tierCounts.atencion > 0 && <AlertTriangle className="w-3.5 h-3.5" />} {tierCounts.atencion}
             </p>
-            <p className={`text-[9px] uppercase tracking-wider mt-0.5 ${tierCounts.atencion > 0 ? 'text-warn/80' : 'text-muted'}`}>Atención</p>
+            <p className={`text-xs uppercase tracking-wider mt-0.5 ${tierCounts.atencion > 0 ? 'text-warn/80' : 'text-muted'}`}>Atención</p>
           </div>
         </div>
       )}
@@ -152,7 +152,7 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
               {MARKER_TEMPLATES.map(t => (
                 <button key={t.name} onClick={() => applyTemplate(t.markerKeys)}
                   className="px-2.5 py-1.5 bg-bg-alt rounded-lg text-xs font-medium text-muted hover:text-accent hover:bg-accent/10 transition-colors">
-                  {t.name} <span className="text-[10px] opacity-60">({t.markerKeys.length})</span>
+                  {t.name} <span className="text-xs opacity-60">({t.markerKeys.length})</span>
                 </button>
               ))}
             </div>
@@ -246,7 +246,7 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
                     minNormal={def.min} maxNormal={def.max} minScale={def.scaleMin} maxScale={def.scaleMax}
                     description={def.description} dietaryNote={advice || undefined} />
                   <button onClick={() => setExpandedMarker(expanded ? null : def.key)}
-                    className="flex items-center gap-1 text-[11px] text-muted hover:text-accent ml-1">
+                    className="flex items-center gap-1 text-xs text-muted hover:text-accent ml-1">
                     {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     {expanded ? 'Ocultar historial' : `Historial (${readings.length})`}
                   </button>

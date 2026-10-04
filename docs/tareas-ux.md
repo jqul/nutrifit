@@ -9,7 +9,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
 
 ## Fase 0 — Base común (antes de rediseñar pantallas)
 
-- [ ] **UX-01 · Escala tipográfica** (S)
+- [x] **UX-01 · Escala tipográfica** (S)
   Hay **106** usos de `text-[9px]/[10px]/[11px]` (26 solo en `PlanDietaTab`).
   Definir una escala (12 metadata · 14 secundario · 16 normal · 20 subtítulo ·
   28-36 títulos) y sustituir los tamaños sueltos.

@@ -372,7 +372,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
                         {meal.name} <span className="font-normal text-muted">· {meal.time}</span>
                       </p>
                       {meal.kcalTarget != null && (
-                        <span className="text-[11px] font-semibold text-muted bg-bg-alt px-2 py-0.5 rounded-full flex-shrink-0">{meal.kcalTarget} kcal</span>
+                        <span className="text-xs font-semibold text-muted bg-bg-alt px-2 py-0.5 rounded-full flex-shrink-0">{meal.kcalTarget} kcal</span>
                       )}
                     </div>
                     {meal.items.length > 0 && (
@@ -386,7 +386,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
                   ) : (
                     <label className="w-10 h-10 rounded-lg bg-bg-alt flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-bg-alt/70">
                       {uploadingMeal === meal.id ? (
-                        <span className="text-[9px] text-muted">...</span>
+                        <span className="text-xs text-muted">...</span>
                       ) : (
                         <Camera className="w-4 h-4 text-muted" />
                       )}
@@ -564,11 +564,11 @@ function ProximasCitas({ client, demoMode, demoCitas }: { client: ClientData; de
               <div className="flex items-center gap-2 flex-shrink-0">
                 {c.videoLink && (
                   <a href={c.videoLink} target="_blank" rel="noreferrer"
-                    className="flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-lg text-[10px] font-bold">
+                    className="flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-lg text-xs font-bold">
                     <Video className="w-3 h-3" /> Unirse
                   </a>
                 )}
-                {c.status === 'pendiente' && <span className="text-[10px] font-bold text-warn uppercase">Pendiente</span>}
+                {c.status === 'pendiente' && <span className="text-xs font-bold text-warn uppercase">Pendiente</span>}
               </div>
             </div>
           ))}

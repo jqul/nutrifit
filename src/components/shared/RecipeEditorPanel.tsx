@@ -117,7 +117,7 @@ export function RecipeEditorPanel({ nutricionistaId, demoMode, foods, initial, o
           className="flex items-center gap-1 text-xs text-muted hover:text-accent"><Plus className="w-3 h-3" /> Añadir alimento</button>
       </div>
       <div>
-        <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">Pasos de preparación (opcional, un paso por línea)</label>
+        <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Pasos de preparación (opcional, un paso por línea)</label>
         <textarea value={steps} onChange={e => setSteps(e.target.value)} rows={4}
           placeholder={'1. Cuece la pasta...\n2. Dora la carne...'}
           className="w-full px-2.5 py-2 bg-bg border border-border rounded-lg text-xs outline-none resize-none focus:ring-2 focus:ring-accent/20" />

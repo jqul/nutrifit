@@ -75,7 +75,7 @@ export function ClientConsent({ token, clientName, nutricionistaName, documentUr
         </label>
         <input value={signedName} onChange={e => setSignedName(e.target.value)} placeholder="Nombre y apellidos"
           className="w-full px-4 py-3.5 bg-card border border-border rounded-2xl text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors mb-1" />
-        <p className="text-[11px] text-muted mb-5">Escribir tu nombre aquí, junto con la casilla anterior, actúa como tu firma electrónica y queda fechada automáticamente.</p>
+        <p className="text-xs text-muted mb-5">Escribir tu nombre aquí, junto con la casilla anterior, actúa como tu firma electrónica y queda fechada automáticamente.</p>
 
         {error && <p className="text-sm text-warn text-center mb-4">{error}</p>}
 

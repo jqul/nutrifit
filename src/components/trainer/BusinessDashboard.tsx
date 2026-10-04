@@ -34,7 +34,7 @@ export function BusinessDashboard({ clients }: { clients: ClientWithStats[] }) {
           <div key={k.label} className={`bg-card border border-border border-t-4 ${k.color} rounded-2xl p-4`}>
             <k.icon className="w-4 h-4 text-muted mb-2" />
             <p className="text-xl font-serif font-bold">{k.value}</p>
-            <p className="text-[10px] text-muted uppercase tracking-wider mt-0.5">{k.label}</p>
+            <p className="text-xs text-muted uppercase tracking-wider mt-0.5">{k.label}</p>
           </div>
         ))}
       </div>
