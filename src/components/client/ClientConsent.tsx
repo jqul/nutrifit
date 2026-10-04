@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FileText, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { logError } from '../../lib/errors'
+import { useSignedUrl } from '../../lib/useSignedUrl'
 
 /** Puerta de consentimiento informado: se muestra tras registrarse/iniciar
  * sesión, antes de entrar al panel, solo cuando el nutricionista ha
@@ -16,6 +17,9 @@ export function ClientConsent({ token, clientName, nutricionistaName, documentUr
   documentUrl: string
   onComplete: () => void
 }) {
+  // El bucket es privado: documentUrl es la ruta del objeto y se abre con una
+  // URL firmada (el cliente ya está autenticado cuando llega a esta pantalla).
+  const signedUrl = useSignedUrl('consent-documents', documentUrl)
   const [read, setRead] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const [signedName, setSignedName] = useState(clientName)
@@ -45,8 +49,9 @@ export function ClientConsent({ token, clientName, nutricionistaName, documentUr
           {nutricionistaName} necesita tu consentimiento para tratar tus datos de salud antes de darte acceso a tu panel.
         </p>
 
-        <a href={documentUrl} target="_blank" rel="noreferrer" onClick={() => setRead(true)}
-          className="flex items-center gap-3 p-4 bg-card border border-border rounded-2xl mb-5 hover:border-accent transition-colors">
+        <a href={signedUrl ?? undefined} target="_blank" rel="noreferrer" onClick={() => { if (signedUrl) setRead(true) }}
+          aria-disabled={!signedUrl}
+          className={`flex items-center gap-3 p-4 bg-card border border-border rounded-2xl mb-5 hover:border-accent transition-colors ${!signedUrl ? 'opacity-60 pointer-events-none' : ''}`}>
           <FileText className="w-5 h-5 text-accent flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Documento de consentimiento</p>
