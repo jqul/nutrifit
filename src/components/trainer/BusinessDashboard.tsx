@@ -46,7 +46,7 @@ export function BusinessDashboard({ clients }: { clients: ClientWithStats[] }) {
         </p>
       )}
 
-      <div className="bg-card border border-border rounded-2xl p-5">
+      <div className="card p-5">
         <p className="font-semibold text-sm mb-3">Actividad por cliente</p>
         {clients.length === 0 ? (
           <p className="text-sm text-muted">Todavía no tienes clientes.</p>

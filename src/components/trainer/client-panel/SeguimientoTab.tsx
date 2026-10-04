@@ -111,7 +111,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted">Notas y conclusiones para el informe</p>
           <button onClick={() => printProgressReport({ ...client, reportNotes }, { weights, checkins, bloodMarkers },
@@ -132,7 +132,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
         )}
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted">Nota clínica</p>
           <button onClick={() => setAddingNote(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
@@ -163,26 +163,26 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
         mealLogs={mealLogs} checkins={checkins} variant="trainer" nutricionistaName={nutricionistaName} goalWeightKg={client.goalWeightKg} />
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-card border border-border rounded-2xl p-4 text-center">
+        <div className="card p-4 text-center">
           <div className="flex items-center justify-center gap-1"><Flame className="w-4 h-4 text-accent" /><p className="text-xl font-serif font-bold">{streak}d</p></div>
           <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Racha</p>
         </div>
-        <div className="bg-card border border-border rounded-2xl p-4 text-center">
+        <div className="card p-4 text-center">
           <p className="text-xl font-serif font-bold">{adherence7d}%</p>
           <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Adherencia 7d</p>
         </div>
-        <div className="bg-card border border-border rounded-2xl p-4 text-center">
+        <div className="card p-4 text-center">
           <p className="text-xl font-serif font-bold">{adherence30d}%</p>
           <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Adherencia 30d</p>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5">
+      <div className="card p-5">
         <p className="font-semibold text-sm mb-3">Peso corporal</p>
         <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} />
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5">
+      <div className="card p-5">
         <p className="font-semibold text-sm mb-3 flex items-center gap-1.5"><Camera className="w-4 h-4" /> Fotos de progreso</p>
         {sessions.length === 0 ? (
           <p className="text-sm text-muted">El cliente todavía no ha subido fotos.</p>
@@ -204,7 +204,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
         )}
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5">
+      <div className="card p-5">
         <p className="font-semibold text-sm mb-3 flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4" /> Diario de comidas</p>
         {mealLogs.length === 0 ? (
           <p className="text-sm text-muted">El cliente todavía no ha registrado comidas.</p>
@@ -233,7 +233,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
         demoSurveys={demoData ? DEMO_CUSTOM_SURVEYS : undefined}
         demoResponses={demoData ? (DEMO_SURVEY_RESPONSES[client.id] || []) : undefined} />
 
-      <div className="bg-card border border-border rounded-2xl p-5">
+      <div className="card p-5">
         <p className="font-semibold text-sm mb-3">Check-ins recientes</p>
         {checkins.length === 0 ? (
           <p className="text-sm text-muted">Sin check-ins todavía.</p>

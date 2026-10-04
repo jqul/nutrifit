@@ -151,7 +151,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
 
   if (!editing) return (
     <div className="space-y-6 max-w-lg">
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <Field label="Nombre" value={`${client.name} ${client.surname}`} />
         <Field label="Teléfono" value={client.phone || '—'} />
         <Field label="Email" value={client.email || '—'} />
@@ -199,7 +199,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
           más IMC y altura como mini-métricas — sustituye a la lista plana
           de texto que había antes (Altura/Peso actual/Peso objetivo). */}
       {(currentWeight != null || client.heightCm != null) && (
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+        <div className="card p-5 space-y-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5"><Scale className="w-3.5 h-3.5" /> Composición corporal</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {initialWeight != null && <MiniStat label="Peso inicial" value={`${initialWeight} kg`} />}
@@ -234,7 +234,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5" /> Cuestionario de salud</p>
         {anamnesisAnswers ? (
           <div className="space-y-2.5">
@@ -256,7 +256,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         )}
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5"><Receipt className="w-3.5 h-3.5" /> Facturación</p>
           <Button variant="outline" onClick={handleGenerateInvoice} loading={generatingInvoice} disabled={hasCurrentInvoice || client.monthlyPrice == null}>
@@ -292,7 +292,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
         )}
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <p className="text-xs font-bold uppercase tracking-wider text-muted">{personalMode ? 'Tus datos (RGPD)' : 'Datos del cliente (RGPD)'}</p>
         <p className="text-xs text-muted">{personalMode
           ? 'Descarga toda tu información guardada, o pídenos que la eliminemos por completo.'

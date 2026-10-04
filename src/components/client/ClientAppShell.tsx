@@ -125,13 +125,13 @@ export function ClientAppShell({
         {activeTab === 'mas' && (
           <div className="px-4 py-6 space-y-4 max-w-xl mx-auto pb-24">
             <h3 className="font-serif font-bold text-xl">Más opciones</h3>
-            <div className="bg-card border border-border rounded-2xl p-5 space-y-2">
+            <div className="card p-5 space-y-2">
               <p className="text-xs font-bold uppercase tracking-wider text-muted">{previewMode ? 'Ficha del cliente' : 'Tu cuenta'}</p>
               <p className="text-sm"><span className="text-muted">Nombre:</span> <span className="font-semibold">{clientName}</span></p>
               <p className="text-sm"><span className="text-muted">Nutricionista:</span> <span className="font-semibold">{nutricionistaName}</span></p>
             </div>
             <GuidesLibrary nutricionistaId={clientData.nutricionistaId} demoMode={demoMode} />
-            <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between">
+            <div className="card p-5 flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold">Modo oscuro</p>
                 <p className="text-xs text-muted">Cambia la apariencia de tu panel</p>
@@ -139,7 +139,7 @@ export function ClientAppShell({
               <ThemeToggle />
             </div>
             {!previewMode && (
-              <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between gap-3">
+              <div className="card p-5 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold">Notificaciones</p>
                   <p className="text-xs text-muted">Avisos cuando tu nutricionista actualice tu plan o confirme una cita</p>
@@ -193,7 +193,7 @@ function InstallAppCard() {
   const { show } = useInstallPrompt()
   if (!show) return null
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 flex items-center justify-between gap-3">
+    <div className="card p-5 flex items-center justify-between gap-3">
       <div>
         <p className="text-sm font-semibold">Instalar app</p>
         <p className="text-xs text-muted">Añade NutriFit a tu pantalla de inicio, como una app</p>
@@ -227,7 +227,7 @@ function AnamnesisPreview({ clientId }: { clientId: string }) {
   if (completedAt === undefined) return null
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5">
+    <div className="card p-5">
       <p className="text-sm font-semibold mb-1">Cuestionario de salud</p>
       <p className="text-xs text-muted">
         {completedAt ? `El cliente lo completó el ${new Date(completedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}.` : 'El cliente todavía no lo ha completado.'}

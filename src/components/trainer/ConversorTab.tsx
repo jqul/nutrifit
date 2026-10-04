@@ -109,7 +109,7 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
           Elige un alimento y una cantidad para ver sus macros y la equivalencia en otras unidades caseras (g, ml, cucharada, cucharadita, taza, vaso, puñado).
         </p>
 
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+        <div className="card p-5 space-y-4">
           <div className="relative">
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Alimento</label>
             <input
@@ -246,7 +246,7 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
             : 'Elige un alimento de la lista desplegable de arriba (haz clic en una sugerencia) para poder sustituirlo.'}
         </p>
 
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+        <div className="card p-5 space-y-4">
           <div className="relative">
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Sustituir por</label>
             <input

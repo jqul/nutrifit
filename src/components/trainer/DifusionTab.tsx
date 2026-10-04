@@ -44,7 +44,7 @@ export function DifusionTab({ clients, nutricionistaId, demoMode }: {
         </p>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+      <div className="card p-5 space-y-4">
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5 flex items-center gap-1.5"><Tag className="w-3.5 h-3.5" /> Grupo</label>
           {allTags.length === 0 ? (
@@ -95,7 +95,7 @@ export function DifusionTab({ clients, nutricionistaId, demoMode }: {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <p className="text-sm font-semibold flex items-center gap-1.5"><Bell className="w-4 h-4" /> Notificación push (envío de verdad a todo el grupo)</p>
         <input value={pushTitle} onChange={e => setPushTitle(e.target.value)} placeholder="Título de la notificación"
           className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
@@ -105,7 +105,7 @@ export function DifusionTab({ clients, nutricionistaId, demoMode }: {
         </button>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <p className="text-sm font-semibold flex items-center gap-1.5"><MessageCircle className="w-4 h-4" /> WhatsApp (uno a uno — WhatsApp no permite envío automático masivo)</p>
         {matching.length === 0 ? (
           <p className="text-sm text-muted">No hay clientes en este grupo.</p>

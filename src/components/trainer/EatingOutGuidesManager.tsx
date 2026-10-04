@@ -92,7 +92,7 @@ export function EatingOutGuidesManager({ nutricionistaId, demoMode }: { nutricio
       </p>
 
       {editor && (
-        <div className="bg-card border border-border rounded-2xl p-4 space-y-3 mb-3">
+        <div className="card p-4 space-y-3 mb-3">
           <div className="flex items-center gap-2">
             <input value={editor.emoji} onChange={e => setEditor({ ...editor, emoji: e.target.value })} maxLength={4}
               placeholder="🍽️" className="w-14 px-2 py-2 bg-bg border border-border rounded-lg text-lg text-center outline-none focus:ring-2 focus:ring-accent/20" />
@@ -112,7 +112,7 @@ export function EatingOutGuidesManager({ nutricionistaId, demoMode }: { nutricio
       )}
 
       {rows.length === 0 && !editor ? (
-        <div className="bg-card border border-border rounded-2xl p-6 text-center space-y-3">
+        <div className="card p-6 text-center space-y-3">
           <p className="text-muted text-sm">Todavía no has personalizado esto — tu cliente ve un contenido genérico por defecto.</p>
           <Button size="sm" variant="ghost" onClick={restoreDefaults}>
             <RotateCcw className="w-3.5 h-3.5" /> Empezar a partir de las plantillas por defecto
@@ -122,7 +122,7 @@ export function EatingOutGuidesManager({ nutricionistaId, demoMode }: { nutricio
         <div className="space-y-2">
           {rows.map(r => (
             <div key={r.id} onClick={() => openEdit(r)}
-              className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-accent/50 transition-colors">
+              className="card p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-accent/50 transition-colors">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-xl flex-shrink-0">{r.emoji}</span>
                 <div className="min-w-0">

@@ -24,7 +24,7 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-sm text-center">
         <h1 className="text-4xl font-serif font-bold mb-8">Nutri<span className="text-accent italic">Fit</span></h1>
-        <div className="bg-card border border-border rounded-2xl p-8">
+        <div className="card p-8">
           <h2 className="font-serif font-bold text-xl mb-2">Contraseña actualizada ✓</h2>
           <p className="text-muted text-sm leading-relaxed">Ya puedes entrar con tu nueva contraseña.</p>
           <button onClick={onDone} className="mt-6 w-full py-3 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90">Ir al inicio de sesión</button>

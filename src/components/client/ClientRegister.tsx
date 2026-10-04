@@ -123,7 +123,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
                 <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError('') }}
                   onKeyDown={e => e.key === 'Enter' && handleForgotPassword()}
                   placeholder="tu@email.com"
-                  className="w-full px-4 py-3.5 bg-card border border-border rounded-2xl text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors" />
+                  className="w-full px-4 py-3.5 card text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors" />
               </div>
               {error && <p className="mt-3 text-sm text-warn text-left">{error}</p>}
               <button onClick={handleForgotPassword} disabled={loading}
@@ -164,7 +164,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
           <input type="email" inputMode="email" autoComplete="email" value={email}
             onChange={e => { setEmail(e.target.value); setError('') }}
             placeholder="tu@email.com"
-            className="w-full px-4 py-3.5 bg-card border border-border rounded-2xl text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors" />
+            className="w-full px-4 py-3.5 card text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors" />
         </div>
 
         <div>
@@ -173,7 +173,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
             <input type={showPassword ? 'text' : 'password'} autoComplete={step === 'register' ? 'new-password' : 'current-password'}
               value={password} onChange={e => { setPassword(e.target.value); setError('') }}
               placeholder="Mínimo 6 caracteres"
-              className="w-full px-4 py-3.5 pr-12 bg-card border border-border rounded-2xl text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors" />
+              className="w-full px-4 py-3.5 pr-12 card text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors" />
             <button type="button" onClick={() => setShowPassword(v => !v)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition-colors">
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -189,7 +189,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
                 onChange={e => { setConfirmPassword(e.target.value); setError('') }}
                 placeholder="Repite la contraseña"
                 onKeyDown={e => e.key === 'Enter' && handleRegister()}
-                className="w-full px-4 py-3.5 bg-card border border-border rounded-2xl text-base outline-none focus:border-accent transition-colors" />
+                className="w-full px-4 py-3.5 card text-base outline-none focus:border-accent transition-colors" />
               {confirmPassword && password === confirmPassword && (
                 <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ok" />
               )}

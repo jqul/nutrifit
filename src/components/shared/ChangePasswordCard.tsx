@@ -29,7 +29,7 @@ export function ChangePasswordCard({ demoMode }: { demoMode?: boolean }) {
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+    <div className="card p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold flex items-center gap-1.5"><KeyRound className="w-4 h-4" /> Contraseña</p>
         {!open && (

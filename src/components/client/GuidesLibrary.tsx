@@ -30,7 +30,7 @@ export function GuidesLibrary({ nutricionistaId, demoMode }: { nutricionistaId: 
   return (
     <>
       <button onClick={() => setOpen(true)}
-        className="w-full bg-card border border-border rounded-2xl p-5 flex items-center justify-between gap-3 text-left hover:border-accent/50 transition-colors">
+        className="w-full card p-5 flex items-center justify-between gap-3 text-left hover:border-accent/50 transition-colors">
         <div className="flex items-center gap-3">
           <BookOpen className="w-5 h-5 text-accent flex-shrink-0" />
           <div>

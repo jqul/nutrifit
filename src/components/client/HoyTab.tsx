@@ -299,7 +299,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
 
       {/* ── Pauta activa del nutricionista ── */}
       {plan?.advice && (
-        <div className="bg-accent/10 border border-accent/20 rounded-2xl p-4">
+        <div className="card-featured p-4">
           <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1.5">{personalMode ? 'Tu nota' : 'Consejo de tu nutricionista'}</p>
           <p className="text-sm leading-relaxed">{plan.advice}</p>
         </div>
@@ -308,7 +308,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
       <PendingSurveys client={client} demoMode={demoMode} />
 
       {/* ── Tracker de hidratación ── */}
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-500 flex-shrink-0">
@@ -344,7 +344,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
 
       {/* ── Comidas del día ── */}
       {todaysMeals.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl p-4">
+        <div className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
@@ -403,7 +403,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
 
       {/* ── Pauta de suplementos ── */}
       {visibleSupplements.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl p-4">
+        <div className="card p-4">
           <div className="flex items-center gap-2.5 mb-2">
             <div className="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 flex-shrink-0">
               <Pill className="w-4 h-4" />
@@ -431,7 +431,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-5">
+      <div className="card p-5 space-y-5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-ok/10 flex items-center justify-center text-ok flex-shrink-0">
@@ -541,7 +541,7 @@ function ProximasCitas({ client, demoMode, demoCitas }: { client: ClientData; de
   if (loading) return null
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+    <div className="card p-5 space-y-3">
       <div className="flex items-center justify-between">
         <p className="font-semibold text-sm flex items-center gap-1.5"><Calendar className="w-4 h-4" /> Próximas citas</p>
         <button onClick={() => setRequesting(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">

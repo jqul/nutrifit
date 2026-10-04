@@ -32,7 +32,7 @@ export function SurveyHistory({ client, demoMode, demoSurveys, demoResponses }: 
   if (loading || surveys.length === 0) return null
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5">
+    <div className="card p-5">
       <p className="font-semibold text-sm mb-3 flex items-center gap-1.5"><ClipboardEdit className="w-4 h-4" /> Encuestas recurrentes</p>
       <div className="space-y-4">
         {surveys.map(s => {

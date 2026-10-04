@@ -155,7 +155,7 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
             const dayStr = toLocalISODate(day)
             const dayAppointments = appointments.filter(a => toLocalISODate(new Date(a.startAt)) === dayStr)
             return (
-              <div key={dayStr} className="bg-card border border-border rounded-2xl p-3 space-y-2 min-h-[110px]">
+              <div key={dayStr} className="card p-3 space-y-2 min-h-[110px]">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted">
                   {day.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })}
                 </p>

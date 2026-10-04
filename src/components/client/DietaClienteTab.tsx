@@ -221,14 +221,14 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
       </div>
 
       {plan.advice && (
-        <div className="bg-accent/10 border border-accent/20 rounded-2xl p-4">
+        <div className="card-featured p-4">
           <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1.5">{personalMode ? 'Tu nota' : 'Consejo de tu nutricionista'}</p>
           <p className="text-sm leading-relaxed">{plan.advice}</p>
         </div>
       )}
 
       {usesCarbCycling && (
-        <div className="bg-card border border-border rounded-2xl p-4">
+        <div className="card p-4">
           <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2.5">¿Hoy es día de entrenamiento?</p>
           <div className="grid grid-cols-2 gap-2">
             <button onClick={() => chooseDayType('on')}
@@ -248,7 +248,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
       )}
 
       {usesWeeklyMenu && (
-        <div className="bg-card border border-border rounded-2xl p-4">
+        <div className="card p-4">
           <button onClick={() => setShowWeekSummary(v => !v)} className="w-full flex items-center justify-between">
             <span className="font-semibold text-sm flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Cuadrante semanal</span>
             {showWeekSummary ? <ChevronUp className="w-4 h-4 text-muted" /> : <ChevronDown className="w-4 h-4 text-muted" />}
@@ -310,7 +310,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
             ? optionChoices[groupId] : group[0].id
           const meal = group.find(m => m.id === chosenId) || group[0]
           return (
-            <div key={groupId || meal.id} className="bg-card border border-border rounded-2xl p-4">
+            <div key={groupId || meal.id} className="card p-4">
               {isGroup && groupId && (
                 <div className="flex items-center gap-1.5 mb-3 flex-wrap">
                   <Layers className="w-3.5 h-3.5 text-accent flex-shrink-0" />
@@ -362,7 +362,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
       </div>
 
       {visibleSupplements.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl p-4">
+        <div className="card p-4">
           <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Suplementación</p>
           <ul className="space-y-1.5">
             {visibleSupplements.map(s => (
@@ -497,7 +497,7 @@ function ShoppingList({ meals, foods, checked, onToggle }: { meals: DietMeal[]; 
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4">
+    <div className="card p-4">
       <div className="flex items-center justify-between mb-1">
         <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
           <ShoppingCart className="w-3.5 h-3.5" /> Lista de la compra

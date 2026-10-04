@@ -71,7 +71,7 @@ export function SurveyManager({ nutricionistaId, demoMode, demoSurveys }: {
   if (loading) return <p className="text-sm text-muted">Cargando...</p>
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+    <div className="card p-5 space-y-4">
       <div className="flex items-center justify-between">
         <p className="font-semibold text-sm flex items-center gap-1.5"><ClipboardEdit className="w-4 h-4" /> Encuestas recurrentes</p>
         {!creating && (

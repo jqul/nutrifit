@@ -603,7 +603,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   if (loading) return <p className="text-muted text-sm">Cargando...</p>
 
   if (!planId) return (
-    <div className="bg-card border border-border rounded-2xl p-12 text-center max-w-lg">
+    <div className="card p-12 text-center max-w-lg">
       <p className="text-muted text-sm mb-4">{personalMode ? 'Todavía no tienes un plan de dieta activo.' : 'Este cliente no tiene plan de dieta activo.'}</p>
       <Button onClick={handleCreatePlan}>Crear plan de dieta</Button>
     </div>
@@ -613,7 +613,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     <div className="max-w-2xl space-y-6">
       <FoodConverterDrawer nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />
       {templates.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-2 flex-wrap">
+        <div className="card p-4 flex items-center gap-2 flex-wrap">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted">Aplicar plantilla:</span>
           {templates.map(t => (
             <button key={t.id} onClick={() => applyTemplate(t)}
@@ -659,7 +659,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         )
       })()}
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+      <div className="card p-5 space-y-4">
         <div className="flex items-center justify-between">
           <p className="font-semibold text-sm">Objetivo de macros</p>
           <button onClick={() => setShowCalculator(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
@@ -793,7 +793,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                 </div>
               )}
               {group.map(meal => (
-          <div key={meal.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
+          <div key={meal.id} className="card p-4 space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
               {isGroup && (
                 <input value={meal.optionLabel || ''} onChange={e => updateMeal(meal.id, { optionLabel: e.target.value })} placeholder="Opción A"
@@ -1024,7 +1024,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           <button onClick={addSupplement} className="flex items-center gap-1 text-xs font-bold text-accent"><Plus className="w-3.5 h-3.5" /> Añadir</button>
         </div>
         {supplements.map(sup => (
-          <div key={sup.id} className="bg-card border border-border rounded-2xl p-3 flex items-center gap-2 flex-wrap">
+          <div key={sup.id} className="card p-3 flex items-center gap-2 flex-wrap">
             <input value={sup.name} onChange={e => updateSupplement(sup.id, { name: e.target.value })} placeholder="Nombre"
               className="flex-1 min-w-[120px] px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
             <input value={sup.dose} onChange={e => updateSupplement(sup.id, { dose: e.target.value })} placeholder="Dosis"
@@ -1108,7 +1108,7 @@ function RecipeGroup({ title, recipes, onDelete, onCopy, onSetPhoto, onEdit, nut
 }) {
   const [stepsOpenFor, setStepsOpenFor] = useState<string | null>(null)
   return (
-    <div className="bg-card border border-border rounded-2xl p-4">
+    <div className="card p-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2 flex items-center gap-1.5">
         <ChefHat className="w-3.5 h-3.5" /> {title} ({recipes.length})
       </p>
@@ -1288,7 +1288,7 @@ function ShoppingListPreview({ meals }: { meals: EditableMeal[] }) {
   const items = buildShoppingList(meals)
   if (items.length === 0) return null
   return (
-    <div className="bg-card border border-border rounded-2xl p-4">
+    <div className="card p-4">
       <button onClick={() => setOpen(v => !v)} className="w-full flex items-center justify-between">
         <span className="font-semibold text-sm flex items-center gap-1.5">
           <ShoppingCart className="w-3.5 h-3.5" /> Lista de la compra ({items.length})

@@ -14,7 +14,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   Definir una escala (12 metadata · 14 secundario · 16 normal · 20 subtítulo ·
   28-36 títulos) y sustituir los tamaños sueltos.
   *Hecho cuando:* no quedan `text-[Npx]` por debajo de 12 px en pantallas de uso diario.
-- [ ] **UX-02 · Tres niveles de tarjeta** (S)
+- [x] **UX-02 · Tres niveles de tarjeta** (S)
   Sin tarjeta (contenido normal) · tarjeta (agrupar) · tarjeta destacada (solo lo
   realmente importante). Crear componentes/clases y reducir `border border-border`
   en favor de espacio y fondos.

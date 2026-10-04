@@ -61,7 +61,7 @@ export function HealthTimeline({
   const groups = groupTimelineByMonth(filtered)
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 space-y-5">
+    <div className="card p-5 space-y-5">
       <div>
         <p className="font-serif font-bold text-lg flex items-center gap-2">
           <History className="w-4 h-4 text-accent" /> Health Timeline
@@ -135,7 +135,7 @@ function TimelineEventCard({ event, checkins, goalWeightKg, nutricionistaName, o
       <div className={`w-8 h-8 rounded-full ${accent.circle} text-white flex items-center justify-center flex-shrink-0 mt-0.5`}>
         <Icon className="w-4 h-4" />
       </div>
-      <div className="flex-1 min-w-0 bg-card border border-border rounded-2xl p-4">
+      <div className="flex-1 min-w-0 card p-4">
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <p className={`text-xs font-bold uppercase tracking-wider ${accent.label}`}>{accent.text} · {fmtDate(event.date)}</p>
           {event.type === 'nota' && <span className="text-xs text-muted flex-shrink-0">Por {nutricionistaName}</span>}
@@ -259,7 +259,7 @@ function HitoCard({ event, checkins }: { event: HitoEvent; checkins: DailyChecki
       <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
         <Flame className="w-4 h-4" />
       </div>
-      <div className="flex-1 min-w-0 bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex-1 min-w-0 card p-4 flex items-center justify-between gap-3 flex-wrap">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Hito de adherencia</p>
           <p className="font-semibold text-sm">{event.label}</p>

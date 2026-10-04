@@ -66,7 +66,7 @@ export function SuperAdminPanel({ onLogout, onSwitchToTrainer }: { onLogout: () 
               ) : (
                 <div className="space-y-2">
                   {pendientes.map(n => (
-                    <div key={n.uid} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3">
+                    <div key={n.uid} className="card p-4 flex items-center justify-between gap-3">
                       <div>
                         <p className="font-semibold text-sm">{n.display_name}</p>
                         <p className="text-xs text-muted">{n.email}</p>
@@ -82,7 +82,7 @@ export function SuperAdminPanel({ onLogout, onSwitchToTrainer }: { onLogout: () 
               <h2 className="text-lg font-serif font-bold mb-3">Activos ({activos.length})</h2>
               <div className="space-y-2">
                 {activos.map(n => (
-                  <div key={n.uid} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3">
+                  <div key={n.uid} className="card p-4 flex items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold text-sm">{n.display_name} {n.role === 'super_admin' && <span className="text-xs text-accent font-bold uppercase ml-1">Admin</span>}</p>
                       <p className="text-xs text-muted">{n.email}</p>

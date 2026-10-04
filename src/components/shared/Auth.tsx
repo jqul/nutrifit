@@ -99,7 +99,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
         <h2 className="text-4xl sm:text-5xl font-serif font-bold text-center mb-16 max-w-2xl mx-auto leading-tight">Todo lo que necesitas para gestionar a tus clientes</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {FEATURES.map(({ icon, title, desc }) => (
-            <div key={title} className="bg-card border border-border rounded-2xl p-8 hover:border-accent/40 hover:shadow-sm transition-all group">
+            <div key={title} className="card p-8 hover:border-accent/40 hover:shadow-sm transition-all group">
               <div className="text-2xl mb-4 group-hover:scale-110 transition-transform inline-block">{icon}</div>
               <p className="font-serif font-bold text-base mb-2">{title}</p>
               <p className="text-sm text-muted leading-relaxed">{desc}</p>
@@ -114,7 +114,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-sm text-center">
         <h1 className="text-4xl font-serif font-bold mb-8">Nutri<span className="text-accent italic">Fit</span></h1>
-        <div className="bg-card border border-border rounded-2xl p-8">
+        <div className="card p-8">
           <div className="w-14 h-14 bg-ok/10 rounded-full flex items-center justify-center mx-auto mb-4"><Check className="w-7 h-7 text-ok" /></div>
           <h2 className="font-serif font-bold text-xl mb-2">{accountMode === 'personal' ? 'Cuenta creada' : 'Solicitud enviada'}</h2>
           <p className="text-muted text-sm leading-relaxed">
@@ -133,7 +133,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
       <div className="w-full max-w-sm">
         <h1 className="text-center text-3xl font-serif font-bold mb-8">Nutri<span className="text-accent italic">Fit</span></h1>
         {forgotSent ? (
-          <div className="bg-card border border-border rounded-2xl p-8 text-center">
+          <div className="card p-8 text-center">
             <div className="w-14 h-14 bg-ok/10 rounded-full flex items-center justify-center mx-auto mb-4"><Check className="w-7 h-7 text-ok" /></div>
             <h2 className="font-serif font-bold text-xl mb-2">Revisa tu email</h2>
             <p className="text-muted text-sm leading-relaxed">Te hemos mandado un enlace a <strong>{email}</strong> para elegir una nueva contraseña.</p>

@@ -213,7 +213,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             {loading ? (
               <p className="text-muted text-sm">Cargando...</p>
             ) : filtered.length === 0 ? (
-              <div className="bg-card border border-border rounded-2xl p-12 text-center">
+              <div className="card p-12 text-center">
                 <p className="text-muted text-sm">
                   {clients.length === 0 ? 'Todavía no tienes clientes. Crea el primero para empezar.' : 'Ningún cliente coincide con el filtro.'}
                 </p>

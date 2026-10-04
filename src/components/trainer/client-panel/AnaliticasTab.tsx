@@ -117,7 +117,7 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
 
       {sessionKeys.length > 0 && (
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-card border border-border rounded-2xl p-3 text-center">
+          <div className="card p-3 text-center">
             <p className="text-lg font-serif font-bold">{sessionKeys.length}</p>
             <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Analizados</p>
           </div>
@@ -125,7 +125,7 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
             <p className="text-lg font-serif font-bold text-ok flex items-center justify-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {tierCounts.optimo}</p>
             <p className="text-xs text-ok/80 uppercase tracking-wider mt-0.5">Rango óptimo</p>
           </div>
-          <div className="bg-card border border-border rounded-2xl p-3 text-center">
+          <div className="card p-3 text-center">
             <p className="text-lg font-serif font-bold">{tierCounts.normal}</p>
             <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Normales</p>
           </div>
@@ -143,7 +143,7 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
       )}
 
       {adding && (
-        <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+        <div className="card p-4 space-y-3">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5 flex items-center gap-1.5">
               <ClipboardList className="w-3.5 h-3.5" /> Plantilla de registro rápido
@@ -184,13 +184,13 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
       )}
 
       {distinctDates.length === 0 ? (
-        <div className="bg-card border border-border rounded-2xl p-8 text-center">
+        <div className="card p-8 text-center">
           <p className="text-sm text-muted">Todavía no hay analíticas registradas para este cliente.</p>
         </div>
       ) : (
         <>
           {distinctDates.length > 1 && (
-            <div className="flex items-center justify-between gap-3 flex-wrap bg-card border border-border rounded-2xl px-3.5 py-2.5">
+            <div className="flex items-center justify-between gap-3 flex-wrap card px-3.5 py-2.5">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <Calendar className="w-3.5 h-3.5 text-muted flex-shrink-0" />
                 <span className="text-xs text-muted mr-1">Analítica:</span>
@@ -212,7 +212,7 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
           )}
 
           {effectiveDate && (
-            <div className="flex items-center justify-between gap-3 flex-wrap bg-card border border-border rounded-2xl px-3.5 py-2.5">
+            <div className="flex items-center justify-between gap-3 flex-wrap card px-3.5 py-2.5">
               <span className="text-xs text-muted">Informe de laboratorio · {fmtDate(effectiveDate)}</span>
               <LabReportAttachment clientId={client.id} date={effectiveDate} demoMode={demoMode} />
             </div>

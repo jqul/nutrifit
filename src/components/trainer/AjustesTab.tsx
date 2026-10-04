@@ -63,7 +63,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
     <div className="max-w-xl space-y-6">
       <h1 className="text-2xl font-serif font-bold mb-2">Ajustes</h1>
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+      <div className="card p-5 space-y-4">
         <p className="font-semibold text-sm flex items-center gap-1.5"><ClipboardList className="w-4 h-4" /> Preguntas personalizadas de anamnesis</p>
         <p className="text-xs text-muted">
           Se añaden al cuestionario de salud que rellenan tus clientes, después de las preguntas fijas.
@@ -76,7 +76,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
 
       <ChangePasswordCard demoMode={demoMode} />
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+      <div className="card p-5 space-y-4">
         <p className="font-semibold text-sm flex items-center gap-1.5"><Palette className="w-4 h-4" /> Marca blanca</p>
         <p className="text-xs text-muted">
           Personaliza el logo y el color que ven tus clientes en su panel, y el tuyo propio en el panel de nutricionista.
@@ -121,7 +121,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
         <Button onClick={saveBranding} loading={savingBranding}>Guardar marca</Button>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+      <div className="card p-5 space-y-4">
         <p className="font-semibold text-sm flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /> Consentimiento informado</p>
         <p className="text-xs text-muted">
           Sube el documento de consentimiento (protección de datos, condiciones del servicio...) que te haya

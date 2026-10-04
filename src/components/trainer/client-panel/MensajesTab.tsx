@@ -38,7 +38,7 @@ export function MensajesTab({ client, nutricionistaId, onUpdate, demoMode }: {
     window.open(buildWAUrl(client.phone, resolved), '_blank')
   }
 
-  if (loading) return <div className="h-32 bg-card border border-border rounded-2xl animate-pulse max-w-2xl" />
+  if (loading) return <div className="h-32 card animate-pulse max-w-2xl" />
 
   return (
     <div className="max-w-2xl space-y-4">
@@ -54,7 +54,7 @@ export function MensajesTab({ client, nutricionistaId, onUpdate, demoMode }: {
           const override = overrides[t.id]
           const effectiveText = override ?? t.texto
           return (
-            <div key={t.id} className="bg-card border border-border rounded-2xl p-3 space-y-2">
+            <div key={t.id} className="card p-3 space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted">{MESSAGE_TYPE_LABEL[t.tipo]} · {t.nombre}</p>
                 <div className="flex items-center gap-1 flex-shrink-0">

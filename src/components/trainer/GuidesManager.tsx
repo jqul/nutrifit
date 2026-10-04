@@ -80,7 +80,7 @@ export function GuidesManager({ nutricionistaId, demoMode }: { nutricionistaId: 
       </p>
 
       {editor && (
-        <div className="bg-card border border-border rounded-2xl p-4 space-y-3 mb-3">
+        <div className="card p-4 space-y-3 mb-3">
           <div className="flex items-center gap-2">
             <input value={editor.emoji} onChange={e => setEditor({ ...editor, emoji: e.target.value })} maxLength={4}
               placeholder="📄" className="w-14 px-2 py-2 bg-bg border border-border rounded-lg text-lg text-center outline-none focus:ring-2 focus:ring-accent/20" />
@@ -100,14 +100,14 @@ export function GuidesManager({ nutricionistaId, demoMode }: { nutricionistaId: 
       )}
 
       {guides.length === 0 && !editor ? (
-        <div className="bg-card border border-border rounded-2xl p-6 text-center">
+        <div className="card p-6 text-center">
           <p className="text-muted text-sm">Todavía no tienes ninguna. Pulsa "Nueva guía" para crear la primera.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {guides.map(g => (
             <div key={g.id} onClick={() => openEdit(g)}
-              className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-accent/50 transition-colors">
+              className="card p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-accent/50 transition-colors">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-xl flex-shrink-0">{g.emoji}</span>
                 <div className="min-w-0">

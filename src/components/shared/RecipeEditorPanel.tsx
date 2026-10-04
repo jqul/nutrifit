@@ -74,7 +74,7 @@ export function RecipeEditorPanel({ nutricionistaId, demoMode, foods, initial, o
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+    <div className="card p-4 space-y-3">
       <div className="flex items-center gap-2">
         <RecipePhotoUpload nutricionistaId={nutricionistaId} currentUrl={photoUrl} demoMode={demoMode} size="lg" onUploaded={setPhotoUrl} />
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre de la receta" autoFocus

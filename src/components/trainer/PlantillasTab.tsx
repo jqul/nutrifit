@@ -210,7 +210,7 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
         </div>
 
         {templateEditor && (
-          <div className="bg-card border border-border rounded-2xl p-4 space-y-3 mb-3">
+          <div className="card p-4 space-y-3 mb-3">
             <div className="flex items-center gap-2">
               <input value={templateEditor.name} onChange={e => setTemplateEditor({ ...templateEditor, name: e.target.value })}
                 placeholder="Nombre de la plantilla" autoFocus
@@ -285,7 +285,7 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
         )}
 
         {templates.length === 0 && !templateEditor ? (
-          <div className="bg-card border border-border rounded-2xl p-6 text-center">
+          <div className="card p-6 text-center">
             <p className="text-muted text-sm">Todavía no tienes ninguna. Pulsa "Nueva plantilla" para crear la primera.</p>
           </div>
         ) : (
@@ -295,7 +295,7 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
               const meals = plan.meals || []
               return (
                 <div key={t.id} onClick={() => openEditTemplate(t)}
-                  className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-accent/50 transition-colors">
+                  className="card p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-accent/50 transition-colors">
                   <div>
                     <p className="font-semibold text-sm">{t.name}</p>
                     <p className="text-xs text-muted mt-0.5">
@@ -336,7 +336,7 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
           const ownRecipes = recipes.filter(r => r.nutricionista_id !== null)
           if (ownRecipes.length === 0 && systemRecipes.length === 0 && !recipeEditor) {
             return (
-              <div className="bg-card border border-border rounded-2xl p-6 text-center">
+              <div className="card p-6 text-center">
                 <p className="text-muted text-sm">Todavía no tienes ninguna. Pulsa "Nueva receta" para crear la primera.</p>
               </div>
             )
@@ -378,7 +378,7 @@ function RecipeListCard({ recipe: r, onClick, onDelete, onCopy }: {
   const items = (r.items as { foodName?: string }[] | null) || []
   return (
     <div onClick={onClick}
-      className={`bg-card border border-border rounded-2xl p-4 flex items-center justify-between gap-3 transition-colors ${onClick ? 'cursor-pointer hover:border-accent/50' : ''}`}>
+      className={`card p-4 flex items-center justify-between gap-3 transition-colors ${onClick ? 'cursor-pointer hover:border-accent/50' : ''}`}>
       <div className="flex items-center gap-3 min-w-0">
         {r.photo_url ? (
           <img src={r.photo_url} alt={r.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />

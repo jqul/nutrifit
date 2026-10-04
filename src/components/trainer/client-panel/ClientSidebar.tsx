@@ -21,7 +21,7 @@ export function ClientSidebar({ client, currentWeight }: { client: ClientData; c
 
   return (
     <div className="space-y-4">
-      <div className="bg-card border border-border rounded-2xl p-5 text-center space-y-2">
+      <div className="card p-5 text-center space-y-2">
         <div className="w-16 h-16 rounded-full bg-accent/10 text-accent flex items-center justify-center text-2xl font-serif font-bold mx-auto">
           {client.name[0]?.toUpperCase()}
         </div>
@@ -38,7 +38,7 @@ export function ClientSidebar({ client, currentWeight }: { client: ClientData; c
       </div>
 
       {(currentWeight != null || client.heightCm != null) && (
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+        <div className="card p-5 space-y-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted">Datos biométricos</p>
           <div className="grid grid-cols-2 gap-2">
             {currentWeight != null && <MiniStat label="Peso actual" value={`${currentWeight} kg`} />}

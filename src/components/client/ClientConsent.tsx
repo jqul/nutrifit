@@ -51,7 +51,7 @@ export function ClientConsent({ token, clientName, nutricionistaName, documentUr
 
         <a href={signedUrl ?? undefined} target="_blank" rel="noreferrer" onClick={() => { if (signedUrl) setRead(true) }}
           aria-disabled={!signedUrl}
-          className={`flex items-center gap-3 p-4 bg-card border border-border rounded-2xl mb-5 hover:border-accent transition-colors ${!signedUrl ? 'opacity-60 pointer-events-none' : ''}`}>
+          className={`flex items-center gap-3 p-4 card mb-5 hover:border-accent transition-colors ${!signedUrl ? 'opacity-60 pointer-events-none' : ''}`}>
           <FileText className="w-5 h-5 text-accent flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Documento de consentimiento</p>
@@ -74,7 +74,7 @@ export function ClientConsent({ token, clientName, nutricionistaName, documentUr
           Firma (tu nombre completo)
         </label>
         <input value={signedName} onChange={e => setSignedName(e.target.value)} placeholder="Nombre y apellidos"
-          className="w-full px-4 py-3.5 bg-card border border-border rounded-2xl text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors mb-1" />
+          className="w-full px-4 py-3.5 card text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors mb-1" />
         <p className="text-xs text-muted mb-5">Escribir tu nombre aquí, junto con la casilla anterior, actúa como tu firma electrónica y queda fechada automáticamente.</p>
 
         {error && <p className="text-sm text-warn text-center mb-4">{error}</p>}

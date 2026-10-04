@@ -35,7 +35,7 @@ function PendingApprovalScreen({ displayName, email, onLogout }: { displayName: 
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-sm text-center">
         <h1 className="text-4xl font-serif font-bold mb-8">Nutri<span className="text-accent italic">Fit</span></h1>
-        <div className="bg-card border border-border rounded-2xl p-8">
+        <div className="card p-8">
           <div className="w-14 h-14 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4"><Clock className="w-7 h-7 text-accent" /></div>
           <h2 className="font-serif font-bold text-xl mb-2">Cuenta pendiente de aprobación</h2>
           <p className="text-muted text-sm leading-relaxed">

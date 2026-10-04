@@ -178,7 +178,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
       <HealthTimeline weights={weights} bloodMarkers={bloodMarkers} photos={sessions} clinicalNotes={clinicalNotes}
         mealLogs={mealLogs} checkins={checkins} variant="client" nutricionistaName={nutricionistaName} goalWeightKg={client.goalWeightKg} />
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <p className="font-semibold text-sm">Peso corporal</p>
           {client.gender?.trim().toLowerCase() === 'mujer' && (
@@ -203,7 +203,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
 
       <PhotoComparator sessions={sessions} />
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <p className="font-semibold text-sm">Fotos de progreso</p>
           <button onClick={handleNewSession} className="flex items-center gap-1 text-xs font-bold text-accent">
@@ -238,7 +238,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
         )}
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+      <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <p className="font-semibold text-sm flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4" /> Diario de comidas</p>
           <button onClick={() => setAddingMeal(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
@@ -306,7 +306,7 @@ function AchievementBadges({ weights, streak, checkins, mealLogs }: {
     { icon: '🥗', label: '10 fotos de comida', unlocked: mealPhotoCount >= 10 },
   ]
   return (
-    <div className="bg-card border border-border rounded-2xl p-5">
+    <div className="card p-5">
       <p className="font-semibold text-sm mb-3">Tus logros</p>
       <div className="grid grid-cols-4 gap-2">
         {badges.map(b => (
@@ -388,7 +388,7 @@ function PhotoComparator({ sessions }: { sessions: ProgressPhotoSession[] }) {
   const fmtDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+    <div className="card p-5 space-y-3">
       <p className="font-semibold text-sm flex items-center gap-1.5"><Images className="w-4 h-4" /> Antes vs. después</p>
       <div className="flex gap-1.5">
         {(['front', 'side', 'back'] as const).map(a => (

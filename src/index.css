@@ -47,6 +47,16 @@
   }
 }
 
+/* Niveles de tarjeta (UX-02). Hay tres, de menos a más peso:
+   1. SIN tarjeta: contenido normal, directamente sobre el fondo. No hace falta clase.
+   2. .card: agrupa información relacionada. Borde suave (60 %), no un marco duro.
+   3. .card-featured: lo único realmente importante de la pantalla (máx. UNA por pantalla,
+      p. ej. el consejo del nutricionista). Fondo y borde en el color de acento. */
+@layer components {
+  .card { @apply bg-card rounded-2xl border border-border/60; }
+  .card-featured { @apply bg-accent/10 rounded-2xl border border-accent/30; }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
