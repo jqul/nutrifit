@@ -5,7 +5,7 @@ import { Modal } from '../../shared/Modal'
 import { Button } from '../../shared/Button'
 import { toast } from '../../shared/Toast'
 import { Upload, AlertTriangle, CheckCircle2 } from 'lucide-react'
-import type { EditableItem, EditableMeal } from './PlanDietaTab'
+import type { EditableItem, EditableMeal } from './plan-dieta/planModel'
 
 interface ParsedRow {
   meal: string; time: string; food: string; quantity: string; unit: string
