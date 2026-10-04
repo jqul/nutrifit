@@ -20,24 +20,13 @@ import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
 import { ClientListRow } from './ClientListRow'
 import { sortByAttention } from '../../lib/clientListSummary'
+import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboardNav'
 import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
 }
-
-type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'micronutrientes' | 'plantillas' | 'difusion' | 'ajustes'
-const VIEWS: { id: View; label: string }[] = [
-  { id: 'clientes', label: 'Clientes' },
-  { id: 'calendario', label: 'Calendario' },
-  { id: 'negocio', label: 'Negocio' },
-  { id: 'conversor', label: 'Conversor' },
-  { id: 'micronutrientes', label: 'Micronutrientes' },
-  { id: 'plantillas', label: 'Plantillas' },
-  { id: 'difusion', label: 'Difusión' },
-  { id: 'ajustes', label: 'Ajustes' },
-]
 
 export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients, onUpdateProfile, onSwitchToAdmin }: {
   userProfile: UserProfile
@@ -49,6 +38,13 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
 }) {
   const { clients, loading, addClient, fetchClients } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
   const [view, setView] = useState<View>('clientes')
+  // Última sección vista en cada grupo, para que volver a un grupo te deje donde estabas.
+  const [lastViewByGroup, setLastViewByGroup] = useState<Partial<Record<string, View>>>({})
+  const activeGroup = groupOfView(view)
+  const goToView = (next: View) => {
+    setView(next)
+    setLastViewByGroup(prev => ({ ...prev, [groupOfView(next).id]: next }))
+  }
   const [modalOpen, setModalOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [form, setForm] = useState<NewClientInput>(EMPTY_FORM)
@@ -136,16 +132,33 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             </button>
           </div>
         </div>
-        <div className="max-w-5xl mx-auto px-6 flex gap-1 overflow-x-auto">
-          {VIEWS.map(v => (
-            <button key={v.id} onClick={() => setView(v.id)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                view === v.id ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'
-              }`}>
-              {v.label}
-            </button>
-          ))}
-        </div>
+        <nav aria-label="Secciones" className="max-w-5xl mx-auto px-6 flex gap-1 overflow-x-auto">
+          {NAV_GROUPS.map(g => {
+            const active = g.id === activeGroup.id
+            return (
+              <button key={g.id} onClick={() => goToView(viewForGroup(g, lastViewByGroup))}
+                aria-current={active ? 'page' : undefined}
+                ref={el => { if (active) el?.scrollIntoView({ inline: 'nearest', block: 'nearest' }) }}
+                className={`px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  active ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'
+                }`}>
+                {g.label}
+              </button>
+            )
+          })}
+        </nav>
+        {activeGroup.views.length > 1 && (
+          <div role="tablist" aria-label={activeGroup.label} className="max-w-5xl mx-auto px-6 py-2 flex gap-2 overflow-x-auto">
+            {activeGroup.views.map(v => (
+              <button key={v.id} role="tab" aria-selected={view === v.id} onClick={() => goToView(v.id)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${
+                  view === v.id ? 'bg-accent/15 text-ink' : 'text-muted hover:text-ink hover:bg-bg-alt'
+                }`}>
+                {v.label}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">

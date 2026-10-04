@@ -330,7 +330,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     const stamp = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
     const ok = await saveTemplateAs(`Copia de ${client.name} — ${stamp}`)
     if (!ok) return
-    toast('Plan duplicado ✓ — aplícalo desde "Plantillas" para ajustar la nueva fase', 'ok')
+    toast('Plan duplicado ✓ — aplícalo desde "Planificación" para ajustar la nueva fase', 'ok')
   }
 
   const applyTemplate = (tpl: DietTemplateRow) => {
