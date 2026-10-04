@@ -24,7 +24,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
 
 ## Fase 1 — Las 4 pantallas que definen el producto
 
-- [ ] **UX-10 · Lista de Clientes** (M) — prioridad 1 (6,5 → 9)
+- [x] **UX-10 · Lista de Clientes** (M) — prioridad 1 (6,5 → 9)
   Una fila = una persona + estado + acción. Mostrar peso y variación, adherencia, racha y
   el **semáforo de salud** (`clientHealth`: attention/billing/streak/active) con mucho
   más protagonismo. Filtros con contadores (Todos · Activos · Atención).

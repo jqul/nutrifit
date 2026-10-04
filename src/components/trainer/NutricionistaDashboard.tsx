@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { UserProfile, ClientData } from '../../types'
 import { useNutricionistaClients, NewClientInput } from '../../hooks/useNutricionistaClients'
-import { goalLabel } from '../../lib/constants'
 import { supabase } from '../../lib/supabase'
 import { toLocalISODate } from '../../lib/date'
 import { DEMO_APPOINTMENTS } from '../../lib/demo-data'
@@ -19,22 +18,13 @@ import { PlantillasTab } from './PlantillasTab'
 import { AjustesTab } from './AjustesTab'
 import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
-import { Plus, Flame, Copy, LogOut, Search, Crown, Upload, ShieldCheck, AlertTriangle, Receipt, CheckCircle2, CalendarClock, Tag } from 'lucide-react'
-import { ClientHealthStatus } from '../../lib/clientHealth'
+import { ClientListRow } from './ClientListRow'
+import { sortByAttention } from '../../lib/clientListSummary'
+import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
-}
-
-// Badge de salud del cliente ("semáforo"): un icono + color por estado, para
-// escanear la lista de un vistazo y ver quién necesita atención — ver
-// computeClientHealth para la prioridad entre estados.
-const HEALTH_BADGE: Record<ClientHealthStatus, { icon: typeof AlertTriangle; className: string }> = {
-  attention: { icon: AlertTriangle, className: 'text-warn bg-warn/10 border-warn/20' },
-  billing: { icon: Receipt, className: 'text-notice bg-notice/10 border-notice/20' },
-  streak: { icon: Flame, className: 'text-accent bg-accent/10 border-accent/20' },
-  active: { icon: CheckCircle2, className: 'text-ok bg-ok/10 border-ok/20' },
 }
 
 type View = 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'micronutrientes' | 'plantillas' | 'difusion' | 'ajustes'
@@ -89,16 +79,19 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
 
   const allTags = Array.from(new Set(clients.flatMap(c => c.tags))).sort()
   const riskCount = clients.filter(c => c.healthStatus === 'attention').length
+  const activeCount = clients.length - riskCount
 
   const filtered = clients
     .filter(c => `${c.name} ${c.surname}`.toLowerCase().includes(query.toLowerCase()))
     .filter(c => {
       if (quickFilter === 'all') return true
       if (quickFilter === 'risk') return c.healthStatus === 'attention'
+      if (quickFilter === 'active') return c.healthStatus !== 'attention'
       if (quickFilter === 'today') return todayApptClientIds.has(c.id)
       if (quickFilter.startsWith('tag:')) return c.tags.includes(quickFilter.slice(4))
       return true
     })
+  const sorted = sortByAttention(filtered)
   const topStreak = Math.max(0, ...clients.map(c => c.streak || 0))
 
   const handleCreate = async () => {
@@ -200,8 +193,9 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
                     className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
                 </div>
                 <div className="flex gap-1.5 flex-wrap">
-                  <FilterChip active={quickFilter === 'all'} onClick={() => setQuickFilter('all')} label="Todos" />
-                  <FilterChip active={quickFilter === 'risk'} onClick={() => setQuickFilter('risk')} label={`En riesgo${riskCount > 0 ? ` (${riskCount})` : ''}`} icon={AlertTriangle} />
+                  <FilterChip active={quickFilter === 'all'} onClick={() => setQuickFilter('all')} label={`Todos (${clients.length})`} />
+                  <FilterChip active={quickFilter === 'active'} onClick={() => setQuickFilter('active')} label={`Activos (${activeCount})`} icon={CheckCircle2} />
+                  <FilterChip active={quickFilter === 'risk'} onClick={() => setQuickFilter('risk')} label={`Atención (${riskCount})`} icon={AlertTriangle} />
                   <FilterChip active={quickFilter === 'today'} onClick={() => setQuickFilter('today')} label={`Con cita hoy${todayApptClientIds.size > 0 ? ` (${todayApptClientIds.size})` : ''}`} icon={CalendarClock} />
                   {allTags.map(t => (
                     <FilterChip key={t} active={quickFilter === `tag:${t}`} onClick={() => setQuickFilter(`tag:${t}`)} label={t} icon={Tag} />
@@ -219,47 +213,11 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filtered.map(c => {
-                  const isTopStreak = topStreak > 0 && (c.streak || 0) === topStreak
-                  const badge = HEALTH_BADGE[c.healthStatus || 'active']
-                  const BadgeIcon = badge.icon
-                  return (
-                  <div key={c.id} className={`bg-card border rounded-2xl p-5 hover:shadow-sm transition-all cursor-pointer ${
-                    isTopStreak ? 'border-accent/50' : 'border-border hover:border-accent/40'
-                  }`}
-                    onClick={() => onSelectClient(c)}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-serif font-bold text-lg flex items-center gap-1.5">
-                          {c.name} {c.surname}
-                          {isTopStreak && <Crown className="w-4 h-4 text-accent flex-shrink-0" aria-label="Mejor racha" />}
-                        </p>
-                        {c.goal && <p className="text-xs text-muted mt-0.5">{goalLabel(c.goal)}</p>}
-                      </div>
-                      <button onClick={e => { e.stopPropagation(); copyLink(c.token) }}
-                        className="p-1.5 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors flex-shrink-0" title="Copiar enlace del cliente">
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-4 mt-4 text-sm">
-                      <div className="flex items-center gap-1 text-muted">
-                        <Flame className={`w-3.5 h-3.5 ${(c.streak || 0) > 0 ? 'text-accent' : ''}`} />
-                        <span>{c.streak || 0}d</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="h-1.5 bg-bg-alt rounded-full overflow-hidden">
-                          <div className="h-full bg-accent rounded-full" style={{ width: `${c.adherence7d || 0}%` }} />
-                        </div>
-                      </div>
-                      <span className="text-xs text-muted">{c.adherence7d || 0}%</span>
-                    </div>
-                    <div className={`inline-flex items-center gap-1 mt-3 px-2 py-1 rounded-lg border text-xs font-semibold ${badge.className}`}>
-                      <BadgeIcon className="w-3 h-3" />
-                      {c.healthLabel || 'Activo'}
-                    </div>
-                  </div>
-                )})}
+              <div className="card divide-y divide-border/60 overflow-hidden">
+                {sorted.map(c => (
+                  <ClientListRow key={c.id} client={c} isTopStreak={topStreak > 0 && (c.streak || 0) === topStreak}
+                    onOpen={() => onSelectClient(c)} onCopyLink={() => copyLink(c.token)} />
+                ))}
               </div>
             )}
           </>

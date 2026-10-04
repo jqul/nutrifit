@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { ClientData, DailyCheckin } from '../types'
-import { clientFromRow, clientToRow, checkinFromRow } from '../lib/mappers'
+import { ClientData, DailyCheckin, WeightEntry } from '../types'
+import { clientFromRow, clientToRow, checkinFromRow, weightFromRow } from '../lib/mappers'
+import { summarizeWeight } from '../lib/clientListSummary'
 import { calcAdherence, calcStreak } from '../lib/adherence'
 import { computeClientHealth, hasUnreviewedActivity, ClientHealthStatus } from '../lib/clientHealth'
 import { hasAnyMarkerOutOfRange } from '../lib/bloodMarkers'
 import { toast } from '../components/shared/Toast'
-import { DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES } from '../lib/demo-data'
+import { DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES, DEMO_WEIGHTS } from '../lib/demo-data'
 import { InvoiceRow, BloodMarkerRow, SurveyResponseRow } from '../lib/supabase-types'
 import { generateClientToken } from '../lib/token'
 
@@ -17,6 +18,9 @@ export interface ClientWithStats extends ClientData {
   streak?: number
   healthStatus?: ClientHealthStatus
   healthLabel?: string
+  /** Último peso registrado y su variación en 4 semanas (null si hay <2 pesajes). */
+  weightKg?: number
+  weightDeltaKg?: number | null
 }
 
 function currentPeriod(): string {
@@ -31,6 +35,7 @@ interface Options {
 function withStats(
   clients: ClientData[], checkinsMap: Record<string, DailyCheckin[]>, invoicesMap: Record<string, InvoiceRow[]> = {},
   bloodMarkersMap: Record<string, BloodMarkerRow[]> = {}, surveyResponsesMap: Record<string, SurveyResponseRow[]> = {},
+  weightsMap: Record<string, WeightEntry[]> = {},
 ): ClientWithStats[] {
   const today = new Date()
   const todayStr = toLocalISODate(today)
@@ -48,8 +53,11 @@ function withStats(
       lastCheckin, streak, createdAt: c.createdAt, monthlyPrice: c.monthlyPrice,
       hasBiomarkerAlert, hasUnreviewedActivity: unreviewed,
     }, hasCurrentPeriodInvoice, today)
+    const weight = summarizeWeight(weightsMap[c.id] || [], today)
     return {
       ...c,
+      weightKg: weight?.latestKg,
+      weightDeltaKg: weight?.deltaKg ?? null,
       lastCheckin,
       doneToday: lastCheckin === todayStr,
       adherence7d: calcAdherence(checkins, 7, today),
@@ -78,7 +86,7 @@ export interface NewClientInput {
 
 export function useNutricionistaClients({ nutricionistaId, demoClients }: Options) {
   const [clients, setClients] = useState<ClientWithStats[]>(
-    demoClients ? withStats(demoClients, DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES) : []
+    demoClients ? withStats(demoClients, DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES, DEMO_WEIGHTS) : []
   )
   const [loading, setLoading] = useState(!demoClients)
 
@@ -91,11 +99,12 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
 
     if (mapped.length) {
       const ids = mapped.map(c => c.id)
-      const [{ data: checkinRows }, { data: invoiceRows }, { data: bloodMarkerRows }, { data: surveyResponseRows }] = await Promise.all([
+      const [{ data: checkinRows }, { data: invoiceRows }, { data: bloodMarkerRows }, { data: surveyResponseRows }, { data: weightRows }] = await Promise.all([
         supabase.from('daily_checkins').select('*').in('client_id', ids),
         supabase.from('invoices').select('*').in('client_id', ids),
         supabase.from('blood_markers').select('*').in('client_id', ids),
         supabase.from('survey_responses').select('*').in('client_id', ids),
+        supabase.from('weight_logs').select('*').in('client_id', ids),
       ])
       const checkinsByClient: Record<string, DailyCheckin[]> = {}
       ;(checkinRows || []).forEach((row) => {
@@ -108,7 +117,12 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
       ;(bloodMarkerRows || []).forEach((row: BloodMarkerRow) => { (bloodMarkersByClient[row.client_id] ||= []).push(row) })
       const surveyResponsesByClient: Record<string, SurveyResponseRow[]> = {}
       ;(surveyResponseRows || []).forEach((row: SurveyResponseRow) => { (surveyResponsesByClient[row.client_id] ||= []).push(row) })
-      setClients(withStats(mapped, checkinsByClient, invoicesByClient, bloodMarkersByClient, surveyResponsesByClient))
+      const weightsByClient: Record<string, WeightEntry[]> = {}
+      ;(weightRows || []).forEach((row) => {
+        const w = weightFromRow(row)
+        ;(weightsByClient[w.clientId] ||= []).push(w)
+      })
+      setClients(withStats(mapped, checkinsByClient, invoicesByClient, bloodMarkersByClient, surveyResponsesByClient, weightsByClient))
     } else {
       setClients([])
     }

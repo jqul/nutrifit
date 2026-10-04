@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import { toast } from '../components/shared/Toast'
 
-// Fallback fijo — ver el comentario en lib/supabase.ts sobre por qué no basta
-// con confiar en la variable de entorno en algunas plataformas de despliegue.
-const FALLBACK_VAPID_KEY = 'BMqjfis4fACrLYQE0Fm0-mQxT9FQBLDheEkXWtHh13_sfBvXg7jX7_SjAFjn0Yugw09bqgDKW8ewoideccDWvw4'
-const envVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
-const VAPID_PUBLIC_KEY = envVapidKey && /^[\w-]{80,}$/.test(envVapidKey) ? envVapidKey : FALLBACK_VAPID_KEY
+// Clave PÚBLICA VAPID (no es un secreto: el navegador la necesita para
+// suscribirse). Va fija en el código a propósito y NO se lee de
+// VITE_VAPID_PUBLIC_KEY: una variable antigua en Vercel o en un .env pisaría la
+// clave buena y rompería las notificaciones sin ningún error visible. Debe
+// coincidir con el secreto VAPID_PUBLIC_KEY de Supabase; si se rota el par,
+// se cambia aquí.
+const VAPID_PUBLIC_KEY = 'BMqjfis4fACrLYQE0Fm0-mQxT9FQBLDheEkXWtHh13_sfBvXg7jX7_SjAFjn0Yugw09bqgDKW8ewoideccDWvw4'
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4)
