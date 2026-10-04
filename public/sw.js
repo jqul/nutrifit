@@ -33,7 +33,10 @@ self.addEventListener('fetch', e => {
         }
         return res
       })
-      .catch(() => caches.match(e.request).then(r => r || caches.match('/index.html')))
+      // Sin red: lo cacheado si existe. El respaldo a index.html es solo para
+      // navegaciones (recargar una ruta de la SPA) — si falla un .js/.css y se
+      // devolviera HTML, el navegador lo intentaría ejecutar y daría error de MIME.
+      .catch(() => caches.match(e.request).then(r => r || (e.request.mode === 'navigate' ? caches.match('/index.html') : Response.error())))
   )
 })
 

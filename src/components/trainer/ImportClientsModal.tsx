@@ -4,6 +4,7 @@ import { Modal } from '../shared/Modal'
 import { Button } from '../shared/Button'
 import { toast } from '../shared/Toast'
 import { Upload, AlertTriangle } from 'lucide-react'
+import { generateClientToken } from '../../lib/token'
 
 interface ParsedClient {
   name: string; surname: string; phone: string; email: string
@@ -133,7 +134,7 @@ export function ImportClientsModal({ open, onClose, nutricionistaId, demoMode, o
     setImporting(true)
     const rows = valid.map(c => ({
       nutricionista_id: nutricionistaId,
-      token: Math.random().toString(36).slice(2, 14),
+      token: generateClientToken(),
       name: c.name, surname: c.surname, phone: c.phone, email: c.email || null,
       goal: c.goal || null, height_cm: c.heightCm ? parseFloat(c.heightCm) : null,
       gender: c.gender || null, birth_date: c.birthDate || null,

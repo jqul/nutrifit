@@ -13,6 +13,7 @@ import { PerfilTab } from './client-panel/PerfilTab'
 import { PersonalOnboarding } from './PersonalOnboarding'
 import { AnamnesisForm } from '../client/AnamnesisForm'
 import { LogOut } from 'lucide-react'
+import { generateClientToken } from '../../lib/token'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'plan' | 'perfil'
 
@@ -62,7 +63,7 @@ export function PersonalModeShell({ userProfile, onLogout }: {
   // es inofensivo, así que se deja funcionar de verdad en vez de ocultarlo.
   const handleRegenerateToken = async () => {
     if (!client) return null
-    const token = Math.random().toString(36).slice(2, 14)
+    const token = generateClientToken()
     const { error } = await supabase.from('clientes').update({ token }).eq('id', client.id)
     if (error) return null
     setClient({ ...client, token })

@@ -8,6 +8,7 @@ import { hasAnyMarkerOutOfRange } from '../lib/bloodMarkers'
 import { toast } from '../components/shared/Toast'
 import { DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES } from '../lib/demo-data'
 import { InvoiceRow, BloodMarkerRow, SurveyResponseRow } from '../lib/supabase-types'
+import { generateClientToken } from '../lib/token'
 
 export interface ClientWithStats extends ClientData {
   lastCheckin?: string
@@ -124,7 +125,7 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
   }, [nutricionistaId, demoClients, fetchClients])
 
   const addClient = async (newClient: NewClientInput) => {
-    const token = Math.random().toString(36).slice(2, 14)
+    const token = generateClientToken()
     if (demoClients) {
       const demoClient: ClientData = {
         id: `demo-new-${Date.now()}`, nutricionistaId, token,
@@ -188,7 +189,7 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
   }
 
   const regenerateToken = async (id: string) => {
-    const token = Math.random().toString(36).slice(2, 14)
+    const token = generateClientToken()
     if (demoClients) {
       setClients(prev => prev.map(c => c.id === id ? { ...c, token } : c))
       toast('Enlace regenerado (modo demo — no se guarda)', 'ok')
