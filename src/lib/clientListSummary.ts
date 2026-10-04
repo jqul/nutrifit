@@ -44,3 +44,14 @@ export function sortByAttention<T extends { healthStatus?: ClientHealthStatus; n
     (HEALTH_ORDER[a.healthStatus || 'active'] - HEALTH_ORDER[b.healthStatus || 'active'])
     || `${a.name} ${a.surname}`.localeCompare(`${b.name} ${b.surname}`, 'es'))
 }
+
+/** 68.4 → "68,4" (decimal con coma, siempre un decimal). */
+export function formatKg(n: number): string {
+  return n.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+}
+
+/** Variación de peso lista para mostrar: "↓ 0,6 kg", "↑ 1,5 kg", "= 0,0 kg" o "sin variación" si no hay dato. */
+export function formatWeightDelta(deltaKg: number | null | undefined): string {
+  if (deltaKg == null) return 'sin variación'
+  return `${deltaKg < 0 ? '↓' : deltaKg > 0 ? '↑' : '='} ${formatKg(Math.abs(deltaKg))} kg`
+}

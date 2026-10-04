@@ -29,7 +29,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   el **semáforo de salud** (`clientHealth`: attention/billing/streak/active) con mucho
   más protagonismo. Filtros con contadores (Todos · Activos · Atención).
   *Hecho cuando:* se ve de un vistazo quién necesita atención sin abrir fichas.
-- [ ] **UX-11 · Cabecera fija de la ficha de cliente** (M) — prioridad 3
+- [x] **UX-11 · Cabecera fija de la ficha de cliente** (M) — prioridad 3
   Nombre + estado + 3 KPIs (peso, adherencia, racha) siempre visibles; debajo pestañas
   Resumen · Plan · Seguimiento · Salud · Mensajes. Quitar el efecto "panel dentro de panel".
 - [ ] **UX-12 · Editor del plan de dieta en 3 niveles** (L) — prioridad 2 (6 → 9)

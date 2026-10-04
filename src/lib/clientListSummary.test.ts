@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { summarizeWeight, weightDeltaTone, sortByAttention } from './clientListSummary'
+import { summarizeWeight, weightDeltaTone, sortByAttention, formatKg, formatWeightDelta } from './clientListSummary'
 
 const today = new Date('2026-10-04T12:00:00')
 const d = (daysAgo: number) => {
@@ -66,5 +66,21 @@ describe('sortByAttention', () => {
     const list = [{ name: 'B', surname: '', healthStatus: 'active' as const }, { name: 'A', surname: '', healthStatus: 'attention' as const }]
     sortByAttention(list)
     expect(list[0].name).toBe('B')
+  })
+})
+
+describe('formatKg / formatWeightDelta', () => {
+  it('formats with a decimal comma and one decimal', () => {
+    expect(formatKg(68.4)).toBe('68,4')
+    expect(formatKg(70)).toBe('70,0')
+  })
+  it('shows direction arrows with the absolute value', () => {
+    expect(formatWeightDelta(-0.6)).toBe('↓ 0,6 kg')
+    expect(formatWeightDelta(1.5)).toBe('↑ 1,5 kg')
+    expect(formatWeightDelta(0)).toBe('= 0,0 kg')
+  })
+  it('says there is no variation when there is no data', () => {
+    expect(formatWeightDelta(null)).toBe('sin variación')
+    expect(formatWeightDelta(undefined)).toBe('sin variación')
   })
 })

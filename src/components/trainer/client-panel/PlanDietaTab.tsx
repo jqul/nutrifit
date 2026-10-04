@@ -675,7 +675,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               toast('Objetivo de macros aplicado — recuerda guardar el plan ✓', 'ok')
             }} />
         )}
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
           <NumInput label="Kcal" value={kcalTarget} onChange={setKcalTarget} />
           <NumInput label="Proteína (g)" value={proteinG} onChange={setProteinG} />
           <NumInput label="Carbos (g)" value={carbsG} onChange={setCarbsG} />
@@ -990,7 +990,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                   const recipe = recipes.find(r => r.id === e.target.value)
                   if (recipe) insertRecipe(meal.id, recipe)
                   e.target.value = ''
-                }} className="px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+                }} className="max-w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
                   <option value="" disabled>Insertar receta...</option>
                   {recipes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>

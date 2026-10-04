@@ -1,21 +1,8 @@
 import { ClientWithStats } from '../../hooks/useNutricionistaClients'
-import { ClientHealthStatus } from '../../lib/clientHealth'
 import { goalLabel } from '../../lib/constants'
-import { weightDeltaTone } from '../../lib/clientListSummary'
-import { Flame, Copy, Crown, AlertTriangle, Receipt, CheckCircle2, ChevronRight } from 'lucide-react'
-
-// Estado de salud del cliente ("semáforo"): icono + color por estado — ver
-// computeClientHealth para la prioridad entre estados. `stripe` es la franja
-// lateral de la fila: solo los estados que piden acción la llevan.
-const HEALTH_BADGE: Record<ClientHealthStatus, { icon: typeof AlertTriangle; pill: string; stripe: string }> = {
-  attention: { icon: AlertTriangle, pill: 'text-warn bg-warn/10', stripe: 'border-l-warn' },
-  billing: { icon: Receipt, pill: 'text-notice bg-notice/10', stripe: 'border-l-notice' },
-  streak: { icon: Flame, pill: 'text-accent bg-accent/10', stripe: 'border-l-transparent' },
-  active: { icon: CheckCircle2, pill: 'text-ok bg-ok/10', stripe: 'border-l-transparent' },
-}
-
-const TONE_CLASS = { good: 'text-ok', bad: 'text-warn', neutral: 'text-muted' } as const
-const fmtKg = (n: number) => n.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+import { weightDeltaTone, formatKg, formatWeightDelta } from '../../lib/clientListSummary'
+import { HEALTH_BADGE, TONE_CLASS } from './healthStyles'
+import { Flame, Copy, Crown, ChevronRight } from 'lucide-react'
 
 /**
  * Una fila = una persona + su estado + una acción. Sustituye a la antigua
@@ -59,9 +46,9 @@ export function ClientListRow({ client: c, isTopStreak, onOpen, onCopyLink }: {
         <div className="md:w-24">
           {c.weightKg != null ? (
             <>
-              <p className="font-semibold leading-tight">{fmtKg(c.weightKg)} <span className="text-xs font-normal text-muted">kg</span></p>
+              <p className="font-semibold leading-tight">{formatKg(c.weightKg)} <span className="text-xs font-normal text-muted">kg</span></p>
               <p className={`text-xs leading-tight ${TONE_CLASS[tone]}`}>
-                {c.weightDeltaKg == null ? 'sin variación' : `${c.weightDeltaKg < 0 ? '↓' : c.weightDeltaKg > 0 ? '↑' : '='} ${fmtKg(Math.abs(c.weightDeltaKg))} kg`}
+                {formatWeightDelta(c.weightDeltaKg)}
               </p>
             </>
           ) : (

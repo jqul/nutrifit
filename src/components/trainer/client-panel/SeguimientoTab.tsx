@@ -169,11 +169,11 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
         </div>
         <div className="card p-4 text-center">
           <p className="text-xl font-serif font-bold">{adherence7d}%</p>
-          <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Adherencia 7d</p>
+          <p className="text-xs text-muted mt-0.5">Adherencia 7d</p>
         </div>
         <div className="card p-4 text-center">
           <p className="text-xl font-serif font-bold">{adherence30d}%</p>
-          <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Adherencia 30d</p>
+          <p className="text-xs text-muted mt-0.5">Adherencia 30d</p>
         </div>
       </div>
 

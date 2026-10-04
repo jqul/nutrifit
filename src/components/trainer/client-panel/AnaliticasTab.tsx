@@ -104,9 +104,9 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
 
   return (
     <div className="max-w-2xl space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-serif font-bold text-lg flex items-center gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 basis-60">
+          <p className="font-serif font-bold text-lg flex flex-wrap items-center gap-2">
             <Activity className="w-4 h-4 text-accent" /> Biomarcadores &amp; Longevidad
             <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-accent/10 text-accent">Estilo Holo</span>
           </p>
@@ -116,7 +116,7 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
       </div>
 
       {sessionKeys.length > 0 && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div className="card p-3 text-center">
             <p className="text-lg font-serif font-bold">{sessionKeys.length}</p>
             <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Analizados</p>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { UserProfile, ClientData } from '../../types'
-import { useNutricionistaClients } from '../../hooks/useNutricionistaClients'
+import { useNutricionistaClients, ClientWithStats } from '../../hooks/useNutricionistaClients'
 import { supabase } from '../../lib/supabase'
 import { PerfilTab } from './client-panel/PerfilTab'
 import { NotasTab } from './client-panel/NotasTab'
@@ -8,7 +8,7 @@ import { PlanDietaTab } from './client-panel/PlanDietaTab'
 import { SeguimientoTab } from './client-panel/SeguimientoTab'
 import { MensajesTab } from './client-panel/MensajesTab'
 import { AnaliticasTab } from './client-panel/AnaliticasTab'
-import { ClientSidebar } from './client-panel/ClientSidebar'
+import { ClientHeader } from './client-panel/ClientHeader'
 import { TrainerClientPreview } from './TrainerClientPreview'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { ArrowLeft, Smartphone } from 'lucide-react'
@@ -26,7 +26,9 @@ const TABS: { id: Tab; label: string }[] = [
 ]
 
 export function ClientPanel({ client, userProfile, onClose, demoMode }: {
-  client: ClientData
+  // Con las cifras del listado (adherencia, racha, estado, variación de peso)
+  // si se abre desde él; todas opcionales, así que vale un ClientData suelto.
+  client: ClientWithStats
   userProfile: UserProfile
   onClose: () => void
   demoMode?: boolean
@@ -44,9 +46,9 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
     if (tab === 'seguimiento') markClientReviewed(current.id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, current.id])
-  // Peso actual para la barra lateral (ClientSidebar) — mismo dato que carga
+  // Peso actual para la cabecera (ClientHeader) — mismo dato que carga
   // PerfilTab por su cuenta para su propia ficha; se duplica aquí a
-  // propósito para que la barra lateral no dependa de qué pestaña esté
+  // propósito para que la cabecera no dependa de qué pestaña esté
   // activa (PerfilTab puede estar montado-pero-oculto sin haber cargado
   // nada todavía la primera vez).
   const [sidebarWeight, setSidebarWeight] = useState<number | null>(null)
@@ -84,7 +86,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border bg-bg/90 backdrop-blur-sm sticky top-0 z-10" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors">
               <ArrowLeft className="w-4 h-4" />
@@ -99,7 +101,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
             <ThemeToggle />
           </div>
         </div>
-        <div className="max-w-5xl mx-auto px-6 flex gap-1 overflow-x-auto">
+        <div className="max-w-4xl mx-auto px-6 flex gap-1 overflow-x-auto">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
@@ -111,12 +113,9 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
-        <div className="lg:flex lg:gap-8 lg:items-start">
-          <aside className="mb-6 lg:mb-0 lg:w-72 lg:flex-shrink-0 lg:sticky lg:top-24">
-            <ClientSidebar client={current} currentWeight={sidebarWeight} />
-          </aside>
-          <div className="flex-1 min-w-0">
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        <ClientHeader client={current} currentWeight={sidebarWeight} />
+        <div className="min-w-0">
             {/* Montadas siempre, solo ocultas con CSS — si no, cambiar de
                 pestaña (ej. a Notas y volver) borra cualquier edición del plan
                 de dieta que no se hubiera guardado todavía. */}
@@ -152,7 +151,6 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
             <div className={tab === 'notas' ? '' : 'hidden'}>
               <NotasTab client={current} onUpdate={handleUpdate} />
             </div>
-          </div>
         </div>
       </main>
     </div>

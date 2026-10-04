@@ -68,7 +68,7 @@ export function MicronutrientesTab() {
       </div>
 
       <div className="card p-5 space-y-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Grupo de alimento</label>
             <select value={group} onChange={e => setGroup(e.target.value)}

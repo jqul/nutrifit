@@ -68,8 +68,8 @@ export function HoloRangeBar({
   return (
     <div className="p-4 rounded-xl border border-border bg-card shadow-xs transition-all hover:border-accent/40">
       <div className="flex items-start justify-between gap-3 mb-2">
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-semibold text-sm text-ink">{name}</h4>
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
               isOptimal ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'

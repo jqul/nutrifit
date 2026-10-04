@@ -217,7 +217,7 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
                 className="flex-1 px-3 py-2 bg-bg border border-border rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-accent/20" />
               <button onClick={closeTemplateEditor} className="p-2 text-muted hover:text-warn"><X className="w-4 h-4" /></button>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               <TplNumInput label="Kcal" value={templateEditor.kcalTarget} onChange={v => setTemplateEditor({ ...templateEditor, kcalTarget: v })} />
               <TplNumInput label="Prot. (g)" value={templateEditor.proteinG} onChange={v => setTemplateEditor({ ...templateEditor, proteinG: v })} />
               <TplNumInput label="Carbos (g)" value={templateEditor.carbsG} onChange={v => setTemplateEditor({ ...templateEditor, carbsG: v })} />
