@@ -4,7 +4,7 @@ import { toast } from '../components/shared/Toast'
 
 // Fallback fijo — ver el comentario en lib/supabase.ts sobre por qué no basta
 // con confiar en la variable de entorno en algunas plataformas de despliegue.
-const FALLBACK_VAPID_KEY = 'BMJsM8qK_wLP8bcy_mf7QkFVmju7O2vBkk9Je38qlXT57ZNFokzsZOJ6uSKx1zbxde1dwiyEbXh6W2n5ti2TRvg'
+const FALLBACK_VAPID_KEY = 'BMqjfis4fACrLYQE0Fm0-mQxT9FQBLDheEkXWtHh13_sfBvXg7jX7_SjAFjn0Yugw09bqgDKW8ewoideccDWvw4'
 const envVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
 const VAPID_PUBLIC_KEY = envVapidKey && /^[\w-]{80,}$/.test(envVapidKey) ? envVapidKey : FALLBACK_VAPID_KEY
 

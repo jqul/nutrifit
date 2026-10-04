@@ -5,22 +5,26 @@
 // Solo la llama el propio cron (ver migración de invocación) — a diferencia
 // de send-push, que invoca el navegador del usuario con su JWT. Como usa
 // SUPABASE_SERVICE_ROLE_KEY (salta RLS) y no tiene un usuario al que atarse,
-// se protege con un secreto compartido en vez de un JWT: si CRON_SECRET está
-// configurado, hace falta la cabecera x-cron-secret con ese mismo valor.
-// Si NO está configurado (todavía no se ha puesto en Project Settings →
-// Edge Functions → Secrets), no bloquea nada — para no romper el cron
-// existente en el despliegue en el que se añade este código.
+// se protege con un secreto compartido en vez de un JWT: hace falta la cabecera
+// x-cron-secret con el valor de CRON_SECRET (Project Settings → Edge Functions
+// → Secrets). Si CRON_SECRET no está configurado, la función rechaza todo
+// (fail-closed) en vez de quedar abierta.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import webpush from "npm:web-push@3.6.7"
 import { createClient } from "jsr:@supabase/supabase-js@2"
 
-const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ?? ""
-const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? ""
+// Recorta espacios/saltos de línea y comillas que se cuelan al pegar un secreto en el dashboard.
+const env = (k: string) => (Deno.env.get(k) ?? "").trim().replace(/^["']+|["']+$/g, "")
+const VAPID_PUBLIC_KEY = env("VAPID_PUBLIC_KEY")
+const VAPID_PRIVATE_KEY = env("VAPID_PRIVATE_KEY")
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:soporte@nutrifit.app"
-const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? ""
+const CRON_SECRET = env("CRON_SECRET")
 
+// Si las claves están mal formadas no se tumba el worker: se devuelve el motivo en la respuesta.
+let vapidError = ""
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+  try { webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY) }
+  catch (e) { vapidError = String(e) }
 }
 
 const supabase = createClient(
@@ -36,11 +40,15 @@ function daysAgoISO(days: number): string {
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 })
-  if (CRON_SECRET && req.headers.get("x-cron-secret") !== CRON_SECRET) {
+  // Fail-closed: sin CRON_SECRET configurado, la función no responde a nadie.
+  if (!CRON_SECRET || req.headers.get("x-cron-secret") !== CRON_SECRET) {
     return new Response(JSON.stringify({ error: "No autorizado" }), { status: 401 })
   }
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     return new Response(JSON.stringify({ error: "VAPID keys not configured" }), { status: 500 })
+  }
+  if (vapidError) {
+    return new Response(JSON.stringify({ error: "VAPID keys invalid: " + vapidError }), { status: 500 })
   }
 
   try {
