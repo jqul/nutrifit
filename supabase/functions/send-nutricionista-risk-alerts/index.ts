@@ -22,7 +22,7 @@ const CRON_SECRET = env("CRON_SECRET")
 let vapidError = ""
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   try { webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY) }
-  catch (e) { vapidError = String(e) }
+  catch (e) { vapidError = `${String(e)} (longitud guardada: pública=${VAPID_PUBLIC_KEY.length}, privada=${VAPID_PRIVATE_KEY.length}; esperadas 87 y 43)` }
 }
 
 const supabase = createClient(
