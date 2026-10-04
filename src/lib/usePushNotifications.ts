@@ -19,6 +19,17 @@ function urlBase64ToUint8Array(base64String: string) {
 
 interface Owner { nutricionistaId?: string; clientId?: string }
 
+/** ¿Esta suscripción del navegador se hizo con la clave VAPID actual? Una
+ * hecha con un par anterior sigue existiendo en el navegador (y la pantalla
+ * la daría por "activada"), pero el servidor ya no puede enviarle nada. */
+function usesCurrentKey(sub: PushSubscription): boolean {
+  const k = sub.options?.applicationServerKey
+  if (!k) return false
+  const a = new Uint8Array(k)
+  const b = urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+  return a.length === b.length && a.every((v, i) => v === b[i])
+}
+
 export function usePushNotifications(owner: Owner) {
   const [supported, setSupported] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
@@ -28,7 +39,7 @@ export function usePushNotifications(owner: Owner) {
     setSupported('serviceWorker' in navigator && 'PushManager' in window && !!VAPID_PUBLIC_KEY)
     navigator.serviceWorker?.ready.then(async reg => {
       const sub = await reg.pushManager.getSubscription()
-      setSubscribed(!!sub)
+      setSubscribed(!!sub && usesCurrentKey(sub))
     }).catch(() => {})
   }, [])
 
@@ -50,6 +61,13 @@ export function usePushNotifications(owner: Owner) {
       if (permission !== 'granted') { setLoading(false); return }
 
       const reg = await navigator.serviceWorker.ready
+      // Una suscripción antigua (otra clave VAPID) hace fallar subscribe() con
+      // InvalidStateError: se descarta, junto con su fila en la base de datos.
+      const stale = await reg.pushManager.getSubscription()
+      if (stale && !usesCurrentKey(stale)) {
+        await supabase.from('push_subscriptions').delete().eq('endpoint', stale.endpoint)
+        await stale.unsubscribe()
+      }
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!),
