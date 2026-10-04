@@ -23,13 +23,15 @@ import {
   EditableItem, EditableMeal, EditableSupplement, DAY_LABELS, MACRO_LABELS, newId, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, demoPlanToEditable,
 } from './plan-dieta/planModel'
 import { NumInput, MacroProgressBar, MicroInput } from './plan-dieta/PlanInputs'
+import { ActionMenu } from './plan-dieta/ActionMenu'
+import { MealSummary } from './plan-dieta/MealSummary'
 import { RecipeGroup } from './plan-dieta/RecipeGroup'
 import { MetabolicCalculatorPanel } from './plan-dieta/MetabolicCalculatorPanel'
 import { ShoppingListPreview } from './plan-dieta/ShoppingListPreview'
 import { FoodTagFilterPills, FoodTagBadges } from './plan-dieta/FoodTagWidgets'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
-  ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, Send, Layers, FileSpreadsheet, Pill,
+  ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, Send, Layers, FileSpreadsheet, Pill, Pencil, Check,
 } from 'lucide-react'
 
 export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutricionistaLogoUrl, nutricionistaAccentColor, demoPlan, personalMode }: {
@@ -55,6 +57,13 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   const [supplements, setSupplements] = useState<EditableSupplement[]>(demoEditable?.supplements ?? [])
   const [templates, setTemplates] = useState<DietTemplateRow[]>([])
   const [showCalculator, setShowCalculator] = useState(false)
+  // Objetivos en modo lectura salvo que se pida editarlos (o el plan aún no tenga objetivo).
+  const [editingTargets, setEditingTargets] = useState(false)
+  const [recipesOpen, setRecipesOpen] = useState(false)
+  const [templateFormOpen, setTemplateFormOpen] = useState(false)
+  // Comidas abiertas para editar. Las que tienen alimentos se ven en modo lectura
+  // (MealSummary); una comida vacía —recién creada— se abre sola.
+  const [editingMeals, setEditingMeals] = useState<Set<string>>(new Set())
   const [templateName, setTemplateName] = useState('')
   const [foods, setFoods] = useState<Food[]>([])
   const [openSuggestFor, setOpenSuggestFor] = useState<string | null>(null)
@@ -300,12 +309,13 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     return true
   }
 
-  const handleSaveTemplate = async () => {
-    if (!templateName.trim()) { toast('Ponle un nombre a la plantilla', 'warn'); return }
+  const handleSaveTemplate = async (): Promise<boolean> => {
+    if (!templateName.trim()) { toast('Ponle un nombre a la plantilla', 'warn'); return false }
     const ok = await saveTemplateAs(templateName.trim())
-    if (!ok) return
+    if (!ok) return false
     toast('Plantilla guardada ✓', 'ok')
     setTemplateName('')
+    return true
   }
 
   // "Duplicar plan": guarda la estructura actual como plantilla con un
@@ -516,6 +526,11 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     </div>
   )
 
+  const targetsEditable = editingTargets || !(parseFloat(kcalTarget) > 0)
+  const mealIsEditing = (m: EditableMeal) => editingMeals.has(m.id) || m.items.length === 0
+  const openMeal = (id: string) => setEditingMeals(prev => new Set(prev).add(id))
+  const closeMeal = (id: string) => setEditingMeals(prev => { const next = new Set(prev); next.delete(id); return next })
+
   return (
     <div className="max-w-2xl space-y-6">
       <FoodConverterDrawer nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />
@@ -531,48 +546,26 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         </div>
       )}
 
-      {editingRecipe && (
-        <RecipeEditorPanel nutricionistaId={nutricionistaId} demoMode={!!demoPlan} foods={foods}
-          initial={editingRecipe} onClose={() => setEditingRecipe(null)}
-          onSaved={() => { setEditingRecipe(null); loadRecipes() }} />
-      )}
-
-      {recipes.length > 0 && (() => {
-        const systemRecipes = recipes.filter(r => r.nutricionista_id === null)
-        const ownRecipes = recipes.filter(r => r.nutricionista_id !== null)
-        return (
-          <div className="space-y-3">
-            {systemRecipes.length > 0 && (
-              <RecipeGroup title="Recetas del sistema" recipes={systemRecipes} onCopy={copyRecipe} />
-            )}
-            {ownRecipes.length > 0 && (
-              <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} onSetPhoto={setRecipePhoto}
-                onEdit={setEditingRecipe} nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />
-            )}
-            <div className="flex items-center gap-3 flex-wrap">
-              <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', recipes.map(r => ({
-                name: r.name, photoUrl: r.photo_url, steps: r.steps, items: (r.items as EditableItem[] | null) || [],
-              })), { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })} className="flex items-center gap-1.5 text-xs font-bold text-accent">
-                <BookOpen className="w-3.5 h-3.5" /> Descargar recetario en PDF
+      <div className="card p-5 space-y-4">
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-semibold text-sm">Objetivo del plan</p>
+          {targetsEditable ? (
+            <div className="flex items-center gap-3">
+              <button onClick={() => setShowCalculator(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
+                <Calculator className="w-3.5 h-3.5" /> Calculadora metabólica
               </button>
-              {dynamicRecetario().length > 0 && (
-                <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', dynamicRecetario(), { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
-                  className="flex items-center gap-1.5 text-xs font-bold text-accent" title={personalMode ? 'Solo las recetas usadas en este plan, con las cantidades ya ajustadas a tus necesidades' : 'Solo las recetas usadas en este plan, con las cantidades ya ajustadas a este cliente'}>
-                  <BookOpen className="w-3.5 h-3.5" /> Recetario de este plan ({dynamicRecetario().length})
-                </button>
+              {parseFloat(kcalTarget) > 0 && (
+                <button onClick={() => { setShowCalculator(false); setEditingTargets(false) }} className="text-xs font-bold text-muted hover:text-ink">Listo</button>
               )}
             </div>
-          </div>
-        )
-      })()}
-
-      <div className="card p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="font-semibold text-sm">Objetivo de macros</p>
-          <button onClick={() => setShowCalculator(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
-            <Calculator className="w-3.5 h-3.5" /> Calculadora metabólica
-          </button>
+          ) : (
+            <button onClick={() => setEditingTargets(true)} className="flex items-center gap-1 text-xs font-bold text-accent">
+              <Pencil className="w-3.5 h-3.5" /> Editar
+            </button>
+          )}
         </div>
+        {targetsEditable ? (
+          <>
         {showCalculator && (
           <MetabolicCalculatorPanel client={client} onClose={() => setShowCalculator(false)}
             onApply={(result) => {
@@ -589,6 +582,29 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           <NumInput label="Grasas (g)" value={fatG} onChange={setFatG} />
           <NumInput label="Fibra (g)" value={fiberG} onChange={setFiberG} />
         </div>
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Consejo del nutricionista</label>
+          <textarea value={advice} onChange={e => setAdvice(e.target.value)} rows={2}
+            className="w-full px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+        </div>
+          </>
+        ) : (
+          <>
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          {([['Kcal', kcalTarget, ''], ['Proteína', proteinG, 'g'], ['Carbos', carbsG, 'g'], ['Grasas', fatG, 'g'], ['Fibra', fiberG, 'g']] as const).map(([label, value, unit]) => (
+            <div key={label}>
+              <p className="font-serif font-bold text-2xl leading-tight">{value || '—'}{value && unit ? <span className="text-sm font-sans font-normal text-muted"> {unit}</span> : null}</p>
+              <p className="text-xs text-muted">{label}</p>
+            </div>
+          ))}
+        </div>
+        {advice.trim() ? (
+          <p className="text-sm text-muted italic border-l-2 border-accent/40 pl-3">“{advice.trim()}”</p>
+        ) : (
+          <p className="text-xs text-muted">Sin consejo para el cliente — puedes añadirlo en «Editar».</p>
+        )}
+          </>
+        )}
         {(() => {
           // Solo una comida por hueco: si hay opciones intercambiables,
           // cuenta la primera — son alternativas del mismo hueco, no
@@ -628,11 +644,6 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
             </div>
           )
         })()}
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Consejo del nutricionista</label>
-          <textarea value={advice} onChange={e => setAdvice(e.target.value)} rows={2}
-            className="w-full px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none resize-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
-        </div>
       </div>
 
       <div className="space-y-3">
@@ -699,7 +710,10 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                   </button>
                 </div>
               )}
-              {group.map(meal => (
+              {group.map(meal => !mealIsEditing(meal) ? (
+                <MealSummary key={meal.id} meal={meal} isGroup={isGroup} allergies={client.allergies} medication={medicacion}
+                  personalMode={personalMode} onEdit={() => openMeal(meal.id)} />
+              ) : (
           <div key={meal.id} className="card p-4 space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
               {isGroup && (
@@ -729,6 +743,11 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                 <button onClick={() => removeFromOptionGroup(meal.id)} title="Quitar de opciones" className="p-2 text-muted hover:text-warn"><X className="w-4 h-4" /></button>
               ) : (
                 <button onClick={() => addOption(meal)} title="Convertir en opciones intercambiables" className="p-2 text-muted hover:text-accent"><Layers className="w-4 h-4" /></button>
+              )}
+              {meal.items.length > 0 && (
+                <button onClick={() => closeMeal(meal.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-accent hover:bg-accent/10 transition-colors">
+                  <Check className="w-3.5 h-3.5" /> Listo
+                </button>
               )}
               <button onClick={() => removeMeal(meal.id)} className="p-2 text-muted hover:text-warn"><Trash2 className="w-4 h-4" /></button>
             </div>
@@ -949,22 +968,76 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         ))}
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
+      {(recipes.length > 0 || editingRecipe) && (
+        <div className="space-y-3">
+          <button onClick={() => setRecipesOpen(v => !v)} aria-expanded={recipesOpen || !!editingRecipe}
+            className="w-full flex items-center justify-between card px-5 py-3.5 hover:border-accent/40 transition-colors">
+            <span className="font-semibold text-sm flex items-center gap-2"><ChefHat className="w-4 h-4 text-muted" /> Recetario <span className="text-muted font-normal">({recipes.length})</span></span>
+            {(recipesOpen || editingRecipe) ? <ChevronUp className="w-4 h-4 text-muted" /> : <ChevronDown className="w-4 h-4 text-muted" />}
+          </button>
+          {(recipesOpen || editingRecipe) && (
+            <>
+          {editingRecipe && (
+            <RecipeEditorPanel nutricionistaId={nutricionistaId} demoMode={!!demoPlan} foods={foods}
+              initial={editingRecipe} onClose={() => setEditingRecipe(null)}
+              onSaved={() => { setEditingRecipe(null); loadRecipes() }} />
+          )}
+
+          {recipes.length > 0 && (() => {
+            const systemRecipes = recipes.filter(r => r.nutricionista_id === null)
+            const ownRecipes = recipes.filter(r => r.nutricionista_id !== null)
+            return (
+              <div className="space-y-3">
+                {systemRecipes.length > 0 && (
+                  <RecipeGroup title="Recetas del sistema" recipes={systemRecipes} onCopy={copyRecipe} />
+                )}
+                {ownRecipes.length > 0 && (
+                  <RecipeGroup title="Tus recetas" recipes={ownRecipes} onDelete={deleteRecipe} onSetPhoto={setRecipePhoto}
+                    onEdit={setEditingRecipe} nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />
+                )}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', recipes.map(r => ({
+                    name: r.name, photoUrl: r.photo_url, steps: r.steps, items: (r.items as EditableItem[] | null) || [],
+                  })), { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })} className="flex items-center gap-1.5 text-xs font-bold text-accent">
+                    <BookOpen className="w-3.5 h-3.5" /> Descargar recetario en PDF
+                  </button>
+                  {dynamicRecetario().length > 0 && (
+                    <button onClick={() => printRecipeBook(nutricionistaName || 'Tu nutricionista', dynamicRecetario(), { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
+                      className="flex items-center gap-1.5 text-xs font-bold text-accent" title={personalMode ? 'Solo las recetas usadas en este plan, con las cantidades ya ajustadas a tus necesidades' : 'Solo las recetas usadas en este plan, con las cantidades ya ajustadas a este cliente'}>
+                      <BookOpen className="w-3.5 h-3.5" /> Recetario de este plan ({dynamicRecetario().length})
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+            </>
+          )}
+        </div>
+      )}
+
+      {templateFormOpen && (
+        <div className="card p-4 flex items-center gap-2 flex-wrap">
+          <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Nombre de la plantilla" autoFocus
+            className="flex-1 min-w-[10rem] px-3 py-2 bg-bg border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20" />
+          <Button size="sm" onClick={async () => { if (await handleSaveTemplate()) setTemplateFormOpen(false) }}><BookmarkPlus className="w-3.5 h-3.5" /> Guardar plantilla</Button>
+          <Button size="sm" variant="ghost" onClick={() => setTemplateFormOpen(false)}>Cancelar</Button>
+        </div>
+      )}
+
+      <div className="sticky bottom-0 z-10 py-3 bg-bg/90 backdrop-blur-sm border-t border-border/60 flex items-center gap-2 flex-wrap">
         <Button onClick={handleSave} loading={saving}>Guardar plan</Button>
-        <Button variant="outline" onClick={handleDuplicatePlan} title="Guarda esta estructura como plantilla para una nueva fase (ej. otro objetivo de kcal) sin volver a montarla desde cero">
-          <Copy className="w-3.5 h-3.5" /> Duplicar plan
-        </Button>
-        <Button variant="outline" onClick={handlePrint}><Download className="w-3.5 h-3.5" /> Descargar PDF</Button>
-        <Button variant="outline" onClick={() => {
-          const url = `${window.location.origin}/?c=${client.token}`
-          const message = `Hola ${client.name} 👋\n\nAquí tienes tu plan de dieta actualizado, ábrelo directamente desde este enlace:\n${url}`
-          window.open(buildWAUrl(client.phone, message), '_blank')
-        }}>
-          <Send className="w-3.5 h-3.5" /> Enviar por WhatsApp
-        </Button>
-        <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Nombre de la plantilla"
-          className="px-3 py-2 bg-card border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20 w-48" />
-        <Button variant="outline" onClick={handleSaveTemplate}><BookmarkPlus className="w-3.5 h-3.5" /> Guardar como plantilla</Button>
+        <ActionMenu label="Más acciones" items={[
+          { label: 'Duplicar plan', icon: <Copy className="w-4 h-4 text-muted" />, onClick: handleDuplicatePlan,
+            title: 'Guarda esta estructura como plantilla para una nueva fase (ej. otro objetivo de kcal) sin volver a montarla desde cero' },
+          { label: 'Descargar PDF', icon: <Download className="w-4 h-4 text-muted" />, onClick: handlePrint },
+          { label: 'Enviar por WhatsApp', icon: <Send className="w-4 h-4 text-muted" />, onClick: () => {
+            const url = `${window.location.origin}/?c=${client.token}`
+            const message = `Hola ${client.name} 👋\n\nAquí tienes tu plan de dieta actualizado, ábrelo directamente desde este enlace:\n${url}`
+            window.open(buildWAUrl(client.phone, message), '_blank')
+          } },
+          { label: 'Guardar como plantilla…', icon: <BookmarkPlus className="w-4 h-4 text-muted" />, onClick: () => setTemplateFormOpen(true) },
+        ]} />
       </div>
 
       <BarcodeScanner open={!!scanningFor} onClose={() => setScanningFor(null)} onFound={handleScanned} />

@@ -32,7 +32,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
 - [x] **UX-11 · Cabecera fija de la ficha de cliente** (M) — prioridad 3
   Nombre + estado + 3 KPIs (peso, adherencia, racha) siempre visibles; debajo pestañas
   Resumen · Plan · Seguimiento · Salud · Mensajes. Quitar el efecto "panel dentro de panel".
-- [ ] **UX-12 · Editor del plan de dieta en 3 niveles** (L) — prioridad 2 (6 → 9)
+- [x] **UX-12 · Editor del plan de dieta en 3 niveles** (L) — prioridad 2 (6 → 9)
   `PlanDietaTab` tiene **1.373 líneas y 43 botones** compitiendo con el contenido.
   Nivel 1 resumen de objetivos (kcal/macros) · Nivel 2 comidas como tarjetas con sus
   alimentos · Nivel 3 herramientas agrupadas (Calculadora/Importar/Escáner) y acciones
