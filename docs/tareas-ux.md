@@ -44,7 +44,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
 
 ## Fase 2 — Segunda ola
 
-- [ ] **UX-20 · Seguimiento como historia** (M): Evolución (peso + variación semanal) →
+- [x] **UX-20 · Seguimiento como historia** (M): Evolución (peso + variación semanal) →
   Adherencia (barra + racha) → Señales (hambre/energía/ánimo/digestión con semáforo).
 - [ ] **UX-21 · Navegación del dashboard agrupada** (M): hoy 8 módulos al mismo nivel.
   Agrupar en Clientes · Planificación · Comunicación · Negocio · Herramientas · Ajustes.

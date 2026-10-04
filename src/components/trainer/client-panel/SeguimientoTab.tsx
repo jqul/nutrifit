@@ -13,13 +13,26 @@ import { SurveyHistory } from './SurveyHistory'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
 import { printProgressReport } from '../../../lib/printProgressReport'
 import { toLocalISODate } from '../../../lib/date'
+import { summarizeSignals, isConcerningCheckin, SignalTone } from '../../../lib/checkinSignals'
+import { summarizeWeight, weightDeltaTone, formatWeightDelta } from '../../../lib/clientListSummary'
+import { TONE_CLASS } from '../healthStyles'
 import { toast } from '../../shared/Toast'
 import { Flame, Camera, UtensilsCrossed, AlertTriangle, FileDown, Plus } from 'lucide-react'
 
 const INTENSITY_LABELS = ['Ninguna', 'Leve', 'Moderada', 'Intensa']
-function isConcerningCheckin(c: DailyCheckin): boolean {
-  return (c.bristolScale != null && (c.bristolScale <= 2 || c.bristolScale >= 6))
-    || (c.bloating != null && c.bloating >= 2) || (c.abdominalPain != null && c.abdominalPain >= 2)
+
+const LEVEL_HINT: Record<SignalTone, string> = { good: 'Buena', warn: 'Baja', neutral: 'Media' }
+const fmtScale = (avg: number | null) => (avg == null ? '—' : `${avg.toFixed(1).replace('.', ',')}/5`)
+
+function SignalTile({ label, value, hint, tone }: { label: string; value: string; hint: string; tone: SignalTone }) {
+  const dot = { good: 'bg-ok', warn: 'bg-warn', neutral: 'bg-muted/50' }[tone]
+  return (
+    <div className="bg-bg-alt/60 rounded-xl p-3">
+      <p className="text-xs text-muted flex items-center gap-1.5"><span className={`w-2 h-2 rounded-full flex-shrink-0 ${dot}`} /> {label}</p>
+      <p className="font-serif font-bold text-lg leading-tight mt-1">{value}</p>
+      <p className="text-xs text-muted">{hint}</p>
+    </div>
+  )
 }
 
 interface DemoData {
@@ -108,79 +121,64 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
   const adherence30d = calcAdherence(checkins, 30, today)
   const streak = calcStreak(checkins, today)
   const recentCheckins = [...checkins].sort((a, b) => b.date.localeCompare(a.date))
+  const signals = summarizeSignals(checkins, today)
+  const delta7 = summarizeWeight(weights, today, 7)?.deltaKg ?? null
+  const delta28 = summarizeWeight(weights, today, 28)?.deltaKg ?? null
 
   return (
     <div className="max-w-2xl space-y-6">
       <div className="card p-5 space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted">Notas y conclusiones para el informe</p>
-          <button onClick={() => printProgressReport({ ...client, reportNotes }, { weights, checkins, bloodMarkers },
-            { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
-            className="flex items-center gap-1.5 text-xs font-bold text-accent flex-shrink-0">
-            <FileDown className="w-3.5 h-3.5" /> Descargar PDF
-          </button>
-        </div>
-        <p className="text-xs text-muted">Se imprimen tal cual en el informe clínico — el cliente también puede descargarlo desde su móvil.</p>
-        <textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} rows={3}
-          placeholder="Indicaciones y objetivos de cara a la siguiente revisión..."
-          className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm resize-none" />
-        {onUpdate && (
-          <button onClick={handleSaveReportNotes} disabled={!reportNotesDirty || savingNotes}
-            className="px-3 py-1.5 bg-ink text-white rounded-lg text-xs font-bold disabled:opacity-40">
-            {savingNotes ? 'Guardando...' : 'Guardar notas'}
-          </button>
+        <p className="font-semibold text-sm">Evolución del peso</p>
+        {weights.length >= 2 && (
+          <p className="text-sm flex flex-wrap gap-x-4 gap-y-1">
+            {([['Última semana', delta7], ['Últimas 4 semanas', delta28]] as const).map(([label, delta]) => (
+              <span key={label} className="text-muted">{label}: <span className={`font-semibold ${TONE_CLASS[weightDeltaTone(client.goal, delta)]}`}>{delta == null ? '—' : formatWeightDelta(delta)}</span></span>
+            ))}
+          </p>
         )}
+        <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} />
+      </div>
+
+      <div className="card p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-semibold text-sm">Adherencia</p>
+          <span className="flex items-center gap-1 text-sm font-semibold"><Flame className="w-4 h-4 text-accent" /> {streak} {streak === 1 ? 'día' : 'días'} de racha</span>
+        </div>
+        {([['Últimos 7 días', adherence7d], ['Últimos 30 días', adherence30d]] as const).map(([label, value]) => (
+          <div key={label}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-muted">{label}</span>
+              <span className="text-sm font-bold">{value}%</span>
+            </div>
+            <div className="h-2 bg-bg-alt rounded-full overflow-hidden">
+              <div className="h-full bg-accent rounded-full" style={{ width: `${value}%` }} />
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card p-5 space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted">Nota clínica</p>
-          <button onClick={() => setAddingNote(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
-            <Plus className="w-3.5 h-3.5" /> Añadir
-          </button>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <p className="font-semibold text-sm">Señales</p>
+          <span className="text-xs text-muted">últimos 7 días · {signals.days} check-in{signals.days === 1 ? '' : 's'}</span>
         </div>
-        {addingNote && (
-          <div className="border border-dashed border-border rounded-xl p-3 space-y-2">
-            <p className="text-xs text-muted">Se guarda con fecha y queda visible para el cliente en su Línea de vida clínica.</p>
-            <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
-              className="px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none" />
-            <textarea value={noteText} onChange={e => setNoteText(e.target.value)} rows={2}
-              placeholder="Observaciones, cambios de pauta, ajustes..."
-              className="w-full px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none resize-none" />
-            <div className="flex gap-2">
-              <button onClick={() => { setAddingNote(false); setNoteText('') }}
-                className="flex-1 py-1.5 border border-border rounded-lg text-xs text-muted">Cancelar</button>
-              <button onClick={handleAddNote} disabled={savingNote}
-                className="flex-1 py-1.5 bg-ink text-white rounded-lg text-xs font-semibold disabled:opacity-50">
-                {savingNote ? 'Guardando...' : 'Guardar'}
-              </button>
-            </div>
+        {signals.days === 0 ? (
+          <p className="text-sm text-muted">Sin check-ins esta semana.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <SignalTile label="Hambre" tone={signals.hunger.tone} value={fmtScale(signals.hunger.avg)}
+              hint={signals.hunger.tone === 'warn' ? 'Alta' : signals.hunger.tone === 'good' ? 'Moderada' : (signals.hunger.avg ?? 3) < 2 ? 'Baja' : 'Algo alta'} />
+            <SignalTile label="Energía" tone={signals.energy.tone} value={fmtScale(signals.energy.avg)} hint={LEVEL_HINT[signals.energy.tone]} />
+            <SignalTile label="Ánimo" tone={signals.mood.tone} value={fmtScale(signals.mood.avg)} hint={LEVEL_HINT[signals.mood.tone]} />
+            <SignalTile label="Digestión" tone={signals.digestion.tone}
+              value={signals.digestion.daysWithData === 0 ? '—' : signals.digestion.concerningDays === 0 ? 'Sin molestias' : `${signals.digestion.concerningDays} día${signals.digestion.concerningDays === 1 ? '' : 's'} con molestias`}
+              hint={signals.digestion.daysWithData === 0 ? 'Sin registros' : `${signals.digestion.daysWithData} registro${signals.digestion.daysWithData === 1 ? '' : 's'}`} />
           </div>
         )}
       </div>
 
       <HealthTimeline weights={weights} bloodMarkers={bloodMarkers} photos={sessions} clinicalNotes={clinicalNotes}
         mealLogs={mealLogs} checkins={checkins} variant="trainer" nutricionistaName={nutricionistaName} goalWeightKg={client.goalWeightKg} />
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className="card p-4 text-center">
-          <div className="flex items-center justify-center gap-1"><Flame className="w-4 h-4 text-accent" /><p className="text-xl font-serif font-bold">{streak}d</p></div>
-          <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Racha</p>
-        </div>
-        <div className="card p-4 text-center">
-          <p className="text-xl font-serif font-bold">{adherence7d}%</p>
-          <p className="text-xs text-muted mt-0.5">Adherencia 7d</p>
-        </div>
-        <div className="card p-4 text-center">
-          <p className="text-xl font-serif font-bold">{adherence30d}%</p>
-          <p className="text-xs text-muted mt-0.5">Adherencia 30d</p>
-        </div>
-      </div>
-
-      <div className="card p-5">
-        <p className="font-semibold text-sm mb-3">Peso corporal</p>
-        <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} />
-      </div>
 
       <div className="card p-5">
         <p className="font-semibold text-sm mb-3 flex items-center gap-1.5"><Camera className="w-4 h-4" /> Fotos de progreso</p>
@@ -259,6 +257,60 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
           </div>
         )}
       </div>
+
+      <div className="pt-2">
+        <p className="font-serif font-bold text-lg">Informe y notas</p>
+        <p className="text-xs text-muted">Lo que escribes tú: el informe en PDF y las notas fechadas para la línea de vida.</p>
+      </div>
+
+      <div className="card p-5 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Notas y conclusiones para el informe</p>
+          <button onClick={() => printProgressReport({ ...client, reportNotes }, { weights, checkins, bloodMarkers },
+            { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
+            className="flex items-center gap-1.5 text-xs font-bold text-accent flex-shrink-0">
+            <FileDown className="w-3.5 h-3.5" /> Descargar PDF
+          </button>
+        </div>
+        <p className="text-xs text-muted">Se imprimen tal cual en el informe clínico — el cliente también puede descargarlo desde su móvil.</p>
+        <textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} rows={3}
+          placeholder="Indicaciones y objetivos de cara a la siguiente revisión..."
+          className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm resize-none" />
+        {onUpdate && (
+          <button onClick={handleSaveReportNotes} disabled={!reportNotesDirty || savingNotes}
+            className="px-3 py-1.5 bg-ink text-white rounded-lg text-xs font-bold disabled:opacity-40">
+            {savingNotes ? 'Guardando...' : 'Guardar notas'}
+          </button>
+        )}
+      </div>
+
+      <div className="card p-5 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Nota clínica</p>
+          <button onClick={() => setAddingNote(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
+            <Plus className="w-3.5 h-3.5" /> Añadir
+          </button>
+        </div>
+        {addingNote && (
+          <div className="border border-dashed border-border rounded-xl p-3 space-y-2">
+            <p className="text-xs text-muted">Se guarda con fecha y queda visible para el cliente en su Línea de vida clínica.</p>
+            <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
+              className="px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none" />
+            <textarea value={noteText} onChange={e => setNoteText(e.target.value)} rows={2}
+              placeholder="Observaciones, cambios de pauta, ajustes..."
+              className="w-full px-2.5 py-2 bg-bg border border-border rounded-lg text-sm outline-none resize-none" />
+            <div className="flex gap-2">
+              <button onClick={() => { setAddingNote(false); setNoteText('') }}
+                className="flex-1 py-1.5 border border-border rounded-lg text-xs text-muted">Cancelar</button>
+              <button onClick={handleAddNote} disabled={savingNote}
+                className="flex-1 py-1.5 bg-ink text-white rounded-lg text-xs font-semibold disabled:opacity-50">
+                {savingNote ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
