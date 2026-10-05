@@ -24,7 +24,7 @@ export function NotasTab({ client, onUpdate }: {
   return (
     <div className="max-w-lg space-y-3">
       <p className="flex items-center gap-1.5 text-sm text-muted">
-        <Lock className="w-3.5 h-3.5 flex-shrink-0" /> Notas privadas: no se muestran en la app del cliente.
+        <Lock className="w-3.5 h-3.5 flex-shrink-0" /> Notas privadas: solo las ves tú, el cliente no tiene acceso a ellas.
       </p>
       <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={10} aria-label="Notas privadas"
         placeholder="Historial clínico, preferencias alimentarias, observaciones de consulta..."
