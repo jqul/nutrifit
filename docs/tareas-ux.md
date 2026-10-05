@@ -50,7 +50,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   Agrupar en Clientes · Planificación · Comunicación · Negocio · Herramientas · Ajustes.
 - [x] **UX-22 · Dieta del cliente más visual** (S): objetivo arriba, comidas con
   estado "completada", fotos de receta cuando existan.
-- [ ] **UX-23 · Progreso del cliente emocional** (M): cifra grande de progreso
+- [x] **UX-23 · Progreso del cliente emocional** (M): cifra grande de progreso
   desde el inicio, gráfico limpio, racha, y fotos con protagonismo.
 - [ ] **UX-24 · Plantillas: separar Planes / Recetas / Guías** (S): hoy conviven
   plantillas, recetas, guías y "comer fuera" en una sola pantalla de 418 líneas.

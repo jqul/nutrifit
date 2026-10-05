@@ -6,6 +6,7 @@ import { WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, MealLog, C
 import { BloodMarkerRow } from '../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../lib/adherence'
 import { computeWeightProgress } from '../../lib/weightProgress'
+import { summarizeProgress, formatChangeKg, formatTimeSince } from '../../lib/progressHeadline'
 import { toLocalISODate } from '../../lib/date'
 import { WeightChart } from '../shared/WeightChart'
 import { HealthTimeline } from '../shared/HealthTimeline'
@@ -157,13 +158,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
-      <div className="flex justify-end">
-        <button onClick={() => printProgressReport(client, { weights, checkins, bloodMarkers },
-          { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
-          className="flex items-center gap-1.5 text-xs font-bold text-accent">
-          <FileDown className="w-3.5 h-3.5" /> Informe clínico (PDF)
-        </button>
-      </div>
+      <WeightImpactCard weights={weights} goalKg={client.goalWeightKg} />
 
       <div className={`grid gap-2 ${personalMode ? 'grid-cols-1 max-w-[160px]' : 'grid-cols-3'}`}>
         <StatCard label="Racha" value={`${streak}d`} icon={<Flame className="w-4 h-4 text-accent" />} />
@@ -171,16 +166,11 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
         {!personalMode && <StatCard label="Adherencia 30d" value={`${adherence30d}%`} />}
       </div>
 
-      <AchievementBadges weights={weights} streak={streak} checkins={checkins} mealLogs={mealLogs} />
+      <PhotoComparator sessions={sessions} />
 
-      <WeightImpactCard weights={weights} goalKg={client.goalWeightKg} />
-
-      <HealthTimeline weights={weights} bloodMarkers={bloodMarkers} photos={sessions} clinicalNotes={clinicalNotes}
-        mealLogs={mealLogs} checkins={checkins} variant="client" nutricionistaName={nutricionistaName} goalWeightKg={client.goalWeightKg} />
-
-      <div className="card p-5 space-y-3">
+      <div className="card p-5 space-y-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="font-semibold text-sm">Peso corporal</p>
+          <p className="font-semibold text-sm">Evolución del peso</p>
           {client.gender?.trim().toLowerCase() === 'mujer' && (
             <button onClick={handleLogPeriodStart} disabled={loggedTodayAsCycleStart}
               title="Marca la semana previa en la gráfica de peso, para no confundir la retención de líquidos con grasa"
@@ -189,19 +179,19 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
             </button>
           )}
         </div>
-        <div className="flex gap-2">
+        <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} showSummary={false} />
+        <div className="flex gap-2 pt-1">
           <input type="number" step="0.1" value={newWeight} onChange={e => setNewWeight(e.target.value)}
-            placeholder="Peso de hoy (kg)"
+            placeholder="Peso de hoy (kg)" aria-label="Peso de hoy (kg)"
             className="flex-1 min-w-0 px-3.5 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
           <button onClick={handleAddWeight} disabled={saving}
             className="px-4 py-2.5 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50">
             Guardar
           </button>
         </div>
-        <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} />
       </div>
 
-      <PhotoComparator sessions={sessions} />
+      <AchievementBadges weights={weights} streak={streak} checkins={checkins} mealLogs={mealLogs} />
 
       <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between">
@@ -237,6 +227,9 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
           </div>
         )}
       </div>
+
+      <HealthTimeline weights={weights} bloodMarkers={bloodMarkers} photos={sessions} clinicalNotes={clinicalNotes}
+        mealLogs={mealLogs} checkins={checkins} variant="client" nutricionistaName={nutricionistaName} goalWeightKg={client.goalWeightKg} />
 
       <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between">
@@ -287,6 +280,11 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
           </div>
         )}
       </div>
+      <button onClick={() => printProgressReport(client, { weights, checkins, bloodMarkers },
+        { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
+        className="w-full flex items-center justify-center gap-2 py-3 border border-border rounded-xl text-sm font-semibold text-accent hover:bg-accent/10 transition-colors">
+        <FileDown className="w-4 h-4" /> Descargar informe clínico (PDF)
+      </button>
     </div>
   )
 }
@@ -323,38 +321,35 @@ function AchievementBadges({ weights, streak, checkins, mealLogs }: {
   )
 }
 
-/** Tarjeta de impacto: mismo dato que las fichas de WeightChart, pero en un
- * formato "hero" con barra de progreso hacia la meta — para dar una lectura
- * de un vistazo y con más gratificación visual que la gráfica en sí. */
+/** Titular del progreso: el cambio de peso desde el primer pesaje en una cifra
+ * grande y, si hay meta, la barra hacia ella. Es la única tarjeta destacada
+ * de la pantalla. */
 function WeightImpactCard({ weights, goalKg }: { weights: WeightEntry[]; goalKg: number | null }) {
-  if (weights.length === 0) return null
-  const sorted = [...weights].sort((a, b) => a.date.localeCompare(b.date))
-  const initial = sorted[0].weightKg
-  const current = sorted[sorted.length - 1].weightKg
-  const { changeKg, remainingKg, progressPct, goalReached } = computeWeightProgress(initial, current, goalKg)
+  const headline = summarizeProgress(weights)
+  if (!headline) return null
+  const { initialKg, currentKg, changeKg, daysSinceStart, singleEntry } = headline
+  const { remainingKg, progressPct, goalReached } = computeWeightProgress(initialKg, currentKg, goalKg)
+  const kg = (n: number) => `${String(n).replace('.', ',')} kg`
 
   return (
-    <div className="bg-gradient-to-br from-accent to-accent2 rounded-2xl p-5 text-white space-y-3 shadow-sm">
-      <p className="text-xs font-bold uppercase tracking-wider text-white/80">Tu progreso de peso</p>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="text-center">
-          <p className="text-lg font-serif font-bold">{initial}kg</p>
-          <p className="text-xs text-white/80 uppercase tracking-wider">Inicial</p>
-        </div>
-        <div className="text-center">
-          <p className="text-lg font-serif font-bold">{current}kg</p>
-          <p className="text-xs text-white/80 uppercase tracking-wider">Actual</p>
-        </div>
-        <div className="text-center">
-          <p className="text-lg font-serif font-bold">{changeKg <= 0 ? '−' : '+'}{Math.abs(changeKg).toFixed(1)}kg</p>
-          <p className="text-xs text-white/80 uppercase tracking-wider">Cambio</p>
-        </div>
-      </div>
+    <div className="bg-gradient-to-br from-accent to-accent2 rounded-2xl p-6 text-white shadow-sm">
+      <p className="text-sm text-white/80">{singleEntry ? 'Tu punto de partida' : 'Desde que empezaste'}</p>
+      {singleEntry ? (
+        <>
+          <p className="font-serif font-bold text-5xl leading-none mt-2">{kg(currentKg)}</p>
+          <p className="text-sm text-white/90 mt-3">Primer pesaje registrado. ¡El primer paso ya está dado!</p>
+        </>
+      ) : (
+        <>
+          <p className="font-serif font-bold text-5xl leading-none mt-2">{formatChangeKg(changeKg)}</p>
+          <p className="text-sm text-white/90 mt-3">Empezaste en {kg(initialKg)} {formatTimeSince(daysSinceStart)} · hoy {kg(currentKg)}</p>
+        </>
+      )}
       {goalKg != null && progressPct != null && (
-        <div>
-          <div className="flex items-center justify-between text-xs text-white/90 mb-1">
-            <span>{goalReached ? '¡Objetivo alcanzado! 🎉' : `Estás a solo ${remainingKg!.toFixed(1)}kg de tu objetivo`}</span>
-            <span className="font-bold">{Math.round(progressPct)}%</span>
+        <div className="mt-5">
+          <div className="flex items-center justify-between gap-3 text-xs text-white/90 mb-1.5">
+            <span>{goalReached ? '¡Objetivo alcanzado! 🎉' : `Estás a solo ${remainingKg!.toFixed(1).replace('.', ',')} kg de tu objetivo`}</span>
+            <span className="font-bold flex-shrink-0">{Math.round(progressPct)}%</span>
           </div>
           <div className="h-2 bg-white/25 rounded-full overflow-hidden">
             <div className="h-full bg-white rounded-full transition-all" style={{ width: `${progressPct}%` }} />

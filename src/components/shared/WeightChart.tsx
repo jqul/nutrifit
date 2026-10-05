@@ -65,7 +65,11 @@ function useRemountOnFirstVisible<T extends HTMLElement>() {
   return { ref, key }
 }
 
-export function WeightChart({ entries, goalKg, cycleEntries }: { entries: WeightEntry[]; goalKg?: number | null; cycleEntries?: CycleEntry[] }) {
+export function WeightChart({ entries, goalKg, cycleEntries, showSummary = true }: {
+  entries: WeightEntry[]; goalKg?: number | null; cycleEntries?: CycleEntry[]
+  // false cuando la pantalla ya muestra por su cuenta inicial/actual/cambio (Progreso del cliente).
+  showSummary?: boolean
+}) {
   const { ref: chartContainerRef, key: chartKey } = useRemountOnFirstVisible<HTMLDivElement>()
 
   if (entries.length < 2) {
@@ -102,14 +106,14 @@ export function WeightChart({ entries, goalKg, cycleEntries }: { entries: Weight
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2">
+      {showSummary && <div className="grid grid-cols-3 gap-2">
         {cards.map((k, i) => (
           <div key={i} className="bg-bg-alt rounded-xl p-3 text-center">
             <p className={`text-lg font-bold ${k.color}`}>{k.value}</p>
             <p className="text-xs text-muted uppercase tracking-wider mt-0.5">{k.label}</p>
           </div>
         ))}
-      </div>
+      </div>}
       <div className="h-48" ref={chartContainerRef}>
         <ResponsiveContainer key={chartKey} width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
