@@ -58,7 +58,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   Marca · Legal.
 - [x] **UX-26 · Calendario con vista lista** (M): hoy **no existe** (solo cuadrícula de
   7 columnas). Añadir Semana/Lista; en móvil, lista por defecto.
-- [ ] **UX-27 · Analíticas más limpias** (S): marcador = barra + valor + anterior;
+- [x] **UX-27 · Analíticas más limpias** (S): marcador = barra + valor + anterior;
   referencias y detalles médicos en un desplegable.
 
 ## Fase 3 — Pulido

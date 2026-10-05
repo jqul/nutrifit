@@ -11,7 +11,7 @@ import { LabReportAttachment } from './LabReportAttachment'
 import { toLocalISODate } from '../../../lib/date'
 import { toast } from '../../shared/Toast'
 import { Button } from '../../shared/Button'
-import { Activity, Plus, Trash2, ChevronDown, ChevronUp, ClipboardList, CheckCircle2, AlertTriangle, Calendar, Clock } from 'lucide-react'
+import { Activity, Plus, Trash2, ClipboardList, Calendar, Clock } from 'lucide-react'
 
 interface DraftEntry { markerKey: string; value: string }
 
@@ -29,7 +29,6 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
   const [draft, setDraft] = useState<DraftEntry[]>([{ markerKey: BLOOD_MARKERS[0].key, value: '' }])
   const [saving, setSaving] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState<MarkerCategory | 'all'>('all')
-  const [expandedMarker, setExpandedMarker] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -98,7 +97,6 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
     acc[markerTier(BLOOD_MARKER_MAP[key], v)]++
     return acc
   }, { optimo: 0, normal: 0, atencion: 0 })
-  const pctOptimo = sessionKeys.length > 0 ? Math.round((tierCounts.optimo / sessionKeys.length) * 100) : 0
 
   const visibleDefs = BLOOD_MARKERS.filter(def => sessionKeys.includes(def.key) && (categoryFilter === 'all' || def.category === categoryFilter))
 
@@ -109,36 +107,29 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
           <p className="font-serif font-bold text-lg flex flex-wrap items-center gap-2">
             <Activity className="w-4 h-4 text-accent" /> Biomarcadores &amp; Longevidad
           </p>
-          <p className="text-xs text-muted mt-0.5">Visualización de precisión mediante barras de rango calibradas (zonas subóptimas, normales y de longevidad óptima) con comparativas históricas directas.</p>
+          <p className="text-xs text-muted mt-0.5">Cada valor frente a su rango óptimo, comparado con la analítica anterior.</p>
         </div>
         {!adding && <Button size="sm" onClick={() => setAdding(true)} className="flex-shrink-0"><Plus className="w-3.5 h-3.5" /> Nueva analítica</Button>}
       </div>
 
       {sessionKeys.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <div className="card p-3 text-center">
-            <p className="text-lg font-serif font-bold">{sessionKeys.length}</p>
-            <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Analizados</p>
+        <div className="card p-4">
+          <p className="font-serif font-bold text-2xl leading-none">
+            {tierCounts.optimo}<span className="font-sans text-base font-medium text-muted"> de {sessionKeys.length} en rango óptimo</span>
+          </p>
+          <div className="flex h-2 rounded-full overflow-hidden mt-3 bg-bg-alt" role="img"
+            aria-label={`${tierCounts.optimo} óptimos, ${tierCounts.normal} normales, ${tierCounts.atencion} que requieren atención`}>
+            <div className="bg-ok" style={{ width: `${(tierCounts.optimo / sessionKeys.length) * 100}%` }} />
+            <div className="bg-muted/40" style={{ width: `${(tierCounts.normal / sessionKeys.length) * 100}%` }} />
+            <div className="bg-warn" style={{ width: `${(tierCounts.atencion / sessionKeys.length) * 100}%` }} />
           </div>
-          <div className="bg-ok/10 border border-ok/20 rounded-2xl p-3 text-center">
-            <p className="text-lg font-serif font-bold text-ok flex items-center justify-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {tierCounts.optimo}</p>
-            <p className="text-xs text-ok/80 uppercase tracking-wider mt-0.5">Rango óptimo</p>
-          </div>
-          <div className="card p-3 text-center">
-            <p className="text-lg font-serif font-bold">{tierCounts.normal}</p>
-            <p className="text-xs text-muted uppercase tracking-wider mt-0.5">Normales</p>
-          </div>
-          <div className={`rounded-2xl p-3 text-center border ${tierCounts.atencion > 0 ? 'bg-warn/10 border-warn/20' : 'bg-card border-border'}`}>
-            <p className={`text-lg font-serif font-bold flex items-center justify-center gap-1 ${tierCounts.atencion > 0 ? 'text-warn' : ''}`}>
-              {tierCounts.atencion > 0 && <AlertTriangle className="w-3.5 h-3.5" />} {tierCounts.atencion}
-            </p>
-            <p className={`text-xs uppercase tracking-wider mt-0.5 ${tierCounts.atencion > 0 ? 'text-warn/80' : 'text-muted'}`}>Atención</p>
-          </div>
+          <p className="text-xs text-muted mt-2">
+            {tierCounts.normal} normales ·{' '}
+            {tierCounts.atencion > 0
+              ? <span className="text-warn font-semibold">{tierCounts.atencion} {tierCounts.atencion === 1 ? 'requiere' : 'requieren'} atención</span>
+              : 'ninguno requiere atención'}
+          </p>
         </div>
-      )}
-
-      {sessionKeys.length > 0 && pctOptimo >= 0 && (
-        <p className="text-xs text-muted -mt-2">{pctOptimo}% de los analizados en rango óptimo de longevidad.</p>
       )}
 
       {adding && (
@@ -237,30 +228,24 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
               if (value == null) return null
               const previousValue = previousValueFor(def.key)
               const advice = adviceForMarker(def, value)
-              const expanded = expandedMarker === def.key
               return (
-                <div key={def.key} className="space-y-1.5">
-                  <HoloRangeBar name={`${def.label} · ${fmtDate(effectiveDate!, { day: 'numeric', month: 'short' })}`}
-                    unit={def.unit} value={value} previousValue={previousValue}
-                    minNormal={def.min} maxNormal={def.max} minScale={def.scaleMin} maxScale={def.scaleMax}
-                    description={def.description} dietaryNote={advice || undefined} />
-                  <button onClick={() => setExpandedMarker(expanded ? null : def.key)}
-                    className="flex items-center gap-1 text-xs text-muted hover:text-accent ml-1">
-                    {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    {expanded ? 'Ocultar historial' : `Historial (${readings.length})`}
-                  </button>
-                  {expanded && (
-                    <div className="bg-card border border-border rounded-xl p-3 divide-y divide-border">
+                <HoloRangeBar key={def.key} name={def.label}
+                  unit={def.unit} value={value} previousValue={previousValue}
+                  minNormal={def.min} maxNormal={def.max} minScale={def.scaleMin} maxScale={def.scaleMax}
+                  description={def.description} dietaryNote={advice || undefined}>
+                  <div>
+                    <p className="font-semibold text-ink mb-1">Historial ({readings.length})</p>
+                    <div className="divide-y divide-border">
                       {readings.map(r => (
-                        <div key={r.id} className="py-1.5 flex items-center justify-between gap-2 text-xs first:pt-0 last:pb-0">
-                          <span className="text-muted">{fmtDate(r.date)}</span>
+                        <div key={r.id} className="py-1.5 flex items-center justify-between gap-2 first:pt-0 last:pb-0">
+                          <span>{fmtDate(r.date)}</span>
                           <span className="tabular-nums">{r.value} {def.unit}</span>
-                          <button onClick={() => deleteReading(r.id)} className="text-muted hover:text-warn"><Trash2 className="w-3 h-3" /></button>
+                          <button onClick={() => deleteReading(r.id)} aria-label={`Eliminar lectura del ${fmtDate(r.date)}`} className="text-muted hover:text-warn"><Trash2 className="w-3 h-3" /></button>
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                </HoloRangeBar>
               )
             })}
           </div>
