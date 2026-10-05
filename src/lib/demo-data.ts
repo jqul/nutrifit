@@ -1,5 +1,5 @@
 import { UserProfile, ClientData, DietPlan, WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment, ClinicalNote } from '../types'
-import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, GuideRow, EatingOutGuideRow } from './supabase-types'
+import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, GuideRow, EatingOutGuideRow, DietPlanChangeRow } from './supabase-types'
 import { periodKeyFor } from './surveyPeriod'
 
 export const DEMO_NUTRICIONISTA_ID = 'demo-nutri-001'
@@ -101,6 +101,17 @@ export const DEMO_CLIENTS: ClientData[] = [
 ]
 
 // ── Planes de dieta ─────────────────────────────────────────
+
+// Historial de cambios de objetivos del plan (demo). María: dos ajustes recientes.
+const daysAgoISO = (n: number) => new Date(Date.now() - n * 86400000).toISOString()
+export const DEMO_PLAN_CHANGES: Record<string, DietPlanChangeRow[]> = {
+  'demo-client-001': [
+    { id: 'demo-chg-2', plan_id: 'demo-plan-maria', client_id: 'demo-client-001', changed_at: daysAgoISO(12), changed_by: DEMO_NUTRICIONISTA_ID,
+      changes: [{ field: 'kcal_target', from: 1700, to: 1600 }, { field: 'protein_g', from: 120, to: 130 }], reason: 'Peso estancado 2 semanas' },
+    { id: 'demo-chg-1', plan_id: 'demo-plan-maria', client_id: 'demo-client-001', changed_at: daysAgoISO(26), changed_by: DEMO_NUTRICIONISTA_ID,
+      changes: [{ field: 'kcal_target', from: 1800, to: 1700 }], reason: 'Bajada de peso más lenta de lo esperado' },
+  ],
+}
 
 export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
   'demo-client-001': {

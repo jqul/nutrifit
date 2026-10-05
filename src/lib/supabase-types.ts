@@ -63,6 +63,17 @@ export interface ClientReviewRow {
   updated_at: string
 }
 
+/** Un cambio de objetivos del plan registrado por la base de datos (tabla diet_plan_changes). */
+export interface DietPlanChangeRow {
+  id: string
+  plan_id: string
+  client_id: string
+  changed_at: string
+  changed_by: string | null
+  changes: { field: 'kcal_target' | 'protein_g' | 'carbs_g' | 'fat_g' | 'fiber_g' | 'advice'; from: number | string | null; to: number | string | null }[]
+  reason: string | null
+}
+
 export interface DietPlanRow {
   id: string
   client_id: string

@@ -29,6 +29,8 @@ import { RecipeGroup } from './plan-dieta/RecipeGroup'
 import { MetabolicCalculatorPanel } from './plan-dieta/MetabolicCalculatorPanel'
 import { ShoppingListPreview } from './plan-dieta/ShoppingListPreview'
 import { FoodTagFilterPills, FoodTagBadges } from './plan-dieta/FoodTagWidgets'
+import { PlanHistory } from './PlanHistory'
+import { diffPlanTargets, formatPlanChange, targetsFromForm, PlanTargets } from '../../../lib/planChanges'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
   ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, Send, Layers, FileSpreadsheet, Pill, Pencil, Check,
@@ -53,6 +55,13 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   const [fatG, setFatG] = useState(demoEditable?.fatG ?? '')
   const [fiberG, setFiberG] = useState(demoEditable?.fiberG ?? '')
   const [advice, setAdvice] = useState(demoEditable?.advice ?? '')
+  // Objetivos tal y como están guardados: se comparan con los del formulario para avisar
+  // de que un cambio va a quedar en el historial y pedir el motivo (opcional).
+  const [savedTargets, setSavedTargets] = useState<PlanTargets | null>(demoEditable ? targetsFromForm({
+    kcal: demoEditable.kcalTarget, protein: demoEditable.proteinG, carbs: demoEditable.carbsG, fat: demoEditable.fatG, fiber: demoEditable.fiberG, advice: demoEditable.advice,
+  }) : null)
+  const [changeReason, setChangeReason] = useState('')
+  const [savedTick, setSavedTick] = useState(0)
   const [meals, setMeals] = useState<EditableMeal[]>(demoEditable?.meals ?? [])
   const [supplements, setSupplements] = useState<EditableSupplement[]>(demoEditable?.supplements ?? [])
   const [templates, setTemplates] = useState<DietTemplateRow[]>([])
@@ -175,6 +184,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     if (!planRow) {
       setPlanId(null); setMeals([]); setSupplements([])
       setKcalTarget(''); setProteinG(''); setCarbsG(''); setFatG(''); setFiberG(''); setAdvice('')
+      setSavedTargets(null)
       setLoading(false)
       return
     }
@@ -194,6 +204,10 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     setFatG(String(planRow.fat_g ?? ''))
     setFiberG(String(planRow.fiber_g ?? ''))
     setAdvice(planRow.advice || '')
+    setSavedTargets({
+      kcal_target: Number(planRow.kcal_target) || 0, protein_g: Number(planRow.protein_g) || 0, carbs_g: Number(planRow.carbs_g) || 0,
+      fat_g: Number(planRow.fat_g) || 0, fiber_g: Number(planRow.fiber_g) || 0, advice: planRow.advice || '',
+    })
     setMeals((mealRows || []).map((m: DietMealRow) => ({
       id: m.id, name: m.name, time: m.time, kcalTarget: m.kcal_target != null ? String(m.kcal_target) : '',
       dayOfWeek: m.day_of_week, optionGroup: m.option_group, optionLabel: m.option_label, dayType: m.day_type,
@@ -233,6 +247,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       kcal_target: parseFloat(kcalTarget) || 0, protein_g: parseFloat(proteinG) || 0,
       carbs_g: parseFloat(carbsG) || 0, fat_g: parseFloat(fatG) || 0, fiber_g: parseFloat(fiberG) || 0,
       advice, updated_at: new Date().toISOString(),
+      // El trigger de la BD registra el cambio en el historial y consume (vacía) este motivo.
+      change_reason: changeReason.trim() || null,
     }).eq('id', planId)
 
     await supabase.from('diet_meals').delete().eq('plan_id', planId)
@@ -264,10 +280,17 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       })))
     }
     setSaving(false)
+    setChangeReason('')
+    setSavedTick(t => t + 1)
     toast('Plan de dieta guardado ✓', 'ok')
     sendPush({ clientId: client.id }, 'Tu plan de dieta se ha actualizado 🥗', 'Tu nutricionista ha actualizado tu plan — échale un vistazo.')
     await loadPlan()
   }
+
+  // Cambios de objetivos que se van a registrar en el historial al guardar.
+  const pendingChanges = planId
+    ? diffPlanTargets(savedTargets, targetsFromForm({ kcal: kcalTarget, protein: proteinG, carbs: carbsG, fat: fatG, fiber: fiberG, advice }))
+    : []
 
   const handlePrint = () => {
     const printable: DietPlan = {
@@ -1025,7 +1048,20 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         </div>
       )}
 
+      {planId && (
+        <PlanHistory clientId={client.id} nutricionistaId={nutricionistaId} nutricionistaName={nutricionistaName}
+          personalMode={personalMode} demoMode={!!demoPlan} refreshKey={savedTick} />
+      )}
+
       <div className="sticky bottom-0 z-10 py-3 bg-bg/90 backdrop-blur-sm border-t border-border/60 flex items-center gap-2 flex-wrap">
+        {pendingChanges.length > 0 && (
+          <div className="w-full space-y-1.5">
+            <p className="text-xs text-muted">Quedará en el historial: {pendingChanges.map(formatPlanChange).join(' · ')}</p>
+            <input value={changeReason} onChange={e => setChangeReason(e.target.value)} maxLength={200}
+              placeholder="Motivo del cambio (opcional): p. ej. peso estancado 2 semanas" aria-label="Motivo del cambio"
+              className="w-full px-3 py-2 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+          </div>
+        )}
         <Button onClick={handleSave} loading={saving}>Guardar plan</Button>
         <ActionMenu label="Más acciones" items={[
           { label: 'Duplicar plan', icon: <Copy className="w-4 h-4 text-muted" />, onClick: handleDuplicatePlan,
