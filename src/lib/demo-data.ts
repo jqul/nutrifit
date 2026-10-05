@@ -146,7 +146,7 @@ export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
     supplements: [
       { id: 's1', name: 'Multivitamínico', dose: '1 cápsula', timing: 'Con el desayuno', visibleToClient: true },
     ],
-    createdAt: Date.now() - 40 * 86400000, updatedAt: Date.now() - 2 * 86400000,
+    createdAt: Date.now() - 40 * 86400000, updatedAt: Date.now() - 16 * 86400000,
   },
   'demo-client-002': {
     id: 'demo-plan-carlos', clientId: 'demo-client-002', nutricionistaId: DEMO_NUTRICIONISTA_ID,
@@ -196,7 +196,7 @@ export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
       { id: 's1', name: 'Proteína whey', dose: '1 scoop', timing: 'Post-entreno', visibleToClient: true },
       { id: 's2', name: 'Creatina', dose: '5g', timing: 'Cualquier momento del día', visibleToClient: true },
     ],
-    createdAt: Date.now() - 75 * 86400000, updatedAt: Date.now() - 5 * 86400000,
+    createdAt: Date.now() - 75 * 86400000, updatedAt: Date.now() - 21 * 86400000,
   },
   'demo-client-003': {
     id: 'demo-plan-laura', clientId: 'demo-client-003', nutricionistaId: DEMO_NUTRICIONISTA_ID,

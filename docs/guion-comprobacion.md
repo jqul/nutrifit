@@ -111,6 +111,22 @@ sube con él **una foto de progreso, una foto de una comida y, desde la ficha, e
 Si el borrado falla a mitad, el mensaje lo dice y **no se borra la ficha** hasta que los ficheros se
 hayan podido borrar: puedes reintentarlo.
 
+## 10. Reajuste del plan
+
+Ficha de un cliente con plan y varias semanas de pesajes → **Seguimiento**, tarjeta **Reajuste del plan**
+(justo debajo de la revisión semanal).
+
+- [ ] Si el plan se cambió hace menos de 14 días, dice que esperes (no propone nada).
+- [ ] Con menos de 3 pesajes en 10 días desde el último cambio, dice que faltan pesajes.
+- [ ] Si el cliente sigue el plan menos del 70 % de los días, avisa de eso en vez de proponer recortes.
+- [ ] Si el ritmo de peso encaja con su objetivo, dice que no hace falta reajustar.
+- [ ] Cuando se desvía: propone subir o bajar kcal (entre 50 y 250, de 25 en 25). **La proteína y la grasa no cambian**; los carbohidratos acompañan.
+- [ ] Puedes corregir la cifra de kcal antes de aplicar; los carbohidratos se recalculan.
+- [ ] «Aplicar al plan» cambia kcal y carbohidratos del plan, **no toca las comidas**, y queda en
+  *Historial de cambios* (con el motivo «Reajuste sugerido…») y como nueva versión restaurable.
+- [ ] «Ahora no» oculta la propuesta; reaparece si cambian los datos.
+- [ ] Nunca propone bajar de 1.200 kcal ni dejar menos de 50 g de carbohidratos.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

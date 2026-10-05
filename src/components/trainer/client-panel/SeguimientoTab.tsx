@@ -11,6 +11,7 @@ import { StoragePhoto } from '../../shared/StoragePhoto'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
+import { DietAdjustmentCard } from './DietAdjustmentCard'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
 import { printProgressReport, ReportOptions } from '../../../lib/printProgressReport'
 import { ReportOptionsModal } from './ReportOptionsModal'
@@ -162,6 +163,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
   return (
     <div className="max-w-2xl space-y-6">
       <WeeklyReviewCard client={client} checkins={checkins} weights={weights} demoMode={demoMode} />
+      <DietAdjustmentCard client={client} checkins={checkins} weights={weights} demoMode={demoMode} />
 
       <div className="card p-5 space-y-3">
         <p className="font-semibold text-sm">Evolución del peso</p>
