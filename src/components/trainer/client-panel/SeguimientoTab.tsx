@@ -3,7 +3,7 @@ import { ClientData } from '../../../types'
 import { supabase } from '../../../lib/supabase'
 import { weightFromRow, cycleEntryFromRow, checkinFromRow, photoSessionFromRow, mealLogFromRow, clinicalNoteFromRow } from '../../../lib/mappers'
 import { WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClinicalNote } from '../../../types'
-import { BloodMarkerRow } from '../../../lib/supabase-types'
+import { BloodMarkerRow, DietPlanChangeRow } from '../../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../../lib/adherence'
 import { WeightChart } from '../../shared/WeightChart'
 import { HealthTimeline } from '../../shared/HealthTimeline'
@@ -12,7 +12,10 @@ import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
-import { printProgressReport } from '../../../lib/printProgressReport'
+import { printProgressReport, ReportOptions } from '../../../lib/printProgressReport'
+import { ReportOptionsModal } from './ReportOptionsModal'
+import { getDemoReviews } from '../../../hooks/useClientReviews'
+import { DEMO_PLAN_CHANGES } from '../../../lib/demo-data'
 import { toLocalISODate } from '../../../lib/date'
 import { summarizeSignals, isConcerningCheckin, SignalTone } from '../../../lib/checkinSignals'
 import { summarizeWeight, weightDeltaTone, formatWeightDelta } from '../../../lib/clientListSummary'
@@ -60,6 +63,8 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
   // puede descargar el propio cliente, así que van en un campo separado.
   const [reportNotes, setReportNotes] = useState(client.reportNotes)
   const [savingNotes, setSavingNotes] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [generatingReport, setGeneratingReport] = useState(false)
   const reportNotesDirty = reportNotes !== client.reportNotes
 
   // Nota clínica fechada para la Línea de vida clínica (HealthTimeline) —
@@ -77,6 +82,34 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
     const ok = await onUpdate({ reportNotes })
     setSavingNotes(false)
     if (ok) toast('Notas del informe guardadas ✓', 'ok')
+  }
+
+  // Genera el informe: lo interno del nutricionista (cambios del plan, valoraciones) se lee
+  // solo si se pide, y la ventana se abre antes de esperar para que no la bloquee el navegador.
+  const generateReport = async (options: ReportOptions) => {
+    const win = window.open('', '_blank')
+    if (!win) { toast('El navegador bloqueó la ventana del informe: permite las ventanas emergentes', 'warn'); return }
+    setGeneratingReport(true)
+    try {
+      let planChanges: DietPlanChangeRow[] | undefined
+      let reviews: { week_start: string; status: 'accepted' | 'edited' | 'ignored'; note: string }[] | undefined
+      if (options.sections.planChanges) {
+        planChanges = demoMode ? DEMO_PLAN_CHANGES[client.id] ?? []
+          : ((await supabase.from('diet_plan_changes').select('*').eq('client_id', client.id)).data ?? []) as DietPlanChangeRow[]
+      }
+      if (options.sections.reviews) {
+        reviews = demoMode ? getDemoReviews(client.id)
+          : ((await supabase.from('client_reviews').select('week_start, status, note').eq('client_id', client.id)).data ?? []) as typeof reviews
+      }
+      printProgressReport({ ...client, reportNotes }, { weights, checkins, bloodMarkers, planChanges, reviews },
+        { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor }, options, win)
+      setReportOpen(false)
+    } catch {
+      win.close()
+      toast('No se pudo generar el informe', 'warn')
+    } finally {
+      setGeneratingReport(false)
+    }
   }
 
   const load = useCallback(async () => {
@@ -267,15 +300,21 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
       </div>
 
       <div className="card p-5 space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted">Notas y conclusiones para el informe</p>
-          <button onClick={() => printProgressReport({ ...client, reportNotes }, { weights, checkins, bloodMarkers },
-            { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor })}
-            className="flex items-center gap-1.5 text-xs font-bold text-accent flex-shrink-0">
-            <FileDown className="w-3.5 h-3.5" /> Descargar PDF
-          </button>
+        <div>
+          <p className="font-semibold text-sm">Informe de progreso</p>
+          <p className="text-xs text-muted mt-0.5">Un PDF con el peso, la adherencia y las señales del periodo que elijas, para entregar a tu cliente o a su médico. Tú decides qué secciones lleva.</p>
         </div>
-        <p className="text-xs text-muted">Se imprimen tal cual en el informe clínico — el cliente también puede descargarlo desde su móvil.</p>
+        <button onClick={() => setReportOpen(true)}
+          className="flex items-center gap-1.5 px-4 py-2 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90">
+          <FileDown className="w-4 h-4" /> Generar informe
+        </button>
+      </div>
+
+      <ReportOptionsModal open={reportOpen} onClose={() => setReportOpen(false)} onGenerate={generateReport} busy={generatingReport} />
+
+      <div className="card p-5 space-y-3">
+        <p className="font-semibold text-sm">Observaciones y próximos objetivos</p>
+        <p className="text-xs text-muted">Aparecen en el informe de progreso. El cliente también puede descargar el suyo desde el móvil, sin cambios del plan ni valoraciones.</p>
         <textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} rows={3}
           placeholder="Indicaciones y objetivos de cara a la siguiente revisión..."
           className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm resize-none" />

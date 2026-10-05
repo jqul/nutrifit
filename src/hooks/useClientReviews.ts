@@ -8,6 +8,9 @@ import { weekStartISO, WeeklyReview, ReviewStatus } from '../lib/weeklyReview'
 const demoStore = new Map<string, ClientReviewRow>()
 const demoKey = (clientId: string, weekStart: string) => `${clientId}:${weekStart}`
 
+/** Revisiones de demo de un cliente (para el informe en modo demo). */
+export const getDemoReviews = (clientId: string): ClientReviewRow[] => [...demoStore.values()].filter(r => r.client_id === clientId)
+
 export interface SaveReviewInput {
   clientId: string
   review: WeeklyReview
