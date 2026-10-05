@@ -1,9 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { UserProfile, ClientData } from '../../types'
 import { useNutricionistaClients, NewClientInput } from '../../hooks/useNutricionistaClients'
-import { supabase } from '../../lib/supabase'
-import { toLocalISODate } from '../../lib/date'
-import { DEMO_APPOINTMENTS } from '../../lib/demo-data'
 import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
 import { ThemeToggle } from '../shared/ThemeToggle'
@@ -19,6 +16,8 @@ import { AjustesTab } from './AjustesTab'
 import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
 import { ClientListRow } from './ClientListRow'
+import { ControlCenter } from './ControlCenter'
+import { useTodayAppointments } from '../../hooks/useTodayAppointments'
 import { sortByAttention } from '../../lib/clientListSummary'
 import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboardNav'
 import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag } from 'lucide-react'
@@ -37,7 +36,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   onSwitchToAdmin?: () => void
 }) {
   const { clients, loading, addClient, fetchClients } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
-  const [view, setView] = useState<View>('clientes')
+  const [view, setView] = useState<View>('inicio')
   // Última sección vista en cada grupo, para que volver a un grupo te deje donde estabas.
   const [lastViewByGroup, setLastViewByGroup] = useState<Partial<Record<string, View>>>({})
   const activeGroup = groupOfView(view)
@@ -53,25 +52,8 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   // 'all' | 'risk' | 'today' | `tag:${nombre}` — filtro rápido de la lista,
   // se combina con la búsqueda por texto (ambos deben cumplirse).
   const [quickFilter, setQuickFilter] = useState('all')
-  const [todayApptClientIds, setTodayApptClientIds] = useState<Set<string>>(new Set())
-
-  useEffect(() => {
-    const todayStr = toLocalISODate(new Date())
-    if (demoClients) {
-      const ids = new Set(
-        DEMO_APPOINTMENTS.filter(a => a.clientId && toLocalISODate(new Date(a.startAt)) === todayStr && a.status !== 'cancelada')
-          .map(a => a.clientId as string)
-      )
-      setTodayApptClientIds(ids)
-      return
-    }
-    const start = new Date(); start.setHours(0, 0, 0, 0)
-    const end = new Date(); end.setHours(23, 59, 59, 999)
-    supabase.from('appointments').select('client_id')
-      .eq('nutricionista_id', userProfile.uid).neq('status', 'cancelada')
-      .gte('start_at', start.toISOString()).lte('start_at', end.toISOString())
-      .then(({ data }) => setTodayApptClientIds(new Set((data || []).map((r: { client_id: string }) => r.client_id).filter(Boolean))))
-  }, [userProfile.uid, demoClients])
+  const todayAppointments = useTodayAppointments(userProfile.uid, !!demoClients)
+  const todayApptClientIds = useMemo(() => new Set(todayAppointments.map(a => a.clientId).filter((id): id is string => !!id)), [todayAppointments])
 
   const allTags = Array.from(new Set(clients.flatMap(c => c.tags))).sort()
   const riskCount = clients.filter(c => c.healthStatus === 'attention').length
@@ -167,6 +149,15 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             (a Clientes, a otra pestaña...) el componente pierde su estado
             interno entero: la búsqueda del Conversor, el alimento
             seleccionado, el formulario a medio rellenar... */}
+        <div className={view === 'inicio' ? '' : 'hidden'}>
+          <ControlCenter displayName={userProfile.displayName} clients={clients} loading={loading}
+            todayAppointments={todayAppointments}
+            onOpenClient={onSelectClient}
+            onShowClients={filter => { setQuickFilter(filter); goToView('clientes') }}
+            onGoToCalendar={() => goToView('calendario')}
+            onGoToBusiness={() => goToView('negocio')}
+            onNewClient={() => { goToView('clientes'); setModalOpen(true) }} />
+        </div>
         <div className={view === 'calendario' ? '' : 'hidden'}>
           <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />
         </div>

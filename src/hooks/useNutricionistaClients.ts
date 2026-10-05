@@ -4,7 +4,7 @@ import { ClientData, DailyCheckin, WeightEntry } from '../types'
 import { clientFromRow, clientToRow, checkinFromRow, weightFromRow } from '../lib/mappers'
 import { summarizeWeight } from '../lib/clientListSummary'
 import { calcAdherence, calcStreak } from '../lib/adherence'
-import { computeClientHealth, hasUnreviewedActivity, ClientHealthStatus } from '../lib/clientHealth'
+import { computeClientHealth, hasUnreviewedActivity, ClientHealthStatus, ClientHealthReason } from '../lib/clientHealth'
 import { hasAnyMarkerOutOfRange } from '../lib/bloodMarkers'
 import { toast } from '../components/shared/Toast'
 import { DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES, DEMO_WEIGHTS } from '../lib/demo-data'
@@ -18,6 +18,7 @@ export interface ClientWithStats extends ClientData {
   streak?: number
   healthStatus?: ClientHealthStatus
   healthLabel?: string
+  healthReason?: ClientHealthReason
   /** Último peso registrado y su variación en 4 semanas (null si hay <2 pesajes). */
   weightKg?: number
   weightDeltaKg?: number | null
@@ -64,6 +65,7 @@ export function withStats(
       streak,
       healthStatus: health.status,
       healthLabel: health.label,
+      healthReason: health.reason,
     }
   })
 }

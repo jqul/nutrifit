@@ -7,8 +7,12 @@
 
 export type ClientHealthStatus = 'attention' | 'billing' | 'streak' | 'active'
 
+/** Por qué tiene ese estado — lo usa el Centro de control para decidir la prioridad. */
+export type ClientHealthReason = 'inactive' | 'biomarker' | 'unreviewed' | 'billing' | 'streak' | 'active'
+
 export interface ClientHealth {
   status: ClientHealthStatus
+  reason: ClientHealthReason
   label: string
 }
 
@@ -73,20 +77,21 @@ export function computeClientHealth(client: {
   if (!tooNewToFlag && (daysSinceCheckin === null || daysSinceCheckin > INACTIVITY_THRESHOLD_DAYS)) {
     return {
       status: 'attention',
+      reason: 'inactive',
       label: daysSinceCheckin === null ? 'Sin check-ins todavía' : `Sin check-in hace ${daysSinceCheckin}d`,
     }
   }
   if (client.hasBiomarkerAlert) {
-    return { status: 'attention', label: 'Analítica en alerta' }
+    return { status: 'attention', reason: 'biomarker', label: 'Analítica en alerta' }
   }
   if (client.hasUnreviewedActivity) {
-    return { status: 'attention', label: 'Check-in o encuesta sin revisar' }
+    return { status: 'attention', reason: 'unreviewed', label: 'Check-in o encuesta sin revisar' }
   }
   if (client.monthlyPrice != null && !hasCurrentPeriodInvoice) {
-    return { status: 'billing', label: 'Plan por renovar' }
+    return { status: 'billing', reason: 'billing', label: 'Plan por renovar' }
   }
   if ((client.streak || 0) >= STREAK_THRESHOLD_DAYS) {
-    return { status: 'streak', label: `En racha · ${client.streak}d` }
+    return { status: 'streak', reason: 'streak', label: `En racha · ${client.streak}d` }
   }
-  return { status: 'active', label: 'Activo' }
+  return { status: 'active', reason: 'active', label: 'Activo' }
 }

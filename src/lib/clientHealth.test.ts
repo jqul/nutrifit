@@ -120,3 +120,17 @@ describe('hasUnreviewedActivity', () => {
     expect(hasUnreviewedActivity('2026-06-20T00:00:00Z', '2026-06-10', '2026-06-11T09:00:00Z')).toBe(false)
   })
 })
+
+describe('computeClientHealth reason', () => {
+  it('reports why a client needs attention, so the control center can prioritise', () => {
+    expect(computeClientHealth({ ...oldClient, lastCheckin: dateStr(8, ref), monthlyPrice: 40 }, true, ref).reason).toBe('inactive')
+    expect(computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: 40, hasBiomarkerAlert: true }, true, ref).reason).toBe('biomarker')
+    expect(computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: 40, hasUnreviewedActivity: true }, true, ref).reason).toBe('unreviewed')
+  })
+
+  it('reports billing, streak and active for the non-attention states', () => {
+    expect(computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: 40 }, false, ref).reason).toBe('billing')
+    expect(computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: null, streak: 5 }, false, ref).reason).toBe('streak')
+    expect(computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: null, streak: 1 }, false, ref).reason).toBe('active')
+  })
+})
