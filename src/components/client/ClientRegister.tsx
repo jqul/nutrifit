@@ -45,7 +45,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
 
     if (authError) {
       if (authError.message.includes('already registered')) {
-        setError('Este email ya tiene cuenta. Inicia sesión.')
+        setError('Ya hay una cuenta con este email. Entra con tu contraseña.')
         setStep('login')
       } else {
         setError(authError.message)
@@ -76,7 +76,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
     const { error: loginError } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(), password,
     })
-    if (loginError) { setError('Email o contraseña incorrectos'); setLoading(false); return }
+    if (loginError) { setError('Ese email y esa contraseña no coinciden. Revísalos e inténtalo otra vez.'); setLoading(false); return }
     onComplete()
     setLoading(false)
   }
@@ -97,8 +97,8 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
         <div className="w-20 h-20 bg-ok/10 rounded-full flex items-center justify-center mb-5">
           <CheckCircle2 className="w-10 h-10 text-ok" />
         </div>
-        <h2 className="text-2xl font-serif font-bold mb-2">¡Cuenta creada!</h2>
-        <p className="text-muted text-sm">Accediendo a tu panel...</p>
+        <h2 className="text-2xl font-serif font-bold mb-2">¡Todo listo, {firstName}!</h2>
+        <p className="text-muted text-sm">Tu cuenta está creada. Estamos abriendo tu panel...</p>
       </div>
     )
   }
@@ -119,7 +119,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
               <h1 className="text-2xl font-serif font-bold mb-2">¿Olvidaste tu contraseña?</h1>
               <p className="text-sm text-muted mb-8">Te mandamos un enlace a tu email para elegir una nueva.</p>
               <div className="text-left">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Email</label>
+                <label className="block text-sm font-medium text-ink mb-1.5">Email</label>
                 <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError('') }}
                   onKeyDown={e => e.key === 'Enter' && handleForgotPassword()}
                   placeholder="tu@email.com"
@@ -144,23 +144,23 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
         <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white mx-auto mb-4 bg-accent">
           {nutricionistaName[0]?.toUpperCase()}
         </div>
-        <p className="text-xs font-semibold text-muted uppercase tracking-widest mb-2">{nutricionistaName}</p>
+        <p className="text-sm font-semibold text-muted mb-2">{nutricionistaName}</p>
         {step === 'register' ? (
           <>
             <h1 className="text-2xl font-serif font-bold">Hola, {firstName} 👋</h1>
-            <p className="text-sm text-muted mt-2">Crea tu cuenta para acceder a tu panel de nutrición</p>
+            <p className="text-sm text-muted mt-2 leading-relaxed">{nutricionistaName} te ha preparado tu panel: tu plan, tu progreso y tus mensajes, todo en un mismo sitio. Solo falta crear tu cuenta.</p>
           </>
         ) : (
           <>
-            <h1 className="text-2xl font-serif font-bold">Bienvenido de nuevo</h1>
-            <p className="text-sm text-muted mt-2">Inicia sesión para acceder a tu panel</p>
+            <h1 className="text-2xl font-serif font-bold">Qué bien verte de nuevo, {firstName}</h1>
+            <p className="text-sm text-muted mt-2">Entra para seguir con tu plan.</p>
           </>
         )}
       </div>
 
       <div className="flex-1 px-6 space-y-4 max-w-sm mx-auto w-full">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Email</label>
+          <label className="block text-sm font-medium text-ink mb-1.5">Email</label>
           <input type="email" inputMode="email" autoComplete="email" value={email}
             onChange={e => { setEmail(e.target.value); setError('') }}
             placeholder="tu@email.com"
@@ -168,7 +168,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
         </div>
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Contraseña</label>
+          <label className="block text-sm font-medium text-ink mb-1.5">Contraseña</label>
           <div className="relative">
             <input type={showPassword ? 'text' : 'password'} autoComplete={step === 'register' ? 'new-password' : 'current-password'}
               value={password} onChange={e => { setPassword(e.target.value); setError('') }}
@@ -183,7 +183,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
 
         {step === 'register' && (
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Confirmar contraseña</label>
+            <label className="block text-sm font-medium text-ink mb-1.5">Confirmar contraseña</label>
             <div className="relative">
               <input type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={confirmPassword}
                 onChange={e => { setConfirmPassword(e.target.value); setError('') }}

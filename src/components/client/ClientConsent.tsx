@@ -26,6 +26,7 @@ export function ClientConsent({ token, clientName, nutricionistaName, documentUr
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const firstName = clientName.split(' ')[0]
   const canSubmit = agreed && signedName.trim().length > 2
 
   const handleSign = async () => {
@@ -44,9 +45,9 @@ export function ClientConsent({ token, clientName, nutricionistaName, documentUr
         <div className="w-16 h-16 rounded-full bg-accent/10 text-accent flex items-center justify-center mx-auto mb-5">
           <ShieldCheck className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-serif font-bold text-center mb-2">Antes de continuar</h1>
+        <h1 className="text-2xl font-serif font-bold text-center mb-2">Un último paso, {firstName}</h1>
         <p className="text-sm text-muted text-center mb-6 leading-relaxed">
-          {nutricionistaName} necesita tu consentimiento para tratar tus datos de salud antes de darte acceso a tu panel.
+          Para cuidar de tu salud, {nutricionistaName} necesita tu permiso para tratar tus datos. Léelo con calma: te llevará un minuto.
         </p>
 
         <a href={signedUrl ?? undefined} target="_blank" rel="noreferrer" onClick={() => { if (signedUrl) setRead(true) }}
@@ -55,7 +56,7 @@ export function ClientConsent({ token, clientName, nutricionistaName, documentUr
           <FileText className="w-5 h-5 text-accent flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Documento de consentimiento</p>
-            <p className="text-xs text-muted">Toca para abrirlo y leerlo (PDF)</p>
+            <p className="text-xs text-muted">Toca para abrirlo (PDF)</p>
           </div>
           {read && <CheckCircle2 className="w-5 h-5 text-ok flex-shrink-0" />}
         </a>
@@ -70,12 +71,12 @@ export function ClientConsent({ token, clientName, nutricionistaName, documentUr
         </label>
         {!read && <p className="text-xs text-muted -mt-4 mb-5">Ábrelo primero para poder marcar esta casilla.</p>}
 
-        <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">
-          Firma (tu nombre completo)
+        <label className="block text-sm font-medium text-ink mb-1.5">
+          Tu firma (nombre completo)
         </label>
         <input value={signedName} onChange={e => setSignedName(e.target.value)} placeholder="Nombre y apellidos"
           className="w-full px-4 py-3.5 card text-base outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors mb-1" />
-        <p className="text-xs text-muted mb-5">Escribir tu nombre aquí, junto con la casilla anterior, actúa como tu firma electrónica y queda fechada automáticamente.</p>
+        <p className="text-xs text-muted mb-5">Tu nombre aquí, junto con la casilla anterior, funciona como tu firma electrónica y queda fechado automáticamente.</p>
 
         {error && <p className="text-sm text-warn text-center mb-4">{error}</p>}
 
