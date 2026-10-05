@@ -108,7 +108,6 @@ export function AnaliticasTab({ client, demoMode, demoMarkers }: { client: Clien
         <div className="min-w-0 flex-1 basis-60">
           <p className="font-serif font-bold text-lg flex flex-wrap items-center gap-2">
             <Activity className="w-4 h-4 text-accent" /> Biomarcadores &amp; Longevidad
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-accent/10 text-accent">Estilo Holo</span>
           </p>
           <p className="text-xs text-muted mt-0.5">Visualización de precisión mediante barras de rango calibradas (zonas subóptimas, normales y de longevidad óptima) con comparativas históricas directas.</p>
         </div>

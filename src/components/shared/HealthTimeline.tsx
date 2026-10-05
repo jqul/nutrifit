@@ -65,7 +65,6 @@ export function HealthTimeline({
       <div>
         <p className="font-serif font-bold text-lg flex items-center gap-2">
           <History className="w-4 h-4 text-accent" /> Health Timeline
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-accent/10 text-accent">Estilo Holo</span>
         </p>
         <p className="text-xs text-muted mt-0.5">Línea cronológica unificada de hitos clínicos, biomarcadores, peso, fotos y notas.</p>
       </div>
