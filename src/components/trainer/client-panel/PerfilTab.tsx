@@ -109,8 +109,9 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
     try {
       await exportClientData(client)
       toast('Datos exportados ✓', 'ok')
-    } catch {
-      toast('Error al exportar los datos', 'warn')
+    } catch (e) {
+      // Si falta una tabla se dice cuál: es mejor no entregar nada que entregar un archivo incompleto.
+      toast(e instanceof Error && e.message.startsWith('No se pudo exportar') ? e.message : 'Error al exportar los datos', 'warn')
     } finally {
       setExporting(false)
     }
@@ -308,7 +309,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
           <p className="text-sm text-muted">
             {personalMode
               ? '¿Eliminar tu cuenta y todos tus datos (plan de dieta, peso, fotos, check-ins)? Esta acción no se puede deshacer.'
-              : <>¿Eliminar a <strong className="text-ink">{client.name} {client.surname}</strong> y todos sus datos (plan de dieta, peso, fotos, check-ins)? Esta acción no se puede deshacer.</>}
+              : <>¿Eliminar a <strong className="text-ink">{client.name} {client.surname}</strong> y todos sus datos? Se borra su ficha con el plan, el seguimiento, las analíticas y las notas, sus <strong className="text-ink">fotos y PDFs</strong> guardados y <strong className="text-ink">su cuenta de acceso</strong>. Esta acción no se puede deshacer: si quieres conservar una copia, exporta antes sus datos.</>}
           </p>
           <div className="flex gap-2">
             <Button variant="danger" onClick={handleDelete} loading={deleting}>Sí, eliminar</Button>

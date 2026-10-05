@@ -87,6 +87,30 @@ Repite en el móvil, sin esfuerzo, lo siguiente:
 - [ ] El diálogo de «Generar informe» y el de «Restaurar» caben en pantalla.
 - [ ] Ajustes: la fila de pestañas (Cuenta, Avisos, Experiencia, Marca, Legal) se desplaza en horizontal. Es normal.
 
+## 9. Exportar y eliminar un cliente (privacidad) ⚠️
+
+Esta es la prueba más importante de privacidad y la única que no se puede hacer sin una sesión real.
+**Hazla solo con un cliente de prueba**: eliminar es irreversible.
+
+Preparación: crea un cliente de prueba, regístralo como cliente (con un email tuyo de pruebas) y
+sube con él **una foto de progreso, una foto de una comida y, desde la ficha, el PDF de una analítica**.
+
+**Exportar** (Perfil → Exportar datos):
+- [ ] Se descarga un `.json`. Ábrelo: tiene `datos` con todas las secciones (peso, check-ins, analíticas, notas clínicas, ciclo, anamnesis, encuestas, facturas, citas, revisiones, cambios y versiones del plan…).
+- [ ] `planesDeDieta` trae el plan con sus comidas, alimentos y suplementos.
+- [ ] `archivos` lista la foto de progreso, la de la comida y el PDF, cada uno con un `enlace` que **abre** el fichero (caducan a los 7 días).
+- [ ] Si algo falla, sale un aviso que dice **qué parte** falló (no se descarga un archivo a medias).
+
+**Eliminar** (Perfil → Eliminar cliente y sus datos):
+- [ ] El diálogo avisa de que se borran también fotos, PDFs y la cuenta de acceso.
+- [ ] Tras confirmar sale «Cliente eliminado, con sus ficheros y su cuenta de acceso» y desaparece de la lista.
+- [ ] En el panel de Supabase → **Storage** → buckets `photos` y `lab-reports`: ya no existe la carpeta con el identificador de ese cliente.
+- [ ] En Supabase → **Authentication → Users**: ya no está el email de prueba.
+- [ ] Intenta entrar con el enlace antiguo del cliente: sale «Enlace no válido o expirado».
+
+Si el borrado falla a mitad, el mensaje lo dice y **no se borra la ficha** hasta que los ficheros se
+hayan podido borrar: puedes reintentarlo.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

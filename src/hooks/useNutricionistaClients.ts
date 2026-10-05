@@ -89,6 +89,15 @@ export function withStats(
   })
 }
 
+/** El mensaje que devolvió una función de Supabase cuando falla (viene en el cuerpo de la respuesta). */
+async function functionErrorDetail(error: unknown): Promise<string> {
+  try {
+    const res = (error as { context?: Response } | null)?.context
+    const body = res ? await res.json() : null
+    return typeof body?.error === 'string' ? body.error : ''
+  } catch { return '' }
+}
+
 function toLocalISODate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
@@ -216,10 +225,18 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
       toast('Cliente eliminado (modo demo — no se guarda)', 'ok')
       return true
     }
-    const { error } = await supabase.from('clientes').delete().eq('id', id)
-    if (error) { toast('Error al eliminar el cliente', 'warn'); return false }
+    // La eliminación completa la hace la función delete-client: además de la ficha (y sus 18 tablas)
+    // borra los ficheros del cliente (fotos, analíticas en PDF) y su cuenta de acceso, que borrar la
+    // fila sola no toca.
+    const { data, error } = await supabase.functions.invoke('delete-client', { body: { clientId: id } })
+    if (error || !data?.ok) {
+      const detail = await functionErrorDetail(error)
+      toast(`No se pudo eliminar al cliente${detail ? `: ${detail}` : ''}`, 'warn')
+      return false
+    }
     await fetchClients()
-    toast('Cliente eliminado', 'ok')
+    if (data.accountError) toast(`Cliente eliminado, pero no se pudo borrar su cuenta de acceso: ${data.accountError}`, 'warn')
+    else toast('Cliente eliminado, con sus ficheros y su cuenta de acceso', 'ok')
     return true
   }
 

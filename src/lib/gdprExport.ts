@@ -1,43 +1,40 @@
+// Descarga de la copia completa de los datos de un cliente (RGPD). Lo que se
+// incluye y cómo se garantiza que no falte nada está en clientExport.ts; aquí solo
+// está la conexión real con Supabase y la descarga del archivo.
 import { supabase } from './supabase'
 import { ClientData } from '../types'
+import { collectClientExport, ExportSource } from './clientExport'
+
+// Supabase corta cada respuesta en 1.000 filas: sin paginar, un cliente con muchos
+// check-ins se exportaría truncado sin ningún aviso.
+const PAGE = 1000
+// Los valores de un .in(...) van en la URL: se trocean para no pasarse de largo.
+const IN_CHUNK = 50
+
+const source: ExportSource = {
+  async rows(table, column, values, order) {
+    const all: Record<string, unknown>[] = []
+    for (let i = 0; i < values.length; i += IN_CHUNK) {
+      const part = values.slice(i, i + IN_CHUNK)
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase.from(table).select('*').in(column, part)
+          .order(order, { ascending: true }).order('id', { ascending: true }).range(from, from + PAGE - 1)
+        if (error) throw new Error(`${table}: ${error.message}`)
+        all.push(...((data ?? []) as Record<string, unknown>[]))
+        if (!data || data.length < PAGE) break
+      }
+    }
+    return all
+  },
+  async signedUrls(bucket, paths, expiresInSeconds) {
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrls(paths, expiresInSeconds)
+    if (error) throw new Error(`${bucket}: ${error.message}`)
+    return (data ?? []).map(d => ({ path: d.path ?? '', signedUrl: d.signedUrl ?? null }))
+  },
+}
 
 export async function exportClientData(client: ClientData): Promise<void> {
-  const [{ data: plans }, { data: weights }, { data: photos }, { data: checkins }] = await Promise.all([
-    supabase.from('diet_plans').select('*').eq('client_id', client.id),
-    supabase.from('weight_logs').select('*').eq('client_id', client.id).order('date'),
-    supabase.from('progress_photos').select('*').eq('client_id', client.id).order('date'),
-    supabase.from('daily_checkins').select('*').eq('client_id', client.id).order('date'),
-  ])
-
-  const planIds = (plans || []).map(p => p.id)
-  let meals: unknown[] = []
-  let supplements: unknown[] = []
-  if (planIds.length) {
-    const [{ data: mealRows }, { data: supRows }] = await Promise.all([
-      supabase.from('diet_meals').select('*').in('plan_id', planIds),
-      supabase.from('diet_supplements').select('*').in('plan_id', planIds),
-    ])
-    meals = mealRows || []
-    supplements = supRows || []
-    const mealIds = meals.map((m) => (m as { id: string }).id)
-    if (mealIds.length) {
-      const { data: itemRows } = await supabase.from('diet_meal_items').select('*').in('meal_id', mealIds)
-      meals = meals.map(m => ({ ...(m as object), items: (itemRows || []).filter((i) => i.meal_id === (m as { id: string }).id) }))
-    }
-  }
-
-  const bundle = {
-    exportedAt: new Date().toISOString(),
-    client,
-    dietPlans: (plans || []).map(p => ({
-      ...p,
-      meals: meals.filter((m) => (m as { plan_id: string }).plan_id === p.id),
-      supplements: supplements.filter((s) => (s as { plan_id: string }).plan_id === p.id),
-    })),
-    weightLogs: weights || [],
-    progressPhotos: photos || [],
-    dailyCheckins: checkins || [],
-  }
+  const bundle = await collectClientExport(client, source)
 
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
