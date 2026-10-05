@@ -78,11 +78,11 @@ export function EatingOutGuidesManager({ nutricionistaId, demoMode }: { nutricio
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="font-semibold text-sm flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4" /> Modo "Comer fuera" ({rows.length})</h2>
         {!editor && (
-          <button onClick={openNew} className="flex items-center gap-1 text-xs font-bold text-accent">
-            <Plus className="w-3.5 h-3.5" /> Nuevo tipo de restaurante
+          <button onClick={openNew} className="flex items-center gap-1 text-xs font-bold text-accent flex-shrink-0 whitespace-nowrap">
+            <Plus className="w-3.5 h-3.5" /> Nuevo tipo
           </button>
         )}
       </div>

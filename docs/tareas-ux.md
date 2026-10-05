@@ -52,7 +52,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   estado "completada", fotos de receta cuando existan.
 - [x] **UX-23 · Progreso del cliente emocional** (M): cifra grande de progreso
   desde el inicio, gráfico limpio, racha, y fotos con protagonismo.
-- [ ] **UX-24 · Plantillas: separar Planes / Recetas / Guías** (S): hoy conviven
+- [x] **UX-24 · Plantillas: separar Planes / Recetas / Guías** (S): hoy conviven
   plantillas, recetas, guías y "comer fuera" en una sola pantalla de 418 líneas.
 - [ ] **UX-25 · Ajustes por categorías** (S): Cuenta · Experiencia del cliente ·
   Marca · Legal.
