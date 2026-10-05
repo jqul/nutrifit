@@ -19,6 +19,10 @@ import { RecipeEditorPanel } from '../../shared/RecipeEditorPanel'
 import { toast } from '../../shared/Toast'
 import { FoodConverterDrawer } from '../FoodConverterDrawer'
 import { ImportDietPlanModal } from './ImportDietPlanModal'
+import { FoodForm } from '../FoodForm'
+import { Modal } from '../../shared/Modal'
+import { FoodDraft, blankFoodDraft, draftToColumns, normalizeFoodName } from '../../../lib/foodDraft'
+import { createOwnFood } from '../../../lib/ownFoods'
 import {
   EditableItem, EditableMeal, EditableSupplement, DAY_LABELS, MACRO_LABELS, newId, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, demoPlanToEditable,
 } from './plan-dieta/planModel'
@@ -499,6 +503,35 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     setOpenSuggestFor(null)
   }
 
+  // Crear un alimento propio sin salir del plan: el que se está escribiendo y no está en el catálogo.
+  const [createFoodFor, setCreateFoodFor] = useState<{ mealId: string; itemId: string; draft: FoodDraft } | null>(null)
+  const [savingNewFood, setSavingNewFood] = useState(false)
+  const saveNewFood = async () => {
+    if (!createFoodFor) return
+    const { mealId, itemId, draft } = createFoodFor
+    let food: Food
+    if (demoPlan) {
+      // Sin base de datos: el alimento vive solo mientras dure la sesión.
+      const c = draftToColumns(draft)
+      food = {
+        id: `demo-food-${Date.now()}`, name: c.name, category: c.category, kcal: c.kcal, proteinG: c.protein_g, carbsG: c.carbs_g, fatG: c.fat_g,
+        fiberG: c.fiber_g, sugarG: c.sugar_g, sodiumMg: c.sodium_mg, saturatedFatG: c.saturated_fat_g,
+        calciumMg: c.calcium_mg, ironMg: c.iron_mg, zincMg: c.zinc_mg, reference: 'Añadido por ti', nutricionistaId,
+      }
+      toast('Modo demo: el alimento no se guarda de verdad', 'ok')
+    } else {
+      setSavingNewFood(true)
+      const r = await createOwnFood(nutricionistaId, draft)
+      setSavingNewFood(false)
+      if (r.error !== undefined) { toast(r.error, 'warn'); return }
+      food = r.food
+      toast(`«${food.name}» añadido a tu catálogo ✓`, 'ok')
+    }
+    setFoods(prev => [...prev, food])
+    selectFood(mealId, itemId, food)
+    setCreateFoodFor(null)
+  }
+
   const [scanningFor, setScanningFor] = useState<{ mealId: string; itemId: string } | null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const handleScanned = (food: ScannedFood) => {
@@ -813,6 +846,12 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                                 <span className="text-muted flex-shrink-0">{f.kcal} kcal/100g</span>
                               </button>
                             ))}
+                            {!foods.some(f => normalizeFoodName(f.name) === normalizeFoodName(item.foodName)) && (
+                              <button type="button" onMouseDown={() => setCreateFoodFor({ mealId: meal.id, itemId: item.id, draft: blankFoodDraft(item.foodName.trim()) })}
+                                className="w-full text-left px-2.5 py-1.5 text-xs font-bold text-accent border-t border-border hover:bg-accent/10 transition-colors flex items-center gap-1.5">
+                                <Plus className="w-3.5 h-3.5 flex-shrink-0" /> <span className="truncate">Crear «{item.foodName.trim()}» como alimento propio</span>
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1087,6 +1126,12 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       </div>
 
       <BarcodeScanner open={!!scanningFor} onClose={() => setScanningFor(null)} onFound={handleScanned} />
+      <Modal open={!!createFoodFor} onClose={() => !savingNewFood && setCreateFoodFor(null)} title="Nuevo alimento propio" maxWidth="max-w-xl">
+        {createFoodFor && (
+          <FoodForm draft={createFoodFor.draft} onChange={draft => setCreateFoodFor({ ...createFoodFor, draft })} existing={foods}
+            saving={savingNewFood} submitLabel="Guardar y usar" onSubmit={saveNewFood} onCancel={() => setCreateFoodFor(null)} />
+        )}
+      </Modal>
       <ImportDietPlanModal open={importOpen} onClose={() => setImportOpen(false)} foods={foods}
         onImport={imported => setMeals(prev => [...prev, ...imported])} />
     </div>

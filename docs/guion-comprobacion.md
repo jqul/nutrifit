@@ -127,6 +127,21 @@ Ficha de un cliente con plan y varias semanas de pesajes → **Seguimiento**, ta
 - [ ] «Ahora no» oculta la propuesta; reaparece si cambian los datos.
 - [ ] Nunca propone bajar de 1.200 kcal ni dejar menos de 50 g de carbohidratos.
 
+## 11. Alimentos propios
+
+**Planificación → Plantillas → Mis alimentos**
+
+- [ ] «Nuevo alimento»: si dejas campos obligatorios vacíos, o repites el nombre de uno del catálogo («Pechuga de pollo»), no deja guardar y dice por qué.
+- [ ] Un valor imposible (5.000 kcal, o proteína + carbos + grasa por encima de 100 g) tampoco deja guardar.
+- [ ] Si las kcal no cuadran con los macros, **avisa pero deja guardar**.
+- [ ] Se acepta la coma decimal (8,5).
+- [ ] Editar un alimento cambia sus valores. Si ya está en algún plan, **el nombre queda bloqueado** y lo explica.
+- [ ] Eliminar: te dice en cuántos platos de tus planes aparece. Esos platos siguen en el plan con sus valores.
+- [ ] En el **plan de un cliente**, escribe un alimento que no exista en una comida: abajo del desplegable aparece
+  «Crear … como alimento propio». Se guarda, se rellena el plato con sus valores y queda en Mis alimentos.
+- [ ] En la app del **cliente**, un plan con un alimento propio permite buscar sustitutos para él y lo agrupa en la lista de la compra.
+- [ ] Otro nutricionista **no** ve tus alimentos propios.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

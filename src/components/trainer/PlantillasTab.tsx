@@ -7,16 +7,18 @@ import { GuidesManager } from './GuidesManager'
 import { EatingOutGuidesManager } from './EatingOutGuidesManager'
 import { PlanTemplatesPanel } from './plantillas/PlanTemplatesPanel'
 import { RecipesPanel } from './plantillas/RecipesPanel'
+import { MyFoodsPanel } from './plantillas/MyFoodsPanel'
 import { BookmarkPlus } from 'lucide-react'
 
-type Section = 'planes' | 'recetas' | 'guias'
+type Section = 'planes' | 'recetas' | 'alimentos' | 'guias'
 const SECTIONS: { id: Section; label: string; hint: string }[] = [
   { id: 'planes', label: 'Planes', hint: 'Planes de dieta completos. Créalos aquí o desde el plan de cualquier cliente con "Guardar como plantilla", y aplícalos al plan de cualquier otro cliente.' },
   { id: 'recetas', label: 'Recetas', hint: 'Platos reutilizables con foto y pasos. Créalos aquí o desde un plan con "Guardar esta comida como receta", y añádelos a cualquier plan.' },
+  { id: 'alimentos', label: 'Mis alimentos', hint: 'Los alimentos que añades tú al catálogo (un producto de marca, una receta base…). Los puedes usar en cualquier plan y tus clientes los ven con sus valores.' },
   { id: 'guias', label: 'Guías', hint: 'Contenido fijo que ven todos tus clientes: guías de apoyo y pautas para cuando comen fuera de casa.' },
 ]
 
-/** Plantillas y recursos: tres secciones (planes, recetas, guías) en vez de
+/** Plantillas y recursos: cuatro secciones (planes, recetas, alimentos propios, guías) en vez de
  * una sola pantalla larga. Todas se quedan montadas y solo se ocultan con CSS
  * para no perder un editor a medio rellenar al cambiar de sección. */
 export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: string; demoMode?: boolean }) {
@@ -55,6 +57,9 @@ export function PlantillasTab({ nutricionistaId, demoMode }: { nutricionistaId: 
       </div>
       <div role="tabpanel" className={section === 'recetas' ? '' : 'hidden'}>
         <RecipesPanel nutricionistaId={nutricionistaId} demoMode={demoMode} foods={foods} />
+      </div>
+      <div role="tabpanel" className={section === 'alimentos' ? '' : 'hidden'}>
+        <MyFoodsPanel nutricionistaId={nutricionistaId} demoMode={demoMode} foods={foods} onFoodsChange={setFoods} />
       </div>
       <div role="tabpanel" className={section === 'guias' ? 'space-y-8' : 'hidden'}>
         <GuidesManager nutricionistaId={nutricionistaId} demoMode={demoMode} />

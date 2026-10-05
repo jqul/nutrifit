@@ -3,9 +3,11 @@ import { supabase } from '../../lib/supabase'
 import { foodFromRow } from '../../lib/mappers'
 import { Food } from '../../types'
 import { convertQuantity, computeMacros, computeSubstitution, computeSubstitutionDiff, CONVERTIBLE_UNITS, MacroKey } from '../../lib/foodConversion'
-import { Button } from '../shared/Button'
+import { FoodDraft, blankFoodDraft } from '../../lib/foodDraft'
+import { createOwnFood } from '../../lib/ownFoods'
+import { FoodForm } from './FoodForm'
 import { toast } from '../shared/Toast'
-import { ArrowRightLeft, Plus, X } from 'lucide-react'
+import { ArrowRightLeft, Plus } from 'lucide-react'
 import { ToolHeader } from './ToolHeader'
 
 const MACRO_OPTIONS: { key: MacroKey; label: string }[] = [
@@ -14,18 +16,6 @@ const MACRO_OPTIONS: { key: MacroKey; label: string }[] = [
   { key: 'carbsG', label: 'Carbohidratos' },
   { key: 'fatG', label: 'Grasas' },
 ]
-
-const FOOD_CATEGORIES = ['Verdura', 'Fruta', 'Carbohidrato', 'Proteína', 'Lácteo', 'Legumbre', 'Grasa', 'Fruto seco', 'Suplemento', 'Otros']
-
-interface NewFoodDraft {
-  name: string; category: string
-  kcal: string; proteinG: string; carbsG: string; fatG: string
-  fiberG: string; sugarG: string; sodiumMg: string; saturatedFatG: string
-  calciumMg: string; ironMg: string; zincMg: string
-}
-function blankFoodDraft(name = ''): NewFoodDraft {
-  return { name, category: 'Otros', kcal: '', proteinG: '', carbsG: '', fatG: '', fiberG: '', sugarG: '', sodiumMg: '', saturatedFatG: '', calciumMg: '', ironMg: '', zincMg: '' }
-}
 
 export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: string; demoMode?: boolean }) {
   const [foods, setFoods] = useState<Food[]>([])
@@ -39,7 +29,7 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
   const [matchBy, setMatchBy] = useState<MacroKey>('proteinG')
 
   const [addingFood, setAddingFood] = useState(false)
-  const [newFood, setNewFood] = useState<NewFoodDraft>(blankFoodDraft())
+  const [newFood, setNewFood] = useState<FoodDraft>(blankFoodDraft())
   const [savingFood, setSavingFood] = useState(false)
 
   const loadFoods = useCallback(async () => {
@@ -53,27 +43,16 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
   const closeAddFood = () => setAddingFood(false)
 
   const saveNewFood = async () => {
-    if (!newFood.name.trim()) { toast('Ponle un nombre al alimento', 'warn'); return }
-    if (!newFood.kcal || !newFood.proteinG || !newFood.carbsG || !newFood.fatG) {
-      toast('Rellena al menos kcal, proteína, carbohidratos y grasas', 'warn'); return
-    }
+    // La validación (nombre repetido, valores imposibles…) la hace el formulario antes de llamar aquí.
     if (demoMode || !nutricionistaId) { toast('Modo demo: los cambios no se guardan', 'ok'); closeAddFood(); return }
     setSavingFood(true)
-    const { data, error } = await supabase.from('foods').insert({
-      nutricionista_id: nutricionistaId, name: newFood.name.trim(), category: newFood.category,
-      kcal: parseFloat(newFood.kcal) || 0, protein_g: parseFloat(newFood.proteinG) || 0,
-      carbs_g: parseFloat(newFood.carbsG) || 0, fat_g: parseFloat(newFood.fatG) || 0,
-      fiber_g: newFood.fiberG ? parseFloat(newFood.fiberG) : null, sugar_g: newFood.sugarG ? parseFloat(newFood.sugarG) : null,
-      sodium_mg: newFood.sodiumMg ? parseFloat(newFood.sodiumMg) : null, saturated_fat_g: newFood.saturatedFatG ? parseFloat(newFood.saturatedFatG) : null,
-      calcium_mg: newFood.calciumMg ? parseFloat(newFood.calciumMg) : null, iron_mg: newFood.ironMg ? parseFloat(newFood.ironMg) : null,
-      zinc_mg: newFood.zincMg ? parseFloat(newFood.zincMg) : null, reference: 'Añadido por ti',
-    }).select().single()
+    const r = await createOwnFood(nutricionistaId, newFood)
     setSavingFood(false)
-    if (error) { toast('Error: ' + error.message, 'warn'); return }
-    toast(`"${newFood.name.trim()}" añadido a tu catálogo ✓`, 'ok')
+    if (r.error !== undefined) { toast(r.error, 'warn'); return }
+    toast(`"${r.food.name}" añadido a tu catálogo ✓`, 'ok')
     closeAddFood()
     await loadFoods()
-    if (data) { setSelected(foodFromRow(data)); setQuery('') }
+    setSelected(r.food); setQuery('')
   }
 
   const suggestions = query.trim().length > 0 && !selected
@@ -132,34 +111,9 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
               <Plus className="w-3.5 h-3.5" /> ¿No está en la lista? Añade tu propio alimento
             </button>
           ) : (
-            <div className="bg-bg-alt rounded-xl p-3.5 space-y-2.5">
-              <div className="flex items-center gap-2">
-                <input value={newFood.name} onChange={e => setNewFood({ ...newFood, name: e.target.value })} placeholder="Nombre del alimento" autoFocus
-                  className="flex-1 px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-accent/20" />
-                <select value={newFood.category} onChange={e => setNewFood({ ...newFood, category: e.target.value })}
-                  className="px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
-                  {FOOD_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <button onClick={closeAddFood} className="p-1.5 text-muted hover:text-warn flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
-              </div>
-              <p className="text-xs text-muted">Todos los valores son por 100g. Kcal/proteína/carbohidratos/grasas son obligatorios, el resto es opcional.</p>
-              <div className="grid grid-cols-4 gap-2">
-                <FoodNumInput label="Kcal *" value={newFood.kcal} onChange={v => setNewFood({ ...newFood, kcal: v })} />
-                <FoodNumInput label="Prot. (g) *" value={newFood.proteinG} onChange={v => setNewFood({ ...newFood, proteinG: v })} />
-                <FoodNumInput label="Carbos (g) *" value={newFood.carbsG} onChange={v => setNewFood({ ...newFood, carbsG: v })} />
-                <FoodNumInput label="Grasas (g) *" value={newFood.fatG} onChange={v => setNewFood({ ...newFood, fatG: v })} />
-                <FoodNumInput label="Fibra (g)" value={newFood.fiberG} onChange={v => setNewFood({ ...newFood, fiberG: v })} />
-                <FoodNumInput label="Azúcares (g)" value={newFood.sugarG} onChange={v => setNewFood({ ...newFood, sugarG: v })} />
-                <FoodNumInput label="Sodio (mg)" value={newFood.sodiumMg} onChange={v => setNewFood({ ...newFood, sodiumMg: v })} />
-                <FoodNumInput label="Sat. (g)" value={newFood.saturatedFatG} onChange={v => setNewFood({ ...newFood, saturatedFatG: v })} />
-                <FoodNumInput label="Calcio (mg)" value={newFood.calciumMg} onChange={v => setNewFood({ ...newFood, calciumMg: v })} />
-                <FoodNumInput label="Hierro (mg)" value={newFood.ironMg} onChange={v => setNewFood({ ...newFood, ironMg: v })} />
-                <FoodNumInput label="Zinc (mg)" value={newFood.zincMg} onChange={v => setNewFood({ ...newFood, zincMg: v })} />
-              </div>
-              <div className="flex items-center gap-2 pt-1">
-                <Button size="sm" onClick={saveNewFood} loading={savingFood}>Guardar alimento</Button>
-                <Button size="sm" variant="ghost" onClick={closeAddFood}>Cancelar</Button>
-              </div>
+            <div className="bg-bg-alt rounded-xl p-3.5">
+              <FoodForm draft={newFood} onChange={setNewFood} existing={foods} saving={savingFood} submitLabel="Guardar alimento"
+                onSubmit={saveNewFood} onCancel={closeAddFood} />
             </div>
           )}
 
@@ -319,16 +273,6 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function FoodNumInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
-      <input type="number" value={value} onChange={e => onChange(e.target.value)}
-        className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
     </div>
   )
 }
