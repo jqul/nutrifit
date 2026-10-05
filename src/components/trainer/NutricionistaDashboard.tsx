@@ -19,6 +19,7 @@ import { ClientListRow } from './ClientListRow'
 import { ControlCenter } from './ControlCenter'
 import { priorityOf, ClientPanelTab } from '../../lib/controlCenter'
 import { useTodayAppointments } from '../../hooks/useTodayAppointments'
+import { useReviewedThisWeek } from '../../hooks/useClientReviews'
 import { sortByAttention } from '../../lib/clientListSummary'
 import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboardNav'
 import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag } from 'lucide-react'
@@ -54,6 +55,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   // se combina con la búsqueda por texto (ambos deben cumplirse).
   const [quickFilter, setQuickFilter] = useState('all')
   const todayAppointments = useTodayAppointments(userProfile.uid, !!demoClients)
+  const reviewedClientIds = useReviewedThisWeek(!!demoClients)
   const todayApptClientIds = useMemo(() => new Set(todayAppointments.map(a => a.clientId).filter((id): id is string => !!id)), [todayAppointments])
 
   const allTags = Array.from(new Set(clients.flatMap(c => c.tags))).sort()
@@ -155,6 +157,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         <div className={view === 'inicio' ? '' : 'hidden'}>
           <ControlCenter displayName={userProfile.displayName} clients={clients} loading={loading}
             todayAppointments={todayAppointments}
+            reviewedClientIds={reviewedClientIds}
             onOpenClient={(c, tab) => onSelectClient(c, tab)}
             onShowClients={filter => { setQuickFilter(filter); goToView('clientes') }}
             onGoToCalendar={() => goToView('calendario')}

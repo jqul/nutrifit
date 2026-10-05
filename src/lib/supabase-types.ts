@@ -50,6 +50,19 @@ export interface ClienteRow {
 export type ClientProfileRow = Omit<ClienteRow,
   'notes' | 'report_notes' | 'notes_updated_at' | 'monthly_price' | 'custom_messages' | 'tags' | 'last_reviewed_at'>
 
+/** Decisión del nutricionista sobre la revisión semanal de un cliente (tabla client_reviews). */
+export interface ClientReviewRow {
+  id: string
+  client_id: string
+  week_start: string
+  status: 'accepted' | 'edited' | 'ignored'
+  summary: { key: string; label: string; value: string; detail: string | null; tone: string }[]
+  suggestion: string
+  note: string
+  created_at: string
+  updated_at: string
+}
+
 export interface DietPlanRow {
   id: string
   client_id: string

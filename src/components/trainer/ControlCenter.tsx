@@ -2,10 +2,12 @@ import { useMemo } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { Appointment } from '../../types'
 import { ClientWithStats } from '../../hooks/useNutricionistaClients'
+import { pendingReviews } from '../../lib/weeklyReview'
 import { attentionList, goalReachedClients, greeting, monthlyRevenue, summarizePriorities, Priority, ClientPanelTab } from '../../lib/controlCenter'
 import { Button } from '../shared/Button'
 
 const MAX_ATTENTION = 6
+const MAX_REVIEWS = 5
 
 // Qué se hace al abrir la ficha desde un aviso: lo dice el botón de la derecha.
 const TAB_ACTION: Record<ClientPanelTab, string> = {
@@ -23,11 +25,13 @@ const PRIORITY_STYLE: Record<Priority, { dot: string; label: string }> = {
  * necesita mi atención ahora?" antes que a "¿qué clientes tengo?": prioridades,
  * citas de hoy, quién necesita algo y una línea de negocio.
  */
-export function ControlCenter({ displayName, clients, loading, todayAppointments, onOpenClient, onShowClients, onGoToCalendar, onGoToBusiness, onNewClient }: {
+export function ControlCenter({ displayName, clients, loading, todayAppointments, reviewedClientIds, onOpenClient, onShowClients, onGoToCalendar, onGoToBusiness, onNewClient }: {
   displayName: string
   clients: ClientWithStats[]
   loading: boolean
   todayAppointments: Appointment[]
+  /** Clientes cuya revisión semanal de esta semana ya está decidida. */
+  reviewedClientIds: Set<string>
   /** Abre la ficha; si se indica pestaña, directamente en ella. */
   onOpenClient: (client: ClientWithStats, tab?: ClientPanelTab) => void
   /** Lleva a la lista de Clientes con ese filtro rápido ('all' | 'risk'). */
@@ -40,6 +44,11 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
   const summary = useMemo(() => summarizePriorities(clients), [clients])
   const attention = useMemo(() => attentionList(clients), [clients])
   const reached = useMemo(() => goalReachedClients(clients), [clients])
+  // Pendientes de revisar esta semana: primero los que más atención piden.
+  const pending = useMemo(() => {
+    const order = new Map(attention.map((a, i) => [a.client.id, i]))
+    return pendingReviews(clients, reviewedClientIds).sort((a, b) => (order.get(a.id) ?? 1e6) - (order.get(b.id) ?? 1e6) || `${a.name} ${a.surname}`.localeCompare(`${b.name} ${b.surname}`, 'es'))
+  }, [clients, attention, reviewedClientIds])
   const revenue = useMemo(() => monthlyRevenue(clients), [clients])
   const clientName = (id: string | null) => {
     const c = id ? clients.find(x => x.id === id) : null
@@ -141,6 +150,29 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
               )}
             </section>
           </div>
+
+          {pending.length > 0 && (
+            <section aria-labelledby="cc-reviews">
+              <div className="flex items-baseline justify-between gap-3 mb-2">
+                <h2 id="cc-reviews" className="text-sm font-semibold">Revisión semanal</h2>
+                <span className="text-xs text-muted">{pending.length} {pending.length === 1 ? 'pendiente' : 'pendientes'}</span>
+              </div>
+              <div className="card divide-y divide-border/60 overflow-hidden">
+                {pending.slice(0, MAX_REVIEWS).map(c => (
+                  <button key={c.id} onClick={() => onOpenClient(c, 'seguimiento')}
+                    className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-bg-alt/60 transition-colors">
+                    <span className="text-sm font-semibold truncate">{c.name} {c.surname}</span>
+                    <span className="flex items-center gap-0.5 text-xs font-semibold text-accent flex-shrink-0">
+                      Revisar <ChevronRight className="w-4 h-4" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {pending.length > MAX_REVIEWS && (
+                <p className="text-xs text-muted mt-2">y {pending.length - MAX_REVIEWS} más — se abren desde Clientes.</p>
+              )}
+            </section>
+          )}
 
           {reached.length > 0 && (
             <section aria-labelledby="cc-goals">
