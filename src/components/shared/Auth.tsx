@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Eye, EyeOff, Check, ArrowRight, Briefcase, User } from 'lucide-react'
 import { InstallAppButton } from './InstallAppButton'
+import { LandingPreview } from './LandingPreview'
 
 interface AuthProps { onAuth: () => void; onDemo?: () => void }
 
@@ -10,7 +11,7 @@ const FEATURES = [
   { icon: '⚖️', title: 'Seguimiento de peso', desc: 'Gráfica de evolución sincronizada, sin depender del móvil del cliente.' },
   { icon: '📸', title: 'Fotos de progreso', desc: 'El cliente sube fotos y tú ves su evolución visual.' },
   { icon: '✅', title: 'Check-in diario', desc: 'Adherencia, hambre, energía y ánimo cada día, sin preguntarlo por WhatsApp.' },
-  { icon: '📱', title: 'Panel del cliente', desc: 'Acceso desde el móvil con un enlace. Sin registro. Sin contraseña.' },
+  { icon: '📱', title: 'Panel del cliente', desc: 'Acceso desde el móvil con un enlace personal. Sin descargar nada.' },
   { icon: '📈', title: 'Adherencia y racha', desc: 'Ve de un vistazo quién sigue el plan y quién necesita un empujón.' },
 ]
 
@@ -94,6 +95,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
           </button>
         </div>
       </section>
+      <LandingPreview />
       <section className="max-w-5xl mx-auto px-6 py-20 w-full">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent mb-4 text-center">Qué incluye</p>
         <h2 className="text-4xl sm:text-5xl font-serif font-bold text-center mb-16 max-w-2xl mx-auto leading-tight">Todo lo que necesitas para gestionar a tus clientes</h2>

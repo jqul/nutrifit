@@ -32,7 +32,7 @@ interface Options {
   demoClients?: ClientData[]
 }
 
-function withStats(
+export function withStats(
   clients: ClientData[], checkinsMap: Record<string, DailyCheckin[]>, invoicesMap: Record<string, InvoiceRow[]> = {},
   bloodMarkersMap: Record<string, BloodMarkerRow[]> = {}, surveyResponsesMap: Record<string, SurveyResponseRow[]> = {},
   weightsMap: Record<string, WeightEntry[]> = {},

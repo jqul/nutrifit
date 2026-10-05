@@ -70,7 +70,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
 - [x] **UX-33 · Conversor y Micronutrientes como "Herramientas"** (S).
 - [x] **UX-34 · Difusión en 3 pasos** (S): destinatarios → mensaje → revisar y enviar.
 - [x] **UX-35 · Registro y consentimiento del cliente más cálidos** (S).
-- [ ] **UX-36 · Landing: captura real del producto bajo el hero** (S).
+- [x] **UX-36 · Landing: captura real del producto bajo el hero** (S).
 - [ ] **UX-37 · Notas: aviso "solo visible para ti" + fecha de última edición** (S).
 
 ## Orden recomendado
