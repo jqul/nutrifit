@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ReactNode } from 'react'
 import { Home, Utensils, BarChart2, MoreHorizontal, MessageCircle } from 'lucide-react'
 import { buildWAUrl } from '../../lib/whatsapp'
 import { ClientData, DietPlan, WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClinicalNote } from '../../types'
@@ -125,35 +125,42 @@ export function ClientAppShell({
         {activeTab === 'mas' && (
           <div className="px-4 py-6 space-y-4 max-w-xl mx-auto pb-24">
             <h3 className="font-serif font-bold text-xl">Más opciones</h3>
-            <div className="card p-5 space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted">{previewMode ? 'Ficha del cliente' : 'Tu cuenta'}</p>
-              <p className="text-sm"><span className="text-muted">Nombre:</span> <span className="font-semibold">{clientName}</span></p>
-              <p className="text-sm"><span className="text-muted">Nutricionista:</span> <span className="font-semibold">{nutricionistaName}</span></p>
-            </div>
-            <GuidesLibrary nutricionistaId={clientData.nutricionistaId} demoMode={demoMode} />
-            <div className="card p-5 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold">Modo oscuro</p>
-                <p className="text-xs text-muted">Cambia la apariencia de tu panel</p>
+
+            <MoreSection title="Cuenta">
+              <div className="card p-5 space-y-2">
+                <p className="text-sm font-semibold">{previewMode ? 'Ficha del cliente' : 'Tus datos'}</p>
+                <p className="text-sm"><span className="text-muted">Nombre:</span> <span className="font-semibold">{clientName}</span></p>
+                <p className="text-sm"><span className="text-muted">Nutricionista:</span> <span className="font-semibold">{nutricionistaName}</span></p>
               </div>
-              <ThemeToggle />
-            </div>
-            {!previewMode && (
-              <div className="card p-5 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold">Notificaciones</p>
-                  <p className="text-xs text-muted">Avisos cuando tu nutricionista actualice tu plan o confirme una cita</p>
-                </div>
-                <PushToggle clientId={demoMode ? undefined : clientData.id} />
+              {previewMode ? (
+                <AnamnesisPreview clientId={clientData.id} />
+              ) : (
+                <AnamnesisForm clientId={clientData.id} nutricionistaId={clientData.nutricionistaId} demoMode={demoMode} />
+              )}
+            </MoreSection>
+
+            <MoreSection title="Recursos">
+              <GuidesLibrary nutricionistaId={clientData.nutricionistaId} demoMode={demoMode} />
+            </MoreSection>
+
+            <MoreSection title="Aplicación">
+              <div className="card px-5 divide-y divide-border/60">
+                <SettingRow title="Modo oscuro" hint="Cambia la apariencia de tu panel"><ThemeToggle /></SettingRow>
+                {!previewMode && (
+                  <SettingRow title="Notificaciones" hint="Avisos cuando tu nutricionista actualice tu plan o confirme una cita">
+                    <PushToggle clientId={demoMode ? undefined : clientData.id} />
+                  </SettingRow>
+                )}
+                <InstallAppRow />
               </div>
+            </MoreSection>
+
+            {!demoMode && !previewMode && (
+              <MoreSection title="Seguridad">
+                <ChangePasswordCard />
+                {onSignOut && <SignOutButton onSignOut={onSignOut} />}
+              </MoreSection>
             )}
-            <InstallAppCard />
-            {previewMode ? (
-              <AnamnesisPreview clientId={clientData.id} />
-            ) : (
-              <AnamnesisForm clientId={clientData.id} nutricionistaId={clientData.nutricionistaId} demoMode={demoMode} />
-            )}
-            {!demoMode && !previewMode && <ChangePasswordCard />}
             {previewMode && (
               <p className="text-xs text-muted text-center px-4">Estás viendo esta pantalla como el nutricionista — cerrar sesión, cambiar contraseña y las notificaciones push del cliente no están disponibles en la vista previa.</p>
             )}
@@ -161,9 +168,6 @@ export function ClientAppShell({
               <a href="/" className="block w-full text-center py-3 border border-border rounded-2xl text-sm font-medium text-muted hover:bg-bg-alt transition-colors">
                 Volver al inicio
               </a>
-            )}
-            {!demoMode && !previewMode && onSignOut && (
-              <SignOutButton onSignOut={onSignOut} />
             )}
           </div>
         )}
@@ -187,18 +191,37 @@ export function ClientAppShell({
 }
 
 /** Se oculta sola (vía useInstallPrompt) si ya está instalada o si el
- * navegador no ofrece ninguna vía — así el bloque entero, no solo el
- * botón, desaparece de "Más" en vez de dejar una tarjeta vacía. */
-function InstallAppCard() {
+ * navegador no ofrece ninguna vía — así la fila entera, no solo el botón,
+ * desaparece de "Más" en vez de dejar un hueco vacío. */
+function InstallAppRow() {
   const { show } = useInstallPrompt()
   if (!show) return null
   return (
-    <div className="card p-5 flex items-center justify-between gap-3">
-      <div>
-        <p className="text-sm font-semibold">Instalar app</p>
-        <p className="text-xs text-muted">Añade NutriFit a tu pantalla de inicio, como una app</p>
-      </div>
+    <SettingRow title="Instalar app" hint="Añade NutriFit a tu pantalla de inicio, como una app">
       <InstallAppButton />
+    </SettingRow>
+  )
+}
+
+/** Bloque de "Más" con un título corto y sus opciones debajo. */
+function MoreSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-2">
+      <h4 className="text-sm font-semibold text-muted px-1">{title}</h4>
+      {children}
+    </section>
+  )
+}
+
+/** Fila de ajuste: texto a la izquierda, control a la derecha. */
+function SettingRow({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-4">
+      <div className="min-w-0">
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="text-xs text-muted">{hint}</p>
+      </div>
+      <div className="flex-shrink-0">{children}</div>
     </div>
   )
 }

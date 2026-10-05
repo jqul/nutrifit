@@ -63,7 +63,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
 
 ## Fase 3 — Pulido
 
-- [ ] **UX-30 · "Más" del cliente por secciones** (S): Cuenta · Recursos · Aplicación ·
+- [x] **UX-30 · "Más" del cliente por secciones** (S): Cuenta · Recursos · Aplicación ·
   Seguridad en lugar de una tarjeta suelta por opción.
 - [ ] **UX-31 · Mensajes: la plantilla global, secundaria** (S).
 - [ ] **UX-32 · Negocio: un KPI principal, el resto subordinado** (S).
