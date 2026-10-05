@@ -67,7 +67,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   Seguridad en lugar de una tarjeta suelta por opción.
 - [x] **UX-31 · Mensajes: la plantilla global, secundaria** (S).
 - [x] **UX-32 · Negocio: un KPI principal, el resto subordinado** (S).
-- [ ] **UX-33 · Conversor y Micronutrientes como "Herramientas"** (S).
+- [x] **UX-33 · Conversor y Micronutrientes como "Herramientas"** (S).
 - [ ] **UX-34 · Difusión en 3 pasos** (S): destinatarios → mensaje → revisar y enviar.
 - [ ] **UX-35 · Registro y consentimiento del cliente más cálidos** (S).
 - [ ] **UX-36 · Landing: captura real del producto bajo el hero** (S).

@@ -5,7 +5,8 @@ import { Food } from '../../types'
 import { convertQuantity, computeMacros, computeSubstitution, computeSubstitutionDiff, CONVERTIBLE_UNITS, MacroKey } from '../../lib/foodConversion'
 import { Button } from '../shared/Button'
 import { toast } from '../shared/Toast'
-import { Calculator, ArrowRightLeft, Plus, X } from 'lucide-react'
+import { ArrowRightLeft, Plus, X } from 'lucide-react'
+import { ToolHeader } from './ToolHeader'
 
 const MACRO_OPTIONS: { key: MacroKey; label: string }[] = [
   { key: 'proteinG', label: 'Proteína' },
@@ -100,14 +101,10 @@ export function ConversorTab({ nutricionistaId, demoMode }: { nutricionistaId?: 
 
   return (
     <div className="max-w-lg space-y-6">
-      <div>
-        <div className="flex items-center gap-2 mb-6">
-          <Calculator className="w-5 h-5 text-accent" />
-          <h1 className="text-2xl font-serif font-bold">Conversor de alimentos</h1>
-        </div>
-        <p className="text-sm text-muted mb-5">
+      <div className="space-y-5">
+        <ToolHeader title="Conversor de alimentos">
           Elige un alimento y una cantidad para ver sus macros y la equivalencia en otras unidades caseras (g, ml, cucharada, cucharadita, taza, vaso, puñado).
-        </p>
+        </ToolHeader>
 
         <div className="card p-5 space-y-4">
           <div className="relative">
