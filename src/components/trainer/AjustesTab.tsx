@@ -7,12 +7,14 @@ import { SurveyManager } from './SurveyManager'
 import { QuestionEditor } from '../shared/QuestionEditor'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { ConsentDocumentUpload } from '../shared/ConsentDocumentUpload'
+import { AvisosPanel } from './AvisosPanel'
 import { DEMO_CUSTOM_SURVEYS } from '../../lib/demo-data'
 import { Globe, MessageCircle } from 'lucide-react'
 
-type Section = 'cuenta' | 'experiencia' | 'marca' | 'legal'
+type Section = 'cuenta' | 'avisos' | 'experiencia' | 'marca' | 'legal'
 const SECTIONS: { id: Section; label: string; hint: string }[] = [
   { id: 'cuenta', label: 'Cuenta', hint: 'Tus datos de acceso.' },
+  { id: 'avisos', label: 'Avisos', hint: 'Qué avisos automáticos recibes tú: un resumen diario con lo nuevo de tus clientes.' },
   { id: 'experiencia', label: 'Experiencia', hint: 'Experiencia del cliente: el cuestionario de salud que rellenan y las encuestas que reciben.' },
   { id: 'marca', label: 'Marca', hint: 'Cómo ven tu consulta tus clientes: logo, color, dominio y contacto.' },
   { id: 'legal', label: 'Legal', hint: 'Documentos que tus clientes deben aceptar antes de usar su panel.' },
@@ -86,7 +88,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
         <p className="text-sm text-muted mt-3">{SECTIONS.find(sec => sec.id === section)!.hint}</p>
       </div>
 
-      {/* Las cuatro categorías se quedan montadas y solo se ocultan con CSS: así
+      {/* Las categorías se quedan montadas y solo se ocultan con CSS: así
           un formulario a medio rellenar no se pierde al cambiar de categoría. */}
       <div role="tabpanel" className={section === 'cuenta' ? 'space-y-6' : 'hidden'}>
         <div className="card p-5 space-y-3">
@@ -98,6 +100,10 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
         </div>
 
         <ChangePasswordCard demoMode={demoMode} />
+      </div>
+
+      <div role="tabpanel" className={section === 'avisos' ? 'space-y-6' : 'hidden'}>
+        <AvisosPanel nutricionistaId={userProfile.uid} demoMode={demoMode} />
       </div>
 
       <div role="tabpanel" className={section === 'experiencia' ? 'space-y-6' : 'hidden'}>

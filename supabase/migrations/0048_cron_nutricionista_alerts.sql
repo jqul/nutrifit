@@ -1,0 +1,23 @@
+-- SOLO DOCUMENTACIÓN — este archivo no ejecuta nada.
+--
+-- El job diario 'nutrifit-nutricionista-alerts-daily' (07:30 UTC, ~8:30-9:30 en
+-- España) que llama a la función send-nutricionista-alerts YA ESTÁ CREADO en la
+-- base de datos real. No se escribe aquí como SQL ejecutable a propósito: lleva
+-- la cabecera x-cron-secret y el anon key, y un placeholder aplicado tal cual
+-- dejaría el job roto (ya pasó con la 0037).
+--
+-- Cómo se creó, sin tener que manejar el secreto: clonando el comando de un job
+-- que ya funciona y cambiando solo la URL de la función:
+--
+--   do $$
+--   declare cmd text;
+--   begin
+--     select command into cmd from cron.job where jobname = 'nutrifit-nutricionista-risk-alerts-daily';
+--     cmd := replace(cmd, 'send-nutricionista-risk-alerts', 'send-nutricionista-alerts');
+--     perform cron.schedule('nutrifit-nutricionista-alerts-daily', '30 7 * * *', cmd);
+--   end $$;
+--
+-- Para comprobar qué avisaría SIN enviar nada ni guardar estado, lanzar la misma
+-- llamada con body {"dryRun": true} y leer la respuesta en net._http_response.
+-- (Solo procesa a nutricionistas con alguna suscripción push activa.)
+select 1 where false;

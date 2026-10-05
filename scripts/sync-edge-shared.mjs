@@ -1,0 +1,75 @@
+// Copia a la función programada send-nutricionista-alerts el MISMO código de
+// alertas que usa la app (src/lib), para que el aviso diario al nutricionista y
+// el Centro de control nunca puedan discrepar. Las funciones de Supabase corren
+// en Deno, que exige extensión en los imports relativos y no entiende '../types'
+// de la app, así que se generan copias con esos imports ajustados.
+//
+//   node scripts/sync-edge-shared.mjs          → regenera las copias
+//
+// src/lib/edgeShared.test.ts falla si las copias no coinciden con la fuente,
+// así que olvidarse de regenerarlas no pasa desapercibido.
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+export const SOURCE_DIR = join(root, 'src/lib')
+export const TARGET_DIR = join(root, 'supabase/functions/send-nutricionista-alerts/shared')
+
+// Ficheros de src/lib que necesita la función (en orden de dependencia).
+export const SHARED_FILES = ['date', 'adherence', 'checkinSignals', 'weightProgress', 'clientAlerts', 'alertDigest']
+
+const HEADER = '// GENERADO por scripts/sync-edge-shared.mjs a partir de src/lib/{name}.ts — NO EDITAR A MANO.\n'
+
+// Solo los tipos que usan estos ficheros (en la app viven en src/types/index.ts).
+const TYPES = `${HEADER.replace('src/lib/{name}.ts', 'src/types/index.ts (subconjunto)')}export type FollowedPlan = 'si' | 'parcial' | 'no'
+
+export interface DailyCheckin {
+  id: string
+  clientId: string
+  date: string
+  followedPlan: FollowedPlan
+  hunger: number
+  energy: number
+  mood: number
+  waterL: number | null
+  notes: string
+  bristolScale?: number | null
+  bloating?: number | null
+  abdominalPain?: number | null
+}
+
+export interface WeightEntry {
+  id: string
+  clientId: string
+  date: string
+  weightKg: number
+  note: string
+}
+`
+
+/** Adapta un fichero de src/lib a Deno: imports con extensión y de solo tipos explícitos. */
+export function toDeno(name, source) {
+  const body = source
+    .replace(/\r\n/g, '\n')
+    // tipos de la app → el subconjunto generado
+    .replace(/import \{([^}]*)\} from '\.\.\/types'/g, "import type {$1} from './types.ts'")
+    // imports relativos: Deno necesita la extensión
+    .replace(/from '(\.\/[A-Za-z0-9_-]+)'/g, "from '$1.ts'")
+    // alertDigest solo importa un tipo de clientAlerts
+    .replace(/import \{ AlertKind \} from '\.\/clientAlerts\.ts'/, "import type { AlertKind } from './clientAlerts.ts'")
+  return HEADER.replace('{name}', name) + body
+}
+
+/** Mapa nombre de fichero → contenido que debe tener en la carpeta de la función. */
+export function buildShared(readSource = (n) => readFileSync(join(SOURCE_DIR, `${n}.ts`), 'utf8')) {
+  const out = { 'types.ts': TYPES }
+  for (const name of SHARED_FILES) out[`${name}.ts`] = toDeno(name, readSource(name))
+  return out
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  mkdirSync(TARGET_DIR, { recursive: true })
+  for (const [file, content] of Object.entries(buildShared())) writeFileSync(join(TARGET_DIR, file), content)
+  console.log(`Copias generadas en ${TARGET_DIR}`)
+}
