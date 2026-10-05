@@ -56,7 +56,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   plantillas, recetas, guías y "comer fuera" en una sola pantalla de 418 líneas.
 - [x] **UX-25 · Ajustes por categorías** (S): Cuenta · Experiencia del cliente ·
   Marca · Legal.
-- [ ] **UX-26 · Calendario con vista lista** (M): hoy **no existe** (solo cuadrícula de
+- [x] **UX-26 · Calendario con vista lista** (M): hoy **no existe** (solo cuadrícula de
   7 columnas). Añadir Semana/Lista; en móvil, lista por defecto.
 - [ ] **UX-27 · Analíticas más limpias** (S): marcador = barra + valor + anterior;
   referencias y detalles médicos en un desplegable.

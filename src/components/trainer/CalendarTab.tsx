@@ -3,13 +3,14 @@ import { supabase } from '../../lib/supabase'
 import { appointmentFromRow } from '../../lib/mappers'
 import { Appointment, AppointmentStatus } from '../../types'
 import { toLocalISODate } from '../../lib/date'
+import { groupAppointmentsByDay, dayHeading } from '../../lib/calendarList'
 import { ClientWithStats } from '../../hooks/useNutricionistaClients'
 import { sendPush } from '../../lib/usePushNotifications'
 import { DEMO_APPOINTMENTS } from '../../lib/demo-data'
 import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
 import { toast } from '../shared/Toast'
-import { ChevronLeft, ChevronRight, Plus, Check, X, Trash2, Video } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Check, X, Trash2, Video, List, CalendarDays } from 'lucide-react'
 
 const STATUS_LABEL: Record<AppointmentStatus, string> = {
   pendiente: 'Pendiente', confirmada: 'Confirmada', cancelada: 'Cancelada', completada: 'Completada',
@@ -44,6 +45,9 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
   demoMode?: boolean
 }) {
   const [anchor, setAnchor] = useState(new Date())
+  // Semana (cuadrícula de 7 columnas) o Lista (citas por día en orden). En móvil la
+  // cuadrícula se apila en 7 tarjetas casi vacías, así que ahí se abre en lista.
+  const [mode, setMode] = useState<'semana' | 'lista'>(() => window.matchMedia('(max-width: 639px)').matches ? 'lista' : 'semana')
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -127,20 +131,37 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
   }
 
   const pendingCount = appointments.filter(a => a.status === 'pendiente').length
+  const isCurrentWeek = days[0].getTime() === startOfWeek(new Date()).getTime()
+  const clientName = (id: string | null) => id ? (clients.find(c => c.id === id)?.name || 'Cliente') : null
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <button onClick={() => setAnchor(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })}
-            className="p-2 rounded-lg hover:bg-bg-alt text-muted"><ChevronLeft className="w-4 h-4" /></button>
+            aria-label="Semana anterior" className="p-2 rounded-lg hover:bg-bg-alt text-muted"><ChevronLeft className="w-4 h-4" /></button>
           <p className="text-sm font-semibold whitespace-nowrap">
             {days[0].toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – {days[6].toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
           </p>
           <button onClick={() => setAnchor(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })}
-            className="p-2 rounded-lg hover:bg-bg-alt text-muted"><ChevronRight className="w-4 h-4" /></button>
+            aria-label="Semana siguiente" className="p-2 rounded-lg hover:bg-bg-alt text-muted"><ChevronRight className="w-4 h-4" /></button>
+          {!isCurrentWeek && (
+            <button onClick={() => setAnchor(new Date())} className="px-2.5 py-1 rounded-lg text-xs font-semibold text-accent hover:bg-accent/10">Hoy</button>
+          )}
         </div>
-        <Button onClick={() => setShowForm(true)}><Plus className="w-4 h-4" /> Nueva cita</Button>
+        <div className="flex items-center gap-2">
+          <div role="tablist" aria-label="Vista del calendario" className="flex bg-bg-alt rounded-lg p-0.5">
+            {([['semana', 'Semana', CalendarDays], ['lista', 'Lista', List]] as const).map(([id, label, Icon]) => (
+              <button key={id} role="tab" aria-selected={mode === id} onClick={() => setMode(id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  mode === id ? 'bg-card text-ink shadow-sm' : 'text-muted hover:text-ink'
+                }`}>
+                <Icon className="w-3.5 h-3.5" /> {label}
+              </button>
+            ))}
+          </div>
+          <Button onClick={() => setShowForm(true)}><Plus className="w-4 h-4" /> Nueva cita</Button>
+        </div>
       </div>
 
       {pendingCount > 0 && (
@@ -149,7 +170,7 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
         </div>
       )}
 
-      {loading ? <p className="text-muted text-sm">Cargando...</p> : (
+      {loading ? <p className="text-muted text-sm">Cargando...</p> : mode === 'semana' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
           {days.map(day => {
             const dayStr = toLocalISODate(day)
@@ -160,31 +181,29 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
                   {day.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })}
                 </p>
                 {dayAppointments.map(a => (
-                  <div key={a.id} className="border border-border rounded-lg p-2 space-y-1">
-                    <p className="text-xs font-semibold">
-                      {new Date(a.startAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · {a.title}
-                    </p>
-                    {a.clientId && <p className="text-xs text-muted">{clients.find(c => c.id === a.clientId)?.name || 'Cliente'}</p>}
-                    <p className={`text-xs font-semibold ${STATUS_COLOR[a.status]}`}>{STATUS_LABEL[a.status]}</p>
-                    {a.videoLink && (
-                      <a href={a.videoLink} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-semibold text-accent hover:underline">
-                        <Video className="w-3 h-3" /> Videollamada
-                      </a>
-                    )}
-                    <div className="flex items-center gap-1">
-                      {a.status === 'pendiente' && (
-                        <button onClick={() => updateStatus(a.id, 'confirmada')} className="p-1 text-ok hover:bg-ok/10 rounded" title="Confirmar"><Check className="w-3 h-3" /></button>
-                      )}
-                      {a.status !== 'cancelada' && a.status !== 'completada' && (
-                        <button onClick={() => updateStatus(a.id, 'cancelada')} className="p-1 text-warn hover:bg-warn/10 rounded" title="Cancelar"><X className="w-3 h-3" /></button>
-                      )}
-                      <button onClick={() => deleteAppointment(a.id)} className="p-1 text-muted hover:text-warn rounded ml-auto" title="Eliminar"><Trash2 className="w-3 h-3" /></button>
-                    </div>
-                  </div>
+                  <AppointmentCard key={a.id} a={a} clientName={clientName(a.clientId)} onStatus={updateStatus} onDelete={deleteAppointment} />
                 ))}
               </div>
             )
           })}
+        </div>
+      ) : appointments.length === 0 ? (
+        <div className="card p-8 text-center">
+          <p className="text-sm text-muted">No hay citas esta semana.</p>
+          <button onClick={() => setShowForm(true)} className="mt-2 text-sm font-semibold text-accent">Crear una cita</button>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {groupAppointmentsByDay(appointments).map(g => (
+            <section key={g.day}>
+              <h2 className="text-sm font-semibold capitalize mb-2">{dayHeading(g.day)}</h2>
+              <div className="space-y-2">
+                {g.appointments.map(a => (
+                  <AppointmentCard key={a.id} a={a} clientName={clientName(a.clientId)} onStatus={updateStatus} onDelete={deleteAppointment} row />
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       )}
 
@@ -239,6 +258,55 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
           <Button onClick={saveAppointment} loading={saving} className="w-full">Crear cita</Button>
         </div>
       </Modal>
+    </div>
+  )
+}
+
+/** Una cita con su estado y acciones. `row` = versión de la lista (hora a la izquierda, tarjeta a todo el ancho). */
+function AppointmentCard({ a, clientName, onStatus, onDelete, row }: {
+  a: Appointment; clientName: string | null; onStatus: (id: string, status: AppointmentStatus) => void
+  onDelete: (id: string) => void; row?: boolean
+}) {
+  const time = new Date(a.startAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  const actions = (
+    <div className="flex items-center gap-1">
+      {a.status === 'pendiente' && (
+        <button onClick={() => onStatus(a.id, 'confirmada')} className="p-1 text-ok hover:bg-ok/10 rounded" title="Confirmar" aria-label="Confirmar"><Check className="w-3 h-3" /></button>
+      )}
+      {a.status !== 'cancelada' && a.status !== 'completada' && (
+        <button onClick={() => onStatus(a.id, 'cancelada')} className="p-1 text-warn hover:bg-warn/10 rounded" title="Cancelar" aria-label="Cancelar"><X className="w-3 h-3" /></button>
+      )}
+      <button onClick={() => onDelete(a.id)} className="p-1 text-muted hover:text-warn rounded ml-auto" title="Eliminar" aria-label="Eliminar"><Trash2 className="w-3 h-3" /></button>
+    </div>
+  )
+  const video = a.videoLink && (
+    <a href={a.videoLink} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-semibold text-accent hover:underline">
+      <Video className="w-3 h-3" /> Videollamada
+    </a>
+  )
+
+  if (row) {
+    return (
+      <div className="card p-3 flex items-start gap-3">
+        <p className="font-serif font-bold text-lg leading-tight w-14 flex-shrink-0">{time}</p>
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <p className="text-sm font-semibold">{a.title}</p>
+          {clientName && <p className="text-xs text-muted">{clientName}</p>}
+          <p className={`text-xs font-semibold ${STATUS_COLOR[a.status]}`}>{STATUS_LABEL[a.status]}</p>
+          {video}
+        </div>
+        <div className="flex-shrink-0">{actions}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="border border-border rounded-lg p-2 space-y-1">
+      <p className="text-xs font-semibold">{time} · {a.title}</p>
+      {clientName && <p className="text-xs text-muted">{clientName}</p>}
+      <p className={`text-xs font-semibold ${STATUS_COLOR[a.status]}`}>{STATUS_LABEL[a.status]}</p>
+      {video}
+      {actions}
     </div>
   )
 }
