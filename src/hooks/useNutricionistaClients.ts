@@ -22,6 +22,12 @@ export interface ClientWithStats extends ClientData {
   healthReason?: ClientHealthReason
   /** Avisos del Centro de control (peso estancado, hambre alta...) — ver clientAlerts.ts. */
   alerts?: ClientAlert[]
+  /** Último check-in o pesaje (YYYY-MM-DD): base de la retención por actividad (retention.ts). */
+  lastActivity?: string
+  /** Adherencia de la semana anterior a las últimas 7 días, para detectar caídas. */
+  adherencePrev7d?: number
+  /** Primer peso registrado, para medir el cambio total. */
+  weightStartKg?: number
   /** Último peso registrado y su variación en 4 semanas (null si hay <2 pesajes). */
   weightKg?: number
   weightDeltaKg?: number | null
@@ -57,9 +63,16 @@ export function withStats(
       lastCheckin, streak, createdAt: c.createdAt, monthlyPrice: c.monthlyPrice,
       hasBiomarkerAlert, hasUnreviewedActivity: unreviewed,
     }, hasCurrentPeriodInvoice, today)
-    const weight = summarizeWeight(weightsMap[c.id] || [], today)
+    const weights = weightsMap[c.id] || []
+    const weight = summarizeWeight(weights, today)
+    const firstWeigh = weights.length ? [...weights].sort((a, b) => a.date.localeCompare(b.date))[0] : undefined
+    const lastWeigh = weights.reduce<string | undefined>((m, w) => (!m || w.date > m ? w.date : m), undefined)
+    const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7)
     return {
       ...c,
+      lastActivity: [lastCheckin, lastWeigh].filter((d): d is string => !!d).sort().pop(),
+      adherencePrev7d: calcAdherence(checkins, 7, weekAgo),
+      weightStartKg: firstWeigh?.weightKg,
       weightKg: weight?.latestKg,
       weightDeltaKg: weight?.deltaKg ?? null,
       lastCheckin,

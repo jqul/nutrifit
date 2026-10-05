@@ -168,7 +168,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
           <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />
         </div>
         <div className={view === 'negocio' ? '' : 'hidden'}>
-          <BusinessDashboard clients={clients} />
+          <BusinessDashboard clients={clients} onOpenClient={(c, tab) => onSelectClient(c, tab)} />
         </div>
         <div className={view === 'conversor' ? '' : 'hidden'}>
           <ConversorTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />
