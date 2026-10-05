@@ -8,6 +8,7 @@ import { appointmentFromRow, checkinFromRow, mealLogFromRow, dietPlanFromRows } 
 import { calcStreak } from '../../lib/adherence'
 import { resolveTodaysMeals, loadOptionChoices, loadDayType } from '../../lib/planMeals'
 import { sendPush } from '../../lib/usePushNotifications'
+import { publishMealLogs } from '../../lib/mealProgress'
 import { PendingSurveys } from './PendingSurveys'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS, DEMO_CHECKINS } from '../../lib/demo-data'
@@ -146,6 +147,8 @@ export function HoyTab({ client, demoMode, personalMode }: {
   }, [client.id, today, demoMode])
 
   useEffect(() => { loadMealLogs() }, [loadMealLogs])
+  // Dieta muestra qué comidas de hoy están hechas leyendo lo que publica aquí.
+  useEffect(() => { publishMealLogs(client.id, mealLogsToday) }, [client.id, mealLogsToday])
 
   const todaysMeals: DietMeal[] = plan
     ? resolveTodaysMeals(plan.meals, todayDayOfWeek(), loadDayType(plan.id), loadOptionChoices(plan.id))

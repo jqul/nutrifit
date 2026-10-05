@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import { supabase } from '../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow, RecipeRow } from '../../lib/supabase-types'
 import { dietPlanFromRows, foodFromRow } from '../../lib/mappers'
@@ -7,7 +7,8 @@ import { printDietPlan } from '../../lib/printPlan'
 import { buildShoppingList, groupShoppingItemsByAisle } from '../../lib/shoppingList'
 import { gramsForAbsoluteMacro, rankSubstitutesByMacros, MacroKey } from '../../lib/foodConversion'
 import { todayDayOfWeek } from '../../lib/date'
-import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, saveDayType } from '../../lib/planMeals'
+import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, saveDayType, resolveTodaysMeals } from '../../lib/planMeals'
+import { subscribeMealLogs, getMealLogsSnapshot, mealLogsOf, isMealDone, countMealsDone, macroEnergySplit } from '../../lib/mealProgress'
 import { buildWAUrl } from '../../lib/whatsapp'
 import { BottomSheet } from '../shared/BottomSheet'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
@@ -59,6 +60,9 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   // entrenamiento (ON) o de descanso (OFF). Igual de local/informativo que
   // optionChoices: se guarda en localStorage, no en la BD.
   const [dayType, setDayType] = useState<'on' | 'off'>('on')
+  // Comidas de hoy ya marcadas como hechas: las marca Hoy y las publica en mealProgress.
+  const mealLogsSnap = useSyncExternalStore(subscribeMealLogs, getMealLogsSnapshot)
+  const logsToday = mealLogsOf(mealLogsSnap, clientId)
   const [scannerOpen, setScannerOpen] = useState(false)
   const [scannedFood, setScannedFood] = useState<ScannedFood | null>(null)
   const [viewingRecipe, setViewingRecipe] = useState<RecipeRow | null>(null)
@@ -151,22 +155,13 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   const matchesDayType = (m: DietMeal) => m.dayType == null || m.dayType === dayType
   const visibleMeals = (!usesWeeklyMenu ? plan.meals : plan.meals.filter(m => m.dayOfWeek === selectedDay || m.dayOfWeek == null))
     .filter(matchesDayType)
+  const viewingToday = !usesWeeklyMenu || selectedDay === todayDayOfWeek()
+  const todaysMeals = resolveTodaysMeals(plan.meals, todayDayOfWeek(), dayType, optionChoices)
+  const mealsDoneToday = countMealsDone(todaysMeals.map(m => m.name), logsToday)
+  const split = macroEnergySplit(plan.proteinG, plan.carbsG, plan.fatG)
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <button onClick={() => setScannerOpen(true)} className="flex items-center gap-1.5 text-xs font-bold text-accent">
-          <Barcode className="w-3.5 h-3.5" /> Escanear producto
-        </button>
-        <button onClick={() => { setEatingOutOpen(true); setEatingOutGuideId(null) }} className="flex items-center gap-1.5 text-xs font-bold text-accent">
-          <UtensilsCrossed className="w-3.5 h-3.5" /> ¿Vas a comer fuera?
-        </button>
-        <button onClick={() => printDietPlan(client, plan)}
-          className="flex items-center gap-1.5 text-xs font-bold text-accent ml-auto">
-          <Download className="w-3.5 h-3.5" /> Descargar PDF
-        </button>
-      </div>
-
       <BarcodeScanner open={scannerOpen} onClose={() => setScannerOpen(false)} onFound={food => { setScannerOpen(false); setScannedFood(food) }} />
 
       {eatingOutOpen && (() => {
@@ -212,12 +207,39 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
           <p className="text-xs text-muted">Valores por 100g, según Open Food Facts. Comprueba en el envase si encaja en tus macros de hoy.</p>
         </BottomSheet>
       )}
-      <div className="grid grid-cols-5 gap-2">
-        <MacroCard label="Kcal" value={plan.kcalTarget} />
-        <MacroCard label="Prot." value={plan.proteinG} suffix="g" />
-        <MacroCard label="Carbos" value={plan.carbsG} suffix="g" />
-        <MacroCard label="Grasas" value={plan.fatG} suffix="g" />
-        <MacroCard label="Fibra" value={plan.fiberG} suffix="g" />
+      <div className="card p-5">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-muted">Tu objetivo diario</p>
+            <p className="font-serif font-bold text-4xl leading-none mt-1">{plan.kcalTarget}<span className="font-sans text-base font-medium text-muted ml-1">kcal</span></p>
+          </div>
+          {todaysMeals.length > 0 && (
+            <div className="text-right flex-shrink-0">
+              <p className="font-serif font-bold text-2xl leading-none">{mealsDoneToday}/{todaysMeals.length}</p>
+              <p className="text-xs text-muted mt-1">comidas hechas hoy</p>
+            </div>
+          )}
+        </div>
+        {split && (
+          <div className="flex h-2 rounded-full overflow-hidden mt-4 bg-bg-alt" role="img"
+            aria-label={`Reparto de energía: ${split.proteinPct}% proteína, ${split.carbsPct}% carbohidratos, ${split.fatPct}% grasas`}>
+            <div className="bg-protein" style={{ width: `${split.proteinPct}%` }} />
+            <div className="bg-notice" style={{ width: `${split.carbsPct}%` }} />
+            <div className="bg-fat" style={{ width: `${split.fatPct}%` }} />
+          </div>
+        )}
+        <div className="grid grid-cols-4 gap-2 mt-3">
+          <MacroStat dot="bg-protein" label="Proteína" value={plan.proteinG} />
+          <MacroStat dot="bg-notice" label="Carbos" value={plan.carbsG} />
+          <MacroStat dot="bg-fat" label="Grasas" value={plan.fatG} />
+          <MacroStat dot="bg-ok" label="Fibra" value={plan.fiberG} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <ToolButton icon={<Barcode className="w-4 h-4" />} label="Escanear producto" onClick={() => setScannerOpen(true)} />
+        <ToolButton icon={<UtensilsCrossed className="w-4 h-4" />} label="¿Vas a comer fuera?" onClick={() => { setEatingOutOpen(true); setEatingOutGuideId(null) }} />
+        <ToolButton icon={<Download className="w-4 h-4" />} label="Descargar PDF" onClick={() => printDietPlan(client, plan)} />
       </div>
 
       {plan.advice && (
@@ -309,8 +331,12 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
           const chosenId = isGroup && groupId && optionChoices[groupId] && group.some(m => m.id === optionChoices[groupId])
             ? optionChoices[groupId] : group[0].id
           const meal = group.find(m => m.id === chosenId) || group[0]
+          const done = viewingToday && isMealDone(meal.name, logsToday)
+          const mealRecipes = Array.from(new Set(meal.items.map(i => i.recipeId).filter((id): id is string => !!id)))
+            .map(id => recipes.find(r => r.id === id)).filter((r): r is RecipeRow => !!r)
+          const coverRecipe = mealRecipes.find(r => r.photo_url)
           return (
-            <div key={groupId || meal.id} className="card p-4">
+            <div key={groupId || meal.id} className={`card p-4 ${done ? 'ring-1 ring-ok/40' : ''}`}>
               {isGroup && groupId && (
                 <div className="flex items-center gap-1.5 mb-3 flex-wrap">
                   <Layers className="w-3.5 h-3.5 text-accent flex-shrink-0" />
@@ -326,28 +352,35 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
                   </div>
                 </div>
               )}
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-sm">{meal.name}</p>
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  {meal.time && <span>{meal.time}</span>}
-                  {meal.kcalTarget != null && <span>{meal.kcalTarget} kcal</span>}
+              <div className="flex items-start gap-3 mb-2">
+                {coverRecipe && (
+                  <button onClick={() => setViewingRecipe(coverRecipe)} aria-label={`Ver receta: ${coverRecipe.name}`} className="flex-shrink-0">
+                    <img src={coverRecipe.photo_url!} alt="" className="w-14 h-14 rounded-xl object-cover" />
+                  </button>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-sm">{meal.name}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted flex-shrink-0">
+                      {meal.time && <span>{meal.time}</span>}
+                      {meal.kcalTarget != null && <span>{meal.kcalTarget} kcal</span>}
+                    </div>
+                  </div>
+                  {done && (
+                    <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-ok"><Check className="w-3.5 h-3.5" /> Hecha hoy</p>
+                  )}
+                  {mealRecipes.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {mealRecipes.map(r => (
+                        <button key={r.id} onClick={() => setViewingRecipe(r)}
+                          className="flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-lg text-xs font-semibold">
+                          <BookOpen className="w-3 h-3" /> Ver receta{mealRecipes.length > 1 ? `: ${r.name}` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-              {(() => {
-                const mealRecipeIds = Array.from(new Set(meal.items.map(i => i.recipeId).filter((id): id is string => !!id)))
-                const mealRecipes = mealRecipeIds.map(id => recipes.find(r => r.id === id)).filter((r): r is RecipeRow => !!r)
-                if (mealRecipes.length === 0) return null
-                return (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {mealRecipes.map(r => (
-                      <button key={r.id} onClick={() => setViewingRecipe(r)}
-                        className="flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-lg text-xs font-semibold">
-                        <BookOpen className="w-3 h-3" /> Ver receta{mealRecipes.length > 1 ? `: ${r.name}` : ''}
-                      </button>
-                    ))}
-                  </div>
-                )
-              })()}
               {meal.items.length > 0 && <MealMacroPills items={meal.items} />}
               {meal.items.length > 0 && (
                 <ul className="space-y-1 mt-2">
@@ -569,6 +602,25 @@ function MealMacroPills({ items }: { items: DietMealItem[] }) {
         </span>
       ))}
     </div>
+  )
+}
+
+function MacroStat({ dot, label, value }: { dot: string; label: string; value: number }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs text-muted flex items-center gap-1.5"><span className={`w-2 h-2 rounded-full flex-shrink-0 ${dot}`} /> <span className="truncate">{label}</span></p>
+      <p className="font-serif font-bold text-lg leading-tight mt-0.5">{value}g</p>
+    </div>
+  )
+}
+
+function ToolButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      className="flex flex-col items-center justify-center gap-1.5 px-2 py-3 bg-card border border-border/60 rounded-xl text-xs font-semibold text-accent text-center hover:bg-accent/10 transition-colors">
+      {icon}
+      <span>{label}</span>
+    </button>
   )
 }
 

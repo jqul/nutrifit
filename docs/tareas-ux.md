@@ -48,7 +48,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   Adherencia (barra + racha) → Señales (hambre/energía/ánimo/digestión con semáforo).
 - [x] **UX-21 · Navegación del dashboard agrupada** (M): hoy 8 módulos al mismo nivel.
   Agrupar en Clientes · Planificación · Comunicación · Negocio · Herramientas · Ajustes.
-- [ ] **UX-22 · Dieta del cliente más visual** (S): objetivo arriba, comidas con
+- [x] **UX-22 · Dieta del cliente más visual** (S): objetivo arriba, comidas con
   estado "completada", fotos de receta cuando existan.
 - [ ] **UX-23 · Progreso del cliente emocional** (M): cifra grande de progreso
   desde el inicio, gráfico limpio, racha, y fotos con protagonismo.
