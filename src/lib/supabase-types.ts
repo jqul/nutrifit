@@ -45,6 +45,11 @@ export interface ClienteRow {
   last_reviewed_at: string | null
 }
 
+/** Lo que devuelve get_my_client_profile(): la ficha SIN los campos internos del
+ * nutricionista (notas privadas, notas del informe, precio, etiquetas...). */
+export type ClientProfileRow = Omit<ClienteRow,
+  'notes' | 'report_notes' | 'notes_updated_at' | 'monthly_price' | 'custom_messages' | 'tags' | 'last_reviewed_at'>
+
 export interface DietPlanRow {
   id: string
   client_id: string

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
-import { ClienteRow } from '../../lib/supabase-types'
-import { clientFromRow } from '../../lib/mappers'
+import { ClienteRow, ClientProfileRow } from '../../lib/supabase-types'
+import { clientFromRow, clienteRowFromProfile } from '../../lib/mappers'
 import { logError } from '../../lib/errors'
 import { NotFound } from '../shared/NotFound'
 import { ClientRegister } from './ClientRegister'
@@ -77,12 +77,13 @@ export function ClientView({ token }: { token: string }) {
       return
     }
 
-    // Autenticado de verdad — a partir de aquí la RLS normal
-    // (auth_user_id = auth.uid()) ya protege la fila completa, sin
-    // necesitar ningún RPC ampliado.
-    const { data: fullRow, error: fullErr } = await supabase.from('clientes').select('*').eq('id', status.id).single()
-    if (fullErr || !fullRow) { setError('No se pudo cargar tu perfil.'); return }
-    setClient(fullRow)
+    // Autenticado de verdad: se lee SU ficha con un RPC que devuelve solo las
+    // columnas que el cliente necesita. La tabla `clientes` también guarda
+    // campos internos del nutricionista (notas privadas, precio, etiquetas...)
+    // que no deben llegar al navegador del cliente.
+    const { data: profile, error: fullErr } = await supabase.rpc('get_my_client_profile', { p_client_id: status.id }).maybeSingle()
+    if (fullErr || !profile) { setError('No se pudo cargar tu perfil.'); return }
+    setClient(clienteRowFromProfile(profile as ClientProfileRow))
     setAuthState('authenticated')
   }
 

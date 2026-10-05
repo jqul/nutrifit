@@ -1,13 +1,19 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
   WeightLogRow, CycleLogRow, GuideRow, EatingOutGuideRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
-  AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, ClinicalNoteRow,
+  ClientProfileRow, AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, ClinicalNoteRow,
 } from './supabase-types'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
   WeightEntry, CycleEntry, Guide, EatingOutGuide, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
   Appointment, MealLog, Anamnesis, Invoice, CustomSurvey, SurveyResponse, BloodMarker, ClinicalNote,
 } from '../types'
+
+/** La ficha que ve el propio cliente: los campos internos del nutricionista no
+ * viajan hasta su navegador, así que se rellenan con valores vacíos. */
+export function clienteRowFromProfile(p: ClientProfileRow): ClienteRow {
+  return { ...p, notes: null, report_notes: null, notes_updated_at: null, monthly_price: null, custom_messages: null, tags: [], last_reviewed_at: null }
+}
 
 export function clientFromRow(row: ClienteRow): ClientData {
   return {
