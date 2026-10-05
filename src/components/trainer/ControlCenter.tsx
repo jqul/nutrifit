@@ -2,10 +2,15 @@ import { useMemo } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { Appointment } from '../../types'
 import { ClientWithStats } from '../../hooks/useNutricionistaClients'
-import { attentionList, greeting, monthlyRevenue, summarizePriorities, Priority } from '../../lib/controlCenter'
+import { attentionList, goalReachedClients, greeting, monthlyRevenue, summarizePriorities, Priority, ClientPanelTab } from '../../lib/controlCenter'
 import { Button } from '../shared/Button'
 
 const MAX_ATTENTION = 6
+
+// Qué se hace al abrir la ficha desde un aviso: lo dice el botón de la derecha.
+const TAB_ACTION: Record<ClientPanelTab, string> = {
+  perfil: 'Ver ficha', dieta: 'Ver plan', seguimiento: 'Ver seguimiento', analiticas: 'Ver analítica', mensajes: 'Escribir', notas: 'Ver notas',
+}
 
 const PRIORITY_STYLE: Record<Priority, { dot: string; label: string }> = {
   today: { dot: 'bg-warn', label: 'Actuar hoy' },
@@ -23,7 +28,8 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
   clients: ClientWithStats[]
   loading: boolean
   todayAppointments: Appointment[]
-  onOpenClient: (client: ClientWithStats) => void
+  /** Abre la ficha; si se indica pestaña, directamente en ella. */
+  onOpenClient: (client: ClientWithStats, tab?: ClientPanelTab) => void
   /** Lleva a la lista de Clientes con ese filtro rápido ('all' | 'risk'). */
   onShowClients: (filter: 'all' | 'risk') => void
   onGoToCalendar: () => void
@@ -33,6 +39,7 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
   const now = new Date()
   const summary = useMemo(() => summarizePriorities(clients), [clients])
   const attention = useMemo(() => attentionList(clients), [clients])
+  const reached = useMemo(() => goalReachedClients(clients), [clients])
   const revenue = useMemo(() => monthlyRevenue(clients), [clients])
   const clientName = (id: string | null) => {
     const c = id ? clients.find(x => x.id === id) : null
@@ -111,21 +118,44 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
                 <div className="card p-5"><p className="text-sm text-muted">Nadie necesita atención ahora mismo. Todo en orden.</p></div>
               ) : (
                 <div className="card divide-y divide-border/60 overflow-hidden">
-                  {attention.slice(0, MAX_ATTENTION).map(({ client: c, priority }) => (
-                    <button key={c.id} onClick={() => onOpenClient(c)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-bg-alt/60 transition-colors">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_STYLE[priority].dot}`} aria-label={PRIORITY_STYLE[priority].label} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold truncate">{c.name} {c.surname}</span>
-                        <span className="block text-xs text-muted truncate">{c.healthLabel}</span>
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-muted flex-shrink-0" />
-                    </button>
-                  ))}
+                  {attention.slice(0, MAX_ATTENTION).map(({ client: c, priority, issues }) => {
+                    const first = issues[0]
+                    return (
+                      <button key={c.id} onClick={() => onOpenClient(c, first.tab)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-bg-alt/60 transition-colors">
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_STYLE[priority].dot}`} aria-label={PRIORITY_STYLE[priority].label} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold truncate">{c.name} {c.surname}</span>
+                          <span className="block text-xs text-muted">
+                            {issues.slice(0, 2).map(i => i.label).join(' · ')}
+                            {issues.length > 2 && ` · +${issues.length - 2}`}
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-0.5 text-xs font-semibold text-accent flex-shrink-0">
+                          {TAB_ACTION[first.tab]} <ChevronRight className="w-4 h-4" />
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </section>
           </div>
+
+          {reached.length > 0 && (
+            <section aria-labelledby="cc-goals">
+              <h2 id="cc-goals" className="text-sm font-semibold mb-2">Objetivos alcanzados</h2>
+              <div className="card divide-y divide-border/60">
+                {reached.map(c => (
+                  <button key={c.id} onClick={() => onOpenClient(c, 'seguimiento')}
+                    className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-bg-alt/60 transition-colors">
+                    <span className="text-sm font-semibold truncate">{c.name} {c.surname}</span>
+                    <span className="text-xs font-semibold text-ok flex-shrink-0">Objetivo alcanzado</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section aria-labelledby="cc-business">
             <div className="flex items-baseline justify-between gap-3 mb-2">

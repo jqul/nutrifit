@@ -1,27 +1,53 @@
 // Centro de control: la pantalla de inicio del nutricionista. Todo se calcula a
-// partir de lo que ya existe (semáforo de salud, citas de hoy, precios), sin
-// tablas nuevas.
+// partir de lo que ya existe (semáforo de salud, alertas por cliente, citas de
+// hoy, precios), sin tablas nuevas.
 import { Appointment } from '../types'
 import { ClientHealthReason } from './clientHealth'
+import { ClientAlert, AlertKind } from './clientAlerts'
+
+/** Pestañas de la ficha del cliente: a cuál lleva cada aviso. */
+export type ClientPanelTab = 'perfil' | 'dieta' | 'seguimiento' | 'analiticas' | 'mensajes' | 'notas'
 
 /** 'today' = actuar hoy · 'week' = revisar esta semana · 'ok' = todo correcto. */
 export type Priority = 'today' | 'week' | 'ok'
 
-interface PrioritizableClient { healthReason?: ClientHealthReason }
+/** Un motivo concreto por el que un cliente aparece en "Requieren atención". */
+export interface Issue { priority: 'today' | 'week'; label: string; tab: ClientPanelTab }
+
+interface PrioritizableClient { healthReason?: ClientHealthReason; healthLabel?: string; alerts?: ClientAlert[] }
 
 /**
- * Sin check-in reciente es lo único que compromete la relación si no se
- * actúa a tiempo, así que es lo que pide acción hoy. Una analítica en alerta,
- * actividad sin revisar o un plan por renovar caben en la revisión semanal.
+ * Del semáforo de salud: sin check-in reciente es lo único que compromete la
+ * relación si no se actúa a tiempo, así que pide acción hoy (y lo natural es
+ * escribirle). Una analítica en alerta, actividad sin revisar o un plan por
+ * renovar caben en la revisión semanal.
  */
-export function priorityOf(client: PrioritizableClient): Priority {
-  switch (client.healthReason) {
-    case 'inactive': return 'today'
-    case 'biomarker':
-    case 'unreviewed':
-    case 'billing': return 'week'
-    default: return 'ok'
+const HEALTH_ISSUE: Partial<Record<ClientHealthReason, { priority: Issue['priority']; tab: ClientPanelTab }>> = {
+  inactive: { priority: 'today', tab: 'mensajes' },
+  biomarker: { priority: 'week', tab: 'analiticas' },
+  unreviewed: { priority: 'week', tab: 'seguimiento' },
+  billing: { priority: 'week', tab: 'perfil' },
+}
+
+// Las alertas de peso, hambre, energía y adherencia se miran en Seguimiento.
+const ALERT_TAB: Record<AlertKind, ClientPanelTab> = {
+  weight_stalled: 'seguimiento', high_hunger: 'seguimiento', low_energy: 'seguimiento',
+  low_adherence: 'seguimiento', no_weigh_in: 'seguimiento', goal_reached: 'seguimiento',
+}
+
+/** Todos los motivos de atención de un cliente, el más urgente primero. */
+export function issuesOf(client: PrioritizableClient): Issue[] {
+  const issues: Issue[] = []
+  const health = client.healthReason ? HEALTH_ISSUE[client.healthReason] : undefined
+  if (health) issues.push({ priority: health.priority, label: client.healthLabel || '', tab: health.tab })
+  for (const a of client.alerts || []) {
+    if (a.priority === 'week') issues.push({ priority: 'week', label: a.label, tab: ALERT_TAB[a.kind] })
   }
+  return issues.sort((a, b) => (a.priority === b.priority ? 0 : a.priority === 'today' ? -1 : 1))
+}
+
+export function priorityOf(client: PrioritizableClient): Priority {
+  return issuesOf(client)[0]?.priority ?? 'ok'
 }
 
 export interface PrioritySummary { today: number; week: number; ok: number; total: number }
@@ -32,19 +58,24 @@ export function summarizePriorities(clients: PrioritizableClient[]): PrioritySum
   return s
 }
 
-export interface AttentionItem<T> { client: T; priority: Exclude<Priority, 'ok'> }
+export interface AttentionItem<T> { client: T; priority: Exclude<Priority, 'ok'>; issues: Issue[] }
 
 /** Quién necesita algo: primero los de "hoy", luego "esta semana", cada grupo por nombre. */
-export function attentionList<T extends PrioritizableClient & { name: string; surname: string; healthLabel?: string }>(clients: T[]): AttentionItem<T>[] {
+export function attentionList<T extends PrioritizableClient & { name: string; surname: string }>(clients: T[]): AttentionItem<T>[] {
   const items: AttentionItem<T>[] = []
   for (const client of clients) {
-    const priority = priorityOf(client)
-    if (priority !== 'ok') items.push({ client, priority })
+    const issues = issuesOf(client)
+    if (issues.length > 0) items.push({ client, priority: issues[0].priority, issues })
   }
   const rank = { today: 0, week: 1 } as const
   return items.sort((a, b) =>
     (rank[a.priority] - rank[b.priority])
     || `${a.client.name} ${a.client.surname}`.localeCompare(`${b.client.name} ${b.client.surname}`, 'es'))
+}
+
+/** Clientes que han alcanzado su peso objetivo: la buena noticia del día. */
+export function goalReachedClients<T extends { alerts?: ClientAlert[] }>(clients: T[]): T[] {
+  return clients.filter(c => (c.alerts || []).some(a => a.kind === 'goal_reached'))
 }
 
 /** "Buenos días, Ana" según la hora; usa solo el primer nombre. */

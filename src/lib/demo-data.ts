@@ -238,7 +238,8 @@ export const DEMO_WEIGHTS: Record<string, WeightEntry[]> = {
     id: `w-carlos-${i}`, clientId: 'demo-client-002', date: daysAgo(d), note: '',
     weightKg: [70, 70.6, 71.3, 72, 72.5, 73.1, 73.6, 74][i],
   })),
-  'demo-client-003': [30, 20, 10].map((d, i) => ({
+  // Laura: último pesaje hace 17 días — el Centro de control avisa de que lleva tiempo sin pesarse.
+  'demo-client-003': [37, 27, 17].map((d, i) => ({
     id: `w-laura-${i}`, clientId: 'demo-client-003', date: daysAgo(d), note: '',
     weightKg: [75.4, 75.1, 75.2][i],
   })),
@@ -276,9 +277,11 @@ export const DEMO_CHECKINS: Record<string, DailyCheckin[]> = {
     .map((c, i, arr) => i === arr.length - 1 ? { ...c, bristolScale: 4, bloating: 0, abdominalPain: 0 } : c),
   // Carlos: adherencia media, algún día suelto. Diario digestivo con hinchazón/molestias
   // moderadas los últimos días — el tipo de patrón que el nutricionista quiere ver a tiempo.
+  // Además, hambre alta y energía baja toda la última semana (alertas del Centro de control).
   'demo-client-002': buildCheckins('demo-client-002',
     ['si', 'parcial', 'si', 'no', 'si', 'parcial', 'si', 'si', 'no', 'parcial', 'si', 'si', 'si', 'parcial'], 13)
-    .map((c, i, arr) => i === arr.length - 1 ? { ...c, bristolScale: 6, bloating: 2, abdominalPain: 1 } : c),
+    .map((c, i, arr) => i === arr.length - 1 ? { ...c, bristolScale: 6, bloating: 2, abdominalPain: 1 } : c)
+    .map((c, i, arr) => i >= arr.length - 7 ? { ...c, hunger: [4, 5, 4, 5, 4, 5, 5][i - (arr.length - 7)], energy: 2 } : c),
   // Laura: sin check-ins recientes — cliente en riesgo.
   'demo-client-003': buildCheckins('demo-client-003', ['parcial', 'no', 'si'], 10),
 }

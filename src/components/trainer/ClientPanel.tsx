@@ -11,10 +11,11 @@ import { AnaliticasTab } from './client-panel/AnaliticasTab'
 import { ClientHeader } from './client-panel/ClientHeader'
 import { TrainerClientPreview } from './TrainerClientPreview'
 import { ThemeToggle } from '../shared/ThemeToggle'
+import { ClientPanelTab } from '../../lib/controlCenter'
 import { ArrowLeft, Smartphone } from 'lucide-react'
 import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_CLINICAL_NOTES, DEMO_CYCLES } from '../../lib/demo-data'
 
-type Tab = 'perfil' | 'dieta' | 'seguimiento' | 'analiticas' | 'mensajes' | 'notas'
+type Tab = ClientPanelTab
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'perfil', label: 'Perfil' },
@@ -25,7 +26,9 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'notas', label: 'Notas' },
 ]
 
-export function ClientPanel({ client, userProfile, onClose, demoMode }: {
+export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab }: {
+  /** Pestaña con la que se abre la ficha (p. ej. desde un aviso del Centro de control). */
+  initialTab?: ClientPanelTab
   // Con las cifras del listado (adherencia, racha, estado, variación de peso)
   // si se abre desde él; todas opcionales, así que vale un ClientData suelto.
   client: ClientWithStats
@@ -33,7 +36,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode }: {
   onClose: () => void
   demoMode?: boolean
 }) {
-  const [tab, setTab] = useState<Tab>('perfil')
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'perfil')
   const [current, setCurrent] = useState(client)
   const [previewing, setPreviewing] = useState(false)
   const { updateClient, regenerateToken, deleteClient, markClientReviewed } = useNutricionistaClients({

@@ -17,6 +17,7 @@ import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
 import { ClientListRow } from './ClientListRow'
 import { ControlCenter } from './ControlCenter'
+import { priorityOf, ClientPanelTab } from '../../lib/controlCenter'
 import { useTodayAppointments } from '../../hooks/useTodayAppointments'
 import { sortByAttention } from '../../lib/clientListSummary'
 import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboardNav'
@@ -30,7 +31,7 @@ const EMPTY_FORM: NewClientInput = {
 export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients, onUpdateProfile, onSwitchToAdmin }: {
   userProfile: UserProfile
   onLogout: () => void
-  onSelectClient: (client: ClientData) => void
+  onSelectClient: (client: ClientData, tab?: ClientPanelTab) => void
   demoClients?: ClientData[]
   onUpdateProfile: (updates: Partial<UserProfile>) => void
   onSwitchToAdmin?: () => void
@@ -56,15 +57,17 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   const todayApptClientIds = useMemo(() => new Set(todayAppointments.map(a => a.clientId).filter((id): id is string => !!id)), [todayAppointments])
 
   const allTags = Array.from(new Set(clients.flatMap(c => c.tags))).sort()
-  const riskCount = clients.filter(c => c.healthStatus === 'attention').length
+  // "Atención" = lo que el Centro de control marca como actuar hoy o revisar esta semana.
+  const needsAttention = (c: typeof clients[number]) => priorityOf(c) !== 'ok'
+  const riskCount = clients.filter(needsAttention).length
   const activeCount = clients.length - riskCount
 
   const filtered = clients
     .filter(c => `${c.name} ${c.surname}`.toLowerCase().includes(query.toLowerCase()))
     .filter(c => {
       if (quickFilter === 'all') return true
-      if (quickFilter === 'risk') return c.healthStatus === 'attention'
-      if (quickFilter === 'active') return c.healthStatus !== 'attention'
+      if (quickFilter === 'risk') return needsAttention(c)
+      if (quickFilter === 'active') return !needsAttention(c)
       if (quickFilter === 'today') return todayApptClientIds.has(c.id)
       if (quickFilter.startsWith('tag:')) return c.tags.includes(quickFilter.slice(4))
       return true
@@ -152,7 +155,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         <div className={view === 'inicio' ? '' : 'hidden'}>
           <ControlCenter displayName={userProfile.displayName} clients={clients} loading={loading}
             todayAppointments={todayAppointments}
-            onOpenClient={onSelectClient}
+            onOpenClient={(c, tab) => onSelectClient(c, tab)}
             onShowClients={filter => { setQuickFilter(filter); goToView('clientes') }}
             onGoToCalendar={() => goToView('calendario')}
             onGoToBusiness={() => goToView('negocio')}

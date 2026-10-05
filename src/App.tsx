@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense } from 'react'
 import { supabase } from './lib/supabase'
 import { ClientData, UserProfile } from './types'
+import type { ClientPanelTab } from './lib/controlCenter'
 import { Auth } from './components/shared/Auth'
 import { ResetPassword } from './components/shared/ResetPassword'
 import { useToast, ToastContainer } from './components/shared/Toast'
@@ -68,9 +69,11 @@ function DemoCTA({ onRegister, onLogin }: { onRegister: () => void; onLogin: () 
   )
 }
 
-function DemoView({ selectedClient, setSelectedClient, onRegister, onLogin }: {
+function DemoView({ selectedClient, initialTab, openClient, closeClient, onRegister, onLogin }: {
   selectedClient: ClientData | null
-  setSelectedClient: (c: ClientData | null) => void
+  initialTab?: ClientPanelTab
+  openClient: (c: ClientData, tab?: ClientPanelTab) => void
+  closeClient: () => void
   onRegister: () => void
   onLogin: () => void
 }) {
@@ -80,10 +83,10 @@ function DemoView({ selectedClient, setSelectedClient, onRegister, onLogin }: {
       <DemoCTA onRegister={onRegister} onLogin={onLogin} />
       <div className="pb-16">
         {selectedClient ? (
-          <ClientPanel client={selectedClient} userProfile={demoProfile} onClose={() => setSelectedClient(null)} demoMode />
+          <ClientPanel client={selectedClient} userProfile={demoProfile} onClose={closeClient} demoMode initialTab={initialTab} />
         ) : (
           <NutricionistaDashboard userProfile={demoProfile} onLogout={() => { window.location.href = '/' }}
-            demoClients={DEMO_CLIENTS} onSelectClient={setSelectedClient} onUpdateProfile={() => {}} />
+            demoClients={DEMO_CLIENTS} onSelectClient={openClient} onUpdateProfile={() => {}} />
         )}
       </div>
     </>
@@ -93,6 +96,10 @@ function DemoView({ selectedClient, setSelectedClient, onRegister, onLogin }: {
 export default function App() {
   const { view, userProfile, pendingUser, clientToken, logout, setView, setUserProfile } = useAuthBootstrap()
   const [selectedClient, setSelectedClient] = useState<ClientData | null>(null)
+  // Pestaña con la que abrir la ficha cuando se entra desde un aviso del Centro de control.
+  const [initialClientTab, setInitialClientTab] = useState<ClientPanelTab | undefined>(undefined)
+  const openClient = (c: ClientData, tab?: ClientPanelTab) => { setInitialClientTab(tab); setSelectedClient(c) }
+  const closeClient = () => { setSelectedClient(null); setInitialClientTab(undefined) }
   const [adminSubview, setAdminSubview] = useState<'admin' | 'trainer'>('admin')
   const { toasts } = useToast()
   useAccentOverride(view === 'trainer' ? userProfile?.accentColor : null)
@@ -123,7 +130,9 @@ export default function App() {
       {view === 'demo' && (
         <DemoView
           selectedClient={selectedClient}
-          setSelectedClient={setSelectedClient}
+          initialTab={initialClientTab}
+          openClient={openClient}
+          closeClient={closeClient}
           onRegister={() => { window.history.pushState({}, '', '/'); setView('auth') }}
           onLogin={() => { window.history.pushState({}, '', '/'); setView('auth') }}
         />
@@ -142,13 +151,14 @@ export default function App() {
           <ClientPanel
             client={selectedClient}
             userProfile={userProfile}
-            onClose={() => setSelectedClient(null)}
+            onClose={closeClient}
+            initialTab={initialClientTab}
           />
         ) : (
           <NutricionistaDashboard
             userProfile={userProfile}
             onLogout={logout}
-            onSelectClient={setSelectedClient}
+            onSelectClient={openClient}
             onUpdateProfile={updates => setUserProfile(prev => prev ? { ...prev, ...updates } : prev)}
             onSwitchToAdmin={userProfile.role === 'super_admin' ? () => setAdminSubview('admin') : undefined}
           />

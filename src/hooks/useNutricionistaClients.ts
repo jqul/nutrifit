@@ -4,6 +4,7 @@ import { ClientData, DailyCheckin, WeightEntry } from '../types'
 import { clientFromRow, clientToRow, checkinFromRow, weightFromRow } from '../lib/mappers'
 import { summarizeWeight } from '../lib/clientListSummary'
 import { calcAdherence, calcStreak } from '../lib/adherence'
+import { computeClientAlerts, ClientAlert } from '../lib/clientAlerts'
 import { computeClientHealth, hasUnreviewedActivity, ClientHealthStatus, ClientHealthReason } from '../lib/clientHealth'
 import { hasAnyMarkerOutOfRange } from '../lib/bloodMarkers'
 import { toast } from '../components/shared/Toast'
@@ -19,6 +20,8 @@ export interface ClientWithStats extends ClientData {
   healthStatus?: ClientHealthStatus
   healthLabel?: string
   healthReason?: ClientHealthReason
+  /** Avisos del Centro de control (peso estancado, hambre alta...) — ver clientAlerts.ts. */
+  alerts?: ClientAlert[]
   /** Último peso registrado y su variación en 4 semanas (null si hay <2 pesajes). */
   weightKg?: number
   weightDeltaKg?: number | null
@@ -66,6 +69,9 @@ export function withStats(
       healthStatus: health.status,
       healthLabel: health.label,
       healthReason: health.reason,
+      alerts: computeClientAlerts({
+        checkins, weights: weightsMap[c.id] || [], goal: c.goal, goalWeightKg: c.goalWeightKg, createdAt: c.createdAt,
+      }, today),
     }
   })
 }
