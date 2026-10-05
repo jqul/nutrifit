@@ -54,7 +54,7 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   desde el inicio, gráfico limpio, racha, y fotos con protagonismo.
 - [x] **UX-24 · Plantillas: separar Planes / Recetas / Guías** (S): hoy conviven
   plantillas, recetas, guías y "comer fuera" en una sola pantalla de 418 líneas.
-- [ ] **UX-25 · Ajustes por categorías** (S): Cuenta · Experiencia del cliente ·
+- [x] **UX-25 · Ajustes por categorías** (S): Cuenta · Experiencia del cliente ·
   Marca · Legal.
 - [ ] **UX-26 · Calendario con vista lista** (M): hoy **no existe** (solo cuadrícula de
   7 columnas). Añadir Semana/Lista; en móvil, lista por defecto.
