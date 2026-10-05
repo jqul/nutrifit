@@ -1,4 +1,5 @@
 import { UserProfile, ClientData, DietPlan, WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment, ClinicalNote } from '../types'
+import { PlanVersionRow, PlanSnapshot } from './planVersions'
 import { DietTemplateRow, RecipeRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, GuideRow, EatingOutGuideRow, DietPlanChangeRow } from './supabase-types'
 import { periodKeyFor } from './surveyPeriod'
 
@@ -233,6 +234,32 @@ export const DEMO_DIET_PLANS: Record<string, DietPlan> = {
     ],
     createdAt: Date.now() - 30 * 86400000, updatedAt: Date.now() - 10 * 86400000,
   },
+}
+
+// ── Versiones del plan (demo) ───────────────────────────────
+// María: tres versiones que cuadran con DEMO_PLAN_CHANGES — la actual (1600 kcal),
+// la de hace 26 días (1700) y la inicial (1800, todavía sin merienda).
+function demoSnapshot(plan: DietPlan, over: { kcal: number; protein: number; dropMeal?: string }): PlanSnapshot {
+  return {
+    name: plan.name, kcal_target: over.kcal, protein_g: over.protein, carbs_g: plan.carbsG, fat_g: plan.fatG, fiber_g: plan.fiberG, advice: plan.advice,
+    meals: plan.meals.filter(m => m.name !== over.dropMeal).map((m, i) => ({
+      name: m.name, time: m.time, kcal_target: m.kcalTarget, sort_order: i, day_of_week: m.dayOfWeek ?? null, option_group: m.optionGroup ?? null,
+      option_label: m.optionLabel ?? null, day_type: m.dayType ?? null,
+      items: m.items.map((it, j) => ({ food_name: it.foodName, quantity: it.quantity, unit: it.unit, kcal: it.kcal, protein_g: it.proteinG, carbs_g: it.carbsG, fat_g: it.fatG, sort_order: j })),
+    })),
+    supplements: plan.supplements.map(s => ({ name: s.name, dose: s.dose, timing: s.timing, visible_to_client: s.visibleToClient })),
+  }
+}
+const demoVersionRow = (n: number, daysBack: number, snapshot: PlanSnapshot, note: string | null): PlanVersionRow => ({
+  id: `demo-ver-${n}`, plan_id: 'demo-plan-maria', client_id: 'demo-client-001', version_number: n, snapshot, note, restored_from: null,
+  created_at: new Date(Date.now() - daysBack * 86400000).toISOString(), created_by: DEMO_NUTRICIONISTA_ID,
+})
+export const DEMO_PLAN_VERSIONS: Record<string, PlanVersionRow[]> = {
+  'demo-client-001': [
+    demoVersionRow(3, 12, demoSnapshot(DEMO_DIET_PLANS['demo-client-001'], { kcal: 1600, protein: 130 }), 'Peso estancado 2 semanas'),
+    demoVersionRow(2, 26, demoSnapshot(DEMO_DIET_PLANS['demo-client-001'], { kcal: 1700, protein: 120 }), 'Bajada de peso más lenta de lo esperado'),
+    demoVersionRow(1, 40, demoSnapshot(DEMO_DIET_PLANS['demo-client-001'], { kcal: 1800, protein: 120, dropMeal: 'Merienda' }), 'Versión inicial'),
+  ],
 }
 
 // ── Peso corporal ───────────────────────────────────────────

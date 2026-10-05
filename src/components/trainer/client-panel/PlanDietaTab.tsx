@@ -30,6 +30,7 @@ import { MetabolicCalculatorPanel } from './plan-dieta/MetabolicCalculatorPanel'
 import { ShoppingListPreview } from './plan-dieta/ShoppingListPreview'
 import { FoodTagFilterPills, FoodTagBadges } from './plan-dieta/FoodTagWidgets'
 import { PlanHistory } from './PlanHistory'
+import { PlanVersions } from './PlanVersions'
 import { diffPlanTargets, formatPlanChange, targetsFromForm, PlanTargets } from '../../../lib/planChanges'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
@@ -279,6 +280,10 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         plan_id: planId, name: s.name, dose: s.dose, timing: s.timing, visible_to_client: s.visibleToClient,
       })))
     }
+    // Instantánea completa de lo que acaba de quedar guardado (la BD no crea otra si no ha cambiado nada).
+    // No es crítico: si falla, el plan ya está guardado y solo falta esta versión.
+    const { error: versionError } = await supabase.rpc('create_plan_version', { p_plan_id: planId, p_note: changeReason.trim() || null })
+    if (versionError) console.warn('No se pudo crear la versión del plan', versionError)
     setSaving(false)
     setChangeReason('')
     setSavedTick(t => t + 1)
@@ -1046,6 +1051,11 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           <Button size="sm" onClick={async () => { if (await handleSaveTemplate()) setTemplateFormOpen(false) }}><BookmarkPlus className="w-3.5 h-3.5" /> Guardar plantilla</Button>
           <Button size="sm" variant="ghost" onClick={() => setTemplateFormOpen(false)}>Cancelar</Button>
         </div>
+      )}
+
+      {planId && (
+        <PlanVersions planId={planId} demoMode={!!demoPlan} refreshKey={savedTick}
+          onRestored={async () => { await loadPlan(); setSavedTick(t => t + 1) }} />
       )}
 
       {planId && (
