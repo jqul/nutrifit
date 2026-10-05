@@ -26,6 +26,7 @@ export function clientFromRow(row: ClienteRow): ClientData {
     allergies: row.allergies || '',
     notes: row.notes || '',
     reportNotes: row.report_notes || '',
+    notesUpdatedAt: row.notes_updated_at ? new Date(row.notes_updated_at).getTime() : null,
     consentAcceptedAt: row.consent_accepted_at,
     consentSignedName: row.consent_signed_name,
     monthlyPrice: row.monthly_price,

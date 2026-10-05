@@ -34,6 +34,7 @@ export interface ClienteRow {
   allergies: string | null
   notes: string | null
   report_notes: string | null
+  notes_updated_at: string | null
   consent_accepted_at: string | null
   consent_signed_name: string | null
   monthly_price: number | null

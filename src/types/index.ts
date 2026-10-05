@@ -51,6 +51,8 @@ export interface ClientData {
   allergies: string
   notes: string
   reportNotes: string
+  /** Cuándo se editó por última vez `notes` (la rellena un trigger de la BD). */
+  notesUpdatedAt?: number | null
   consentAcceptedAt: string | null
   consentSignedName: string | null
   monthlyPrice: number | null
