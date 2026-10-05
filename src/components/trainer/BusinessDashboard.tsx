@@ -1,4 +1,3 @@
-import { Euro, Users, UserCheck, TrendingUp, Flame } from 'lucide-react'
 import { ClientWithStats } from '../../hooks/useNutricionistaClients'
 
 function daysAgo(dateStr?: string): number | null {
@@ -19,30 +18,38 @@ export function BusinessDashboard({ clients }: { clients: ClientWithStats[] }) {
     ? Math.round(clients.reduce((sum, c) => sum + (c.streak || 0), 0) / clientesTotales * 10) / 10
     : 0
 
-  const KPIS = [
-    { label: 'Ingresos estimados/mes', value: `${ingresosMensuales}€`, icon: Euro, color: 'border-t-accent' },
-    { label: 'Clientes totales', value: String(clientesTotales), icon: Users, color: 'border-t-ink' },
-    { label: 'Activos (7 días)', value: String(clientesActivos), icon: UserCheck, color: 'border-t-ok' },
-    { label: 'Adherencia media', value: `${adherenciaMedia}%`, icon: TrendingUp, color: 'border-t-accent2' },
-    { label: 'Racha media', value: `${rachaMedia}d`, icon: Flame, color: 'border-t-warn' },
+  // Un solo dato protagonista (lo que facturas al mes); el resto, en segundo plano.
+  const SECONDARY = [
+    { label: 'Clientes', value: String(clientesTotales) },
+    { label: 'Activos (7 días)', value: String(clientesActivos) },
+    { label: 'Adherencia media', value: `${adherenciaMedia}%` },
+    { label: 'Racha media', value: `${String(rachaMedia).replace('.', ',')}d` },
   ]
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {KPIS.map(k => (
-          <div key={k.label} className={`bg-card border border-border border-t-4 ${k.color} rounded-2xl p-4`}>
-            <k.icon className="w-4 h-4 text-muted mb-2" />
+      <div className="card-featured p-6">
+        <p className="text-sm text-muted">Ingresos estimados al mes</p>
+        <p className="font-serif font-bold text-5xl leading-none mt-2">{ingresosMensuales.toLocaleString('es-ES')} €</p>
+        <p className="text-sm text-muted mt-3">
+          {clientesTotales} {clientesTotales === 1 ? 'cliente' : 'clientes'}
+          {clientesSinPrecio > 0 && ` · ${clientesSinPrecio} sin precio asignado`}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-5 px-1">
+        {SECONDARY.map(k => (
+          <div key={k.label}>
             <p className="text-xl font-serif font-bold">{k.value}</p>
-            <p className="text-xs text-muted uppercase tracking-wider mt-0.5">{k.label}</p>
+            <p className="text-xs text-muted mt-0.5">{k.label}</p>
           </div>
         ))}
       </div>
 
       {clientesSinPrecio > 0 && (
         <p className="text-xs text-muted">
-          Los ingresos son una estimación a partir del precio mensual que le pongas a cada cliente — no es facturación real.
-          {' '}{clientesSinPrecio} {clientesSinPrecio === 1 ? 'cliente no tiene' : 'clientes no tienen'} precio asignado (edítalo en su Perfil).
+          Los ingresos son una estimación a partir del precio mensual de cada cliente — no es facturación real.
+          {' '}Asigna el precio que falta en el Perfil de cada cliente.
         </p>
       )}
 
