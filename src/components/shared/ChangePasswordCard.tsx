@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Button } from './Button'
 import { toast } from './Toast'
-import { KeyRound } from 'lucide-react'
+
 
 /**
  * Cambiar contraseña estando ya autenticado (distinto de "¿Olvidaste tu
@@ -31,7 +31,7 @@ export function ChangePasswordCard({ demoMode }: { demoMode?: boolean }) {
   return (
     <div className="card p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold flex items-center gap-1.5"><KeyRound className="w-4 h-4" /> Contraseña</p>
+        <p className="text-sm font-semibold flex items-center gap-1.5">Contraseña</p>
         {!open && (
           <button onClick={() => setOpen(true)} className="flex-shrink-0 text-xs font-bold text-accent">Cambiar</button>
         )}

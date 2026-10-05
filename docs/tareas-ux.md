@@ -19,8 +19,12 @@ salvo que se indique lo contrario. Datos medidos en el código el 2026-10-04.
   realmente importante). Crear componentes/clases y reducir `border border-border`
   en favor de espacio y fondos.
   *Hecho cuando:* una pantalla muestra como mucho una tarjeta destacada.
-- [ ] **UX-03 · Regla de iconos** (S)
+- [x] **UX-03 · Regla de iconos** (S)
   Icono = apoyo, nunca protagonista. Quitar iconos decorativos donde cada bloque tiene uno.
+  *Regla aplicada:* un icono solo se queda si **informa** (estado: ✓ hecha, ⚠ error, racha) o es
+  **la acción** de un botón (copiar, añadir, descargar). Los títulos de tarjeta y de sección van
+  sin icono. Quitados: 13 títulos de tarjeta, las 5 baldosas de color de Hoy y los emojis de las
+  6 tarjetas de la landing.
 
 ## Fase 1 — Las 4 pantallas que definen el producto
 

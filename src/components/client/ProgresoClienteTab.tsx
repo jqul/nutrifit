@@ -12,7 +12,7 @@ import { WeightChart } from '../shared/WeightChart'
 import { HealthTimeline } from '../shared/HealthTimeline'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { printProgressReport } from '../../lib/printProgressReport'
-import { Camera, Flame, UtensilsCrossed, Plus, Images, FileDown, Moon } from 'lucide-react'
+import { Camera, Flame, UtensilsCrossed, Plus, FileDown, Moon } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
 const HYDRATION_GOAL_L = 2.0
@@ -233,7 +233,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
 
       <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="font-semibold text-sm flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4" /> Diario de comidas</p>
+          <p className="font-semibold text-sm flex items-center gap-1.5">Diario de comidas</p>
           <button onClick={() => setAddingMeal(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
             <Plus className="w-3.5 h-3.5" /> Añadir
           </button>
@@ -384,7 +384,7 @@ function PhotoComparator({ sessions }: { sessions: ProgressPhotoSession[] }) {
 
   return (
     <div className="card p-5 space-y-3">
-      <p className="font-semibold text-sm flex items-center gap-1.5"><Images className="w-4 h-4" /> Antes vs. después</p>
+      <p className="font-semibold text-sm flex items-center gap-1.5">Antes vs. después</p>
       <div className="flex gap-1.5">
         {(['front', 'side', 'back'] as const).map(a => (
           <button key={a} onClick={() => setAngle(a)}

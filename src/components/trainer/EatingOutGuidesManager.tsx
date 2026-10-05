@@ -5,7 +5,7 @@ import { DEFAULT_EATING_OUT_GUIDES } from '../../lib/eatingOutGuides'
 import { DEMO_EATING_OUT_GUIDES } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { Button } from '../shared/Button'
-import { UtensilsCrossed, Plus, Trash2, X, RotateCcw } from 'lucide-react'
+import { Plus, Trash2, X, RotateCcw } from 'lucide-react'
 
 function newId() { return crypto.randomUUID() }
 
@@ -79,7 +79,7 @@ export function EatingOutGuidesManager({ nutricionistaId, demoMode }: { nutricio
   return (
     <div>
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="font-semibold text-sm flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4" /> Modo "Comer fuera" ({rows.length})</h2>
+        <h2 className="font-semibold text-sm flex items-center gap-1.5">Modo "Comer fuera" ({rows.length})</h2>
         {!editor && (
           <button onClick={openNew} className="flex items-center gap-1 text-xs font-bold text-accent flex-shrink-0 whitespace-nowrap">
             <Plus className="w-3.5 h-3.5" /> Nuevo tipo

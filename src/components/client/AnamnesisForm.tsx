@@ -5,7 +5,7 @@ import { CustomAnamnesisQuestion } from '../../types'
 import { DEMO_ANAMNESIS, DEMO_NUTRICIONISTA_PROFILE } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { QuestionInput } from '../shared/QuestionInput'
-import { ClipboardList, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 export function AnamnesisForm({ clientId, nutricionistaId, demoMode, personalMode, openByDefault }: {
   clientId: string; nutricionistaId: string; demoMode?: boolean
@@ -56,7 +56,7 @@ export function AnamnesisForm({ clientId, nutricionistaId, demoMode, personalMod
     <div className="card p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold flex items-center gap-1.5"><ClipboardList className="w-4 h-4" /> Cuestionario de salud</p>
+          <p className="text-sm font-semibold flex items-center gap-1.5">Cuestionario de salud</p>
           <p className="text-xs text-muted mt-0.5">
             {completedAt
               ? `Completado el ${new Date(completedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`

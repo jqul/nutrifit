@@ -8,7 +8,7 @@ import { QuestionEditor } from '../shared/QuestionEditor'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { ConsentDocumentUpload } from '../shared/ConsentDocumentUpload'
 import { DEMO_CUSTOM_SURVEYS } from '../../lib/demo-data'
-import { Palette, Globe, ClipboardList, MessageCircle, ShieldCheck, UserRound } from 'lucide-react'
+import { Globe, MessageCircle } from 'lucide-react'
 
 type Section = 'cuenta' | 'experiencia' | 'marca' | 'legal'
 const SECTIONS: { id: Section; label: string; hint: string }[] = [
@@ -90,7 +90,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
           un formulario a medio rellenar no se pierde al cambiar de categoría. */}
       <div role="tabpanel" className={section === 'cuenta' ? 'space-y-6' : 'hidden'}>
         <div className="card p-5 space-y-3">
-          <p className="font-semibold text-sm flex items-center gap-1.5"><UserRound className="w-4 h-4" /> Tu cuenta</p>
+          <p className="font-semibold text-sm flex items-center gap-1.5">Tu cuenta</p>
           <dl className="text-sm grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
             <dt className="text-muted">Nombre</dt><dd className="font-medium min-w-0 break-words">{userProfile.displayName}</dd>
             <dt className="text-muted">Email</dt><dd className="font-medium min-w-0 break-all">{userProfile.email}</dd>
@@ -102,7 +102,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
 
       <div role="tabpanel" className={section === 'experiencia' ? 'space-y-6' : 'hidden'}>
         <div className="card p-5 space-y-4">
-          <p className="font-semibold text-sm flex items-center gap-1.5"><ClipboardList className="w-4 h-4" /> Preguntas personalizadas de anamnesis</p>
+          <p className="font-semibold text-sm flex items-center gap-1.5">Preguntas personalizadas de anamnesis</p>
           <p className="text-xs text-muted">
             Se añaden al cuestionario de salud que rellenan tus clientes, después de las preguntas fijas.
           </p>
@@ -115,7 +115,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
 
       <div role="tabpanel" className={section === 'marca' ? 'space-y-6' : 'hidden'}>
         <div className="card p-5 space-y-4">
-          <p className="font-semibold text-sm flex items-center gap-1.5"><Palette className="w-4 h-4" /> Marca blanca</p>
+          <p className="font-semibold text-sm flex items-center gap-1.5">Marca blanca</p>
           <p className="text-xs text-muted">
             Personaliza el logo y el color que ven tus clientes en su panel, y el tuyo propio en el panel de nutricionista.
           </p>
@@ -162,7 +162,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
 
       <div role="tabpanel" className={section === 'legal' ? 'space-y-6' : 'hidden'}>
         <div className="card p-5 space-y-4">
-          <p className="font-semibold text-sm flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /> Consentimiento informado</p>
+          <p className="font-semibold text-sm flex items-center gap-1.5">Consentimiento informado</p>
           <p className="text-xs text-muted">
             Sube el documento de consentimiento (protección de datos, condiciones del servicio...) que te haya
             preparado tu propio abogado. Si lo subes, cada cliente nuevo tendrá que leerlo y firmarlo electrónicamente

@@ -15,7 +15,7 @@ import { toast } from '../../shared/Toast'
 import { QuestionAnswerDisplay } from '../../shared/QuestionAnswerDisplay'
 import { exportClientData } from '../../../lib/gdprExport'
 import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
-import { Copy, RefreshCw, Download, Trash2, ClipboardList, Receipt, Tag, X, AlertTriangle, Scale, Ruler, ShieldCheck } from 'lucide-react'
+import { Copy, RefreshCw, Download, Trash2, Tag, X, AlertTriangle, Ruler, ShieldCheck } from 'lucide-react'
 
 const BMI_CATEGORY_CLASS: Record<string, string> = {
   'bajo peso': 'text-notice', normal: 'text-ok', sobrepeso: 'text-notice', obesidad: 'text-warn',
@@ -200,7 +200,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
           de texto que había antes (Altura/Peso actual/Peso objetivo). */}
       {(currentWeight != null || client.heightCm != null) && (
         <div className="card p-5 space-y-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5"><Scale className="w-3.5 h-3.5" /> Composición corporal</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">Composición corporal</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {initialWeight != null && <MiniStat label="Peso inicial" value={`${initialWeight} kg`} />}
             {currentWeight != null && <MiniStat label="Peso actual" value={`${currentWeight} kg`} />}
@@ -235,7 +235,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
       )}
 
       <div className="card p-5 space-y-3">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5" /> Cuestionario de salud</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">Cuestionario de salud</p>
         {anamnesisAnswers ? (
           <div className="space-y-2.5">
             {ANAMNESIS_QUESTIONS.map(q => anamnesisAnswers[q.key] ? (
@@ -258,7 +258,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
 
       <div className="card p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5"><Receipt className="w-3.5 h-3.5" /> Facturación</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">Facturación</p>
           <Button variant="outline" onClick={handleGenerateInvoice} loading={generatingInvoice} disabled={hasCurrentInvoice || client.monthlyPrice == null}>
             {hasCurrentInvoice ? 'Ya generada este mes' : 'Generar factura de este mes'}
           </Button>

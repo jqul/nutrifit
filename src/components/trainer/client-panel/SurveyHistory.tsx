@@ -4,7 +4,7 @@ import { CustomSurveyRow, SurveyResponseRow } from '../../../lib/supabase-types'
 import { supabase } from '../../../lib/supabase'
 import { periodLabel } from '../../../lib/surveyPeriod'
 import { QuestionAnswerDisplay } from '../../shared/QuestionAnswerDisplay'
-import { ClipboardEdit } from 'lucide-react'
+
 
 export function SurveyHistory({ client, demoMode, demoSurveys, demoResponses }: {
   client: ClientData
@@ -33,7 +33,7 @@ export function SurveyHistory({ client, demoMode, demoSurveys, demoResponses }: 
 
   return (
     <div className="card p-5">
-      <p className="font-semibold text-sm mb-3 flex items-center gap-1.5"><ClipboardEdit className="w-4 h-4" /> Encuestas recurrentes</p>
+      <p className="font-semibold text-sm mb-3 flex items-center gap-1.5">Encuestas recurrentes</p>
       <div className="space-y-4">
         {surveys.map(s => {
           const surveyResponses = responses

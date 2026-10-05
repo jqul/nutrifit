@@ -4,7 +4,7 @@ import { GuideRow } from '../../lib/supabase-types'
 import { DEMO_GUIDES } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { Button } from '../shared/Button'
-import { BookOpen, Plus, Trash2, X } from 'lucide-react'
+import { Plus, Trash2, X } from 'lucide-react'
 
 function newId() { return crypto.randomUUID() }
 
@@ -67,7 +67,7 @@ export function GuidesManager({ nutricionistaId, demoMode }: { nutricionistaId: 
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold text-sm flex items-center gap-1.5"><BookOpen className="w-4 h-4" /> Biblioteca de guías ({guides.length})</h2>
+        <h2 className="font-semibold text-sm flex items-center gap-1.5">Biblioteca de guías ({guides.length})</h2>
         {!editor && (
           <button onClick={openNew} className="flex items-center gap-1 text-xs font-bold text-accent">
             <Plus className="w-3.5 h-3.5" /> Nueva guía

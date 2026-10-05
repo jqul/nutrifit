@@ -6,7 +6,7 @@ import { periodKeyFor } from '../../lib/surveyPeriod'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { QuestionInput } from '../shared/QuestionInput'
-import { ClipboardEdit, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 const FREQUENCY_LABELS: Record<'weekly' | 'monthly', string> = { weekly: 'esta semana', monthly: 'este mes' }
 
@@ -62,7 +62,7 @@ export function PendingSurveys({ client, demoMode }: { client: ClientData; demoM
         <div key={survey.id} className="bg-card border border-accent/40 rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold flex items-center gap-1.5"><ClipboardEdit className="w-4 h-4 text-accent" /> {survey.name}</p>
+              <p className="text-sm font-semibold flex items-center gap-1.5">{survey.name}</p>
               <p className="text-xs text-muted mt-0.5">Pendiente de {FREQUENCY_LABELS[survey.frequency]}</p>
             </div>
             {openSurvey !== survey.id && (

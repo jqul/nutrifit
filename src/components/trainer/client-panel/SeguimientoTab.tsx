@@ -17,7 +17,7 @@ import { summarizeSignals, isConcerningCheckin, SignalTone } from '../../../lib/
 import { summarizeWeight, weightDeltaTone, formatWeightDelta } from '../../../lib/clientListSummary'
 import { TONE_CLASS } from '../healthStyles'
 import { toast } from '../../shared/Toast'
-import { Flame, Camera, UtensilsCrossed, AlertTriangle, FileDown, Plus } from 'lucide-react'
+import { Flame, UtensilsCrossed, AlertTriangle, FileDown, Plus } from 'lucide-react'
 
 const INTENSITY_LABELS = ['Ninguna', 'Leve', 'Moderada', 'Intensa']
 
@@ -181,7 +181,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
         mealLogs={mealLogs} checkins={checkins} variant="trainer" nutricionistaName={nutricionistaName} goalWeightKg={client.goalWeightKg} />
 
       <div className="card p-5">
-        <p className="font-semibold text-sm mb-3 flex items-center gap-1.5"><Camera className="w-4 h-4" /> Fotos de progreso</p>
+        <p className="font-semibold text-sm mb-3 flex items-center gap-1.5">Fotos de progreso</p>
         {sessions.length === 0 ? (
           <p className="text-sm text-muted">El cliente todavía no ha subido fotos.</p>
         ) : (
@@ -203,7 +203,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
       </div>
 
       <div className="card p-5">
-        <p className="font-semibold text-sm mb-3 flex items-center gap-1.5"><UtensilsCrossed className="w-4 h-4" /> Diario de comidas</p>
+        <p className="font-semibold text-sm mb-3 flex items-center gap-1.5">Diario de comidas</p>
         {mealLogs.length === 0 ? (
           <p className="text-sm text-muted">El cliente todavía no ha registrado comidas.</p>
         ) : (

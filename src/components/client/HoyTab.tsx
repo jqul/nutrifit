@@ -13,7 +13,7 @@ import { PendingSurveys } from './PendingSurveys'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS, DEMO_CHECKINS } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
-import { CheckCircle2, CheckSquare, Square, Calendar, Plus, Video, Flame, Droplet, Camera, UtensilsCrossed, Pill } from 'lucide-react'
+import { CheckCircle2, CheckSquare, Square, Plus, Video, Flame, Camera } from 'lucide-react'
 
 const SCALE = [1, 2, 3, 4, 5]
 const WATER_GOAL_L = 2.0
@@ -315,9 +315,6 @@ export function HoyTab({ client, demoMode, personalMode }: {
         <div className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
-                <UtensilsCrossed className="w-4 h-4" />
-              </div>
               <div>
                 <p className="font-semibold text-sm">Comidas del día</p>
                 <p className="text-xs text-muted">{mealsDoneCount} de {todaysMeals.length} completadas</p>
@@ -383,9 +380,6 @@ export function HoyTab({ client, demoMode, personalMode }: {
       <div className="card p-4 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-500 flex-shrink-0">
-              <Droplet className="w-4 h-4" />
-            </div>
             <p className="font-semibold text-sm">Agua {waterGoalReached && <span className="text-xs font-semibold text-ok ml-1">🎉 ¡Meta alcanzada!</span>}</p>
           </div>
           <span className="text-sm font-bold text-sky-600 dark:text-sky-400 flex-shrink-0">{waterL.toFixed(2).replace(/\.?0+$/, '') || 0} L / {WATER_GOAL_L} L</span>
@@ -411,9 +405,6 @@ export function HoyTab({ client, demoMode, personalMode }: {
       {visibleSupplements.length > 0 && (
         <div className="card p-4">
           <div className="flex items-center gap-2.5 mb-2">
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400 flex-shrink-0">
-              <Pill className="w-4 h-4" />
-            </div>
             <div>
               <p className="font-semibold text-sm">Pauta de suplementos</p>
               <p className="text-xs text-muted">Marcar cuando los hayas tomado hoy</p>
@@ -440,9 +431,6 @@ export function HoyTab({ client, demoMode, personalMode }: {
       {!checkinOpen && doneToday && (
         <div className="card p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-ok/10 flex items-center justify-center text-ok flex-shrink-0">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
             <div>
               <p className="font-semibold text-sm">Check-in de hoy</p>
               <p className="text-xs text-ok font-semibold">Registrado ✓</p>
@@ -456,9 +444,6 @@ export function HoyTab({ client, demoMode, personalMode }: {
         <div className="card p-5 space-y-5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-ok/10 flex items-center justify-center text-ok flex-shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
               <div>
                 <p className="font-semibold text-sm">Check-in de sensaciones</p>
                 <p className="text-xs text-muted">Evaluación de hábitos diarios</p>
@@ -566,7 +551,7 @@ function ProximasCitas({ client, demoMode, demoCitas }: { client: ClientData; de
   return (
     <div className="card p-5 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="font-semibold text-sm flex items-center gap-1.5"><Calendar className="w-4 h-4" /> Próximas citas</p>
+        <p className="font-semibold text-sm flex items-center gap-1.5">Próximas citas</p>
         <button onClick={() => setRequesting(v => !v)} className="flex items-center gap-1 text-xs font-bold text-accent">
           <Plus className="w-3.5 h-3.5" /> Pedir cita
         </button>

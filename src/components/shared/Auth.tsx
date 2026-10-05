@@ -7,12 +7,12 @@ import { LandingPreview } from './LandingPreview'
 interface AuthProps { onAuth: () => void; onDemo?: () => void }
 
 const FEATURES = [
-  { icon: '🥗', title: 'Plan de dieta', desc: 'Macros, comidas, suplementación y consejo personalizado por cliente.' },
-  { icon: '⚖️', title: 'Seguimiento de peso', desc: 'Gráfica de evolución sincronizada, sin depender del móvil del cliente.' },
-  { icon: '📸', title: 'Fotos de progreso', desc: 'El cliente sube fotos y tú ves su evolución visual.' },
-  { icon: '✅', title: 'Check-in diario', desc: 'Adherencia, hambre, energía y ánimo cada día, sin preguntarlo por WhatsApp.' },
-  { icon: '📱', title: 'Panel del cliente', desc: 'Acceso desde el móvil con un enlace personal. Sin descargar nada.' },
-  { icon: '📈', title: 'Adherencia y racha', desc: 'Ve de un vistazo quién sigue el plan y quién necesita un empujón.' },
+  { title: 'Plan de dieta', desc: 'Macros, comidas, suplementación y consejo personalizado por cliente.' },
+  { title: 'Seguimiento de peso', desc: 'Gráfica de evolución sincronizada, sin depender del móvil del cliente.' },
+  { title: 'Fotos de progreso', desc: 'El cliente sube fotos y tú ves su evolución visual.' },
+  { title: 'Check-in diario', desc: 'Adherencia, hambre, energía y ánimo cada día, sin preguntarlo por WhatsApp.' },
+  { title: 'Panel del cliente', desc: 'Acceso desde el móvil con un enlace personal. Sin descargar nada.' },
+  { title: 'Adherencia y racha', desc: 'Ve de un vistazo quién sigue el plan y quién necesita un empujón.' },
 ]
 
 export function Auth({ onAuth, onDemo }: AuthProps) {
@@ -100,9 +100,8 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent mb-4 text-center">Qué incluye</p>
         <h2 className="text-4xl sm:text-5xl font-serif font-bold text-center mb-16 max-w-2xl mx-auto leading-tight">Todo lo que necesitas para gestionar a tus clientes</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {FEATURES.map(({ icon, title, desc }) => (
+          {FEATURES.map(({ title, desc }) => (
             <div key={title} className="card p-8 hover:border-accent/40 hover:shadow-sm transition-all group">
-              <div className="text-2xl mb-4 group-hover:scale-110 transition-transform inline-block">{icon}</div>
               <p className="font-serif font-bold text-base mb-2">{title}</p>
               <p className="text-sm text-muted leading-relaxed">{desc}</p>
             </div>

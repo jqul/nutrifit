@@ -5,7 +5,7 @@ import { Food } from '../../../types'
 import { DEMO_RECIPES } from '../../../lib/demo-data'
 import { toast } from '../../shared/Toast'
 import { RecipeEditorPanel } from '../../shared/RecipeEditorPanel'
-import { ChefHat, Trash2, Plus, Copy } from 'lucide-react'
+import { Trash2, Plus, Copy } from 'lucide-react'
 
 /** Recetario: recetas propias (editables) y las del sistema (solo copiar). */
 export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionistaId: string; demoMode?: boolean; foods: Food[] }) {
@@ -53,7 +53,7 @@ export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionis
   return (
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-sm flex items-center gap-1.5"><ChefHat className="w-4 h-4" /> Recetario ({recipes.length})</h2>
+          <h2 className="font-semibold text-sm flex items-center gap-1.5">Recetario ({recipes.length})</h2>
           {!recipeEditor && (
             <button onClick={() => setRecipeEditor('new')} className="flex items-center gap-1 text-xs font-bold text-accent">
               <Plus className="w-3.5 h-3.5" /> Nueva receta

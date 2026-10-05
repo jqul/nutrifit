@@ -6,7 +6,7 @@ import { sendPush } from '../../lib/usePushNotifications'
 import { toast } from '../shared/Toast'
 import { Button } from '../shared/Button'
 import { QuestionEditor } from '../shared/QuestionEditor'
-import { Plus, Trash2, ClipboardEdit, Power } from 'lucide-react'
+import { Plus, Trash2, Power } from 'lucide-react'
 
 const FREQUENCY_LABELS: Record<SurveyFrequency, string> = { weekly: 'Semanal', monthly: 'Mensual' }
 
@@ -73,7 +73,7 @@ export function SurveyManager({ nutricionistaId, demoMode, demoSurveys }: {
   return (
     <div className="card p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <p className="font-semibold text-sm flex items-center gap-1.5"><ClipboardEdit className="w-4 h-4" /> Encuestas recurrentes</p>
+        <p className="font-semibold text-sm flex items-center gap-1.5">Encuestas recurrentes</p>
         {!creating && (
           <button onClick={() => setCreating(true)} className="flex items-center gap-1 text-xs font-bold text-accent">
             <Plus className="w-3.5 h-3.5" /> Nueva encuesta
