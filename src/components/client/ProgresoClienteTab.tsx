@@ -54,7 +54,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
     if (demoMode) return
     const [{ data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }, { data: cy }] = await Promise.all([
       supabase.from('weight_logs').select('*').eq('client_id', clientId).order('date'),
-      supabase.from('daily_checkins').select('*').eq('client_id', clientId),
+      supabase.from('daily_checkins').select('*').eq('client_id', clientId).order('date', { ascending: false }), // más recientes primero: si hubiera un corte de filas, se pierde lo antiguo (abajo se devuelve a orden cronológico)
       supabase.from('progress_photos').select('*').eq('client_id', clientId).order('date', { ascending: false }),
       supabase.from('meal_logs').select('*').eq('client_id', clientId).order('created_at', { ascending: false }),
       supabase.from('blood_markers').select('*').eq('client_id', clientId).order('date', { ascending: false }),
@@ -62,7 +62,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
       supabase.from('cycle_logs').select('*').eq('client_id', clientId).order('start_date'),
     ])
     setWeights((w || []).map(weightFromRow))
-    setCheckins((c || []).map(checkinFromRow))
+    setCheckins((c || []).map(checkinFromRow).reverse())
     setSessions((p || []).map(photoSessionFromRow))
     setMealLogs((m || []).map(mealLogFromRow))
     setBloodMarkers(bm || [])

@@ -7,6 +7,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import webpush from "npm:web-push@3.6.7"
 import { createClient } from "jsr:@supabase/supabase-js@2"
+import { fetchAllRows } from "./shared/fetchAll.ts"
 
 // Recorta espacios/saltos de línea y comillas que se cuelan al pegar un secreto en el dashboard.
 const env = (k: string) => (Deno.env.get(k) ?? "").trim().replace(/^["']+|["']+$/g, "")
@@ -56,17 +57,16 @@ Deno.serve(async (req: Request) => {
 
     const period = monthKey(now)
 
-    const { data: clients, error: clientsErr } = await supabase
-      .from("clientes").select("id, nutricionista_id").not("monthly_price", "is", null)
-    if (clientsErr) throw clientsErr
-    if (!clients?.length) {
+    // PostgREST corta en silencio a 1.000 filas por consulta: se pagina (con orden estable).
+    const clients = await fetchAllRows<{ id: string; nutricionista_id: string }>((from, to) =>
+      supabase.from("clientes").select("id, nutricionista_id").not("monthly_price", "is", null).order("id").range(from, to))
+    if (!clients.length) {
       return new Response(JSON.stringify({ sent: 0, pending: 0 }), { headers: { "Content-Type": "application/json" } })
     }
 
-    const { data: invoices, error: invoicesErr } = await supabase
-      .from("invoices").select("client_id").eq("period", period)
-    if (invoicesErr) throw invoicesErr
-    const invoiced = new Set((invoices || []).map((i) => i.client_id))
+    const invoices = await fetchAllRows<{ client_id: string }>((from, to) =>
+      supabase.from("invoices").select("client_id").eq("period", period).order("id").range(from, to))
+    const invoiced = new Set(invoices.map((i) => i.client_id))
 
     const pendingByNutricionista = new Map<string, number>()
     for (const c of clients) {

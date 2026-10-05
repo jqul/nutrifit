@@ -8,6 +8,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import webpush from "npm:web-push@3.6.7"
 import { createClient } from "jsr:@supabase/supabase-js@2"
+import { fetchAllRows } from "./shared/fetchAll.ts"
 
 // Recorta espacios/saltos de línea y comillas que se cuelan al pegar un secreto en el dashboard.
 const env = (k: string) => (Deno.env.get(k) ?? "").trim().replace(/^["']+|["']+$/g, "")
@@ -57,21 +58,16 @@ Deno.serve(async (req: Request) => {
   try {
     const targetDate = daysAgoISO(NUTRICIONISTA_ALERT_DAYS)
 
-    const { data: clients, error: clientsErr } = await supabase
-      .from("clientes").select("id, name, surname, nutricionista_id, created_at")
-    if (clientsErr) throw clientsErr
+    // PostgREST corta en silencio a 1.000 filas por consulta: se pagina, y el último
+    // check-in de cada cliente viene calculado en la base de datos (una fila por cliente).
+    const clients = await fetchAllRows<{ id: string; name: string; surname: string; nutricionista_id: string; created_at: string }>((from, to) =>
+      supabase.from("clientes").select("id, name, surname, nutricionista_id, created_at").order("id").range(from, to))
 
-    const { data: checkins, error: checkinsErr } = await supabase
-      .from("daily_checkins").select("client_id, date")
-    if (checkinsErr) throw checkinsErr
+    const lastCheckins = await fetchAllRows<{ client_id: string; last_checkin: string }>((from, to) =>
+      supabase.rpc("last_checkin_by_client").range(from, to))
+    const lastCheckinByClient = new Map<string, string>(lastCheckins.map((r) => [r.client_id, r.last_checkin]))
 
-    const lastCheckinByClient = new Map<string, string>()
-    for (const c of checkins || []) {
-      const prev = lastCheckinByClient.get(c.client_id)
-      if (!prev || c.date > prev) lastCheckinByClient.set(c.client_id, c.date)
-    }
-
-    const atRisk = (clients || []).filter((c) => {
+    const atRisk = clients.filter((c) => {
       const last = lastCheckinByClient.get(c.id)
       if (last) return last === targetDate
       // Sin check-ins nunca: avisar una vez, cuando lleve exactamente

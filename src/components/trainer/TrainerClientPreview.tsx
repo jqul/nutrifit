@@ -59,7 +59,7 @@ export function TrainerClientPreview({ client, userProfile, demoMode, onClose }:
       const [{ data: planRow }, { data: w }, { data: c }, { data: p }, { data: m }, { data: bm }, { data: cn }, { data: cy }, { data: recipeRows }] = await Promise.all([
         supabase.from('diet_plans').select('*').eq('client_id', client.id).eq('is_active', true).maybeSingle(),
         supabase.from('weight_logs').select('*').eq('client_id', client.id).order('date'),
-        supabase.from('daily_checkins').select('*').eq('client_id', client.id),
+        supabase.from('daily_checkins').select('*').eq('client_id', client.id).order('date', { ascending: false }),
         supabase.from('progress_photos').select('*').eq('client_id', client.id).order('date', { ascending: false }),
         supabase.from('meal_logs').select('*').eq('client_id', client.id).order('created_at', { ascending: false }),
         supabase.from('blood_markers').select('*').eq('client_id', client.id).order('date', { ascending: false }),
@@ -88,7 +88,7 @@ export function TrainerClientPreview({ client, userProfile, demoMode, onClose }:
       setData({
         plan, recipes: recipeRows || [],
         weights: (w || []).map(weightFromRow),
-        checkins: (c || []).map(checkinFromRow),
+        checkins: (c || []).map(checkinFromRow).reverse(),
         photos: (p || []).map(photoSessionFromRow),
         mealLogs: (m || []).map(mealLogFromRow),
         bloodMarkers: bm || [],

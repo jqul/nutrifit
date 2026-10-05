@@ -11,6 +11,8 @@ import { toast } from '../components/shared/Toast'
 import { DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES, DEMO_WEIGHTS } from '../lib/demo-data'
 import { InvoiceRow, BloodMarkerRow, SurveyResponseRow } from '../lib/supabase-types'
 import { generateClientToken } from '../lib/token'
+import { fetchAllRows, fetchAllRowsForIds } from '../lib/fetchAll'
+import { ActivitySummary, HISTORY_WINDOW_DAYS, latestDate, weightsWithBounds } from '../lib/activitySummary'
 
 export interface ClientWithStats extends ClientData {
   lastCheckin?: string
@@ -46,6 +48,9 @@ export function withStats(
   clients: ClientData[], checkinsMap: Record<string, DailyCheckin[]>, invoicesMap: Record<string, InvoiceRow[]> = {},
   bloodMarkersMap: Record<string, BloodMarkerRow[]> = {}, surveyResponsesMap: Record<string, SurveyResponseRow[]> = {},
   weightsMap: Record<string, WeightEntry[]> = {},
+  // Último check-in y primer/último pesaje de cada cliente (clients_activity_summary). La app solo
+  // descarga los últimos días de historial; esto cubre lo que queda fuera de esa ventana.
+  activityMap: Record<string, ActivitySummary> = {},
 ): ClientWithStats[] {
   const today = new Date()
   const todayStr = toLocalISODate(today)
@@ -53,7 +58,8 @@ export function withStats(
   return clients.map(c => {
     const checkins = checkinsMap[c.id] || []
     const sorted = [...checkins].sort((a, b) => b.date.localeCompare(a.date))
-    const lastCheckin = sorted[0]?.date
+    const activity = activityMap[c.id]
+    const lastCheckin = latestDate(sorted[0]?.date, activity?.last_checkin)
     const streak = calcStreak(checkins, today)
     const hasCurrentPeriodInvoice = (invoicesMap[c.id] || []).some(i => i.period === period)
     const hasBiomarkerAlert = hasAnyMarkerOutOfRange(bloodMarkersMap[c.id] || [])
@@ -63,14 +69,15 @@ export function withStats(
       lastCheckin, streak, createdAt: c.createdAt, monthlyPrice: c.monthlyPrice,
       hasBiomarkerAlert, hasUnreviewedActivity: unreviewed,
     }, hasCurrentPeriodInvoice, today)
-    const weights = weightsMap[c.id] || []
+    // Los pesajes recientes + el primero y el último de la historia, aunque queden fuera de la ventana.
+    const weights = weightsWithBounds(c.id, weightsMap[c.id] || [], activity)
     const weight = summarizeWeight(weights, today)
-    const firstWeigh = weights.length ? [...weights].sort((a, b) => a.date.localeCompare(b.date))[0] : undefined
-    const lastWeigh = weights.reduce<string | undefined>((m, w) => (!m || w.date > m ? w.date : m), undefined)
+    const firstWeigh = weights[0]
+    const lastWeigh = weights[weights.length - 1]?.date
     const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7)
     return {
       ...c,
-      lastActivity: [lastCheckin, lastWeigh].filter((d): d is string => !!d).sort().pop(),
+      lastActivity: latestDate(lastCheckin, lastWeigh),
       adherencePrev7d: calcAdherence(checkins, 7, weekAgo),
       weightStartKg: firstWeigh?.weightKg,
       weightKg: weight?.latestKg,
@@ -83,7 +90,7 @@ export function withStats(
       healthLabel: health.label,
       healthReason: health.reason,
       alerts: computeClientAlerts({
-        checkins, weights: weightsMap[c.id] || [], goal: c.goal, goalWeightKg: c.goalWeightKg, createdAt: c.createdAt,
+        checkins, weights, goal: c.goal, goalWeightKg: c.goalWeightKg, createdAt: c.createdAt,
       }, today),
     }
   })
@@ -129,30 +136,48 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
 
     if (mapped.length) {
       const ids = mapped.map(c => c.id)
-      const [{ data: checkinRows }, { data: invoiceRows }, { data: bloodMarkerRows }, { data: surveyResponseRows }, { data: weightRows }] = await Promise.all([
-        supabase.from('daily_checkins').select('*').in('client_id', ids),
-        supabase.from('invoices').select('*').in('client_id', ids),
-        supabase.from('blood_markers').select('*').in('client_id', ids),
-        supabase.from('survey_responses').select('*').in('client_id', ids),
-        supabase.from('weight_logs').select('*').in('client_id', ids),
-      ])
+      // PostgREST corta cada respuesta en 1.000 filas SIN avisar: traer "todos los check-ins" de varios
+      // clientes se pasa enseguida. Por eso todo va paginado (con orden estable) y los check-ins y pesajes
+      // solo de los últimos días; lo que queda fuera de esa ventana (último check-in, primer peso...) llega
+      // por clients_activity_summary, una fila por cliente.
+      const since = new Date(); since.setDate(since.getDate() - HISTORY_WINDOW_DAYS)
+      const sinceStr = toLocalISODate(since)
+      let checkinRows, invoiceRows, bloodMarkerRows, surveyResponseRows, weightRows, activityRows
+      try {
+        ;[checkinRows, invoiceRows, bloodMarkerRows, surveyResponseRows, weightRows, activityRows] = await Promise.all([
+          fetchAllRowsForIds(ids, (chunk, from, to) => supabase.from('daily_checkins').select('*').in('client_id', chunk).gte('date', sinceStr).order('date').order('id').range(from, to)),
+          fetchAllRowsForIds(ids, (chunk, from, to) => supabase.from('invoices').select('*').in('client_id', chunk).order('period').order('id').range(from, to)),
+          fetchAllRowsForIds(ids, (chunk, from, to) => supabase.from('blood_markers').select('*').in('client_id', chunk).order('date').order('id').range(from, to)),
+          fetchAllRowsForIds(ids, (chunk, from, to) => supabase.from('survey_responses').select('*').in('client_id', chunk).order('submitted_at').order('id').range(from, to)),
+          fetchAllRowsForIds(ids, (chunk, from, to) => supabase.from('weight_logs').select('*').in('client_id', chunk).gte('date', sinceStr).order('date').order('id').range(from, to)),
+          fetchAllRows<ActivitySummary>((from, to) => supabase.rpc('clients_activity_summary', { p_client_ids: ids }).range(from, to)),
+        ])
+      } catch (e) {
+        // Antes un fallo aquí se ignoraba y la lista salía con datos a medias; mejor decirlo.
+        console.error(e)
+        toast('No se pudieron cargar todos los datos de los clientes', 'warn')
+        setLoading(false)
+        return
+      }
       const checkinsByClient: Record<string, DailyCheckin[]> = {}
-      ;(checkinRows || []).forEach((row) => {
+      checkinRows.forEach((row) => {
         const c = checkinFromRow(row)
         ;(checkinsByClient[c.clientId] ||= []).push(c)
       })
       const invoicesByClient: Record<string, InvoiceRow[]> = {}
-      ;(invoiceRows || []).forEach((row: InvoiceRow) => { (invoicesByClient[row.client_id] ||= []).push(row) })
+      invoiceRows.forEach((row: InvoiceRow) => { (invoicesByClient[row.client_id] ||= []).push(row) })
       const bloodMarkersByClient: Record<string, BloodMarkerRow[]> = {}
-      ;(bloodMarkerRows || []).forEach((row: BloodMarkerRow) => { (bloodMarkersByClient[row.client_id] ||= []).push(row) })
+      bloodMarkerRows.forEach((row: BloodMarkerRow) => { (bloodMarkersByClient[row.client_id] ||= []).push(row) })
       const surveyResponsesByClient: Record<string, SurveyResponseRow[]> = {}
-      ;(surveyResponseRows || []).forEach((row: SurveyResponseRow) => { (surveyResponsesByClient[row.client_id] ||= []).push(row) })
+      surveyResponseRows.forEach((row: SurveyResponseRow) => { (surveyResponsesByClient[row.client_id] ||= []).push(row) })
       const weightsByClient: Record<string, WeightEntry[]> = {}
-      ;(weightRows || []).forEach((row) => {
+      weightRows.forEach((row) => {
         const w = weightFromRow(row)
         ;(weightsByClient[w.clientId] ||= []).push(w)
       })
-      setClients(withStats(mapped, checkinsByClient, invoicesByClient, bloodMarkersByClient, surveyResponsesByClient, weightsByClient))
+      const activityByClient: Record<string, ActivitySummary> = {}
+      activityRows.forEach(r => { activityByClient[r.client_id] = r })
+      setClients(withStats(mapped, checkinsByClient, invoicesByClient, bloodMarkersByClient, surveyResponsesByClient, weightsByClient, activityByClient))
     } else {
       setClients([])
     }

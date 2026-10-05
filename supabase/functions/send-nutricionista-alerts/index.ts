@@ -24,6 +24,9 @@ import {
 } from "./shared/alertDigest.ts"
 import type { AutomationSettings } from "./shared/alertDigest.ts"
 import type { DailyCheckin, WeightEntry } from "./shared/types.ts"
+import { fetchAllRows, fetchAllRowsForIds } from "./shared/fetchAll.ts"
+import { HISTORY_WINDOW_DAYS, weightsWithBounds } from "./shared/activitySummary.ts"
+import type { ActivitySummary } from "./shared/activitySummary.ts"
 
 // Recorta espacios/saltos de línea y comillas que se cuelan al pegar un secreto en el dashboard.
 const env = (k: string) => (Deno.env.get(k) ?? "").trim().replace(/^["']+|["']+$/g, "")
@@ -83,9 +86,8 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Solo se calcula para quien puede recibir el aviso: nutricionistas con push activado.
-    const { data: subs, error: subsErr } = await supabase
-      .from("push_subscriptions").select("*").is("client_id", null).not("nutricionista_id", "is", null)
-    if (subsErr) throw subsErr
+    const subs = await fetchAllRows<Row>((from, to) =>
+      supabase.from("push_subscriptions").select("*").is("client_id", null).not("nutricionista_id", "is", null).order("id").range(from, to))
     const subsByNutri = new Map<string, Row[]>()
     for (const s of subs || []) {
       const list = subsByNutri.get(s.nutricionista_id) || []
@@ -116,25 +118,33 @@ async function processNutricionista(nutricionistaId: string, nutriSubs: Row[], d
     .from("nutricionista_automations").select("settings").eq("nutricionista_id", nutricionistaId).maybeSingle()
   const settings = (settingsRow?.settings ?? {}) as AutomationSettings
 
-  const { data: clients, error: clientsErr } = await supabase
-    .from("clientes").select("id, name, surname, goal, goal_weight_kg, created_at").eq("nutricionista_id", nutricionistaId)
-  if (clientsErr) throw clientsErr
+  const clients = await fetchAllRows<Row>((from, to) =>
+    supabase.from("clientes").select("id, name, surname, goal, goal_weight_kg, created_at")
+      .eq("nutricionista_id", nutricionistaId).order("id").range(from, to))
 
   // ── Alertas activas de cada cliente (misma lógica que la app) ──
   const active: ActiveAlert[] = []
   let alreadyNotified = new Set<string>()
   if (clients?.length) {
     const ids = clients.map((c: Row) => c.id)
-    const [{ data: checkinRows, error: e1 }, { data: weightRows, error: e2 }, { data: stateRows, error: e3 }] = await Promise.all([
-      supabase.from("daily_checkins")
-        .select("client_id, date, followed_plan, hunger, energy, mood, water_l, bristol_scale, bloating, abdominal_pain")
-        .in("client_id", ids).gte("date", isoDaysAgo(CHECKIN_WINDOW_DAYS)),
-      supabase.from("weight_logs").select("client_id, date, weight_kg").in("client_id", ids),
-      supabase.from("nutricionista_alert_state").select("client_id, kind").in("client_id", ids),
+    // PostgREST corta en silencio a 1.000 filas por consulta: todo se pagina (con orden estable)
+    // y los ids se trocean. Los pesajes se piden solo de la ventana reciente; el primero y el
+    // último de la historia (objetivo alcanzado, "sin pesar") vienen del resumen por cliente.
+    const [checkinRows, weightRows, stateRows, activityRows] = await Promise.all([
+      fetchAllRowsForIds<Row>(ids, (chunk, from, to) =>
+        supabase.from("daily_checkins")
+          .select("id, client_id, date, followed_plan, hunger, energy, mood, water_l, bristol_scale, bloating, abdominal_pain")
+          .in("client_id", chunk).gte("date", isoDaysAgo(CHECKIN_WINDOW_DAYS)).order("date").order("id").range(from, to)),
+      fetchAllRowsForIds<Row>(ids, (chunk, from, to) =>
+        supabase.from("weight_logs").select("id, client_id, date, weight_kg")
+          .in("client_id", chunk).gte("date", isoDaysAgo(HISTORY_WINDOW_DAYS)).order("date").order("id").range(from, to)),
+      fetchAllRowsForIds<Row>(ids, (chunk, from, to) =>
+        supabase.from("nutricionista_alert_state").select("client_id, kind")
+          .in("client_id", chunk).order("client_id").order("kind").range(from, to)),
+      fetchAllRows<ActivitySummary>((from, to) =>
+        supabase.rpc("clients_activity_summary", { p_client_ids: ids }).range(from, to)),
     ])
-    if (e1) throw e1
-    if (e2) throw e2
-    if (e3) throw e3
+    const activityBy = new Map<string, ActivitySummary>(activityRows.map((a) => [a.client_id, a]))
 
     const checkinsBy = new Map<string, DailyCheckin[]>()
     for (const r of checkinRows || []) {
@@ -156,7 +166,7 @@ async function processNutricionista(nutricionistaId: string, nutriSubs: Row[], d
     const today = new Date()
     for (const c of clients) {
       const alerts = computeClientAlerts({
-        checkins: checkinsBy.get(c.id) || [], weights: weightsBy.get(c.id) || [],
+        checkins: checkinsBy.get(c.id) || [], weights: weightsWithBounds(c.id, weightsBy.get(c.id) || [], activityBy.get(c.id)),
         goal: c.goal, goalWeightKg: c.goal_weight_kg != null ? Number(c.goal_weight_kg) : null,
         createdAt: new Date(c.created_at).getTime(),
       }, today)

@@ -19,9 +19,13 @@ export interface ClientHealth {
 const INACTIVITY_THRESHOLD_DAYS = 3
 const STREAK_THRESHOLD_DAYS = 3
 
+// Días de calendario entre una fecha (YYYY-MM-DD) y la de referencia. Se compara contra la
+// MEDIANOCHE de la referencia: con la hora puesta, pasado el mediodía Math.round contaba un día
+// de más (a las 15:00, un check-in de hace 3 días salía "hace 4d" y saltaba el aviso antes de tiempo).
 function daysBetween(dateStr: string, referenceDate: Date): number {
   const d = new Date(dateStr + 'T00:00:00')
-  return Math.round((referenceDate.getTime() - d.getTime()) / 86400000)
+  const today = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate())
+  return Math.round((today.getTime() - d.getTime()) / 86400000)
 }
 
 /**

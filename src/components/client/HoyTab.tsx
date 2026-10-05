@@ -101,7 +101,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
     if (demoMode) return
     const [{ data: todayRow }, { data: history }] = await Promise.all([
       supabase.from('daily_checkins').select('*').eq('client_id', client.id).eq('date', today).maybeSingle(),
-      supabase.from('daily_checkins').select('*').eq('client_id', client.id),
+      supabase.from('daily_checkins').select('*').eq('client_id', client.id).order('date', { ascending: false }),
     ])
     if (todayRow) {
       setDoneToday(true)
@@ -197,7 +197,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
     // Recalcula la racha tras el primer check-in del día — así el contador
     // de llama reacciona al instante, sin esperar a la siguiente carga.
     if (!doneToday) {
-      const { data } = await supabase.from('daily_checkins').select('*').eq('client_id', client.id)
+      const { data } = await supabase.from('daily_checkins').select('*').eq('client_id', client.id).order('date', { ascending: false })
       setStreak(calcStreak((data || []).map(checkinFromRow)))
     }
   }

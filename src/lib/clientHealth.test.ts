@@ -134,3 +134,23 @@ describe('computeClientHealth reason', () => {
     expect(computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: null, streak: 1 }, false, ref).reason).toBe('active')
   })
 })
+
+describe('días sin check-in a distintas horas del día', () => {
+  const old = { createdAt: new Date('2026-01-01T00:00:00').getTime() }
+  const at = (hhmm: string) => new Date(`2026-06-15T${hhmm}:00`)
+  const threeDaysAgo = '2026-06-12'
+
+  it('counts calendar days, not elapsed hours: the same on a morning and on a late night', () => {
+    for (const h of ['00:00', '08:30', '12:00', '15:45', '23:59']) {
+      const r = computeClientHealth({ ...old, lastCheckin: threeDaysAgo, monthlyPrice: null }, false, at(h))
+      expect(r.status, `a las ${h}`).toBe('active')           // hace 3 días todavía no es riesgo
+    }
+  })
+
+  it('flags 4 days without a check-in at any hour, with the right label', () => {
+    for (const h of ['00:00', '15:45', '23:59']) {
+      const r = computeClientHealth({ ...old, lastCheckin: '2026-06-11', monthlyPrice: null }, false, at(h))
+      expect(r.label, `a las ${h}`).toBe('Sin check-in hace 4d')
+    }
+  })
+})

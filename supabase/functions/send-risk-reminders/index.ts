@@ -12,6 +12,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import webpush from "npm:web-push@3.6.7"
 import { createClient } from "jsr:@supabase/supabase-js@2"
+import { fetchAllRows, fetchAllRowsForIds } from "./shared/fetchAll.ts"
 
 // Recorta espacios/saltos de línea y comillas que se cuelan al pegar un secreto en el dashboard.
 const env = (k: string) => (Deno.env.get(k) ?? "").trim().replace(/^["']+|["']+$/g, "")
@@ -54,21 +55,16 @@ Deno.serve(async (req: Request) => {
   try {
     const targetDate = daysAgoISO(3) // hace exactamente 3 días
 
-    const { data: clients, error: clientsErr } = await supabase
-      .from("clientes").select("id, name, created_at")
-    if (clientsErr) throw clientsErr
+    // PostgREST corta en silencio a 1.000 filas por consulta: se pagina, y el último
+    // check-in de cada cliente viene calculado en la base de datos (una fila por cliente).
+    const clients = await fetchAllRows<{ id: string; name: string; created_at: string }>((from, to) =>
+      supabase.from("clientes").select("id, name, created_at").order("id").range(from, to))
 
-    const { data: checkins, error: checkinsErr } = await supabase
-      .from("daily_checkins").select("client_id, date")
-    if (checkinsErr) throw checkinsErr
+    const lastCheckins = await fetchAllRows<{ client_id: string; last_checkin: string }>((from, to) =>
+      supabase.rpc("last_checkin_by_client").range(from, to))
+    const lastCheckinByClient = new Map<string, string>(lastCheckins.map((r) => [r.client_id, r.last_checkin]))
 
-    const lastCheckinByClient = new Map<string, string>()
-    for (const c of checkins || []) {
-      const prev = lastCheckinByClient.get(c.client_id)
-      if (!prev || c.date > prev) lastCheckinByClient.set(c.client_id, c.date)
-    }
-
-    const atRiskIds = (clients || [])
+    const atRiskIds = clients
       .filter((c) => {
         const last = lastCheckinByClient.get(c.id)
         if (last) return last === targetDate
@@ -81,9 +77,10 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ sent: 0, atRisk: 0 }), { headers: { "Content-Type": "application/json" } })
     }
 
-    const { data: subs, error: subsErr } = await supabase
-      .from("push_subscriptions").select("*").in("client_id", atRiskIds)
-    if (subsErr) throw subsErr
+    // Los ids se trocean: una lista larga en .in(...) desbordaría la URL.
+    // deno-lint-ignore no-explicit-any
+    const subs = await fetchAllRowsForIds<any>(atRiskIds, (ids, from, to) =>
+      supabase.from("push_subscriptions").select("*").in("client_id", ids).order("id").range(from, to))
 
     const payload = JSON.stringify({
       title: "¿Cómo vas? 👋",
