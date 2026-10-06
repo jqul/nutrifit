@@ -202,6 +202,7 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Un **nutricionista** que instala NutriFit desde la página principal sigue entrando en su panel como siempre.
 - [ ] Un nutricionista que instaló la app tras haber abierto un enlace de cliente en ese mismo móvil y no tiene sesión iniciada ve la app del cliente con un enlace discreto abajo: «¿Eres nutricionista? Entra aquí».
 - [ ] Si el enlace del cliente se **regeneró** (o el cliente se borró), el icono viejo ya no lleva a un «enlace no válido»: vuelve a la pantalla de inicio.
+- [ ] La app se ve **con sus colores, tipografía e iconos** (no solo texto) desde el icono, incluso justo después de un despliegue nuevo y con poca cobertura. Si alguna vez se ve sin estilos: cerrar la app del todo y volver a abrirla; si sigue, borrar los datos del sitio (Android: Ajustes del sitio en Chrome) o borrar y volver a crear el icono (iPhone).
 - [ ] La pantalla de acceso de nutricionistas avisa: «¿Eres cliente? Abre el enlace personal que te envió tu nutricionista».
 
 ## Qué contarme

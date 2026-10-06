@@ -1,4 +1,5 @@
-const CACHE = 'nutrifit-v1'
+// Subir el número purga las cachés anteriores al activarse (ver 'activate'): sirve para limpiar una caché envenenada.
+const CACHE = 'nutrifit-v2'
 const STATIC = [
   '/',
   '/index.html',
@@ -24,9 +25,17 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url)
   if (url.hostname !== location.hostname) return
 
+  // Si lo que se pide es un fichero (estilos, scripts, imágenes…) y llega una página HTML, no es ese fichero: es la
+  // página de respaldo de la SPA para una ruta que ya no existe (p. ej. un .css con hash de un despliegue anterior).
+  // Darlo por bueno —o guardarlo— deja la app sin estilos; mejor lo que hubiera en caché, o un error limpio.
+  const wantsFile = ['style', 'script', 'font', 'image', 'manifest'].includes(e.request.destination)
+
   e.respondWith(
     fetch(e.request)
       .then(res => {
+        if (wantsFile && (res.headers.get('content-type') || '').includes('text/html')) {
+          return caches.match(e.request).then(cached => cached || Response.error())
+        }
         if (res.ok) {
           const clone = res.clone()
           caches.open(CACHE).then(c => c.put(e.request, clone))
