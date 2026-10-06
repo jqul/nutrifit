@@ -4,6 +4,12 @@ Todo lo de esta lista está probado con tests, con simulaciones en la base de da
 y en el modo demo. Lo único que no se ha podido probar es **entrar con tu cuenta
 real**. Este guion es esa pasada. Dura unos 20-25 minutos.
 
+## Estado de la verificación
+
+**Pasada con sesión real hecha el 6 de octubre de 2026: todo bien** (secciones 1 a 13).
+Queda pendiente fuera del guion: activar las notificaciones push desde la campana (sin suscripciones no llega ningún aviso diario)
+y confirmar que `VITE_VAPID_PUBLIC_KEY` en Vercel coincide con la clave nueva.
+
 ## 0. Antes de empezar
 
 - [ ] Estás en la web de producción (no `?demo=1`), con tu cuenta de nutricionista.
