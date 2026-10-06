@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { UserProfile } from '../types'
 import { isStandalone } from './standalone'
-import { isValidClientToken, readRememberedClientToken, rememberClientToken } from './clientApp'
+import { decideForNonTrainerSession, isValidClientToken, readRememberedClientToken, rememberClientToken } from './clientApp'
 
 export type AppView = 'loading' | 'auth' | 'trainer' | 'client-token' | 'pending-approval' | 'reset-password' | 'demo'
 
@@ -24,15 +24,29 @@ export function useAuthBootstrap() {
 
   // `notATrainer`: qué hacer si la sesión no es de un nutricionista (p. ej. es la de un cliente). Sin él, se cierra la sesión.
   const loadProfile = async (uid: string, email: string, notATrainer?: () => void) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('nutricionistas')
       .select('display_name, approved, role, custom_anamnesis_questions, logo_url, accent_color, custom_domain, contact_phone, consent_document_url, account_mode')
       .eq('uid', uid)
       .maybeSingle()
 
+    // Un fallo al consultar NO es "no eres nutricionista": cerrar la sesión por un corte de red echaba a cualquiera.
+    if (error) { console.error(error); setView('auth'); return }
+
     if (!data) {
-      if (notATrainer) { notATrainer(); return }
-      await supabase.auth.signOut(); setView('auth'); return
+      // Sesión sin cuenta de nutricionista. Si es un CLIENTE (entró por "/" en vez de por su enlace, p. ej. desde el
+      // icono de la pantalla de inicio), se le lleva a su app con la sesión intacta: antes se le cerraba la sesión y
+      // tenía que escribir correo y contraseña cada vez.
+      const outcome = await decideForNonTrainerSession(() => supabase.rpc('get_my_client_token'), !!notATrainer)
+      if (outcome.kind === 'client') {
+        rememberClientToken(outcome.token)
+        clientFallbackRef.current = true
+        window.history.replaceState({}, '', `/?c=${outcome.token}`)   // así "añadir a la pantalla de inicio" desde aquí también abre su enlace
+        setClientToken(outcome.token); setClientFromStorage(false); setView('client-token')
+      } else if (outcome.kind === 'keep-session') setView('auth')
+      else if (outcome.kind === 'remembered') notATrainer?.()
+      else { await supabase.auth.signOut(); setView('auth') }
+      return
     }
 
     if (data.approved === false) {

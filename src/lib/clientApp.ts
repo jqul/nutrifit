@@ -34,6 +34,40 @@ export function forgetClientToken(store: Store | null = defaultStore()): void {
   try { store?.removeItem(CLIENT_TOKEN_KEY) } catch { /* nada que hacer */ }
 }
 
+/**
+ * El token de la ficha del usuario con sesión (RPC get_my_client_token), o null si no es un cliente.
+ * `failed` distingue "no es cliente" de "no se ha podido comprobar": en el segundo caso NO hay que
+ * cerrarle la sesión a nadie.
+ */
+export async function fetchMyClientToken(rpc: () => PromiseLike<{ data: unknown; error: unknown }>): Promise<{ token: string | null; failed: boolean }> {
+  try {
+    const { data, error } = await rpc()
+    if (error) return { token: null, failed: true }
+    return { token: isValidClientToken(data) ? data : null, failed: false }
+  } catch {
+    return { token: null, failed: true }
+  }
+}
+
+export type NonTrainerOutcome =
+  | { kind: 'client'; token: string }   // es un cliente: a su app, con la sesión intacta
+  | { kind: 'keep-session' }            // no se ha podido comprobar: no se cierra la sesión de nadie
+  | { kind: 'remembered' }              // no es cliente, pero hay un enlace recordado en la app instalada
+  | { kind: 'sign-out' }                // no es de nadie: se cierra la sesión (como siempre)
+
+/**
+ * Qué hacer con una sesión que NO es de un nutricionista. Antes: cerrarla siempre, lo que obligaba a un cliente
+ * que abría "/" a escribir su correo y contraseña cada vez.
+ */
+export async function decideForNonTrainerSession(
+  rpc: () => PromiseLike<{ data: unknown; error: unknown }>, hasRememberedClient: boolean,
+): Promise<NonTrainerOutcome> {
+  const mine = await fetchMyClientToken(rpc)
+  if (mine.token) return { kind: 'client', token: mine.token }
+  if (mine.failed) return { kind: 'keep-session' }
+  return hasRememberedClient ? { kind: 'remembered' } : { kind: 'sign-out' }
+}
+
 /** Manifiesto de la app para UN cliente: igual que el general, pero se abre en su enlace. */
 export function buildClientManifest(origin: string, token: string) {
   const start = `${origin}/?c=${token}`

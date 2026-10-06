@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CLIENT_TOKEN_KEY, buildClientManifest, forgetClientToken, isValidClientToken, readRememberedClientToken, rememberClientToken } from './clientApp'
+import { CLIENT_TOKEN_KEY, buildClientManifest, decideForNonTrainerSession, fetchMyClientToken, forgetClientToken, isValidClientToken, readRememberedClientToken, rememberClientToken } from './clientApp'
 
 const memory = () => {
   const m = new Map<string, string>()
@@ -49,6 +49,39 @@ describe('remembered client token', () => {
     expect(readRememberedClientToken(broken)).toBeNull()
     expect(() => rememberClientToken(TOKEN, broken)).not.toThrow()
     expect(() => forgetClientToken(broken)).not.toThrow()
+  })
+})
+
+describe('fetchMyClientToken', () => {
+  it('returns the token of a client', async () => {
+    expect(await fetchMyClientToken(async () => ({ data: TOKEN, error: null }))).toEqual({ token: TOKEN, failed: false })
+  })
+  it('says "not a client" when there is no ficha (null) without calling it a failure', async () => {
+    expect(await fetchMyClientToken(async () => ({ data: null, error: null }))).toEqual({ token: null, failed: false })
+  })
+  it('does not trust a token that is not shaped like one', async () => {
+    expect(await fetchMyClientToken(async () => ({ data: '<script>', error: null }))).toEqual({ token: null, failed: false })
+  })
+  it('reports a failed check, so nobody is signed out because of a network hiccup', async () => {
+    expect(await fetchMyClientToken(async () => ({ data: null, error: { message: 'timeout' } }))).toEqual({ token: null, failed: true })
+    expect(await fetchMyClientToken(async () => { throw new Error('offline') })).toEqual({ token: null, failed: true })
+  })
+})
+
+describe('decideForNonTrainerSession', () => {
+  const ok = (data: unknown) => async () => ({ data, error: null })
+  it('sends a client to their app, keeping the session (this is what stopped the repeated logins)', async () => {
+    expect(await decideForNonTrainerSession(ok(TOKEN), false)).toEqual({ kind: 'client', token: TOKEN })
+    expect(await decideForNonTrainerSession(ok(TOKEN), true)).toEqual({ kind: 'client', token: TOKEN })
+  })
+  it('does not sign anyone out when the check fails', async () => {
+    expect(await decideForNonTrainerSession(async () => ({ data: null, error: { message: 'timeout' } }), false)).toEqual({ kind: 'keep-session' })
+  })
+  it('uses the remembered link of the installed app when the user is not a client', async () => {
+    expect(await decideForNonTrainerSession(ok(null), true)).toEqual({ kind: 'remembered' })
+  })
+  it('signs out a session that belongs to nobody', async () => {
+    expect(await decideForNonTrainerSession(ok(null), false)).toEqual({ kind: 'sign-out' })
   })
 })
 
