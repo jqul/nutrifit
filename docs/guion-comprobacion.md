@@ -184,6 +184,7 @@ Usa **un cliente de prueba** (no uno real).
 - [ ] Se abre una vista previa con la suma **ahora / con el ajuste / objetivo** y la lista de cantidades que cambian, por comida. **Todavía no se ha tocado nada.**
 - [ ] El pollo (la proteína) no se recorta si ya está en su objetivo; **sube o baja lo que esté lejos de su objetivo**: si faltan kcal y falta proteína, sube la proteína; si sobran kcal y sobran carbohidratos, bajan los carbohidratos.
 - [ ] La verdura y los suplementos no se tocan. Las cantidades salen redondeadas (de 5 en 5 g; las unidades, de media en media).
+- [ ] **Ningún macro se pasa más de un 5 % de su objetivo** al subir kcal (ni queda más de un 10 % por debajo al bajarlas). Si el plan está muy lejos del objetivo (faltan 900 kcal, por ejemplo), lo dice —"falta una comida o algún alimento"— y propone lo que se pueda sin desequilibrarlo, en vez de inflar la proteína.
 - [ ] Ningún alimento cambia más de un 40 % a la baja o un 50 % al alza. Si con eso no llega al objetivo, lo dice y te deja decidir (no aplica a ciegas).
 - [ ] Si hay **opciones alternativas** de una comida (Opción B), se escalan con la misma proporción que la comida.
 - [ ] Con un plan por días (lunes, martes…) y/o ON/OFF ajusta **lo que estás viendo**; si toca comidas de «todos los días», te avisa de que cambian también en los demás días.

@@ -9,6 +9,10 @@
 //  · Si ya están todos en su objetivo (o el plan no los fija), la diferencia sale de
 //    carbohidratos y grasas según el reparto que pide el plan, y la proteína solo se
 //    toca si ya no queda otra cosa que mover.
+//  · Ningún macro se aleja de su objetivo por culpa del ajuste: al subir kcal, no se
+//    pasa más de un 5 % de su objetivo; al bajarlas, no queda más de un 10 % por
+//    debajo. En cuanto llega a ese límite deja de moverse aunque queden kcal por
+//    repartir (y se avisa): mejor no llegar al objetivo que desequilibrar el plan.
 //  · Cada alimento puede cambiar como mucho un 40 % hacia abajo o un 50 % hacia arriba.
 //  · Lo que casi no aporta kcal (verdura, café, especias) y lo que no tiene una
 //    cantidad numérica ("al gusto") no se toca.
@@ -56,6 +60,11 @@ export interface FitResult {
 export const FIT_MIN_SCALE = 0.6
 export const FIT_MAX_SCALE = 1.5
 export const FIT_TOLERANCE = 0.02
+/** Cuánto se puede pasar un macro de su objetivo al SUBIR kcal, y cuánto puede quedar por debajo al BAJARLAS. */
+export const FIT_MACRO_MARGIN_ABOVE = 0.05
+export const FIT_MACRO_MARGIN_BELOW = 0.1
+/** Si el plan está más lejos que esto del objetivo, ajustar cantidades no es la solución: falta (o sobra) comida. */
+export const FIT_FAR_FROM_TARGET = 0.3
 /** Un alimento casi sin kcal (un plato de verdura, un café) se considera "libre" y no se ajusta. */
 export const FIT_MIN_ITEM_KCAL = 30
 /** Lo mismo para lo poco denso por 100 g (verduras, fresas…): da igual que pese mucho, no es de donde salen las kcal. */
@@ -144,6 +153,19 @@ export function fitPlanToTargets(input: {
     fat: targets.fatG > 0 ? targets.fatG * 9 : 0,
     protein: 0,
   }
+  const macroTarget: Record<Role, number> = { protein: targets.proteinG, carbs: targets.carbsG, fat: targets.fatG }
+  const macroField: Record<Role, 'proteinG' | 'carbsG' | 'fatG'> = { protein: 'proteinG', carbs: 'carbsG', fat: 'fatG' }
+  const macroItemField: Record<Role, 'p0' | 'c0' | 'f0'> = { protein: 'p0', carbs: 'c0', fat: 'f0' }
+  /** Total de un macro con las escalas dadas (todos los alimentos aportan, no solo los de su rol). */
+  const macroTotal = (role: Role, scaleOf: (x: Flex) => number) =>
+    fixed[macroField[role]] + flex.reduce((a, x) => a + x[macroItemField[role]] * scaleOf(x), 0)
+  /** ¿Puede este macro seguir moviéndose en este sentido sin pasarse de su margen? */
+  const canMove = (role: Role, dir: number, now: number) => {
+    const t = macroTarget[role]
+    if (t <= 0) return true
+    return dir > 0 ? now < t * (1 + FIT_MACRO_MARGIN_ABOVE) - 1e-6 : now > t * (1 - FIT_MACRO_MARGIN_BELOW) + 1e-6
+  }
+
   for (let i = 0; i < 80; i++) {
     const delta = targets.kcal - totalKcal()
     if (Math.abs(delta) <= targets.kcal * 0.001) break
@@ -158,11 +180,10 @@ export function fitPlanToTargets(input: {
       carbs: fixed.carbsG + flex.reduce((a, x) => a + x.c0 * x.s, 0),
       fat: fixed.fatG + flex.reduce((a, x) => a + x.f0 * x.s, 0),
     }
-    const macroTarget: Record<Role, number> = { protein: targets.proteinG, carbs: targets.carbsG, fat: targets.fatG }
     const kcalPerG: Record<Role, number> = { protein: 4, carbs: 4, fat: 9 }
     let weights: Record<Role, number> = { carbs: 0, fat: 0, protein: 0 }
     for (const role of ['protein', 'carbs', 'fat'] as Role[]) {
-      if (macroTarget[role] <= 0 || capacity(role) <= 0.5) continue
+      if (macroTarget[role] <= 0 || capacity(role) <= 0.5 || !canMove(role, dir, macroNow[role])) continue
       const gapKcal = (macroTarget[role] - macroNow[role]) * kcalPerG[role]
       weights[role] = Math.max(0, dir > 0 ? gapKcal : -gapKcal)
     }
@@ -170,9 +191,9 @@ export function fitPlanToTargets(input: {
       // Ningún macro pide moverse en este sentido: se reparte entre carbohidratos y grasas como pide el plan.
       weights = { carbs: 0, fat: 0, protein: 0 }
       for (const role of ['carbs', 'fat'] as Role[]) {
-        if (capacity(role) > 0.5) weights[role] = weightOf[role] > 0 ? weightOf[role] : kcalOfRole(role)
+        if (capacity(role) > 0.5 && canMove(role, dir, macroNow[role])) weights[role] = weightOf[role] > 0 ? weightOf[role] : kcalOfRole(role)
       }
-      if (weights.carbs + weights.fat === 0 && capacity('protein') > 0.5) weights = { carbs: 0, fat: 0, protein: 1 }
+      if (weights.carbs + weights.fat === 0 && capacity('protein') > 0.5 && canMove('protein', dir, macroNow.protein)) weights = { carbs: 0, fat: 0, protein: 1 }
     }
     const total = weights.carbs + weights.fat + weights.protein
     if (total === 0) break   // nada más que mover
@@ -182,7 +203,17 @@ export function fitPlanToTargets(input: {
       const roleKcal = kcalOfRole(role)
       if (roleKcal <= 0) continue
       const factor = 1 + (delta * weights[role] / total) / roleKcal
-      for (const x of flex) if (x.role === role) x.s = clamp(x.s * factor, FIT_MIN_SCALE, FIT_MAX_SCALE)
+      const members = flex.filter(x => x.role === role)
+      const prev = members.map(x => x.s)
+      const macroBefore = macroTotal(role, x => x.s)
+      for (const x of members) x.s = clamp(x.s * factor, FIT_MIN_SCALE, FIT_MAX_SCALE)
+      // Sin pasarse del margen de su macro: si el paso lo cruza, se queda a medio camino.
+      const limit = macroTarget[role] > 0 ? macroTarget[role] * (dir > 0 ? 1 + FIT_MACRO_MARGIN_ABOVE : 1 - FIT_MACRO_MARGIN_BELOW) : null
+      const macroAfter = macroTotal(role, x => x.s)
+      if (limit != null && (dir > 0 ? macroAfter > limit : macroAfter < limit) && macroAfter !== macroBefore) {
+        const t = clamp((limit - macroBefore) / (macroAfter - macroBefore), 0, 1)
+        members.forEach((x, k) => { x.s = prev[k] + t * (x.s - prev[k]) })
+      }
     }
   }
 
@@ -204,6 +235,7 @@ export function fitPlanToTargets(input: {
       const step = quantityStep(x.item.unit, cur)
       const q = cur + dir * step
       if (q / x.q0 > FIT_MAX_SCALE + 1e-9 || q / x.q0 < FIT_MIN_SCALE - 1e-9 || q <= 0) continue
+      if (!canMove(x.role, dir, macroTotal(x.role, y => scaleOf(y)))) continue
       const err = Math.abs(gap - dir * x.kcal0 * (step / x.q0))
       if (best == null || err < best.err) best = { x, q, err }
     }
@@ -260,6 +292,10 @@ export function fitPlanToTargets(input: {
     before: roundTotals(before), after: roundTotals(after), changes, quantities, mealFactors, notes,
   }
 
+  if (Math.abs(before.kcal - targets.kcal) / targets.kcal > FIT_FAR_FROM_TARGET) {
+    const missing = Math.round(targets.kcal - before.kcal)
+    notes.unshift(`El plan está muy lejos del objetivo (${missing > 0 ? 'faltan' : 'sobran'} ${Math.abs(missing)} kcal): normalmente ${missing > 0 ? 'falta una comida o algún alimento' : 'sobra algún alimento'}, y cambiar solo las cantidades no basta.`)
+  }
   if (!result.reached) {
     const gap = Math.round(targets.kcal - after.kcal)
     notes.push(`Con estos alimentos no se llega al objetivo sin pasarse de los límites (−40 % / +50 % por alimento): ${gap > 0 ? 'faltan' : 'sobran'} ${Math.abs(gap)} kcal. Añade o quita algún alimento a mano.`)

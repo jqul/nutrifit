@@ -173,6 +173,47 @@ describe('fitPlanToTargets — hacia arriba y casos límite', () => {
   })
 })
 
+describe('fitPlanToTargets — un plan muy lejos del objetivo', () => {
+  // Como el plan de Laura de la demo: ~1.000 kcal con un objetivo de 1.900. Antes el ajuste inflaba la proteína
+  // (120 g con un objetivo de 100) para intentar acercarse y aun así no llegaba.
+  const PASTA = { kcal: 160, p: 5.8, c: 31, f: 0.9 }
+  const ATUN = { kcal: 116, p: 26, c: 0, f: 1 }
+  const PAVO = { kcal: 135, p: 30, c: 0, f: 1.7 }
+  const TOMATE = { kcal: 80, p: 1.5, c: 9, f: 4 }
+  const far = () => [
+    meal('m1', 'Desayuno', [item('Tostadas integrales', 60, { kcal: 250, p: 9, c: 43, f: 4 }), item('Tomate frito', 40, TOMATE)]),
+    meal('m2', 'Comida', [item('Pasta', 200, PASTA), item('Atún al natural', 60, ATUN), item('Tomate frito', 60, TOMATE)]),
+    meal('m3', 'Cena', [item('Pavo', 150, PAVO), item('Brócoli', 150, BROCOLI)]),
+  ]
+  const T = { kcal: 1900, proteinG: 100, carbsG: 200, fatG: 60 }
+
+  it('does not push any macro past its margin to chase calories it cannot reach', () => {
+    const r = fitPlanToTargets({ slots: far(), targets: T })
+    expect(r.before.kcal).toBeLessThan(1200)
+    // 5 % de margen + lo que puede mover el redondeo a 5 g
+    expect(r.after.proteinG).toBeLessThanOrEqual(T.proteinG * 1.08)
+    expect(r.after.carbsG).toBeLessThanOrEqual(T.carbsG * 1.08)
+    expect(r.after.fatG).toBeLessThanOrEqual(T.fatG * 1.08)
+  })
+
+  it('says the plan is far from the target and that quantities alone will not fix it', () => {
+    const r = fitPlanToTargets({ slots: far(), targets: T })
+    expect(r.reached).toBe(false)
+    expect(r.notes[0]).toContain('muy lejos del objetivo')
+    expect(r.notes[0]).toContain('faltan')
+    expect(r.notes[0]).toContain('una comida o algún alimento')
+  })
+
+  it('never lets a macro fall far below its target when cutting', () => {
+    const r = fitPlanToTargets({ slots: day(), targets: { kcal: 1500, proteinG: 150, carbsG: 150, fatG: 50 } })
+    expect(r.after.proteinG).toBeGreaterThanOrEqual(150 * 0.88)
+  })
+
+  it('does not add the far-from-target note to a normal adjustment', () => {
+    expect(fitPlanToTargets({ slots: day(), targets: TARGET }).notes.join(' ')).not.toContain('muy lejos')
+  })
+})
+
 describe('fitPlanToTargets — opciones alternativas', () => {
   it('scales an alternative by the same proportion as its meal', () => {
     const slots = day()
