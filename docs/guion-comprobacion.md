@@ -155,6 +155,21 @@ Usa **un cliente de prueba** (no uno real).
 - [ ] Un cliente de baja **no recibe** recordatorios (check-in, encuestas) ni genera avisos para ti (sin check-in, alertas, facturación pendiente).
 - [ ] El cliente de baja **sigue pudiendo entrar** en su app con su enlace (ve su plan e historial). Si quieres cortarle el acceso, regenera su enlace desde el Perfil.
 
+## 13. Sustituciones por grupos de intercambio
+
+**Plan de un cliente → un plato con un alimento del catálogo (p. ej. pollo) → el icono de sustituir (⟲).**
+
+- [ ] Arriba aparece «Sugerir: Mismo grupo (Carnes, pescados y huevos) · Todos». Por defecto, **mismo grupo**.
+- [ ] Dice cuántas raciones tiene el plato («Ahora: 2,3 raciones…», «Una ración = 20 g de proteína»).
+- [ ] En «Mismo grupo» solo salen alimentos parecidos (otra carne, pescado, huevo…), con los gramos que dan las **mismas raciones**; el más parecido en macros y en tamaño de porción va primero. No salen yogures ni legumbres para el pollo.
+- [ ] «Todos» vuelve al modo de antes: cualquier alimento, igualando el macro que elijas (proteína, kcal, carbos, grasas).
+- [ ] Elegir uno cambia el plato con su cantidad y sus macros.
+- [ ] Un cliente con **alergia o intolerancia** nunca recibe sugerencias que choquen con ella (queda un aviso «N alimentos ocultos»). Prueba con lactosa: no salen yogur, skyr, kéfir, queso ni proteína de suero, **pero sí** la leche de avena o de almendra.
+- [ ] En el buscador libre, un alimento que choca con la alergia sale marcado con ⚠.
+- [ ] Un plato con un alimento que **no está en el catálogo** (texto libre) no tiene grupo: solo sale el modo «Todos».
+- [ ] **App del cliente → Dieta → ⟲ en un alimento:** mismas pestañas («Mismo grupo» / «Todos»), con las cantidades equivalentes y sin nada que choque con sus alergias.
+- [ ] Un alimento propio nuevo se coloca en su grupo por su categoría (un «Proteína» va con las carnes y pescados; un «Lácteo» con los lácteos).
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

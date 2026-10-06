@@ -11,7 +11,8 @@ import { DEMO_DIET_TEMPLATES, DEMO_RECIPES, DEMO_ANAMNESIS } from '../../../lib/
 import { printDietPlan } from '../../../lib/printPlan'
 import { printRecipeBook } from '../../../lib/printRecipeBook'
 import { ScannedFood } from '../../../lib/openFoodFacts'
-import { gramsForAbsoluteMacro, computeMacros, rankSubstitutesByMacros, MacroKey } from '../../../lib/foodConversion'
+import { computeMacros, convertQuantity, MacroKey } from '../../../lib/foodConversion'
+import { SubstituteItem, suggestSubstitutes, substituteGrams } from '../../../lib/exchangeGroups'
 import { buildWAUrl } from '../../../lib/whatsapp'
 import { Button } from '../../shared/Button'
 import { BarcodeScanner } from '../../shared/BarcodeScanner'
@@ -551,13 +552,28 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
   const [substitutingFor, setSubstitutingFor] = useState<{ mealId: string; itemId: string } | null>(null)
   const [subMatchBy, setSubMatchBy] = useState<MacroKey>('proteinG')
+  // 'group' = solo alimentos del mismo grupo de intercambio (mismas raciones); 'all' = cualquiera, igualando un macro.
+  const [subScope, setSubScope] = useState<'group' | 'all'>('group')
   const [subQuery, setSubQuery] = useState('')
 
+  // Datos del plato para calcular sustitutos (los campos del editor son texto).
+  const substituteItemOf = (item: EditableItem): SubstituteItem => {
+    const qty = parseFloat(item.quantity)
+    return {
+      foodName: item.foodName, grams: Number.isFinite(qty) ? convertQuantity(qty, item.unit, 'g') : null,
+      kcal: parseFloat(item.kcal) || 0, proteinG: parseFloat(item.proteinG) || 0, carbsG: parseFloat(item.carbsG) || 0, fatG: parseFloat(item.fatG) || 0,
+    }
+  }
+  const substitutionFor = (item: EditableItem) => suggestSubstitutes({
+    item: substituteItemOf(item), foods, scope: subScope, matchBy: subMatchBy, allergies: client.allergies,
+    candidateFilter: f => foodMatchesTags(f, activeFoodTags),
+  })
+
   const applySubstitution = (mealId: string, item: EditableItem, substitute: Food) => {
-    const targetAbsolute = parseFloat(item[subMatchBy]) || 0
-    const grams = gramsForAbsoluteMacro(substitute, targetAbsolute, subMatchBy)
+    const view = substitutionFor(item)
+    const grams = substituteGrams(substitute, substituteItemOf(item), view)
     if (grams == null) {
-      toast(`${substitute.name} no aporta nada de ${MACRO_LABELS[subMatchBy]} — prueba a igualar por otro macro`, 'warn')
+      toast(`${substitute.name} no aporta nada de ${MACRO_LABELS[view.matchBy]} — prueba a igualar por otro macro`, 'warn')
       return
     }
     const macros = computeMacros(substitute, grams, 'g')
@@ -902,19 +918,54 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                         {(item.calciumMg || item.ironMg || item.zincMg) ? ` · Ca ${item.calciumMg || 0}mg · Fe ${item.ironMg || 0}mg · Zn ${item.zincMg || 0}mg` : ''}
                       </button>
                     )}
-                    {substitutingFor?.itemId === item.id && (
+                    {substitutingFor?.itemId === item.id && (() => {
+                      const subItem = substituteItemOf(item)
+                      const view = substitutionFor(item)
+                      const row = (f: Food, grams: number | null, key: string) => {
+                        const clash = detectAllergenConflict(client.allergies, f.name)
+                        return (
+                          <button key={key} type="button" onMouseDown={() => applySubstitution(meal.id, item, f)}
+                            className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-1.5 min-w-0">
+                              <span className="truncate">{f.name}</span>
+                              <FoodTagBadges food={f} />
+                              {clash && <span title={`Choca con las alergias del cliente (${clash})`} className="text-warn flex-shrink-0"><AlertTriangle className="w-3 h-3" /></span>}
+                            </span>
+                            <span className="text-muted flex-shrink-0">{grams != null ? `≈ ${grams}g` : 'sin ese macro'}</span>
+                          </button>
+                        )
+                      }
+                      return (
                       <div className="mt-1.5 pl-1 pr-1 pt-2 border-t border-border space-y-2">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-muted">Igualar por</span>
-                          {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
-                            <button key={k} onClick={() => setSubMatchBy(k)}
-                              className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                                subMatchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
-                              }`}>
-                              {MACRO_LABELS[k]}
-                            </button>
-                          ))}
-                        </div>
+                        {view.group && (
+                          <div className="flex items-center gap-1.5 flex-wrap" role="group" aria-label="Qué alimentos sugerir">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted">Sugerir</span>
+                            {([['group', `Mismo grupo (${view.group.label})`], ['all', 'Todos']] as const).map(([id, label]) => (
+                              <button key={id} onClick={() => setSubScope(id)} aria-pressed={subScope === id}
+                                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${subScope === id ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'}`}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {view.grouped && view.group ? (
+                          <p className="text-xs text-muted">
+                            Ahora: <strong className="text-ink">{view.rations != null ? `${String(view.rations).replace('.', ',')} ${view.rations === 1 ? 'ración' : 'raciones'}` : view.group.label}</strong> de {view.group.label.toLowerCase()}.
+                            {' '}Una ración = {view.group.rationText}. Cada sugerencia da las mismas raciones.
+                          </p>
+                        ) : (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted">Igualar por</span>
+                            {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
+                              <button key={k} onClick={() => setSubMatchBy(k)}
+                                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                                  subMatchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+                                }`}>
+                                {MACRO_LABELS[k]}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <div className="relative">
                           <input value={subQuery} onChange={e => setSubQuery(e.target.value)}
                             placeholder={`Busca un sustituto para "${item.foodName}"...`} autoFocus
@@ -923,40 +974,26 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                             <FoodTagFilterPills active={activeFoodTags} onToggle={toggleFoodTag} />
                             {subQuery.trim().length === 0 ? (
                               <>
-                                <p className="px-2.5 pt-1.5 pb-1 text-xs font-semibold uppercase tracking-wider text-muted">Sugeridos por macros parecidos</p>
-                                {rankSubstitutesByMacros(
-                                  { kcal: parseFloat(item.kcal) || 0, proteinG: parseFloat(item.proteinG) || 0, carbsG: parseFloat(item.carbsG) || 0, fatG: parseFloat(item.fatG) || 0 },
-                                  item.foodName, foods.filter(f => foodMatchesTags(f, activeFoodTags)), subMatchBy,
-                                ).slice(0, 6).map(({ food: f, grams }) => (
-                                  <button key={f.id} type="button" onMouseDown={() => applySubstitution(meal.id, item, f)}
-                                    className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
-                                    <span className="flex items-center gap-1.5 min-w-0">
-                                      <span className="truncate">{f.name}</span>
-                                      <FoodTagBadges food={f} />
-                                    </span>
-                                    <span className="text-muted flex-shrink-0">≈ {Math.round(grams * 10) / 10}g</span>
-                                  </button>
-                                ))}
+                                <p className="px-2.5 pt-1.5 pb-1 text-xs font-semibold uppercase tracking-wider text-muted">
+                                  {view.grouped ? 'Del mismo grupo' : 'Sugeridos por macros parecidos'}
+                                </p>
+                                {view.suggestions.length === 0 && <p className="px-2.5 py-2 text-xs text-muted">Sin sugerencias{view.grouped ? ' en este grupo' : ''}.</p>}
+                                {view.suggestions.map(({ food: f, grams }) => row(f, grams, f.id))}
+                                {view.hiddenByAllergy > 0 && (
+                                  <p className="px-2.5 py-1.5 text-xs text-muted border-t border-border">
+                                    {view.hiddenByAllergy} {view.hiddenByAllergy === 1 ? 'alimento oculto' : 'alimentos ocultos'} por las alergias del cliente.
+                                  </p>
+                                )}
                               </>
                             ) : (
-                              foods.filter(f => f.name.toLowerCase().includes(subQuery.toLowerCase()) && f.name !== item.foodName && foodMatchesTags(f, activeFoodTags)).slice(0, 6).map(f => {
-                                const grams = gramsForAbsoluteMacro(f, parseFloat(item[subMatchBy]) || 0, subMatchBy)
-                                return (
-                                  <button key={f.id} type="button" onMouseDown={() => applySubstitution(meal.id, item, f)}
-                                    className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-accent/10 hover:text-accent transition-colors flex items-center justify-between gap-2">
-                                    <span className="flex items-center gap-1.5 min-w-0">
-                                      <span className="truncate">{f.name}</span>
-                                      <FoodTagBadges food={f} />
-                                    </span>
-                                    <span className="text-muted flex-shrink-0">{grams != null ? `≈ ${Math.round(grams * 10) / 10}g` : 'sin ese macro'}</span>
-                                  </button>
-                                )
-                              })
+                              foods.filter(f => f.name.toLowerCase().includes(subQuery.toLowerCase()) && f.name !== item.foodName && foodMatchesTags(f, activeFoodTags)).slice(0, 6)
+                                .map(f => row(f, substituteGrams(f, subItem, view), f.id))
                             )}
                           </div>
                         </div>
                       </div>
-                    )}
+                      )
+                    })()}
                   </div>
                 )
               })}

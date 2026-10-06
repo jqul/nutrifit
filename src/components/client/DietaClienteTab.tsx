@@ -5,7 +5,9 @@ import { dietPlanFromRows, foodFromRow } from '../../lib/mappers'
 import { DietPlan, DietMeal, ClientData, Food, DietMealItem } from '../../types'
 import { printDietPlan } from '../../lib/printPlan'
 import { buildShoppingList, groupShoppingItemsByAisle } from '../../lib/shoppingList'
-import { gramsForAbsoluteMacro, rankSubstitutesByMacros, MacroKey } from '../../lib/foodConversion'
+import { convertQuantity, MacroKey } from '../../lib/foodConversion'
+import { SubstituteItem, suggestSubstitutes, substituteGrams } from '../../lib/exchangeGroups'
+import { detectAllergenConflict } from '../../lib/allergens'
 import { todayDayOfWeek } from '../../lib/date'
 import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, saveDayType, resolveTodaysMeals } from '../../lib/planMeals'
 import { subscribeMealLogs, getMealLogsSnapshot, mealLogsOf, isMealDone, countMealsDone, macroEnergySplit } from '../../lib/mealProgress'
@@ -385,7 +387,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
               {meal.items.length > 0 && (
                 <ul className="space-y-1 mt-2">
                   {meal.items.map(item => (
-                    <MealItemRow key={item.id} item={item} foods={foods} demoMode={demoMode} personalMode={personalMode} />
+                    <MealItemRow key={item.id} item={item} foods={foods} allergies={client.allergies} demoMode={demoMode} personalMode={personalMode} />
                   ))}
                 </ul>
               )}
@@ -437,7 +439,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
  * equivalentes ("sistema de intercambios") — puramente informativo: no
  * modifica el plan real, solo muestra por cuánto se podría cambiar
  * manteniendo el mismo macro. El cambio real solo lo hace el nutricionista. */
-function MealItemRow({ item, foods, demoMode, personalMode }: { item: DietMealItem; foods: Food[]; demoMode?: boolean; personalMode?: boolean }) {
+function MealItemRow({ item, foods, allergies, demoMode, personalMode }: { item: DietMealItem; foods: Food[]; allergies: string; demoMode?: boolean; personalMode?: boolean }) {
   const [open, setOpen] = useState(false)
   const canSubstitute = foods.length > 0
 
@@ -453,48 +455,67 @@ function MealItemRow({ item, foods, demoMode, personalMode }: { item: DietMealIt
           </button>
         )}
       </div>
-      {canSubstitute && <SubstituteSheet open={open} onClose={() => setOpen(false)} item={item} foods={foods} demoMode={demoMode} personalMode={personalMode} />}
+      {canSubstitute && <SubstituteSheet open={open} onClose={() => setOpen(false)} item={item} foods={foods} allergies={allergies} demoMode={demoMode} personalMode={personalMode} />}
     </li>
   )
 }
 
 /** "¿Qué puedo comer en vez de esto?" — hoja inferior con alternativas ya
- * calculadas en gramos reales para el macro elegido, sin tener que escribir
- * nada primero; el buscador solo sirve para acotar la lista si hace falta. */
-function SubstituteSheet({ open, onClose, item, foods, demoMode, personalMode }: {
-  open: boolean; onClose: () => void; item: DietMealItem; foods: Food[]; demoMode?: boolean; personalMode?: boolean
+ * calculadas en gramos reales, sin tener que escribir nada primero. Por defecto
+ * solo salen alimentos del MISMO GRUPO (otra carne, otro cereal, otra fruta…)
+ * con las mismas raciones; "Todos" abre cualquier alimento igualando un macro.
+ * Nunca se sugiere nada que choque con las alergias del cliente. */
+function SubstituteSheet({ open, onClose, item, foods, allergies, demoMode, personalMode }: {
+  open: boolean; onClose: () => void; item: DietMealItem; foods: Food[]; allergies: string; demoMode?: boolean; personalMode?: boolean
 }) {
   const [matchBy, setMatchBy] = useState<MacroKey>('proteinG')
+  const [scope, setScope] = useState<'group' | 'all'>('group')
   const [query, setQuery] = useState('')
 
-  const itemMacro: Record<MacroKey, number | null> = {
-    kcal: item.kcal, proteinG: item.proteinG, carbsG: item.carbsG, fatG: item.fatG,
+  const qty = parseFloat(item.quantity)
+  const subItem: SubstituteItem = {
+    foodName: item.foodName, grams: Number.isFinite(qty) ? convertQuantity(qty, item.unit, 'g') : null,
+    kcal: item.kcal || 0, proteinG: item.proteinG || 0, carbsG: item.carbsG || 0, fatG: item.fatG || 0,
   }
-  // Sin nada escrito, se sugieren directamente los más parecidos por macros
-  // (no solo el mismo macro igualado, también los demás lo más cerca
-  // posible) — el buscador de abajo es solo para cuando ninguno convence.
-  const ranked = query.trim() === ''
-    ? rankSubstitutesByMacros(
-        { kcal: item.kcal || 0, proteinG: item.proteinG || 0, carbsG: item.carbsG || 0, fatG: item.fatG || 0 },
-        item.foodName, foods, matchBy,
-      ).slice(0, 8)
-    : foods.filter(f => f.name !== item.foodName && f.name.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, 8).map(f => ({ food: f, grams: itemMacro[matchBy] != null ? gramsForAbsoluteMacro(f, itemMacro[matchBy]!, matchBy) : null }))
+  const view = suggestSubstitutes({ item: subItem, foods, scope, matchBy, allergies, limit: 8 })
+
+  // Con algo escrito se busca en todo el catálogo (menos lo que choca con las alergias).
+  const q = query.trim().toLowerCase()
+  const ranked = q === ''
+    ? view.suggestions
+    : foods.filter(f => f.name !== item.foodName && f.name.toLowerCase().includes(q) && !detectAllergenConflict(allergies, f.name))
+        .slice(0, 8).map(f => ({ food: f, grams: substituteGrams(f, subItem, view) }))
 
   return (
     <BottomSheet open={open} onClose={onClose} title={`En vez de ${item.foodName}...`}>
       <div className="space-y-3">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted">Igualar por</span>
-          {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
-            <button key={k} onClick={() => setMatchBy(k)}
-              className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                matchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
-              }`}>
-              {MACRO_LABELS[k]}
-            </button>
-          ))}
-        </div>
+        {view.group && (
+          <div className="flex items-center gap-1.5 flex-wrap" role="group" aria-label="Qué alimentos ver">
+            {([['group', view.group.label], ['all', 'Todos']] as const).map(([id, label]) => (
+              <button key={id} onClick={() => setScope(id)} aria-pressed={scope === id}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${scope === id ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+        {view.grouped && view.group ? (
+          <p className="text-xs text-muted">
+            Tu plato son <strong className="text-ink">{view.rations != null ? `${String(view.rations).replace('.', ',')} ${view.rations === 1 ? 'ración' : 'raciones'}` : 'una ración'}</strong> ({view.group.rationText.replace(/ \(.*\)$/, '')} cada una). Las cantidades de abajo dan lo mismo.
+          </p>
+        ) : (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">Igualar por</span>
+            {(['proteinG', 'kcal', 'carbsG', 'fatG'] as MacroKey[]).map(k => (
+              <button key={k} onClick={() => setMatchBy(k)}
+                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                  matchBy === k ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'
+                }`}>
+                {MACRO_LABELS[k]}
+              </button>
+            ))}
+          </div>
+        )}
         <input value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Buscar otro alimento..."
           className="w-full px-3 py-2 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20" />
@@ -508,6 +529,9 @@ function SubstituteSheet({ open, onClose, item, foods, demoMode, personalMode }:
             </div>
           ))}
         </div>
+        {view.hiddenByAllergy > 0 && q === '' && (
+          <p className="text-xs text-muted">Se han ocultado {view.hiddenByAllergy} {view.hiddenByAllergy === 1 ? 'alimento' : 'alimentos'} por tus alergias o intolerancias.</p>
+        )}
         <p className="text-xs text-muted pt-1">
           Solo orientativo — {personalMode ? 'piénsalo bien antes de cambiarlo' : 'coméntaselo a tu nutricionista antes de cambiarlo'}{demoMode ? ' (modo demo)' : ''}.
         </p>
