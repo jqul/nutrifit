@@ -181,6 +181,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
           </div>
           <h2 className="text-2xl font-serif font-bold mb-2">{view === 'login' ? 'Bienvenido de nuevo' : 'Solicitar acceso'}</h2>
           <p className="text-muted text-sm mb-8">{view === 'login' ? 'Entra a tu panel de nutricionista.' : 'Crea tu cuenta y empieza a gestionar clientes.'}</p>
+          {view === 'login' && <p className="text-xs text-muted -mt-6 mb-8">¿Eres cliente? Esta pantalla es solo para nutricionistas: abre el enlace personal que te envió tu nutricionista.</p>}
           <div className="space-y-4">
             {view === 'register' && (
               <div>

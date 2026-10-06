@@ -4,6 +4,7 @@ import { ClienteRow, ClientProfileRow } from '../../lib/supabase-types'
 import { clientFromRow, clienteRowFromProfile } from '../../lib/mappers'
 import { logError } from '../../lib/errors'
 import { NotFound } from '../shared/NotFound'
+import { forgetClientToken, installClientManifest } from '../../lib/clientApp'
 import { ClientRegister } from './ClientRegister'
 import { ClientConsent } from './ClientConsent'
 import { ClientAppShell } from './ClientAppShell'
@@ -20,7 +21,14 @@ type AuthState = 'loading' | 'needs_register' | 'needs_login' | 'needs_consent' 
 // real ni datos en la base de datos.
 const DEMO_TOKEN_PREFIX = 'demo-token-'
 
-export function ClientView({ token }: { token: string }) {
+export function ClientView({ token, fromStorage = false }: {
+  token: string
+  /** true si se ha llegado aquí sin enlace, por el token recordado en el dispositivo (app instalada). */
+  fromStorage?: boolean
+}) {
+  // El icono que se cree desde esta página tiene que abrir ESTE enlace (ver clientApp.ts).
+  useEffect(() => installClientManifest(token), [token])
+
   const demoClient = token.startsWith(DEMO_TOKEN_PREFIX) ? DEMO_CLIENTS.find(c => c.token === token) : undefined
 
   const [authState, setAuthState] = useState<AuthState>(demoClient ? 'authenticated' : 'loading')
@@ -58,7 +66,12 @@ export function ClientView({ token }: { token: string }) {
     ])
     if (cErr) logError('ClientView:loadClient', cErr)
     const status = rows?.[0] || null
-    if (!status) { setError('Enlace no válido o expirado.'); return }
+    if (!status) {
+      // Si se ha llegado por el token recordado y ya no vale (enlace regenerado, cliente borrado…),
+      // se olvida y se vuelve a la pantalla de inicio en vez de dejar al usuario en un "no encontrado".
+      if (fromStorage) { forgetClientToken(); window.location.replace('/'); return }
+      setError('Enlace no válido o expirado.'); return
+    }
     setAuthStatus({ id: status.id, name: status.name, surname: status.surname })
     const branding = brandingRows?.[0]
     if (branding?.display_name) setNutricionistaName(branding.display_name)
@@ -106,13 +119,23 @@ export function ClientView({ token }: { token: string }) {
 
   if (!demoClient && (authState === 'needs_register' || authState === 'needs_login')) {
     return (
-      <ClientRegister
-        token={token}
-        clientName={clientName}
-        nutricionistaName={nutricionistaName}
-        initialStep={authState === 'needs_login' ? 'login' : 'register'}
-        onComplete={checkAuth}
-      />
+      <>
+        <ClientRegister
+          token={token}
+          clientName={clientName}
+          nutricionistaName={nutricionistaName}
+          initialStep={authState === 'needs_login' ? 'login' : 'register'}
+          onComplete={checkAuth}
+        />
+        {fromStorage && (
+          // La app se ha abierto sin enlace y se ha ido a la del cliente: si quien la usa es un nutricionista, tiene salida.
+          <p className="fixed bottom-3 inset-x-0 text-center text-xs text-muted" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+            ¿Eres nutricionista?{' '}
+            <button type="button" className="font-semibold text-accent underline underline-offset-2"
+              onClick={() => { forgetClientToken(); window.location.replace('/') }}>Entra aquí</button>
+          </p>
+        )}
+      </>
     )
   }
 

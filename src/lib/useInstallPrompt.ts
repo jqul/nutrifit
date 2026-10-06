@@ -1,15 +1,10 @@
 import { useState, useEffect } from 'react'
+import { isStandalone } from './standalone'
 
 // El evento beforeinstallprompt no tiene tipo estándar en TS todavía.
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
-function isStandalone(): boolean {
-  if (window.matchMedia?.('(display-mode: standalone)').matches) return true
-  // iOS Safari no tiene display-mode: standalone — expone su propio flag.
-  return (window.navigator as Navigator & { standalone?: boolean }).standalone === true
 }
 
 function isIos(): boolean {

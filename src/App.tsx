@@ -94,7 +94,7 @@ function DemoView({ selectedClient, initialTab, openClient, closeClient, onRegis
 }
 
 export default function App() {
-  const { view, userProfile, pendingUser, clientToken, logout, setView, setUserProfile } = useAuthBootstrap()
+  const { view, userProfile, pendingUser, clientToken, clientFromStorage, logout, setView, setUserProfile } = useAuthBootstrap()
   const [selectedClient, setSelectedClient] = useState<ClientData | null>(null)
   // Pestaña con la que abrir la ficha cuando se entra desde un aviso del Centro de control.
   const [initialClientTab, setInitialClientTab] = useState<ClientPanelTab | undefined>(undefined)
@@ -109,7 +109,7 @@ export default function App() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       {view === 'client-token' && clientToken && (
-        <ClientView token={clientToken} />
+        <ClientView token={clientToken} fromStorage={clientFromStorage} />
       )}
 
       {view === 'reset-password' && (

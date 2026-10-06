@@ -191,6 +191,19 @@ Usa **un cliente de prueba** (no uno real).
 - [ ] «Aplicar al plan» cambia el **borrador**: las barras se actualizan y el botón desaparece. El plan no se guarda hasta pulsar **Guardar plan**; entonces queda en el historial y en las versiones, y se puede restaurar la anterior.
 - [ ] «Cancelar» no cambia nada.
 
+## 15. Acceso directo del cliente en el móvil
+
+Esto **solo se puede probar en un móvil de verdad**, con el enlace de un cliente de prueba.
+
+- [ ] **Android (Chrome):** abre el enlace personal del cliente → menú ⋮ → «Instalar aplicación» o «Añadir a la pantalla de inicio» → ábrelo desde el icono. Debe entrar en **su app** (Hoy / Dieta / Progreso), no en la pantalla de acceso de nutricionistas.
+- [ ] **iPhone (Safari):** abre el enlace → Compartir → «Añadir a pantalla de inicio» → ábrelo desde el icono. Mismo resultado.
+- [ ] **Accesos directos creados ANTES de este cambio:** en Android, basta con **abrir una vez el enlace del cliente en Chrome**; desde entonces el icono viejo también entra bien. En iPhone la app de la pantalla de inicio no comparte datos con Safari: hay que **borrar el icono y volver a crearlo** desde el enlace.
+- [ ] Si el cliente ya tenía su cuenta, al abrir el icono le pide su contraseña (o entra directo si la sesión sigue abierta), como al abrir el enlace.
+- [ ] Un **nutricionista** que instala NutriFit desde la página principal sigue entrando en su panel como siempre.
+- [ ] Un nutricionista que instaló la app tras haber abierto un enlace de cliente en ese mismo móvil y no tiene sesión iniciada ve la app del cliente con un enlace discreto abajo: «¿Eres nutricionista? Entra aquí».
+- [ ] Si el enlace del cliente se **regeneró** (o el cliente se borró), el icono viejo ya no lleva a un «enlace no válido»: vuelve a la pantalla de inicio.
+- [ ] La pantalla de acceso de nutricionistas avisa: «¿Eres cliente? Abre el enlace personal que te envió tu nutricionista».
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.
