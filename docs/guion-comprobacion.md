@@ -142,6 +142,19 @@ Ficha de un cliente con plan y varias semanas de pesajes → **Seguimiento**, ta
 - [ ] En la app del **cliente**, un plan con un alimento propio permite buscar sustitutos para él y lo agrupa en la lista de la compra.
 - [ ] Otro nutricionista **no** ve tus alimentos propios.
 
+## 12. Dar de baja a un cliente
+
+Usa **un cliente de prueba** (no uno real).
+
+- [ ] Ficha del cliente → **Perfil** → tarjeta **Baja del cliente** → «Dar de baja». Pide un motivo (opcional) y una nota.
+- [ ] Tras darlo de baja sale un aviso arriba de la ficha («De baja desde…») con el botón **Reactivar**.
+- [ ] El cliente **desaparece** de Clientes, del Centro de control (Inicio), de la agenda y de la difusión, y sus cuotas dejan de contar en **Ingresos estimados**.
+- [ ] En **Clientes → De baja (N)** aparece con su fecha y motivo; al abrirlo ves toda su ficha y su historial intactos.
+- [ ] **Negocio → Bajas (últimos 90 días)**: cuenta la baja, el % sobre los clientes del periodo, las cuotas que dejas de ingresar, cuánto estuvo y el motivo.
+- [ ] **Reactivar** lo devuelve a la lista como si nada.
+- [ ] Un cliente de baja **no recibe** recordatorios (check-in, encuestas) ni genera avisos para ti (sin check-in, alertas, facturación pendiente).
+- [ ] El cliente de baja **sigue pudiendo entrar** en su app con su enlace (ve su plan e historial). Si quieres cortarle el acceso, regenera su enlace desde el Perfil.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

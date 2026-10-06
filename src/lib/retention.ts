@@ -1,7 +1,8 @@
-// Retención y métricas del negocio. NutriFit no guarda cuándo un cliente "se da
-// de baja" (borrar un cliente lo elimina todo), así que la retención se mide por
-// ACTIVIDAD: un cliente está activo si ha hecho un check-in o se ha pesado en los
-// últimos 30 días. Es una señal útil para actuar a tiempo, no una cifra contable.
+// Retención y métricas del negocio. La retención se ESTIMA por actividad: un
+// cliente está activo si ha hecho un check-in o se ha pesado en los últimos 30
+// días. Es una señal útil para actuar a tiempo, no una cifra contable. Las bajas
+// reales (clientes dados de baja, con fecha y motivo) están en clientBaja.ts y no
+// entran aquí: un cliente de baja no es un cliente "en riesgo".
 import { ClientAlert } from './clientAlerts'
 import { goalLabel } from './constants'
 

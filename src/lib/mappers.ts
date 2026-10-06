@@ -41,6 +41,9 @@ export function clientFromRow(row: ClienteRow): ClientData {
     tags: row.tags || [],
     createdAt: new Date(row.created_at).getTime(),
     lastReviewedAt: row.last_reviewed_at,
+    bajaAt: row.baja_at ? new Date(row.baja_at).getTime() : null,
+    bajaReason: row.baja_reason ?? null,
+    bajaNote: row.baja_note || '',
   }
 }
 

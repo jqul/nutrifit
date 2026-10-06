@@ -57,8 +57,9 @@ Deno.serve(async (req: Request) => {
 
     // PostgREST corta en silencio a 1.000 filas por consulta: se pagina, y el último
     // check-in de cada cliente viene calculado en la base de datos (una fila por cliente).
+    // Los clientes dados de baja (baja_at) no reciben recordatorios.
     const clients = await fetchAllRows<{ id: string; name: string; created_at: string }>((from, to) =>
-      supabase.from("clientes").select("id, name, created_at").order("id").range(from, to))
+      supabase.from("clientes").select("id, name, created_at").is("baja_at", null).order("id").range(from, to))
 
     const lastCheckins = await fetchAllRows<{ client_id: string; last_checkin: string }>((from, to) =>
       supabase.rpc("last_checkin_by_client").range(from, to))

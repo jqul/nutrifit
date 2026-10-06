@@ -15,17 +15,21 @@ import { toast } from '../../shared/Toast'
 import { QuestionAnswerDisplay } from '../../shared/QuestionAnswerDisplay'
 import { exportClientData } from '../../../lib/gdprExport'
 import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
+import { DarDeBajaCard } from './BajaCard'
+import { BajaReason } from '../../../lib/clientBaja'
 import { Copy, RefreshCw, Download, Trash2, Tag, X, AlertTriangle, Ruler, ShieldCheck } from 'lucide-react'
 
 const BMI_CATEGORY_CLASS: Record<string, string> = {
   'bajo peso': 'text-notice', normal: 'text-ok', sobrepeso: 'text-notice', obesidad: 'text-warn',
 }
 
-export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoMode, nutricionistaName, customQuestions, hasConsentDocument, personalMode }: {
+export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDismiss, demoMode, nutricionistaName, customQuestions, hasConsentDocument, personalMode }: {
   client: ClientData
   onUpdate: (updates: Partial<ClientData>) => Promise<boolean>
   onRegenerateToken: () => Promise<string | null>
   onDelete: () => Promise<void>
+  /** Dar de baja al cliente (no en modo personal). */
+  onDismiss?: (reason: BajaReason | null, note: string) => Promise<boolean>
   demoMode?: boolean
   nutricionistaName?: string
   customQuestions?: CustomAnamnesisQuestion[]
@@ -292,6 +296,8 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, demoM
           </div>
         )}
       </div>
+
+      {!personalMode && onDismiss && <DarDeBajaCard client={client} onDismiss={onDismiss} />}
 
       <div className="card p-5 space-y-3">
         <p className="text-xs font-bold uppercase tracking-wider text-muted">{personalMode ? 'Tus datos (RGPD)' : 'Datos del cliente (RGPD)'}</p>

@@ -12,6 +12,7 @@ import { DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES
 import { InvoiceRow, BloodMarkerRow, SurveyResponseRow } from '../lib/supabase-types'
 import { generateClientToken } from '../lib/token'
 import { fetchAllRows, fetchAllRowsForIds } from '../lib/fetchAll'
+import { BajaReason } from '../lib/clientBaja'
 import { ActivitySummary, HISTORY_WINDOW_DAYS, latestDate, weightsWithBounds } from '../lib/activitySummary'
 
 export interface ClientWithStats extends ClientData {
@@ -122,9 +123,12 @@ export interface NewClientInput {
 }
 
 export function useNutricionistaClients({ nutricionistaId, demoClients }: Options) {
+  // `clients` son SOLO los activos: todo lo que los consume (lista, Centro de control, avisos, ingresos,
+  // difusión…) deja así de contar a quien se ha dado de baja. Los dados de baja van aparte, en `bajas`.
   const [clients, setClients] = useState<ClientWithStats[]>(
-    demoClients ? withStats(demoClients, DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES, DEMO_WEIGHTS) : []
+    demoClients ? withStats(demoClients.filter(c => c.bajaAt == null), DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES, DEMO_WEIGHTS) : []
   )
+  const [bajas, setBajas] = useState<ClientData[]>(demoClients ? demoClients.filter(c => c.bajaAt != null) : [])
   const [loading, setLoading] = useState(!demoClients)
 
   const fetchClients = useCallback(async () => {
@@ -132,7 +136,10 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
     setLoading(true)
     const { data, error } = await supabase.from('clientes').select('*').eq('nutricionista_id', nutricionistaId)
     if (error) { console.error(error); toast('No se pudieron cargar los clientes', 'warn'); setLoading(false); return }
-    const mapped = (data || []).map(clientFromRow)
+    const all = (data || []).map(clientFromRow)
+    // A quien está de baja no se le calculan estadísticas (ni se piden sus check-ins y pesajes).
+    setBajas(all.filter(c => c.bajaAt != null))
+    const mapped = all.filter(c => c.bajaAt == null)
 
     if (mapped.length) {
       const ids = mapped.map(c => c.id)
@@ -279,6 +286,37 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
     return token
   }
 
+  // Dar de baja NO borra nada: el cliente sale de la lista, el Centro de control, los avisos y los
+  // recordatorios, pero conserva todo su historial y se puede reactivar (ver la migración 0052).
+  const dismissClient = async (id: string, reason: BajaReason | null, note: string) => {
+    const bajaNote = note.trim()
+    if (demoClients) {
+      const gone = clients.find(c => c.id === id)
+      if (gone) setBajas(prev => [...prev, { ...gone, bajaAt: Date.now(), bajaReason: reason, bajaNote }])
+      setClients(prev => prev.filter(c => c.id !== id))
+      toast('Cliente dado de baja (modo demo — no se guarda)', 'ok')
+      return true
+    }
+    const { error } = await supabase.from('clientes').update({ baja_at: new Date().toISOString(), baja_reason: reason, baja_note: bajaNote || null }).eq('id', id)
+    if (error) { toast('No se pudo dar de baja: ' + error.message, 'warn'); return false }
+    await fetchClients()
+    toast('Cliente dado de baja. Conservas todos sus datos y puedes reactivarlo cuando quieras', 'ok')
+    return true
+  }
+
+  const reactivateClient = async (id: string) => {
+    if (demoClients) {
+      setBajas(prev => prev.filter(c => c.id !== id))
+      toast('Cliente reactivado (modo demo — no se guarda)', 'ok')
+      return true
+    }
+    const { error } = await supabase.from('clientes').update({ baja_at: null, baja_reason: null, baja_note: null }).eq('id', id)
+    if (error) { toast('No se pudo reactivar: ' + error.message, 'warn'); return false }
+    await fetchClients()
+    toast('Cliente reactivado', 'ok')
+    return true
+  }
+
   // Marca la ficha como revisada ahora mismo — se llama sola al abrir
   // Seguimiento (ver ClientPanel.tsx), sin toast ni confirmación, para que
   // el aviso de "check-in o encuesta sin revisar" desaparezca en cuanto el
@@ -291,5 +329,5 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
     await supabase.from('clientes').update({ last_reviewed_at: now }).eq('id', id)
   }
 
-  return { clients, loading, fetchClients, addClient, updateClient, deleteClient, regenerateToken, markClientReviewed }
+  return { clients, bajas, loading, fetchClients, addClient, updateClient, deleteClient, dismissClient, reactivateClient, regenerateToken, markClientReviewed }
 }

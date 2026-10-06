@@ -99,6 +99,37 @@ export const DEMO_CLIENTS: ClientData[] = [
     createdAt: Date.now() - 45 * 86400000,
     lastReviewedAt: null,
   },
+  // Dos bajas (no cuentan como clientes activos): enseñan la sección "De baja" y las métricas de abandono.
+  {
+    id: 'demo-client-004',
+    nutricionistaId: DEMO_NUTRICIONISTA_ID,
+    token: 'demo-token-pablo',
+    authUserId: null,
+    name: 'Pablo', surname: 'Ibáñez',
+    phone: '600777888', email: 'pablo@demo.nutrifit.app',
+    birthDate: '1990-06-11', gender: 'Hombre', heightCm: 176,
+    goal: 'perder_peso', allergies: '', notes: '', reportNotes: '',
+    consentAcceptedAt: null, consentSignedName: null,
+    monthlyPrice: 50, goalWeightKg: 80, customMessages: {}, tags: [],
+    createdAt: Date.now() - 130 * 86400000,
+    lastReviewedAt: null,
+    bajaAt: Date.now() - 18 * 86400000, bajaReason: 'precio', bajaNote: 'Le pareció cara la cuota mensual.',
+  },
+  {
+    id: 'demo-client-005',
+    nutricionistaId: DEMO_NUTRICIONISTA_ID,
+    token: 'demo-token-irene',
+    authUserId: null,
+    name: 'Irene', surname: 'Soto',
+    phone: '600999000', email: 'irene@demo.nutrifit.app',
+    birthDate: '1984-02-27', gender: 'Mujer', heightCm: 164,
+    goal: 'perder_peso', allergies: '', notes: '', reportNotes: '',
+    consentAcceptedAt: null, consentSignedName: null,
+    monthlyPrice: 45, goalWeightKg: 60, customMessages: {}, tags: [],
+    createdAt: Date.now() - 200 * 86400000,
+    lastReviewedAt: null,
+    bajaAt: Date.now() - 52 * 86400000, bajaReason: 'objetivo_logrado', bajaNote: '',
+  },
 ]
 
 // ── Planes de dieta ─────────────────────────────────────────

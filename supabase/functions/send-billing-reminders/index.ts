@@ -58,8 +58,9 @@ Deno.serve(async (req: Request) => {
     const period = monthKey(now)
 
     // PostgREST corta en silencio a 1.000 filas por consulta: se pagina (con orden estable).
+    // Los clientes dados de baja (baja_at) ya no se facturan.
     const clients = await fetchAllRows<{ id: string; nutricionista_id: string }>((from, to) =>
-      supabase.from("clientes").select("id, nutricionista_id").not("monthly_price", "is", null).order("id").range(from, to))
+      supabase.from("clientes").select("id, nutricionista_id").not("monthly_price", "is", null).is("baja_at", null).order("id").range(from, to))
     if (!clients.length) {
       return new Response(JSON.stringify({ sent: 0, pending: 0 }), { headers: { "Content-Type": "application/json" } })
     }

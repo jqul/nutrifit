@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { ClientWithStats } from '../../hooks/useNutricionistaClients'
+import { ClientData } from '../../types'
+import { CHURN_WINDOW_DAYS, churnMetrics, formatTenure } from '../../lib/clientBaja'
 import { ClientPanelTab } from '../../lib/controlCenter'
 import { ACTIVE_WINDOW_DAYS, CohortKey, RiskLevel, cohorts, rankByRisk, retentionMetrics } from '../../lib/retention'
 
@@ -13,17 +15,20 @@ const pct = (n: number | null, signed = false) => n == null ? '—' : `${signed 
 
 /**
  * Negocio: cuánto entra al mes, cómo está la retención y a quién hay que cuidar
- * para que no se vaya. La retención se mide por actividad (check-ins y pesajes),
- * no por bajas, porque NutriFit no guarda cuándo un cliente se va.
+ * para que no se vaya. La retención se estima por actividad (check-ins y pesajes);
+ * las bajas REALES salen de los clientes dados de baja (clientBaja.ts).
  */
-export function BusinessDashboard({ clients, onOpenClient }: {
+export function BusinessDashboard({ clients, bajas = [], onOpenClient }: {
   clients: ClientWithStats[]
+  /** Clientes dados de baja (no cuentan en `clients`). */
+  bajas?: ClientData[]
   onOpenClient: (client: ClientWithStats, tab?: ClientPanelTab) => void
 }) {
   const [cohortBy, setCohortBy] = useState<CohortKey>('goal')
   const [showAllRisk, setShowAllRisk] = useState(false)
 
   const metrics = useMemo(() => retentionMetrics(clients), [clients])
+  const churn = useMemo(() => churnMetrics(bajas, clients.length), [bajas, clients.length])
   const ranked = useMemo(() => rankByRisk(clients), [clients])
   const cohortRows = useMemo(() => cohorts(clients, cohortBy), [clients, cohortBy])
 
@@ -34,7 +39,7 @@ export function BusinessDashboard({ clients, onOpenClient }: {
   const stats = [
     { label: `Activos (${ACTIVE_WINDOW_DAYS} días)`, value: String(metrics.active) },
     { label: 'Nuevos este mes', value: String(metrics.newThisMonth) },
-    { label: 'Posibles bajas', value: String(metrics.likelyLost) },
+    { label: 'Sin actividad', value: String(metrics.likelyLost) },
     { label: 'Retención', value: metrics.retentionPct == null ? '—' : `${metrics.retentionPct}%` },
   ]
 
@@ -63,10 +68,49 @@ export function BusinessDashboard({ clients, onOpenClient }: {
           ))}
         </div>
         <p className="text-xs text-muted mt-3 px-1">
-          «Activo» es quien ha hecho un check-in o se ha pesado en los últimos {ACTIVE_WINDOW_DAYS} días. «Posibles bajas» y «Retención» se calculan sobre
-          los clientes con más de {ACTIVE_WINDOW_DAYS} días de antigüedad: no son bajas confirmadas, NutriFit no registra cuándo alguien se va.
+          «Activo» es quien ha hecho un check-in o se ha pesado en los últimos {ACTIVE_WINDOW_DAYS} días. «Sin actividad» y «Retención» se calculan sobre
+          los clientes con más de {ACTIVE_WINDOW_DAYS} días de antigüedad: es una estimación por actividad. Las bajas reales son las de abajo.
         </p>
       </div>
+
+      <section aria-labelledby="biz-bajas">
+        <h2 id="biz-bajas" className="text-sm font-semibold mb-2">Bajas (últimos {CHURN_WINDOW_DAYS} días)</h2>
+        {bajas.length === 0 ? (
+          <div className="card p-5">
+            <p className="text-sm text-muted">Todavía no has dado de baja a ningún cliente. Cuando alguien deje de ser tu cliente, dale de baja desde su Perfil (en vez de eliminarlo) y aquí verás cuántos se van, por qué y cuánto dejas de ingresar.</p>
+          </div>
+        ) : (
+          <div className="card p-5 space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-4">
+              {[
+                { label: 'Bajas', value: String(churn.bajas) },
+                { label: 'Del total de clientes', value: churn.churnPct == null ? '—' : `${churn.churnPct}%` },
+                { label: 'Cuotas que dejas de ingresar', value: `${eur(churn.lostMonthly)}/mes` },
+                { label: 'Estuvieron de media', value: churn.avgTenureDays == null ? '—' : formatTenure(churn.avgTenureDays) },
+              ].map(k => (
+                <div key={k.label}>
+                  <p className="text-xl font-serif font-bold">{k.value}</p>
+                  <p className="text-xs text-muted mt-0.5">{k.label}</p>
+                </div>
+              ))}
+            </div>
+            {churn.byReason.length > 0 && (
+              <ul className="space-y-1.5" aria-label="Motivos de baja">
+                {churn.byReason.map(r => (
+                  <li key={r.reason} className="flex items-center gap-3 text-sm">
+                    <span className="flex-1 min-w-0 truncate">{r.label}</span>
+                    <span className="w-28 h-1.5 rounded-full bg-bg-alt overflow-hidden flex-shrink-0" aria-hidden="true">
+                      <span className="block h-full bg-accent" style={{ width: `${Math.round((r.count / churn.bajas) * 100)}%` }} />
+                    </span>
+                    <span className="tabular-nums text-xs text-muted w-6 text-right">{r.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="text-xs text-muted">«Del total de clientes» es el % de los que has tenido en este periodo (activos hoy + dados de baja) que se fueron. Los clientes dados de baja no cuentan en el resto de cifras.</p>
+          </div>
+        )}
+      </section>
 
       <section aria-labelledby="biz-risk">
         <div className="flex items-baseline justify-between gap-3 mb-2">

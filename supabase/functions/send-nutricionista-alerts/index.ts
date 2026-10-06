@@ -118,9 +118,10 @@ async function processNutricionista(nutricionistaId: string, nutriSubs: Row[], d
     .from("nutricionista_automations").select("settings").eq("nutricionista_id", nutricionistaId).maybeSingle()
   const settings = (settingsRow?.settings ?? {}) as AutomationSettings
 
+  // Los clientes dados de baja (baja_at) no generan avisos.
   const clients = await fetchAllRows<Row>((from, to) =>
     supabase.from("clientes").select("id, name, surname, goal, goal_weight_kg, created_at")
-      .eq("nutricionista_id", nutricionistaId).order("id").range(from, to))
+      .eq("nutricionista_id", nutricionistaId).is("baja_at", null).order("id").range(from, to))
 
   // ── Alertas activas de cada cliente (misma lógica que la app) ──
   const active: ActiveAlert[] = []

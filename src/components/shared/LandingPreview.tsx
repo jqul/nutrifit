@@ -12,7 +12,7 @@ const noop = () => {}
  * desfasada. Es decorativa (no interactiva) y se oculta a lectores de pantalla. */
 export function LandingPreview() {
   const clients = useMemo(() => sortByAttention(
-    withStats(DEMO_CLIENTS, DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES, DEMO_WEIGHTS),
+    withStats(DEMO_CLIENTS.filter(c => c.bajaAt == null), DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES, DEMO_WEIGHTS),
   ), [])
 
   return (

@@ -43,12 +43,15 @@ export interface ClienteRow {
   tags: string[]
   created_at: string
   last_reviewed_at: string | null
+  baja_at?: string | null
+  baja_reason?: string | null
+  baja_note?: string | null
 }
 
 /** Lo que devuelve get_my_client_profile(): la ficha SIN los campos internos del
  * nutricionista (notas privadas, notas del informe, precio, etiquetas...). */
 export type ClientProfileRow = Omit<ClienteRow,
-  'notes' | 'report_notes' | 'notes_updated_at' | 'monthly_price' | 'custom_messages' | 'tags' | 'last_reviewed_at'>
+  'notes' | 'report_notes' | 'notes_updated_at' | 'monthly_price' | 'custom_messages' | 'tags' | 'last_reviewed_at' | 'baja_at' | 'baja_reason' | 'baja_note'>
 
 /** Decisión del nutricionista sobre la revisión semanal de un cliente (tabla client_reviews). */
 export interface ClientReviewRow {

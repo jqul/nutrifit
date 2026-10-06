@@ -13,6 +13,8 @@ import { TrainerClientPreview } from './TrainerClientPreview'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { ClientPanelTab } from '../../lib/controlCenter'
 import { ArrowLeft, Smartphone } from 'lucide-react'
+import { BajaBanner } from './client-panel/BajaCard'
+import { BajaReason } from '../../lib/clientBaja'
 import { DEMO_DIET_PLANS, DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_CLINICAL_NOTES, DEMO_CYCLES } from '../../lib/demo-data'
 
 type Tab = ClientPanelTab
@@ -39,7 +41,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
   const [tab, setTab] = useState<Tab>(initialTab ?? 'perfil')
   const [current, setCurrent] = useState(client)
   const [previewing, setPreviewing] = useState(false)
-  const { updateClient, regenerateToken, deleteClient, markClientReviewed } = useNutricionistaClients({
+  const { updateClient, regenerateToken, deleteClient, dismissClient, reactivateClient, markClientReviewed } = useNutricionistaClients({
     nutricionistaId: userProfile.uid, demoClients: demoMode ? [current] : undefined,
   })
   // Marca la ficha como revisada en cuanto se abre Seguimiento — así el
@@ -75,6 +77,18 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
     const token = await regenerateToken(current.id)
     if (token) setCurrent({ ...current, token })
     return token
+  }
+
+  const handleDismiss = async (reason: BajaReason | null, note: string) => {
+    const ok = await dismissClient(current.id, reason, note)
+    if (ok) setCurrent({ ...current, bajaAt: Date.now(), bajaReason: reason, bajaNote: note.trim() })
+    return ok
+  }
+
+  const handleReactivate = async () => {
+    const ok = await reactivateClient(current.id)
+    if (ok) setCurrent({ ...current, bajaAt: null, bajaReason: null, bajaNote: '' })
+    return ok
   }
 
   const handleDelete = async () => {
@@ -117,6 +131,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-8">
+        <BajaBanner client={current} onReactivate={handleReactivate} />
         <ClientHeader client={current} currentWeight={sidebarWeight} />
         <div className="min-w-0">
             {/* Montadas siempre, solo ocultas con CSS — si no, cambiar de
@@ -124,7 +139,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
                 de dieta que no se hubiera guardado todavía. */}
             <div className={tab === 'perfil' ? '' : 'hidden'}>
               <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
-                onDelete={handleDelete} demoMode={demoMode} nutricionistaName={userProfile.displayName}
+                onDelete={handleDelete} onDismiss={handleDismiss} demoMode={demoMode} nutricionistaName={userProfile.displayName}
                 customQuestions={userProfile.customAnamnesisQuestions} hasConsentDocument={!!userProfile.consentDocumentUrl} />
             </div>
             <div className={tab === 'dieta' ? '' : 'hidden'}>

@@ -8,6 +8,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import webpush from "npm:web-push@3.6.7"
 import { createClient } from "jsr:@supabase/supabase-js@2"
+import { fetchAllRows, fetchAllRowsForIds } from "./shared/fetchAll.ts"
 
 // Recorta espacios/saltos de línea y comillas que se cuelan al pegar un secreto en el dashboard.
 const env = (k: string) => (Deno.env.get(k) ?? "").trim().replace(/^["']+|["']+$/g, "")
@@ -80,10 +81,10 @@ Deno.serve(async (req: Request) => {
     for (const survey of surveys) {
       const periodKey = survey.frequency === "weekly" ? isoWeekKey(now) : monthKey(now)
 
-      const { data: clients, error: clientsErr } = await supabase
-        .from("clientes").select("id").eq("nutricionista_id", survey.nutricionista_id)
-      if (clientsErr) throw clientsErr
-      if (!clients?.length) continue
+      // Los clientes dados de baja (baja_at) no reciben encuestas. Se pagina: PostgREST corta en silencio a 1.000 filas.
+      const clients = await fetchAllRows<{ id: string }>((from, to) =>
+        supabase.from("clientes").select("id").eq("nutricionista_id", survey.nutricionista_id).is("baja_at", null).order("id").range(from, to))
+      if (!clients.length) continue
 
       const { data: existingResponses } = await supabase
         .from("survey_responses").select("client_id")
@@ -92,9 +93,11 @@ Deno.serve(async (req: Request) => {
       const pendingClientIds = clients.map((c) => c.id).filter((id) => !answered.has(id))
       if (pendingClientIds.length === 0) continue
 
-      const { data: subs } = await supabase
-        .from("push_subscriptions").select("*").in("client_id", pendingClientIds)
-      if (!subs?.length) continue
+      // Los ids se trocean: una lista larga en .in(...) desbordaría la URL.
+      // deno-lint-ignore no-explicit-any
+      const subs = await fetchAllRowsForIds<any>(pendingClientIds, (ids, from, to) =>
+        supabase.from("push_subscriptions").select("*").in("client_id", ids).order("id").range(from, to))
+      if (!subs.length) continue
 
       const payload = JSON.stringify({
         title: "Nueva encuesta disponible 📋",

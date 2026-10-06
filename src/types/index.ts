@@ -61,6 +61,10 @@ export interface ClientData {
   tags: string[]
   createdAt: number
   lastReviewedAt: string | null
+  /** Cuándo se dio de baja (ms); null/ausente = cliente activo. Ver clientBaja.ts. */
+  bajaAt?: number | null
+  bajaReason?: string | null
+  bajaNote?: string
 }
 
 export interface DietMealItem {

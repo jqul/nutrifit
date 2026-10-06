@@ -22,7 +22,8 @@ import { useTodayAppointments } from '../../hooks/useTodayAppointments'
 import { useReviewedThisWeek } from '../../hooks/useClientReviews'
 import { sortByAttention } from '../../lib/clientListSummary'
 import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboardNav'
-import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag } from 'lucide-react'
+import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag, ChevronDown, ChevronRight } from 'lucide-react'
+import { bajaReasonLabel } from '../../lib/clientBaja'
 import { toast } from '../shared/Toast'
 
 const EMPTY_FORM: NewClientInput = {
@@ -37,7 +38,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   onUpdateProfile: (updates: Partial<UserProfile>) => void
   onSwitchToAdmin?: () => void
 }) {
-  const { clients, loading, addClient, fetchClients } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
+  const { clients, bajas, loading, addClient, fetchClients } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
   const [view, setView] = useState<View>('inicio')
   // Última sección vista en cada grupo, para que volver a un grupo te deje donde estabas.
   const [lastViewByGroup, setLastViewByGroup] = useState<Partial<Record<string, View>>>({})
@@ -54,6 +55,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   // 'all' | 'risk' | 'today' | `tag:${nombre}` — filtro rápido de la lista,
   // se combina con la búsqueda por texto (ambos deben cumplirse).
   const [quickFilter, setQuickFilter] = useState('all')
+  const [showBajas, setShowBajas] = useState(false)
   const todayAppointments = useTodayAppointments(userProfile.uid, !!demoClients)
   const reviewedClientIds = useReviewedThisWeek(!!demoClients)
   const todayApptClientIds = useMemo(() => new Set(todayAppointments.map(a => a.clientId).filter((id): id is string => !!id)), [todayAppointments])
@@ -168,7 +170,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
           <CalendarTab nutricionistaId={userProfile.uid} clients={clients} demoMode={!!demoClients} />
         </div>
         <div className={view === 'negocio' ? '' : 'hidden'}>
-          <BusinessDashboard clients={clients} onOpenClient={(c, tab) => onSelectClient(c, tab)} />
+          <BusinessDashboard clients={clients} bajas={bajas} onOpenClient={(c, tab) => onSelectClient(c, tab)} />
         </div>
         <div className={view === 'conversor' ? '' : 'hidden'}>
           <ConversorTab nutricionistaId={userProfile.uid} demoMode={!!demoClients} />
@@ -229,6 +231,30 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
                     onOpen={() => onSelectClient(c)} onCopyLink={() => copyLink(c.token)} />
                 ))}
               </div>
+            )}
+
+            {bajas.length > 0 && (
+              <section aria-labelledby="bajas-list" className="mt-8">
+                <button id="bajas-list" onClick={() => setShowBajas(v => !v)} aria-expanded={showBajas}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showBajas ? '' : '-rotate-90'}`} /> De baja ({bajas.length})
+                </button>
+                {showBajas && (
+                  <div className="card divide-y divide-border/60 overflow-hidden mt-2">
+                    {[...bajas].sort((a, b) => (b.bajaAt ?? 0) - (a.bajaAt ?? 0)).map(c => (
+                      <button key={c.id} onClick={() => onSelectClient(c)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-bg-alt/60 transition-colors">
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold truncate">{c.name} {c.surname}</span>
+                          <span className="block text-xs text-muted">
+                            {new Date(c.bajaAt ?? 0).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })} · {bajaReasonLabel(c.bajaReason)}
+                          </span>
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-muted flex-shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
             )}
           </>
         )}
