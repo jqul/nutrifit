@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 // Hoja inferior táctil (a diferencia de Modal, que es un diálogo centrado) —
@@ -12,7 +13,9 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
     return () => { document.body.style.overflow = '' }
   }, [open])
   if (!open) return null
-  return (
+  // En un portal sobre <body>: dentro de la app del cliente, el contenido vive en un contenedor con su propio z-index
+  // y la barra de pestañas de abajo (Hoy/Dieta/Progreso/Más) quedaba POR ENCIMA de la hoja y le cortaba el final.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 backdrop-blur-sm animate-fade-in"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="bg-card w-full max-w-xl rounded-t-2xl border-t border-x border-border shadow-2xl animate-slide-up flex flex-col overflow-hidden"
@@ -26,6 +29,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
         )}
         <div className="p-5 overflow-y-auto flex-1 min-h-0">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

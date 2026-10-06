@@ -79,3 +79,17 @@ describe('lookupBarcode (compatibility)', () => {
     expect(await lookupBarcode('3017620422003')).toBeNull()
   })
 })
+
+import { scannedFoodNote, scannedMacros } from './openFoodFacts'
+
+describe('scannedMacros / scannedFoodNote', () => {
+  const nutella = { name: 'Nutella', kcal: 539, proteinG: 6.3, carbsG: 57.5, fatG: 30.9, fiberG: null, sugarG: null, sodiumMg: null, saturatedFatG: null, calciumMg: null, ironMg: null, zincMg: null }
+  it('scales the per-100 g values to the amount eaten', () => {
+    expect(scannedMacros(nutella, 100)).toEqual({ kcal: 539, proteinG: 6.3, carbsG: 57.5, fatG: 30.9 })
+    expect(scannedMacros(nutella, 30)).toEqual({ kcal: 162, proteinG: 1.9, carbsG: 17.3, fatG: 9.3 })
+    expect(scannedMacros(nutella, 0)).toEqual({ kcal: 0, proteinG: 0, carbsG: 0, fatG: 0 })
+  })
+  it('writes the diary note with the amount and its macros', () => {
+    expect(scannedFoodNote(nutella, 30)).toBe('30 g · 162 kcal · P 1,9 g · C 17,3 g · G 9,3 g (producto escaneado, Open Food Facts)')
+  })
+})

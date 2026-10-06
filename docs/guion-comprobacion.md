@@ -213,7 +213,10 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] **Dieta → Escanear producto**, en un **Android con Chrome**: pide permiso de cámara y, al enseñarle el código de barras de un producto de supermercado, abre su ficha con kcal y macros por 100 g.
 - [ ] Si el código no está en la base de datos, avisa «Producto no encontrado» **y sigue escaneando** (antes se quedaba parado hasta cerrar y reabrir).
 - [ ] Sin conexión, avisa «No se pudo consultar… revisa tu conexión» en vez de quedarse en «Buscando producto…».
-- [ ] En **iPhone** (Safari) y en navegadores sin escáner por cámara: no hay cámara, pero se puede **escribir el código** a mano (ej. 3017620422003 = Nutella).
+- [ ] En **iPhone** (Safari) y en navegadores sin lector propio: la cámara **también funciona** (la primera vez dice «Preparando la cámara…» unos segundos mientras descarga el lector; las siguientes ya está). Si se niega el permiso de cámara, se puede **escribir el código** a mano (ej. 3017620422003 = Nutella).
+- [ ] Al encontrar un producto, la hoja **se ve entera** (ya no queda tapada por la barra Hoy/Dieta/Progreso/Más): cantidad en gramos (con atajos 30/50/100/150/200), kcal y macros de esa cantidad, **«Añadir a mi diario de hoy»** y **«Escanear otro producto»**.
+- [ ] «Añadir a mi diario de hoy» lo apunta en el **diario de comidas** (Progreso), con la cantidad y los macros; el nutricionista lo ve en el Seguimiento del cliente.
+- [ ] Lo mismo con el resto de hojas y ventanas del modo cliente (sustituir un alimento, comer fuera, guías): ya no las tapa la barra de abajo.
 
 ## Qué contarme
 

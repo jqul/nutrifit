@@ -51,3 +51,18 @@ export async function lookupBarcode(code: string): Promise<ScannedFood | null> {
   const r = await lookupBarcodeDetailed(code)
   return r.ok ? r.food : null
 }
+
+const r1 = (n: number) => Math.round(n * 10) / 10
+const comma = (n: number) => String(r1(n)).replace('.', ',')
+
+/** Kcal y macros de `grams` gramos de un producto (los valores del producto son por 100 g). */
+export function scannedMacros(food: Pick<ScannedFood, 'kcal' | 'proteinG' | 'carbsG' | 'fatG'>, grams: number) {
+  const k = grams / 100
+  return { kcal: Math.round(food.kcal * k), proteinG: r1(food.proteinG * k), carbsG: r1(food.carbsG * k), fatG: r1(food.fatG * k) }
+}
+
+/** La nota del diario para un producto escaneado: cantidad y macros de esa cantidad. */
+export function scannedFoodNote(food: ScannedFood, grams: number): string {
+  const m = scannedMacros(food, grams)
+  return `${comma(grams)} g · ${m.kcal} kcal · P ${comma(m.proteinG)} g · C ${comma(m.carbsG)} g · G ${comma(m.fatG)} g (producto escaneado, Open Food Facts)`
+}

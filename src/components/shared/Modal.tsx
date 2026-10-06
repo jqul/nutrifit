@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 interface ModalProps { open: boolean; onClose: () => void; title?: string; children: ReactNode; maxWidth?: string }
 export function Modal({ open, onClose, title, children, maxWidth = 'max-w-md' }: ModalProps) {
@@ -8,7 +9,8 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-md' }:
     return () => { document.body.style.overflow = '' }
   }, [open])
   if (!open) return null
-  return (
+  // En un portal sobre <body> para que ningún contenedor con su propio z-index (la app del cliente) lo deje por debajo de su barra.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm animate-fade-in"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className={`bg-card w-full ${maxWidth} rounded-2xl border border-border shadow-2xl animate-slide-up flex flex-col overflow-hidden`}
@@ -21,6 +23,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-md' }:
         )}
         <div className="p-6 overflow-y-auto flex-1 min-h-0">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

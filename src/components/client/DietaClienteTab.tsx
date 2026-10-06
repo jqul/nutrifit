@@ -13,6 +13,7 @@ import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, s
 import { subscribeMealLogs, getMealLogsSnapshot, mealLogsOf, isMealDone, countMealsDone, macroEnergySplit } from '../../lib/mealProgress'
 import { buildWAUrl } from '../../lib/whatsapp'
 import { AdviceCard } from './AdviceCard'
+import { ScannedFoodSheet } from './ScannedFoodSheet'
 import { BottomSheet } from '../shared/BottomSheet'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
 import { ScannedFood } from '../../lib/openFoodFacts'
@@ -200,15 +201,8 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         )
       })()}
       {scannedFood && (
-        <BottomSheet open onClose={() => setScannedFood(null)} title={scannedFood.name}>
-          <div className="grid grid-cols-4 gap-2 mb-3">
-            <MacroCard label="Kcal" value={Math.round(scannedFood.kcal)} />
-            <MacroCard label="Prot." value={Math.round(scannedFood.proteinG * 10) / 10} suffix="g" />
-            <MacroCard label="Carbos" value={Math.round(scannedFood.carbsG * 10) / 10} suffix="g" />
-            <MacroCard label="Grasas" value={Math.round(scannedFood.fatG * 10) / 10} suffix="g" />
-          </div>
-          <p className="text-xs text-muted">Valores por 100g, según Open Food Facts. Comprueba en el envase si encaja en tus macros de hoy.</p>
-        </BottomSheet>
+        <ScannedFoodSheet food={scannedFood} clientId={clientId} demoMode={demoMode}
+          onClose={() => setScannedFood(null)} onScanAnother={() => { setScannedFood(null); setScannerOpen(true) }} />
       )}
       <div className="card p-5">
         <div className="flex items-end justify-between gap-3">
@@ -644,11 +638,3 @@ function ToolButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
   )
 }
 
-function MacroCard({ label, value, suffix = '' }: { label: string; value: number; suffix?: string }) {
-  return (
-    <div className="bg-card border border-border rounded-xl px-2 py-3 text-center">
-      <p className="text-lg font-serif font-bold">{value}{suffix}</p>
-      <p className="text-xs text-muted">{label}</p>
-    </div>
-  )
-}

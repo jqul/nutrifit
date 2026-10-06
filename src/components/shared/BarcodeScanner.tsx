@@ -2,14 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { Modal } from './Modal'
 import { toast } from './Toast'
 import { lookupBarcodeDetailed, ScannedFood } from '../../lib/openFoodFacts'
+import { canUseCamera, createBarcodeDetector } from '../../lib/barcodeDetector'
 import { Barcode, Search } from 'lucide-react'
 
-// La Barcode Detection API solo existe en navegadores basados en Chromium
-// (Chrome/Edge/Android). En el resto (Firefox, Safari) se usa el campo manual.
-declare global {
-  interface Window { BarcodeDetector?: any }
-}
-
+// La cámara lee el código con la Barcode Detection API del navegador si existe (Chrome en Android) y, si no
+// (iPhone/Safari, Firefox), con una versión WebAssembly que se descarga solo entonces (ver barcodeDetector.ts).
+// Si no hay cámara o no se da permiso, queda el campo para escribir el código a mano.
 export function BarcodeScanner({ open, onClose, onFound }: {
   open: boolean
   onClose: () => void
@@ -20,7 +18,8 @@ export function BarcodeScanner({ open, onClose, onFound }: {
   const [manualCode, setManualCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [cameraError, setCameraError] = useState(false)
-  const supported = typeof window !== 'undefined' && 'BarcodeDetector' in window
+  const [preparing, setPreparing] = useState(false)
+  const supported = canUseCamera()
 
   useEffect(() => {
     if (!open || !supported) return
@@ -29,12 +28,17 @@ export function BarcodeScanner({ open, onClose, onFound }: {
 
     const start = async () => {
       try {
+        setCameraError(false)
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
         if (cancelled) { stream.getTracks().forEach(t => t.stop()); return }
         streamRef.current = stream
         if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play() }
 
-        const detector = new window.BarcodeDetector!({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] })
+        // La primera vez, en navegadores sin lector propio, hay que descargar el lector WebAssembly.
+        setPreparing(true)
+        const detector = await createBarcodeDetector()
+        setPreparing(false)
+        if (cancelled) return
         const tick = async () => {
           if (cancelled || !videoRef.current) return
           try {
@@ -47,10 +51,13 @@ export function BarcodeScanner({ open, onClose, onFound }: {
               if (cancelled) return
             }
           } catch { /* frame no listo aún, seguir intentando */ }
+          // El lector WebAssembly es más pesado: se lee unas 6-7 veces por segundo, no en cada fotograma.
+          if (!detector.native) await new Promise(r => setTimeout(r, 150))
           raf = requestAnimationFrame(tick)
         }
         raf = requestAnimationFrame(tick)
       } catch {
+        setPreparing(false)
         setCameraError(true)
       }
     }
@@ -86,13 +93,13 @@ export function BarcodeScanner({ open, onClose, onFound }: {
         {supported && !cameraError ? (
           <div className="relative rounded-xl overflow-hidden bg-black aspect-video">
             <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
-            {loading && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-sm">Buscando producto...</div>
+            {(loading || preparing) && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-sm">{loading ? 'Buscando producto...' : 'Preparando la cámara...'}</div>
             )}
           </div>
         ) : (
           <p className="text-xs text-muted">
-            {supported ? 'No se pudo acceder a la cámara.' : 'Tu navegador no soporta el escaneo por cámara.'} Escribe el código de barras a mano:
+            {supported ? 'No se pudo usar la cámara (¿has dado permiso?).' : 'Este navegador no deja usar la cámara.'} Escribe el código de barras a mano:
           </p>
         )}
 
