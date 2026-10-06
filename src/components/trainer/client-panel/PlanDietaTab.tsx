@@ -13,6 +13,8 @@ import { printRecipeBook } from '../../../lib/printRecipeBook'
 import { ScannedFood } from '../../../lib/openFoodFacts'
 import { computeMacros, convertQuantity, MacroKey } from '../../../lib/foodConversion'
 import { SubstituteItem, suggestSubstitutes, substituteGrams } from '../../../lib/exchangeGroups'
+import { FitResult, fitPlanToTargets } from '../../../lib/planFit'
+import { FitPlanModal } from './plan-dieta/FitPlanModal'
 import { buildWAUrl } from '../../../lib/whatsapp'
 import { Button } from '../../shared/Button'
 import { BarcodeScanner } from '../../shared/BarcodeScanner'
@@ -25,7 +27,7 @@ import { Modal } from '../../shared/Modal'
 import { FoodDraft, blankFoodDraft, draftToColumns, normalizeFoodName } from '../../../lib/foodDraft'
 import { createOwnFood } from '../../../lib/ownFoods'
 import {
-  EditableItem, EditableMeal, EditableSupplement, DAY_LABELS, MACRO_LABELS, newId, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, demoPlanToEditable,
+  EditableItem, EditableMeal, EditableSupplement, DAY_LABELS, MACRO_LABELS, newId, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, applyFitToMeals, demoPlanToEditable,
 } from './plan-dieta/planModel'
 import { NumInput, MacroProgressBar, MicroInput } from './plan-dieta/PlanInputs'
 import { ActionMenu } from './plan-dieta/ActionMenu'
@@ -391,6 +393,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   // ON+OFF como si se comieran las dos el mismo día.
   const [selectedDayType, setSelectedDayType] = useState<'all' | 'on' | 'off'>('all')
   const usesCarbCycling = meals.some(m => m.dayType != null)
+  // Propuesta de "Ajustar comidas al objetivo" (null = ventana cerrada). No guarda nada: solo cambia el borrador.
+  const [fitPreview, setFitPreview] = useState<FitResult | null>(null)
 
   const visibleMeals = meals.filter(m => selectedDay === 'all' ? m.dayOfWeek == null : (m.dayOfWeek === selectedDay || m.dayOfWeek == null))
   const usesWeeklyMenu = meals.some(m => m.dayOfWeek != null)
@@ -416,6 +420,28 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       }
     }
   }
+
+  // ── Ajustar comidas al objetivo ──
+  // Se ajusta lo que se está viendo (el día y el tipo de día elegidos), con una comida por hueco: es la misma
+  // suma que muestran las barras de progreso.
+  const fitTargets = { kcal: parseFloat(kcalTarget) || 0, proteinG: parseFloat(proteinG) || 0, carbsG: parseFloat(carbsG) || 0, fatG: parseFloat(fatG) || 0 }
+  const fitSlots = Array.from(new Map(macroMeals.map(m => [m.optionGroup || m.id, m])).values())
+  const openFitPreview = () => {
+    const slotIdByGroup = new Map(fitSlots.map(m => [m.optionGroup || m.id, m.id]))
+    const alternatives = macroMeals.filter(m => !fitSlots.includes(m)).map(m => ({ meal: m, slotId: slotIdByGroup.get(m.optionGroup || m.id) as string }))
+    setFitPreview(fitPlanToTargets({ slots: fitSlots, alternatives, targets: fitTargets }))
+  }
+  const applyFit = () => {
+    if (!fitPreview) return
+    setMeals(prev => applyFitToMeals(prev, fitPreview))
+    setFitPreview(null)
+    toast('Ajuste aplicado al borrador — revisa y pulsa «Guardar plan» ✓', 'ok')
+  }
+  const fitScopeLabel = (selectedDay === 'all' ? 'las comidas de todos los días' : DAY_LABELS[selectedDay as number])
+    + (usesCarbCycling && selectedDayType !== 'all' ? ` · día ${selectedDayType === 'on' ? 'ON' : 'OFF'}` : '')
+  // Las comidas de "todos los días" son las mismas en cada día: ajustarlas desde un día concreto las cambia en todos.
+  const fitSharedNote = fitPreview && selectedDay !== 'all' && fitPreview.changes.some(c => meals.find(m => m.id === c.mealId)?.dayOfWeek == null)
+    ? 'Algunas de estas comidas son de «todos los días»: al ajustarlas cambian también en los demás días.' : null
 
   const copyDayMeals = () => {
     if (copyFromDay === '' || selectedDay === 'all') return
@@ -697,6 +723,11 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">
                   Suma de {selectedDay === 'all' ? 'las comidas' : `${DAY_LABELS[selectedDay as number]}`} vs. objetivo
                 </p>
+                {fitTargets.kcal > 0 && Math.abs(dailyTotals.kcal - fitTargets.kcal) / fitTargets.kcal > 0.02 && (
+                  <button type="button" onClick={openFitPreview} className="text-xs font-bold text-accent hover:underline">
+                    Ajustar comidas al objetivo
+                  </button>
+                )}
                 {usesCarbCycling && (
                   <div className="flex gap-1">
                     {(['all', 'on', 'off'] as const).map(v => (
@@ -1169,6 +1200,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
             saving={savingNewFood} submitLabel="Guardar y usar" onSubmit={saveNewFood} onCancel={() => setCreateFoodFor(null)} />
         )}
       </Modal>
+      <FitPlanModal open={fitPreview != null} onClose={() => setFitPreview(null)} fit={fitPreview} targets={fitTargets}
+        scopeLabel={fitScopeLabel} sharedNote={fitSharedNote} onApply={applyFit} />
       <ImportDietPlanModal open={importOpen} onClose={() => setImportOpen(false)} foods={foods}
         onImport={imported => setMeals(prev => [...prev, ...imported])} />
     </div>

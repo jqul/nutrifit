@@ -6,7 +6,7 @@ real**. Este guion es esa pasada. Dura unos 20-25 minutos.
 
 ## Estado de la verificación
 
-**Pasada con sesión real hecha el 6 de octubre de 2026: todo bien** (secciones 1 a 13).
+**Pasada con sesión real hecha el 6 de octubre de 2026: todo bien** (secciones 1 a 13). La sección 14 (ajustar comidas al objetivo) es posterior y está pendiente de comprobar.
 Queda pendiente fuera del guion: activar las notificaciones push desde la campana (sin suscripciones no llega ningún aviso diario)
 y confirmar que `VITE_VAPID_PUBLIC_KEY` en Vercel coincide con la clave nueva.
 
@@ -175,6 +175,20 @@ Usa **un cliente de prueba** (no uno real).
 - [ ] Un plato con un alimento que **no está en el catálogo** (texto libre) no tiene grupo: solo sale el modo «Todos».
 - [ ] **App del cliente → Dieta → ⟲ en un alimento:** mismas pestañas («Mismo grupo» / «Todos»), con las cantidades equivalentes y sin nada que choque con sus alergias.
 - [ ] Un alimento propio nuevo se coloca en su grupo por su categoría (un «Proteína» va con las carnes y pescados; un «Lácteo» con los lácteos).
+
+## 14. Ajustar comidas al objetivo
+
+**Plan de un cliente → arriba, en «Suma de las comidas vs. objetivo».** Usa un cliente de prueba (⚠️ guardar el plan le manda una notificación).
+
+- [ ] Si las comidas suman más de un 2 % por encima o por debajo del objetivo de kcal, aparece **Ajustar comidas al objetivo**. Si ya están dentro del 2 %, no aparece.
+- [ ] Se abre una vista previa con la suma **ahora / con el ajuste / objetivo** y la lista de cantidades que cambian, por comida. **Todavía no se ha tocado nada.**
+- [ ] El pollo (la proteína) no se recorta si ya está en su objetivo; **sube o baja lo que esté lejos de su objetivo**: si faltan kcal y falta proteína, sube la proteína; si sobran kcal y sobran carbohidratos, bajan los carbohidratos.
+- [ ] La verdura y los suplementos no se tocan. Las cantidades salen redondeadas (de 5 en 5 g; las unidades, de media en media).
+- [ ] Ningún alimento cambia más de un 40 % a la baja o un 50 % al alza. Si con eso no llega al objetivo, lo dice y te deja decidir (no aplica a ciegas).
+- [ ] Si hay **opciones alternativas** de una comida (Opción B), se escalan con la misma proporción que la comida.
+- [ ] Con un plan por días (lunes, martes…) y/o ON/OFF ajusta **lo que estás viendo**; si toca comidas de «todos los días», te avisa de que cambian también en los demás días.
+- [ ] «Aplicar al plan» cambia el **borrador**: las barras se actualizan y el botón desaparece. El plan no se guarda hasta pulsar **Guardar plan**; entonces queda en el historial y en las versiones, y se puede restaurar la anterior.
+- [ ] «Cancelar» no cambia nada.
 
 ## Qué contarme
 

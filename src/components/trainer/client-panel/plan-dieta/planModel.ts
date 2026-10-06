@@ -74,6 +74,39 @@ export function scaleRecipeToKcal(items: EditableItem[], targetKcal: number): Ed
   })
 }
 
+/** Un alimento con otra cantidad: los valores (kcal, macros, micros) se escalan en la misma proporción. */
+export function scaleItemToQuantity(item: EditableItem, newQuantity: number): EditableItem {
+  const oldQuantity = parseFloat(item.quantity)
+  if (!(oldQuantity > 0)) return item
+  const factor = newQuantity / oldQuantity
+  const scaled: EditableItem = { ...item, quantity: String(newQuantity) }
+  for (const field of SCALABLE_ITEM_FIELDS) {
+    if (field === 'quantity') continue
+    const num = parseFloat(item[field] as string)
+    if (item[field] && !isNaN(num)) (scaled[field] as string) = String(Math.round(num * factor * 10) / 10)
+  }
+  return scaled
+}
+
+/**
+ * Aplica un ajuste de planFit.ts a las comidas: cambia la cantidad de los alimentos
+ * que cambian y acompaña el objetivo propio de cada comida (si lo tiene) con la
+ * misma proporción. Devuelve comidas nuevas; no toca las que le pasan.
+ */
+export function applyFitToMeals(meals: EditableMeal[], fit: { quantities: Record<string, number>; mealFactors: Record<string, number> }): EditableMeal[] {
+  return meals.map(m => {
+    const factor = fit.mealFactors[m.id]
+    const touched = m.items.some(i => fit.quantities[i.id] != null)
+    if (!touched && factor == null) return m
+    const target = parseFloat(m.kcalTarget)
+    return {
+      ...m,
+      kcalTarget: factor != null && target > 0 ? String(Math.round((target * factor) / 5) * 5) : m.kcalTarget,
+      items: m.items.map(i => (fit.quantities[i.id] != null ? scaleItemToQuantity(i, fit.quantities[i.id]) : i)),
+    }
+  })
+}
+
 export function demoPlanToEditable(plan: DietPlan) {
   return {
     kcalTarget: String(plan.kcalTarget), proteinG: String(plan.proteinG),
