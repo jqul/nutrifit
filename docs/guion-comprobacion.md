@@ -207,6 +207,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Un cliente que entra por el botón «Entrar» de la web principal (acceso de nutricionistas) ya no es expulsado: va a su app de cliente.
 - [ ] La pantalla de acceso de nutricionistas avisa: «¿Eres cliente? Abre el enlace personal que te envió tu nutricionista».
 
+## 16. Consejo plegable y escáner de productos (app del cliente)
+
+- [ ] **Hoy** y **Dieta**: el «Consejo de tu nutricionista» muestra las dos primeras líneas y un «Ver todo»; al tocarlo se despliega entero («Ocultar» lo pliega). Un consejo corto (de una línea) se ve entero, sin botón.
+- [ ] **Dieta → Escanear producto**, en un **Android con Chrome**: pide permiso de cámara y, al enseñarle el código de barras de un producto de supermercado, abre su ficha con kcal y macros por 100 g.
+- [ ] Si el código no está en la base de datos, avisa «Producto no encontrado» **y sigue escaneando** (antes se quedaba parado hasta cerrar y reabrir).
+- [ ] Sin conexión, avisa «No se pudo consultar… revisa tu conexión» en vez de quedarse en «Buscando producto…».
+- [ ] En **iPhone** (Safari) y en navegadores sin escáner por cámara: no hay cámara, pero se puede **escribir el código** a mano (ej. 3017620422003 = Nutella).
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

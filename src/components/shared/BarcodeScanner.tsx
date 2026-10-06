@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Modal } from './Modal'
 import { toast } from './Toast'
-import { lookupBarcode, ScannedFood } from '../../lib/openFoodFacts'
+import { lookupBarcodeDetailed, ScannedFood } from '../../lib/openFoodFacts'
 import { Barcode, Search } from 'lucide-react'
 
 // La Barcode Detection API solo existe en navegadores basados en Chromium
@@ -39,7 +39,13 @@ export function BarcodeScanner({ open, onClose, onFound }: {
           if (cancelled || !videoRef.current) return
           try {
             const codes = await detector.detect(videoRef.current)
-            if (codes.length > 0) { await handleCode(codes[0].rawValue); return }
+            if (codes.length > 0) {
+              if (await handleCode(codes[0].rawValue)) return
+              // No se ha podido usar ese código: antes el escáner se quedaba parado. Se espera un momento (para no
+              // repetir el aviso mil veces con el mismo código delante de la cámara) y se sigue buscando.
+              await new Promise(r => setTimeout(r, 2500))
+              if (cancelled) return
+            }
           } catch { /* frame no listo aún, seguir intentando */ }
           raf = requestAnimationFrame(tick)
         }
@@ -59,12 +65,19 @@ export function BarcodeScanner({ open, onClose, onFound }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, supported])
 
-  const handleCode = async (code: string) => {
+  /** true si se ha encontrado el producto (y ya no hace falta seguir escaneando). */
+  const handleCode = async (code: string): Promise<boolean> => {
     setLoading(true)
-    const food = await lookupBarcode(code)
+    const r = await lookupBarcodeDetailed(code)
     setLoading(false)
-    if (!food) { toast(`Producto no encontrado (código ${code})`, 'warn'); return }
-    onFound(food)
+    if (!r.ok) {
+      toast(r.reason === 'network' ? 'No se pudo consultar OpenFoodFacts: revisa tu conexión e inténtalo de nuevo'
+        : r.reason === 'no_nutrition' ? `Producto encontrado (código ${code}), pero sin datos nutricionales`
+        : `Producto no encontrado (código ${code})`, 'warn')
+      return false
+    }
+    onFound(r.food)
+    return true
   }
 
   return (

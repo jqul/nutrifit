@@ -10,6 +10,7 @@ import { resolveTodaysMeals, loadOptionChoices, loadDayType } from '../../lib/pl
 import { sendPush } from '../../lib/usePushNotifications'
 import { publishMealLogs } from '../../lib/mealProgress'
 import { PendingSurveys } from './PendingSurveys'
+import { AdviceCard } from './AdviceCard'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS, DEMO_CHECKINS } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
@@ -369,12 +370,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
       )}
 
       {/* ── Pauta activa del nutricionista ── */}
-      {plan?.advice && (
-        <div className="card-featured p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1.5">{personalMode ? 'Tu nota' : 'Consejo de tu nutricionista'}</p>
-          <p className="text-sm leading-relaxed">{plan.advice}</p>
-        </div>
-      )}
+      {plan?.advice && <AdviceCard advice={plan.advice} personalMode={personalMode} />}
 
       {/* ── Agua: toques rápidos repetidos a lo largo del día ── */}
       <div className="card p-4 space-y-3">

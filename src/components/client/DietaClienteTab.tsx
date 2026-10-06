@@ -12,6 +12,7 @@ import { todayDayOfWeek } from '../../lib/date'
 import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, saveDayType, resolveTodaysMeals } from '../../lib/planMeals'
 import { subscribeMealLogs, getMealLogsSnapshot, mealLogsOf, isMealDone, countMealsDone, macroEnergySplit } from '../../lib/mealProgress'
 import { buildWAUrl } from '../../lib/whatsapp'
+import { AdviceCard } from './AdviceCard'
 import { BottomSheet } from '../shared/BottomSheet'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
 import { ScannedFood } from '../../lib/openFoodFacts'
@@ -244,12 +245,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         <ToolButton icon={<Download className="w-4 h-4" />} label="Descargar PDF" onClick={() => printDietPlan(client, plan)} />
       </div>
 
-      {plan.advice && (
-        <div className="card-featured p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-accent mb-1.5">{personalMode ? 'Tu nota' : 'Consejo de tu nutricionista'}</p>
-          <p className="text-sm leading-relaxed">{plan.advice}</p>
-        </div>
-      )}
+      {plan.advice && <AdviceCard advice={plan.advice} personalMode={personalMode} />}
 
       {usesCarbCycling && (
         <div className="card p-4">
