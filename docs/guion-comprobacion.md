@@ -6,7 +6,7 @@ real**. Este guion es esa pasada. Dura unos 20-25 minutos.
 
 ## Estado de la verificación
 
-**Pasada con sesión real hecha el 6 de octubre de 2026: todo bien** (secciones 1 a 13). La sección 14 (ajustar comidas al objetivo) es posterior y está pendiente de comprobar.
+**Pasada con sesión real hecha el 6 de octubre de 2026: todo bien** (secciones 1 a 13); la sección 14 (ajustar comidas al objetivo) también, el 7 de octubre de 2026, tras corregir el reparto de macros con el plan de Laura.
 Queda pendiente fuera del guion: activar las notificaciones push desde la campana (sin suscripciones no llega ningún aviso diario)
 y confirmar que `VITE_VAPID_PUBLIC_KEY` en Vercel coincide con la clave nueva.
 
