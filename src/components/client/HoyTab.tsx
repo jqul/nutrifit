@@ -149,6 +149,11 @@ export function HoyTab({ client, demoMode, personalMode }: {
   }, [client.id, today, demoMode])
 
   useEffect(() => { loadMealLogs() }, [loadMealLogs])
+  // Un producto escaneado (o quitado) en Dieta cambia el diario de hoy: recargarlo para que Dieta lo vea al instante.
+  useEffect(() => {
+    window.addEventListener('nutrifit:meal-logged', loadMealLogs)
+    return () => window.removeEventListener('nutrifit:meal-logged', loadMealLogs)
+  }, [loadMealLogs])
   // Dieta muestra qué comidas de hoy están hechas leyendo lo que publica aquí.
   useEffect(() => { publishMealLogs(client.id, mealLogsToday) }, [client.id, mealLogsToday])
 

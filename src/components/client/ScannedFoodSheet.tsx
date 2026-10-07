@@ -5,6 +5,7 @@ import { toast } from '../shared/Toast'
 import { supabase } from '../../lib/supabase'
 import { toLocalISODate } from '../../lib/date'
 import { ScannedFood, scannedFoodNote, scannedMacros } from '../../lib/openFoodFacts'
+import { getMealLogsSnapshot, mealLogsOf, publishMealLogs } from '../../lib/mealProgress'
 import { Barcode, BookPlus } from 'lucide-react'
 
 const QUICK_GRAMS = [30, 50, 100, 150, 200]
@@ -25,15 +26,22 @@ export function ScannedFoodSheet({ food, clientId, demoMode, onClose, onScanAnot
 
   const addToDiary = async () => {
     if (!valid) return
-    if (demoMode) { toast('Modo demo: no se guarda de verdad', 'ok'); onClose(); return }
+    if (demoMode) {
+      // En la demo no se guarda en la base de datos, pero sí se ve en "Extras de hoy" mientras la pruebas.
+      publishMealLogs(clientId, [...mealLogsOf(getMealLogsSnapshot(), clientId), {
+        id: 'demo-' + Date.now(), clientId, date: toLocalISODate(new Date()), mealName: food.name,
+        note: scannedFoodNote(food, grams), photoUrl: null, createdAt: Date.now(),
+      }])
+      toast('Añadido a "Extras de hoy" (modo demo: no se guarda de verdad)', 'ok'); onClose(); return
+    }
     setSaving(true)
     const { error } = await supabase.from('meal_logs').insert({
       client_id: clientId, date: toLocalISODate(new Date()), meal_name: food.name, note: scannedFoodNote(food, grams), photo_url: null,
     })
     setSaving(false)
     if (error) { toast('No se pudo añadir al diario: ' + error.message, 'warn'); return }
-    toast('Añadido a tu diario de hoy ✓ (lo ves en Progreso)', 'ok')
-    window.dispatchEvent(new Event('nutrifit:meal-logged'))   // el diario de Progreso se recarga sin cerrar la app
+    toast('Añadido a "Extras de hoy" ✓ (también en Progreso → Diario)', 'ok')
+    window.dispatchEvent(new Event('nutrifit:meal-logged'))   // Hoy, Dieta y Progreso recargan el diario sin cerrar la app
     onClose()
   }
 

@@ -13,6 +13,7 @@ import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, s
 import { subscribeMealLogs, getMealLogsSnapshot, mealLogsOf, isMealDone, countMealsDone, macroEnergySplit } from '../../lib/mealProgress'
 import { buildWAUrl } from '../../lib/whatsapp'
 import { AdviceCard } from './AdviceCard'
+import { ExtrasHoyCard } from './ExtrasHoyCard'
 import { ScannedFoodSheet } from './ScannedFoodSheet'
 import { BottomSheet } from '../shared/BottomSheet'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
@@ -238,6 +239,8 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         <ToolButton icon={<UtensilsCrossed className="w-4 h-4" />} label="¿Vas a comer fuera?" onClick={() => { setEatingOutOpen(true); setEatingOutGuideId(null) }} />
         <ToolButton icon={<Download className="w-4 h-4" />} label="Descargar PDF" onClick={() => printDietPlan(client, plan)} />
       </div>
+
+      <ExtrasHoyCard logs={logsToday} clientId={clientId} demoMode={demoMode} kcalTarget={plan.kcalTarget} personalMode={personalMode} />
 
       {plan.advice && <AdviceCard advice={plan.advice} personalMode={personalMode} />}
 

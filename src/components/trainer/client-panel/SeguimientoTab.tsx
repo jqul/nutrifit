@@ -10,6 +10,7 @@ import { HealthTimeline } from '../../shared/HealthTimeline'
 import { StoragePhoto } from '../../shared/StoragePhoto'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
+import { extrasByDay } from '../../../lib/scannedLogs'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
 import { DietAdjustmentCard } from './DietAdjustmentCard'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
@@ -59,6 +60,11 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
   const [cycles, setCycles] = useState<CycleEntry[]>(demoData?.cycles ?? [])
   const [loading, setLoading] = useState(!demoData)
   const demoMode = !!demoData
+  // Lo que el cliente ha escaneado y apuntado: comida fuera del plan, de los últimos 7 días.
+  const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
+  const extraDays = extrasByDay(mealLogs, toLocalISODate(sevenDaysAgo))
+  const extraKcal = extraDays.reduce((s, d) => s + d.kcal, 0)
+  const extraCount = extraDays.reduce((s, d) => s + d.count, 0)
   // Notas del profesional para el informe en PDF (distintas de las notas
   // privadas de NotasTab.tsx — estas SÍ se imprimen, y ahora también las
   // puede descargar el propio cliente, así que van en un campo separado.
@@ -242,6 +248,22 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
 
       <div className="card p-5">
         <p className="font-semibold text-sm mb-3 flex items-center gap-1.5">Diario de comidas</p>
+        {extraDays.length > 0 && (
+          <div className="mb-3 rounded-xl bg-warn/10 px-3 py-2.5">
+            <p className="text-xs font-bold uppercase tracking-wider text-warn">Fuera del plan · últimos 7 días</p>
+            <p className="text-sm mt-1">
+              <span className="font-semibold">{extraKcal} kcal</span> en {extraCount} {extraCount === 1 ? 'producto escaneado' : 'productos escaneados'}
+              <span className="text-muted"> · {Math.round(extraKcal / 7)} kcal de media al día</span>
+            </p>
+            <ul className="mt-1.5 space-y-0.5">
+              {extraDays.map(d => (
+                <li key={d.date} className="text-xs text-muted">
+                  {new Date(d.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}: {d.kcal} kcal ({d.count})
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {mealLogs.length === 0 ? (
           <p className="text-sm text-muted">El cliente todavía no ha registrado comidas.</p>
         ) : (
