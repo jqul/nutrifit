@@ -92,7 +92,7 @@ export function computeClientHealth(client: {
     return { status: 'attention', reason: 'unreviewed', label: 'Check-in o encuesta sin revisar' }
   }
   if (client.monthlyPrice != null && !hasCurrentPeriodInvoice) {
-    return { status: 'billing', reason: 'billing', label: 'Plan por renovar' }
+    return { status: 'billing', reason: 'billing', label: 'Falta la factura de este mes' }
   }
   if ((client.streak || 0) >= STREAK_THRESHOLD_DAYS) {
     return { status: 'streak', reason: 'streak', label: `En racha · ${client.streak}d` }

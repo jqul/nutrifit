@@ -34,7 +34,7 @@ describe('computeClientHealth', () => {
   it('flags billing when monthlyPrice is set and no invoice exists for the current period', () => {
     const h = computeClientHealth({ ...oldClient, lastCheckin: dateStr(0, ref), monthlyPrice: 45 }, false, ref)
     expect(h.status).toBe('billing')
-    expect(h.label).toBe('Plan por renovar')
+    expect(h.label).toBe('Falta la factura de este mes')
   })
 
   it('does not flag billing when monthlyPrice is not set', () => {

@@ -33,7 +33,7 @@ describe('issuesOf / alerts', () => {
   })
   it('opens the lab tab for a biomarker alert and the profile for a renewal', () => {
     expect(issuesOf({ healthReason: 'biomarker', healthLabel: 'Analítica en alerta' })[0].tab).toBe('analiticas')
-    expect(issuesOf({ healthReason: 'billing', healthLabel: 'Plan por renovar' })[0].tab).toBe('perfil')
+    expect(issuesOf({ healthReason: 'billing', healthLabel: 'Falta la factura de este mes' })[0].tab).toBe('perfil')
   })
   it('puts an urgent health issue before a weekly alert even if the alert comes first', () => {
     const issues = issuesOf({ healthReason: 'inactive', healthLabel: 'x', alerts: [alert('high_hunger')] })
