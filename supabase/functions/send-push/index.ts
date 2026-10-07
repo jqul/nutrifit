@@ -114,7 +114,16 @@ Deno.serve(async (req: Request) => {
     )
 
     const sent = results.filter((r) => r.status === "fulfilled").length
-    return new Response(JSON.stringify({ sent, total: subs?.length || 0 }), {
+    // Resultado por dispositivo (solo el servicio de push y el código de respuesta, nunca el endpoint completo ni las
+    // claves) para poder diagnosticar desde la consola del navegador por qué una notificación no llega.
+    const devices = results.map((r, i) => {
+      let host = "?"
+      try { host = new URL(subs![i].endpoint).hostname } catch { /* endpoint ilegible */ }
+      if (r.status === "fulfilled") return { host, ok: true, status: (r.value as any)?.statusCode ?? null }
+      const err = r.reason as any
+      return { host, ok: false, status: err?.statusCode ?? null, detail: sanitizeText(err?.body ?? err?.message, 200) }
+    })
+    return new Response(JSON.stringify({ sent, total: subs?.length || 0, devices }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   } catch (err) {

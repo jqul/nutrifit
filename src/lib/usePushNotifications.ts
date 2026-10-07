@@ -118,7 +118,10 @@ export async function sendPush(target: Owner, title: string, body: string, url?:
       return { ok: false, sent: 0, error: error.message }
     }
     const sent = Number((data as { sent?: number } | null)?.sent ?? 0)
-    if (sent === 0) console.warn('[push] send-push no entregó a ningún dispositivo', data)
+    // Con `devices` se ve a qué servicio (Apple, Google…) llegó y con qué código respondió cada uno.
+    const devices = (data as { devices?: unknown } | null)?.devices
+    if (sent === 0) console.warn('[push] send-push no entregó a ningún dispositivo', devices ?? data)
+    else console.info('[push] send-push', devices)
     return { ok: sent > 0, sent }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
