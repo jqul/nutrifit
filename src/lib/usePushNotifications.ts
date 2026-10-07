@@ -109,10 +109,20 @@ export function usePushNotifications(owner: Owner) {
 }
 
 /** Dispara un push real vía la Edge Function send-push. Falla en silencio si no hay suscripciones. */
-export async function sendPush(target: Owner, title: string, body: string, url?: string) {
+/** Pide un push. Nunca lanza (no bloquea el flujo principal) pero devuelve cómo ha ido, para poder avisar o diagnosticar. */
+export async function sendPush(target: Owner, title: string, body: string, url?: string): Promise<{ ok: boolean; sent: number; error?: string }> {
   try {
-    await supabase.functions.invoke('send-push', { body: { ...target, title, body, url } })
-  } catch {
-    // no bloquear el flujo principal si falla el push
+    const { data, error } = await supabase.functions.invoke('send-push', { body: { ...target, title, body, url } })
+    if (error) {
+      console.warn('[push] send-push falló:', error.message)
+      return { ok: false, sent: 0, error: error.message }
+    }
+    const sent = Number((data as { sent?: number } | null)?.sent ?? 0)
+    if (sent === 0) console.warn('[push] send-push no entregó a ningún dispositivo', data)
+    return { ok: sent > 0, sent }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    console.warn('[push] send-push falló:', message)
+    return { ok: false, sent: 0, error: message }
   }
 }

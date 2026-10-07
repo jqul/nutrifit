@@ -538,9 +538,10 @@ function ProximasCitas({ client, demoMode, demoCitas }: { client: ClientData; de
     })
     setSaving(false)
     if (error) { toast('Error al pedir la cita', 'warn'); return }
-    sendPush({ nutricionistaId: client.nutricionistaId }, 'Nueva solicitud de cita 📅',
+    // Se espera al envío (la app puede suspenderse al instante en el móvil y perderlo) y, si el aviso no sale, se dice.
+    const push = await sendPush({ nutricionistaId: client.nutricionistaId }, 'Nueva solicitud de cita 📅',
       `${client.name} ha pedido cita para el ${new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`)
-    toast('Cita solicitada — te avisaremos cuando se confirme ✓', 'ok')
+    toast(push.ok ? 'Cita solicitada — te avisaremos cuando se confirme ✓' : 'Cita solicitada ✓ (tu nutricionista no ha recibido el aviso al móvil; verá la cita al abrir la app)', push.ok ? 'ok' : 'warn')
     setRequesting(false); setDate('')
     await load()
   }
