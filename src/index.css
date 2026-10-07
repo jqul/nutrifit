@@ -1,4 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap');
+/* Tipografías servidas desde la propia web (no desde Google Fonts): así no se envía la IP de quien visita la web a Google */
+@import "@fontsource/outfit/300.css";
+@import "@fontsource/outfit/400.css";
+@import "@fontsource/outfit/500.css";
+@import "@fontsource/outfit/600.css";
+@import "@fontsource/outfit/700.css";
+@import "@fontsource/dm-serif-display/400.css";
+@import "@fontsource/dm-serif-display/400-italic.css";
 @import "tailwindcss";
 
 @theme {

@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { Eye, EyeOff, Check, ArrowRight, Briefcase, User } from 'lucide-react'
 import { InstallAppButton } from './InstallAppButton'
 import { LandingPreview } from './LandingPreview'
+import { LegalLinks } from './LegalLinks'
+import { LEGAL_REVIEWED, LEGAL_VERSION } from '../../legal/entity'
 
 interface AuthProps { onAuth: () => void; onDemo?: () => void }
 
@@ -26,6 +28,8 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
   const [registered, setRegistered] = useState(false)
   const [forgotSent, setForgotSent] = useState(false)
   const [accountMode, setAccountMode] = useState<'professional' | 'personal'>('professional')
+  // Aceptación de las condiciones y la política de privacidad al registrarse (solo pide la casilla cuando los textos están revisados).
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   const handleLogin = async () => {
     setError(''); setLoading(true)
@@ -47,10 +51,15 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
   const handleRegister = async () => {
     if (!name.trim()) { setError('Introduce tu nombre'); return }
     if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return }
+    if (LEGAL_REVIEWED && !acceptedTerms) { setError('Para crear la cuenta tienes que aceptar las condiciones de uso y la política de privacidad'); return }
     setError(''); setLoading(true)
     const { error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { display_name: name, signup_type: 'nutricionista', account_mode: accountMode } },
+      options: { data: {
+        display_name: name, signup_type: 'nutricionista', account_mode: accountMode,
+        // Constancia de la aceptación: qué versión de los textos y cuándo (queda en los datos del usuario de Supabase Auth).
+        ...(LEGAL_REVIEWED ? { terms_version: LEGAL_VERSION, terms_accepted_at: new Date().toISOString() } : {}),
+      } },
     })
     if (error) { setError(error.message); setLoading(false); return }
     setLoading(false); setRegistered(true)
@@ -108,6 +117,9 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
           ))}
         </div>
       </section>
+      <footer className="border-t border-border mt-auto px-6 py-6 max-w-5xl mx-auto w-full">
+        <LegalLinks slugs={['terminos', 'privacidad', 'encargado', 'cookies', 'aviso']} />
+      </footer>
     </div>
   )
 
@@ -238,6 +250,12 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
             <button onClick={() => { setError(''); setView('forgot') }} className="mt-2 text-sm text-muted hover:text-accent">¿Olvidaste tu contraseña?</button>
           )}
           {error && <p className="mt-3 text-sm text-warn">{error}</p>}
+          {view === 'register' && LEGAL_REVIEWED && (
+            <label className="flex items-start gap-2.5 mt-4 text-xs text-muted leading-relaxed cursor-pointer">
+              <input type="checkbox" checked={acceptedTerms} onChange={e => setAcceptedTerms(e.target.checked)} className="mt-0.5 accent-accent" />
+              <span>He leído y acepto las <a href="/?legal=terminos" target="_blank" rel="noreferrer" className="text-accent underline">condiciones de uso</a>, el <a href="/?legal=encargado" target="_blank" rel="noreferrer" className="text-accent underline">contrato de encargado del tratamiento</a> y la <a href="/?legal=privacidad" target="_blank" rel="noreferrer" className="text-accent underline">política de privacidad</a>.</span>
+            </label>
+          )}
           <button className="w-full mt-6 py-3.5 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
             onClick={view === 'login' ? handleLogin : handleRegister} disabled={loading}>
             {loading ? 'Cargando...' : view === 'login' ? 'Entrar' : 'Crear cuenta'}

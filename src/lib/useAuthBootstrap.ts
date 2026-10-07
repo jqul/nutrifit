@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { UserProfile } from '../types'
 import { isStandalone } from './standalone'
+import { LegalSlug, isLegalSlug } from '../legal/documents'
 import { decideForNonTrainerSession, isValidClientToken, readRememberedClientToken, rememberClientToken } from './clientApp'
 
-export type AppView = 'loading' | 'auth' | 'trainer' | 'client-token' | 'pending-approval' | 'reset-password' | 'demo'
+export type AppView = 'loading' | 'auth' | 'trainer' | 'client-token' | 'pending-approval' | 'reset-password' | 'demo' | 'legal'
 
 export interface PendingUser {
   uid: string
@@ -17,6 +18,7 @@ export function useAuthBootstrap() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [pendingUser, setPendingUser] = useState<PendingUser | null>(null)
   const [clientToken, setClientToken] = useState<string | null>(null)
+  const [legalSlug, setLegalSlug] = useState<LegalSlug>('privacidad')
   // true si la app se ha abierto SIN enlace y se ha ido a la del cliente por el token recordado en este dispositivo.
   const [clientFromStorage, setClientFromStorage] = useState(false)
   const loggingOutRef = useRef(false)
@@ -83,6 +85,9 @@ export function useAuthBootstrap() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    // Textos legales (/?legal=privacidad…): públicos, no necesitan sesión y no tocan la que haya.
+    const legal = params.get('legal')
+    if (isLegalSlug(legal)) { setLegalSlug(legal); setView('legal'); return }
     const token = params.get('c')
     if (token) {
       // El enlace del cliente: se recuerda para que el icono de la pantalla de inicio vuelva a abrirlo.
@@ -119,5 +124,5 @@ export function useAuthBootstrap() {
     return () => subscription.unsubscribe()
   }, [])
 
-  return { view, userProfile, pendingUser, clientToken, clientFromStorage, logout, setView, setUserProfile }
+  return { view, userProfile, pendingUser, clientToken, clientFromStorage, legalSlug, logout, setView, setUserProfile }
 }

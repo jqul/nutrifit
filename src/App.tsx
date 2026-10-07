@@ -14,6 +14,7 @@ const NutricionistaDashboard = lazy(() => import('./components/trainer/Nutricion
 const ClientPanel = lazy(() => import('./components/trainer/ClientPanel').then(m => ({ default: m.ClientPanel })))
 const ClientView = lazy(() => import('./components/client/ClientView').then(m => ({ default: m.ClientView })))
 const SuperAdminPanel = lazy(() => import('./components/trainer/SuperAdminPanel').then(m => ({ default: m.SuperAdminPanel })))
+const LegalPage = lazy(() => import('./components/shared/LegalPage').then(m => ({ default: m.LegalPage })))
 const PersonalModeShell = lazy(() => import('./components/trainer/PersonalModeShell').then(m => ({ default: m.PersonalModeShell })))
 
 function LoadingScreen() {
@@ -94,7 +95,7 @@ function DemoView({ selectedClient, initialTab, openClient, closeClient, onRegis
 }
 
 export default function App() {
-  const { view, userProfile, pendingUser, clientToken, clientFromStorage, logout, setView, setUserProfile } = useAuthBootstrap()
+  const { view, userProfile, pendingUser, clientToken, clientFromStorage, legalSlug, logout, setView, setUserProfile } = useAuthBootstrap()
   const [selectedClient, setSelectedClient] = useState<ClientData | null>(null)
   // Pestaña con la que abrir la ficha cuando se entra desde un aviso del Centro de control.
   const [initialClientTab, setInitialClientTab] = useState<ClientPanelTab | undefined>(undefined)
@@ -111,6 +112,8 @@ export default function App() {
       {view === 'client-token' && clientToken && (
         <ClientView token={clientToken} fromStorage={clientFromStorage} />
       )}
+
+      {view === 'legal' && <LegalPage slug={legalSlug} />}
 
       {view === 'reset-password' && (
         <ResetPassword onDone={() => setView('auth')} />

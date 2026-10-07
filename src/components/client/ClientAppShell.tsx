@@ -3,6 +3,7 @@ import { Home, Utensils, BarChart2, MoreHorizontal, MessageCircle } from 'lucide
 import { buildWAUrl } from '../../lib/whatsapp'
 import { ClientData, DietPlan, WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, MealLog, ClinicalNote } from '../../types'
 import { BloodMarkerRow, RecipeRow } from '../../lib/supabase-types'
+import { LegalLinks } from '../shared/LegalLinks'
 import { ThemeToggle } from '../shared/ThemeToggle'
 import { PushToggle } from '../shared/PushToggle'
 import { InstallAppButton } from '../shared/InstallAppButton'
@@ -154,6 +155,8 @@ export function ClientAppShell({
                 <InstallAppRow />
               </div>
             </MoreSection>
+
+            <LegalLinks slugs={['clientes', 'cookies']} className="justify-center" />
 
             {!demoMode && !previewMode && (
               <MoreSection title="Seguridad">
