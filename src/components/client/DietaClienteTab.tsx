@@ -15,7 +15,7 @@ import { buildWAUrl } from '../../lib/whatsapp'
 import { AdviceCard } from './AdviceCard'
 import { ExtrasHoyCard } from './ExtrasHoyCard'
 import { DayBalanceBar } from '../shared/DayBalanceBar'
-import { balanceOfDay } from '../../lib/dayBalance'
+import { balanceOfDay, mealMacros } from '../../lib/dayBalance'
 import { scannedExtrasOf } from '../../lib/scannedLogs'
 import { ScannedFoodSheet } from './ScannedFoodSheet'
 import { BottomSheet } from '../shared/BottomSheet'
@@ -168,7 +168,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   const mealsDoneToday = countMealsDone(todaysMeals.map(m => m.name), logsToday)
   const split = macroEnergySplit(plan.proteinG, plan.carbsG, plan.fatG)
   // Lo que lleva hoy: comidas del plan hechas (con las cantidades del plan) + lo escaneado fuera del plan.
-  const balance = balanceOfDay(toLocalISODate(new Date()), todaysMeals.filter(m => isMealDone(m.name, logsToday)),
+  const balance = balanceOfDay(toLocalISODate(new Date()), todaysMeals.filter(m => isMealDone(m.name, logsToday)).map(mealMacros),
     scannedExtrasOf(logsToday), plan.kcalTarget)
 
   return (

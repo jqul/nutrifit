@@ -277,7 +277,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate">{m.mealName}</p>
+                  <p className="text-sm font-semibold truncate">{m.mealName}{m.optionLabel ? <span className="font-normal text-muted"> · {m.optionLabel}</span> : null}</p>
                   <p className="text-xs text-muted">{new Date(m.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}{m.note ? ` · ${m.note}` : ''}</p>
                 </div>
               </div>

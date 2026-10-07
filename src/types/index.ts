@@ -272,6 +272,10 @@ export interface MealLog {
   photoUrl: string | null
   note: string
   createdAt: number
+  // Opción del plan que eligió el cliente al marcar la comida y lo que aportaba en ese momento (kcal y macros del plan).
+  // Ausente en los registros antiguos y en los productos escaneados.
+  optionLabel?: string | null
+  planned?: { kcal: number; proteinG: number; carbsG: number; fatG: number } | null
 }
 
 export interface Anamnesis {

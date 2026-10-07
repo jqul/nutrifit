@@ -204,6 +204,11 @@ export function mealLogFromRow(row: MealLogRow): MealLog {
   return {
     id: row.id, clientId: row.client_id, date: row.date, mealName: row.meal_name,
     photoUrl: row.photo_url, note: row.note || '', createdAt: new Date(row.created_at).getTime(),
+    optionLabel: row.option_label ?? null,
+    planned: row.planned_kcal == null ? null : {
+      kcal: Number(row.planned_kcal), proteinG: Number(row.planned_protein_g ?? 0),
+      carbsG: Number(row.planned_carbs_g ?? 0), fatG: Number(row.planned_fat_g ?? 0),
+    },
   }
 }
 

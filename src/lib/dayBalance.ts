@@ -22,20 +22,38 @@ export function addMacros(a: MacroTotals, b: MacroTotals): MacroTotals {
   return { kcal: a.kcal + b.kcal, proteinG: r1(a.proteinG + b.proteinG), carbsG: r1(a.carbsG + b.carbsG), fatG: r1(a.fatG + b.fatG) }
 }
 
+/** Lo que se guarda al marcar una comida como hecha: la opción elegida y lo que aportaba en ese momento. */
+export function plannedOf(meal: Pick<DietMeal, 'items' | 'optionLabel'>): Pick<MealLog, 'optionLabel' | 'planned'> {
+  return { optionLabel: meal.optionLabel ?? null, planned: mealMacros(meal) }
+}
+
+/** Lo mismo, con los nombres de columna de meal_logs para el insert. */
+export function plannedColumns(meal: Pick<DietMeal, 'items' | 'optionLabel'>) {
+  const { optionLabel, planned } = plannedOf(meal)
+  return {
+    option_label: optionLabel,
+    planned_kcal: planned!.kcal, planned_protein_g: planned!.proteinG, planned_carbs_g: planned!.carbsG, planned_fat_g: planned!.fatG,
+  }
+}
+
 /** Día de la semana de una fecha YYYY-MM-DD: 0 = lunes … 6 = domingo (como `dayOfWeek` de las comidas). */
 export function dayOfWeekOf(date: string): number { return (new Date(date + 'T00:00:00').getDay() + 6) % 7 }
 
 /**
- * Las comidas del plan que un día quedaron hechas, para quien no sabe qué opción eligió el cliente (el nutricionista):
- * por cada nombre de comida con registro ese día se toma la primera del plan que aplica a ese día de la semana.
+ * Lo que aportaron las comidas del plan que un día quedaron hechas. Cada comida cuenta una vez. Si el registro lleva lo que
+ * aportaba cuando el cliente la marcó (la opción que eligió), se usa eso; en los registros antiguos, que no lo llevan, se
+ * estima con la primera comida del plan de ese nombre que aplica a ese día de la semana. Lo que no es una comida del plan
+ * (un producto escaneado, una nota) no cuenta.
  */
-export function mealsDoneOn(planMeals: DietMeal[], logs: MealLog[], date: string): DietMeal[] {
+export function plannedMealsOn(planMeals: DietMeal[], logs: MealLog[], date: string): MacroTotals[] {
   const dow = dayOfWeekOf(date)
-  const names = new Set(logs.filter(l => l.date === date).map(l => l.mealName))
-  const done: DietMeal[] = []
-  for (const name of names) {
+  const byName = new Map<string, MealLog>()
+  for (const l of logs) if (l.date === date && !byName.has(l.mealName)) byName.set(l.mealName, l)
+  const done: MacroTotals[] = []
+  for (const [name, log] of byName) {
+    if (log.planned) { done.push(log.planned); continue }
     const meal = planMeals.find(m => m.name === name && (m.dayOfWeek == null || m.dayOfWeek === dow))
-    if (meal) done.push(meal)
+    if (meal) done.push(mealMacros(meal))
   }
   return done
 }
@@ -53,8 +71,8 @@ export interface DayBalance {
 }
 
 /** Balance de un día a partir de las comidas del plan hechas y los extras escaneados. */
-export function balanceOfDay(date: string, doneMeals: DietMeal[], extras: ScannedExtra[], targetKcal: number | null): DayBalance {
-  const plan = doneMeals.reduce((s, m) => addMacros(s, mealMacros(m)), ZERO)
+export function balanceOfDay(date: string, doneMeals: MacroTotals[], extras: ScannedExtra[], targetKcal: number | null): DayBalance {
+  const plan = doneMeals.reduce((s, m) => addMacros(s, m), ZERO)
   const ex = sumExtras(extras)
   const total = addMacros(plan, ex)
   return {
@@ -68,7 +86,7 @@ export function balanceByDay(planMeals: DietMeal[], targetKcal: number | null, l
   const dates = [...new Set(logs.filter(l => l.date >= fromDate).map(l => l.date))].sort((a, b) => b.localeCompare(a))
   return dates.flatMap(date => {
     const dayLogs = logs.filter(l => l.date === date)
-    const balance = balanceOfDay(date, mealsDoneOn(planMeals, dayLogs, date), scannedExtrasOf(dayLogs), targetKcal)
+    const balance = balanceOfDay(date, plannedMealsOn(planMeals, dayLogs, date), scannedExtrasOf(dayLogs), targetKcal)
     return balance.doneMeals + balance.extrasCount > 0 ? [balance] : []
   })
 }

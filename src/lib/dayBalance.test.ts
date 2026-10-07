@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { balanceByDay, balanceOfDay, dayOfWeekOf, mealMacros, mealsDoneOn } from './dayBalance'
+import { balanceByDay, balanceOfDay, dayOfWeekOf, mealMacros, plannedColumns, plannedMealsOn, plannedOf } from './dayBalance'
 import { scannedExtrasOf } from './scannedLogs'
 import { scannedFoodNote } from './openFoodFacts'
 import type { DietMeal, MealLog } from '../types'
@@ -30,21 +30,36 @@ describe('dayOfWeekOf', () => {
   })
 })
 
-describe('mealsDoneOn', () => {
-  const plan = [meal('Desayuno', [item(300)]), meal('Comida', [item(700)], 0, 'comida-lun'), meal('Comida', [item(650)], 2, 'comida-mie')]
-  it('takes the meal that applies to that weekday', () => {
-    expect(mealsDoneOn(plan, [log('Comida', WED)], WED).map(m => m.id)).toEqual(['comida-mie'])
+describe('plannedOf / plannedColumns', () => {
+  const m = { ...meal('Comida', [item(300, 20, 30, 8), item(100, 5, 10, 2)]), optionLabel: 'Opción B' }
+  it('keeps the chosen option and what it contributed', () => {
+    expect(plannedOf(m)).toEqual({ optionLabel: 'Opción B', planned: { kcal: 400, proteinG: 25, carbsG: 40, fatG: 10 } })
   })
-  it('counts a meal once and ignores logs of other days and unknown names', () => {
+  it('uses the column names of meal_logs', () => {
+    expect(plannedColumns(m)).toEqual({ option_label: 'Opción B', planned_kcal: 400, planned_protein_g: 25, planned_carbs_g: 40, planned_fat_g: 10 })
+  })
+  it('has no label for a fixed meal', () => expect(plannedOf(meal('Cena', [item(500)])).optionLabel).toBeNull())
+})
+
+describe('plannedMealsOn', () => {
+  const plan = [meal('Desayuno', [item(300)]), meal('Comida', [item(700)], 0, 'comida-lun'), meal('Comida', [item(650)], 2, 'comida-mie')]
+  it('estimates an old log with the meal of the plan that applies to that weekday', () => {
+    expect(plannedMealsOn(plan, [log('Comida', WED)], WED).map(x => x.kcal)).toEqual([650])
+  })
+  it('uses what the client chose when the log carries it, even if the plan has changed since', () => {
+    const chosen = { ...log('Comida', WED), optionLabel: 'Opción C', planned: { kcal: 480, proteinG: 30, carbsG: 40, fatG: 12 } }
+    expect(plannedMealsOn(plan, [chosen], WED).map(x => x.kcal)).toEqual([480])
+  })
+  it('counts a meal once and ignores other days, scanned products and unknown names', () => {
     const logs = [log('Desayuno', WED, '', 'a'), log('Desayuno', WED, '', 'b'), log('Desayuno', '2026-10-06'), log('Galletas', WED)]
-    expect(mealsDoneOn(plan, logs, WED).map(m => m.name)).toEqual(['Desayuno'])
+    expect(plannedMealsOn(plan, logs, WED).map(x => x.kcal)).toEqual([300])
   })
 })
 
 describe('balanceOfDay', () => {
   it('adds plan meals and scanned extras against the target', () => {
     const extras = scannedExtrasOf([log('Galletas', WED, scannedFoodNote(food, 25))])
-    const b = balanceOfDay(WED, [meal('Desayuno', [item(400, 20, 40, 10)])], extras, 2000)
+    const b = balanceOfDay(WED, [mealMacros(meal('Desayuno', [item(400, 20, 40, 10)]))], extras, 2000)
     expect(b.plan.kcal).toBe(400)
     expect(b.extras.kcal).toBe(120)
     expect(b.total).toEqual({ kcal: 520, proteinG: 21.6, carbsG: 57.5, fatG: 14.6 })

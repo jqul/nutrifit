@@ -9,6 +9,7 @@ import { calcStreak } from '../../lib/adherence'
 import { resolveTodaysMeals, loadOptionChoices, loadDayType } from '../../lib/planMeals'
 import { sendPush } from '../../lib/usePushNotifications'
 import { publishMealLogs } from '../../lib/mealProgress'
+import { plannedColumns, plannedOf } from '../../lib/dayBalance'
 import { PendingSurveys } from './PendingSurveys'
 import { AdviceCard } from './AdviceCard'
 import { useRealtimeRefresh } from '../../hooks/useRealtimeRefresh'
@@ -234,12 +235,12 @@ export function HoyTab({ client, demoMode, personalMode }: {
 
   const markMealDone = async (meal: DietMeal) => {
     if (demoMode) {
-      setMealLogsToday(prev => [...prev, { id: newId(), clientId: client.id, date: today, mealName: meal.name, note: '', photoUrl: null, createdAt: Date.now() }])
+      setMealLogsToday(prev => [...prev, { id: newId(), clientId: client.id, date: today, mealName: meal.name, note: '', photoUrl: null, createdAt: Date.now(), ...plannedOf(meal) }])
       toast('Modo demo: los cambios no se guardan', 'ok')
       return
     }
     const { data, error } = await supabase.from('meal_logs').insert({
-      client_id: client.id, date: today, meal_name: meal.name, note: '', photo_url: null,
+      client_id: client.id, date: today, meal_name: meal.name, note: '', photo_url: null, ...plannedColumns(meal),
     }).select().single()
     if (error) { toast('Error al marcar la comida', 'warn'); return }
     setMealLogsToday(prev => [...prev, mealLogFromRow(data)])
@@ -259,7 +260,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
       const localUrl = URL.createObjectURL(file)
       setMealLogsToday(prev => existing
         ? prev.map(l => l.id === existing.id ? { ...l, photoUrl: localUrl } : l)
-        : [...prev, { id: newId(), clientId: client.id, date: today, mealName: meal.name, note: '', photoUrl: localUrl, createdAt: Date.now() }])
+        : [...prev, { id: newId(), clientId: client.id, date: today, mealName: meal.name, note: '', photoUrl: localUrl, createdAt: Date.now(), ...plannedOf(meal) }])
       toast('Modo demo: los cambios no se guardan', 'ok')
       return
     }
@@ -276,7 +277,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
       setMealLogsToday(prev => prev.map(l => l.id === existing.id ? { ...l, photoUrl } : l))
     } else {
       const { data } = await supabase.from('meal_logs').insert({
-        client_id: client.id, date: today, meal_name: meal.name, note: '', photo_url: photoUrl,
+        client_id: client.id, date: today, meal_name: meal.name, note: '', photo_url: photoUrl, ...plannedColumns(meal),
       }).select().single()
       if (data) setMealLogsToday(prev => [...prev, mealLogFromRow(data)])
     }

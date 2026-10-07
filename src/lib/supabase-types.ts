@@ -262,6 +262,11 @@ export interface MealLogRow {
   photo_url: string | null
   note: string | null
   created_at: string
+  option_label?: string | null
+  planned_kcal?: number | null
+  planned_protein_g?: number | null
+  planned_carbs_g?: number | null
+  planned_fat_g?: number | null
 }
 
 export interface AnamnesisRow {
