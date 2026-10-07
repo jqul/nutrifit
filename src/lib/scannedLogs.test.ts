@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extrasByDay, parseScannedLog, scannedExtrasOf, sumExtras } from './scannedLogs'
+import { parseScannedLog, scannedExtrasOf, sumExtras } from './scannedLogs'
 import { scannedFoodNote } from './openFoodFacts'
 import type { MealLog } from '../types'
 
@@ -26,13 +26,4 @@ describe('extras of today', () => {
     expect(sumExtras(scannedExtrasOf(logs))).toEqual({ kcal: 360, proteinG: 4.9, carbsG: 52.5, fatG: 13.7 })
   })
   it('is zero without extras', () => expect(sumExtras([])).toEqual({ kcal: 0, proteinG: 0, carbsG: 0, fatG: 0 }))
-})
-
-describe('extrasByDay', () => {
-  const at = (date: string, grams: number, id: string): MealLog => ({ ...log(scannedFoodNote(food, grams), id), date })
-  const logs = [at('2026-10-07', 25, 'a'), at('2026-10-07', 50, 'b'), at('2026-10-05', 100, 'c'), at('2026-09-20', 100, 'old'), { ...log('Cena', 'n'), date: '2026-10-07' }]
-  it('groups by day, newest first, skipping old days and ordinary meals', () => {
-    expect(extrasByDay(logs, '2026-10-01')).toEqual([{ date: '2026-10-07', kcal: 360, count: 2 }, { date: '2026-10-05', kcal: 480, count: 1 }])
-  })
-  it('is empty when nothing was scanned in the period', () => expect(extrasByDay(logs, '2026-11-01')).toEqual([]))
 })

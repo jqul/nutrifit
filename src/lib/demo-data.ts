@@ -611,6 +611,9 @@ export const DEMO_MEAL_LOGS: Record<string, MealLog[]> = {
       photoUrl: mealPlaceholder('Desayuno', '#3f7d4f'), createdAt: Date.now() - 3 * 3600000 },
     { id: 'ml-maria-2', clientId: 'demo-client-001', date: daysAgo(1), mealName: 'Comida', note: '',
       photoUrl: mealPlaceholder('Comida', '#8fae6c'), createdAt: Date.now() - 27 * 3600000 },
+    // Un producto escaneado (fuera del plan): así se ve en la demo el balance del día con extras.
+    { id: 'ml-maria-3', clientId: 'demo-client-001', date: daysAgo(0), mealName: 'Galletas María', photoUrl: null, createdAt: Date.now() - 2 * 3600000,
+      note: '40 g · 192 kcal · P 2,6 g · C 28 g · G 7,3 g (producto escaneado, Open Food Facts)' },
   ],
   'demo-client-002': [
     { id: 'ml-carlos-1', clientId: 'demo-client-002', date: daysAgo(0), mealName: 'Post-entreno', note: 'Batido + plátano justo al salir del gym',

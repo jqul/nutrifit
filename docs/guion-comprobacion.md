@@ -216,7 +216,8 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] En **iPhone** (Safari) y en navegadores sin lector propio: la cámara **también funciona** (la primera vez dice «Preparando la cámara…» unos segundos mientras descarga el lector; las siguientes ya está). Si se niega el permiso de cámara, se puede **escribir el código** a mano (ej. 3017620422003 = Nutella).
 - [ ] Al encontrar un producto, la hoja **se ve entera** (ya no queda tapada por la barra Hoy/Dieta/Progreso/Más): cantidad en gramos (con atajos 30/50/100/150/200), kcal y macros de esa cantidad, **«Añadir a mi diario de hoy»** y **«Escanear otro producto»**.
 - [ ] «Añadir a mi diario de hoy» lo apunta y **aparece enseguida** en **Dieta → «Extras de hoy»** (nombre, cantidad, kcal, macros, total y % del objetivo diario) y en Progreso → Diario de comidas, sin cerrar la app. El icono de la papelera lo quita.
-- [ ] El nutricionista ve en el Seguimiento del cliente un recuadro **«Fuera del plan · últimos 7 días»** con las kcal escaneadas por día y la media diaria.
+- [ ] En **Dieta**, la tarjeta del objetivo muestra **«Hoy llevas X kcal de Y (Z%)»** con una barra (verde = comidas del plan hechas, ámbar = extras) y los macros comidos frente al objetivo; aparece en cuanto marcas una comida en Hoy o añades un extra.
+- [ ] El nutricionista ve en el Seguimiento del cliente **«Balance de los últimos 7 días»**: por día, kcal frente al objetivo, desglose plan/extras y el exceso si se pasa, más un recuadro **«Fuera del plan»** con las kcal escaneadas y la media diaria. Es una estimación (las comidas hechas cuentan con las cantidades del plan).
 - [ ] Lo mismo con el resto de hojas y ventanas del modo cliente (sustituir un alimento, comer fuera, guías): ya no las tapa la barra de abajo.
 
 ## Qué contarme

@@ -8,12 +8,15 @@ import { buildShoppingList, groupShoppingItemsByAisle } from '../../lib/shopping
 import { convertQuantity, MacroKey } from '../../lib/foodConversion'
 import { SubstituteItem, suggestSubstitutes, substituteGrams } from '../../lib/exchangeGroups'
 import { detectAllergenConflict } from '../../lib/allergens'
-import { todayDayOfWeek } from '../../lib/date'
+import { todayDayOfWeek, toLocalISODate } from '../../lib/date'
 import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, saveDayType, resolveTodaysMeals } from '../../lib/planMeals'
 import { subscribeMealLogs, getMealLogsSnapshot, mealLogsOf, isMealDone, countMealsDone, macroEnergySplit } from '../../lib/mealProgress'
 import { buildWAUrl } from '../../lib/whatsapp'
 import { AdviceCard } from './AdviceCard'
 import { ExtrasHoyCard } from './ExtrasHoyCard'
+import { DayBalanceBar } from '../shared/DayBalanceBar'
+import { balanceOfDay } from '../../lib/dayBalance'
+import { scannedExtrasOf } from '../../lib/scannedLogs'
 import { ScannedFoodSheet } from './ScannedFoodSheet'
 import { BottomSheet } from '../shared/BottomSheet'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
@@ -164,6 +167,9 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   const todaysMeals = resolveTodaysMeals(plan.meals, todayDayOfWeek(), dayType, optionChoices)
   const mealsDoneToday = countMealsDone(todaysMeals.map(m => m.name), logsToday)
   const split = macroEnergySplit(plan.proteinG, plan.carbsG, plan.fatG)
+  // Lo que lleva hoy: comidas del plan hechas (con las cantidades del plan) + lo escaneado fuera del plan.
+  const balance = balanceOfDay(toLocalISODate(new Date()), todaysMeals.filter(m => isMealDone(m.name, logsToday)),
+    scannedExtrasOf(logsToday), plan.kcalTarget)
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
@@ -224,6 +230,21 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
             <div className="bg-protein" style={{ width: `${split.proteinPct}%` }} />
             <div className="bg-notice" style={{ width: `${split.carbsPct}%` }} />
             <div className="bg-fat" style={{ width: `${split.fatPct}%` }} />
+          </div>
+        )}
+        {balance.total.kcal > 0 && (
+          <div className="mt-4 pt-4 border-t border-border space-y-2" aria-live="polite">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-sm"><span className="font-semibold">Hoy llevas {balance.total.kcal} kcal</span>
+                <span className="text-muted"> de {plan.kcalTarget}{balance.pctOfTarget != null ? ` (${balance.pctOfTarget}%)` : ''}</span></p>
+              {balance.total.kcal > plan.kcalTarget && <p className="text-xs font-semibold text-warn">+{balance.total.kcal - plan.kcalTarget} kcal</p>}
+            </div>
+            <DayBalanceBar planKcal={balance.plan.kcal} extrasKcal={balance.extras.kcal} targetKcal={plan.kcalTarget} />
+            <p className="text-xs text-muted">
+              <span className="inline-block w-2 h-2 rounded-full bg-ok mr-1" />Plan {balance.plan.kcal}
+              <span className="inline-block w-2 h-2 rounded-full bg-notice ml-3 mr-1" />Extras {balance.extras.kcal}
+              <span className="ml-3">P {Math.round(balance.total.proteinG)}/{plan.proteinG} · C {Math.round(balance.total.carbsG)}/{plan.carbsG} · G {Math.round(balance.total.fatG)}/{plan.fatG} g</span>
+            </p>
           </div>
         )}
         <div className="grid grid-cols-4 gap-2 mt-3">

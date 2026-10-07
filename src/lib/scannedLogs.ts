@@ -31,17 +31,3 @@ export function sumExtras(extras: ScannedExtra[]): { kcal: number; proteinG: num
     fatG: r1(extras.reduce((s, e) => s + e.info.fatG, 0)),
   }
 }
-
-export interface ExtraDay { date: string; kcal: number; count: number }
-
-/** Lo escaneado (fuera del plan) por día desde `fromDate` (YYYY-MM-DD, incluido), el día más reciente primero. */
-export function extrasByDay(logs: MealLog[], fromDate: string): ExtraDay[] {
-  const days = new Map<string, ExtraDay>()
-  for (const { log, info } of scannedExtrasOf(logs)) {
-    if (log.date < fromDate) continue
-    const day = days.get(log.date) ?? { date: log.date, kcal: 0, count: 0 }
-    day.kcal += info.kcal; day.count += 1
-    days.set(log.date, day)
-  }
-  return [...days.values()].sort((a, b) => b.date.localeCompare(a.date))
-}
