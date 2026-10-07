@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { EditableItem, EditableMeal, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, scaleItemToQuantity, applyFitToMeals, demoPlanToEditable } from './planModel'
+import { EditableItem, EditableMeal, buildSavePlanPayload, numOrNull, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, scaleItemToQuantity, applyFitToMeals, demoPlanToEditable } from './planModel'
 import { DEMO_DIET_PLANS } from '../../../../lib/demo-data'
 
 const item = (over: Partial<EditableItem> = {}): EditableItem => ({
@@ -120,5 +120,42 @@ describe('demoPlanToEditable', () => {
     expect(e.meals).toHaveLength(plan.meals.length)
     expect(e.meals[0].items[0].foodName).toBe(plan.meals[0].items[0].foodName)
     expect(e.supplements).toHaveLength(plan.supplements.length)
+  })
+})
+
+describe('buildSavePlanPayload', () => {
+  const item = (over: Partial<EditableItem> = {}): EditableItem => ({
+    id: 'i1', foodName: 'Avena', quantity: '50', unit: 'g', kcal: '190', proteinG: '6,5', carbsG: '', fatG: 'abc',
+    fiberG: '', sugarG: '', sodiumMg: '', saturatedFatG: '', calciumMg: '', ironMg: '', zincMg: '', recipeId: null, ...over,
+  })
+  const meal: EditableMeal = { id: 'm1', name: 'Desayuno', time: '08:00', kcalTarget: '400', dayOfWeek: 2, optionGroup: null, optionLabel: null, dayType: 'on', items: [item()] }
+  const form = {
+    kcalTarget: '2100', proteinG: '140', carbsG: '', fatG: 'x', fiberG: '28', advice: 'Bebe agua', changeReason: '  subo kcal  ',
+    meals: [meal], supplements: [{ id: 's1', name: 'Omega 3', dose: '1 g', timing: 'cena', visibleToClient: false }],
+  }
+
+  it('turns the text fields into numbers and never sends NaN', () => {
+    const p = buildSavePlanPayload(form)
+    expect(p).toMatchObject({ kcal_target: 2100, protein_g: 140, carbs_g: 0, fat_g: 0, fiber_g: 28, advice: 'Bebe agua' })
+    expect(p.meals[0].items[0]).toMatchObject({ food_name: 'Avena', kcal: 190, protein_g: 6, carbs_g: null, fat_g: null })
+    expect(JSON.stringify(p)).not.toContain('NaN')
+  })
+  it('keeps the meal structure and the supplements with the column names of the database', () => {
+    const p = buildSavePlanPayload(form)
+    expect(p.meals[0]).toMatchObject({ name: 'Desayuno', time: '08:00', kcal_target: 400, day_of_week: 2, day_type: 'on', option_group: null })
+    expect(p.supplements).toEqual([{ name: 'Omega 3', dose: '1 g', timing: 'cena', visible_to_client: false }])
+  })
+  it('sends the reason trimmed, or null when empty, and an empty recipe link as null', () => {
+    expect(buildSavePlanPayload(form).change_reason).toBe('subo kcal')
+    const p = buildSavePlanPayload({ ...form, changeReason: '   ', meals: [{ ...meal, kcalTarget: '', items: [item({ recipeId: '' })] }] })
+    expect(p.change_reason).toBeNull()
+    expect(p.meals[0].kcal_target).toBeNull()
+    expect(p.meals[0].items[0].recipe_id).toBeNull()
+  })
+})
+
+describe('numOrNull', () => {
+  it('reads numbers and rejects the rest', () => {
+    expect([numOrNull('12.5'), numOrNull(''), numOrNull(undefined), numOrNull('abc'), numOrNull('0')]).toEqual([12.5, null, null, null, 0])
   })
 })

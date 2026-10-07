@@ -27,7 +27,7 @@ import { Modal } from '../../shared/Modal'
 import { FoodDraft, blankFoodDraft, draftToColumns, normalizeFoodName } from '../../../lib/foodDraft'
 import { createOwnFood } from '../../../lib/ownFoods'
 import {
-  EditableItem, EditableMeal, EditableSupplement, DAY_LABELS, MACRO_LABELS, newId, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, applyFitToMeals, demoPlanToEditable,
+  EditableItem, EditableMeal, EditableSupplement, buildSavePlanPayload, DAY_LABELS, MACRO_LABELS, newId, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, applyFitToMeals, demoPlanToEditable,
 } from './plan-dieta/planModel'
 import { NumInput, MacroProgressBar, MicroInput } from './plan-dieta/PlanInputs'
 import { ActionMenu } from './plan-dieta/ActionMenu'
@@ -251,46 +251,17 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     if (!planId) return
     if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
     setSaving(true)
-    await supabase.from('diet_plans').update({
-      kcal_target: parseFloat(kcalTarget) || 0, protein_g: parseFloat(proteinG) || 0,
-      carbs_g: parseFloat(carbsG) || 0, fat_g: parseFloat(fatG) || 0, fiber_g: parseFloat(fiberG) || 0,
-      advice, updated_at: new Date().toISOString(),
-      // El trigger de la BD registra el cambio en el historial y consume (vacía) este motivo.
-      change_reason: changeReason.trim() || null,
-    }).eq('id', planId)
-
-    await supabase.from('diet_meals').delete().eq('plan_id', planId)
-    await supabase.from('diet_supplements').delete().eq('plan_id', planId)
-
-    for (let idx = 0; idx < meals.length; idx++) {
-      const meal = meals[idx]
-      const { data: insertedMeal } = await supabase.from('diet_meals').insert({
-        plan_id: planId, name: meal.name, time: meal.time,
-        kcal_target: meal.kcalTarget ? parseFloat(meal.kcalTarget) : null, day_of_week: meal.dayOfWeek,
-        option_group: meal.optionGroup, option_label: meal.optionLabel, day_type: meal.dayType, sort_order: idx,
-      }).select().single()
-      if (insertedMeal && meal.items.length) {
-        await supabase.from('diet_meal_items').insert(meal.items.map((item, i) => ({
-          meal_id: insertedMeal.id, food_name: item.foodName, quantity: item.quantity, unit: item.unit,
-          kcal: item.kcal ? parseFloat(item.kcal) : null, protein_g: item.proteinG ? parseFloat(item.proteinG) : null,
-          carbs_g: item.carbsG ? parseFloat(item.carbsG) : null, fat_g: item.fatG ? parseFloat(item.fatG) : null,
-          fiber_g: item.fiberG ? parseFloat(item.fiberG) : null, sugar_g: item.sugarG ? parseFloat(item.sugarG) : null,
-          sodium_mg: item.sodiumMg ? parseFloat(item.sodiumMg) : null, saturated_fat_g: item.saturatedFatG ? parseFloat(item.saturatedFatG) : null,
-          calcium_mg: item.calciumMg ? parseFloat(item.calciumMg) : null, iron_mg: item.ironMg ? parseFloat(item.ironMg) : null,
-          zinc_mg: item.zincMg ? parseFloat(item.zincMg) : null, recipe_id: item.recipeId || null,
-          sort_order: i,
-        })))
-      }
+    // Todo el guardado en una sola operación del servidor: o queda el plan entero guardado, o no cambia nada
+    // (antes eran decenas de peticiones sueltas y, si una fallaba, el plan se quedaba a medias).
+    const { error } = await supabase.rpc('save_diet_plan', {
+      p_plan_id: planId,
+      p_plan: buildSavePlanPayload({ kcalTarget, proteinG, carbsG, fatG, fiberG, advice, changeReason, meals, supplements }),
+    })
+    if (error) {
+      setSaving(false)
+      toast('No se pudo guardar el plan, no se ha cambiado nada: ' + error.message, 'warn')
+      return
     }
-    if (supplements.length) {
-      await supabase.from('diet_supplements').insert(supplements.map(s => ({
-        plan_id: planId, name: s.name, dose: s.dose, timing: s.timing, visible_to_client: s.visibleToClient,
-      })))
-    }
-    // Instantánea completa de lo que acaba de quedar guardado (la BD no crea otra si no ha cambiado nada).
-    // No es crítico: si falla, el plan ya está guardado y solo falta esta versión.
-    const { error: versionError } = await supabase.rpc('create_plan_version', { p_plan_id: planId, p_note: changeReason.trim() || null })
-    if (versionError) console.warn('No se pudo crear la versión del plan', versionError)
     setSaving(false)
     setChangeReason('')
     setSavedTick(t => t + 1)

@@ -52,6 +52,7 @@ Con el cliente de prueba, pestaña **Plan de dieta**:
 - [ ] Abre **Versiones del plan**: hay una versión nueva marcada «Actual» y la anterior debajo.
 - [ ] Pulsa **Ver** en la anterior: enseña consejo, comidas con alimentos y suplementos.
 - [ ] Guarda sin tocar nada: **no** debe aparecer una versión nueva.
+- [ ] El guardado es **atómico**: con un plan grande (muchas comidas), tras guardar y recargar la página está **todo** (comidas, alimentos, suplementos). Si cortas la conexión justo al guardar, sale «No se pudo guardar el plan, no se ha cambiado nada» y al recargar el plan sigue **como estaba**, nunca a medias.
 - [ ] Pulsa **Restaurar** en la versión anterior: el diálogo dice qué cambiaría (kcal, comidas…). Confirma.
 - [ ] El editor se recarga con el plan antiguo (kcal y comidas). Hay una versión nueva «Restaurada desde la versión N» y el historial registra «Restaurado a la versión N».
 - [ ] El cliente de prueba ve el plan restaurado en su app (no recibe aviso: es lo esperado).

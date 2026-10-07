@@ -128,3 +128,35 @@ export function demoPlanToEditable(plan: DietPlan) {
     supplements: plan.supplements.map(s => ({ id: s.id, name: s.name, dose: s.dose, timing: s.timing, visibleToClient: s.visibleToClient })),
   }
 }
+
+// ── Guardado del plan ───────────────────────────────────────────────────────────────────────────────────────────
+
+/** Número del campo de texto, o null si está vacío o no es un número (nunca NaN). */
+export function numOrNull(text: string | null | undefined): number | null {
+  const n = parseFloat(String(text ?? ''))
+  return Number.isFinite(n) ? n : null
+}
+
+/** El plan editado, con la forma que espera la función `save_diet_plan` de la base de datos (ver migración 0056). */
+export function buildSavePlanPayload(form: {
+  kcalTarget: string; proteinG: string; carbsG: string; fatG: string; fiberG: string; advice: string; changeReason: string
+  meals: EditableMeal[]; supplements: EditableSupplement[]
+}) {
+  return {
+    kcal_target: numOrNull(form.kcalTarget) ?? 0, protein_g: numOrNull(form.proteinG) ?? 0, carbs_g: numOrNull(form.carbsG) ?? 0,
+    fat_g: numOrNull(form.fatG) ?? 0, fiber_g: numOrNull(form.fiberG) ?? 0, advice: form.advice,
+    change_reason: form.changeReason.trim() || null, note: form.changeReason.trim() || null,
+    meals: form.meals.map(m => ({
+      name: m.name, time: m.time, kcal_target: numOrNull(m.kcalTarget), day_of_week: m.dayOfWeek,
+      option_group: m.optionGroup, option_label: m.optionLabel, day_type: m.dayType,
+      items: m.items.map(i => ({
+        food_name: i.foodName, quantity: i.quantity, unit: i.unit,
+        kcal: numOrNull(i.kcal), protein_g: numOrNull(i.proteinG), carbs_g: numOrNull(i.carbsG), fat_g: numOrNull(i.fatG),
+        fiber_g: numOrNull(i.fiberG), sugar_g: numOrNull(i.sugarG), sodium_mg: numOrNull(i.sodiumMg),
+        saturated_fat_g: numOrNull(i.saturatedFatG), calcium_mg: numOrNull(i.calciumMg), iron_mg: numOrNull(i.ironMg),
+        zinc_mg: numOrNull(i.zincMg), recipe_id: i.recipeId || null,
+      })),
+    })),
+    supplements: form.supplements.map(s => ({ name: s.name, dose: s.dose, timing: s.timing, visible_to_client: s.visibleToClient })),
+  }
+}
