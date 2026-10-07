@@ -11,6 +11,7 @@ import { sendPush } from '../../lib/usePushNotifications'
 import { publishMealLogs } from '../../lib/mealProgress'
 import { PendingSurveys } from './PendingSurveys'
 import { AdviceCard } from './AdviceCard'
+import { useRealtimeRefresh } from '../../hooks/useRealtimeRefresh'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS, DEMO_CHECKINS } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
@@ -521,6 +522,8 @@ function ProximasCitas({ client, demoMode, demoCitas }: { client: ClientData; de
   }, [client.id, demoMode])
 
   useEffect(() => { load() }, [load])
+  // Cuando el nutricionista confirma o cambia la cita, el cliente lo ve sin cerrar y abrir la app.
+  useRealtimeRefresh('appointments', `client_id=eq.${client.id}`, load, !demoMode)
 
   const requestAppointment = async () => {
     if (!date) { toast('Elige una fecha', 'warn'); return }

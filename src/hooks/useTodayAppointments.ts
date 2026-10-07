@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useRealtimeRefresh } from './useRealtimeRefresh'
 import { supabase } from '../lib/supabase'
 import { appointmentFromRow } from '../lib/mappers'
 import { toLocalISODate } from '../lib/date'
@@ -9,7 +10,7 @@ import { Appointment } from '../types'
 export function useTodayAppointments(nutricionistaId: string, demoMode: boolean): Appointment[] {
   const [appointments, setAppointments] = useState<Appointment[]>([])
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (demoMode) {
       const todayStr = toLocalISODate(new Date())
       setAppointments(DEMO_APPOINTMENTS
@@ -25,6 +26,10 @@ export function useTodayAppointments(nutricionistaId: string, demoMode: boolean)
       .order('start_at')
       .then(({ data }) => setAppointments((data || []).map(appointmentFromRow)))
   }, [nutricionistaId, demoMode])
+
+  useEffect(() => { load() }, [load])
+  // Las citas de hoy se actualizan solas cuando cambia alguna.
+  useRealtimeRefresh('appointments', `nutricionista_id=eq.${nutricionistaId}`, load, !demoMode)
 
   return appointments
 }

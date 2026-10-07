@@ -32,7 +32,8 @@ export function ScannedFoodSheet({ food, clientId, demoMode, onClose, onScanAnot
     })
     setSaving(false)
     if (error) { toast('No se pudo añadir al diario: ' + error.message, 'warn'); return }
-    toast('Añadido a tu diario de hoy ✓', 'ok')
+    toast('Añadido a tu diario de hoy ✓ (lo ves en Progreso)', 'ok')
+    window.dispatchEvent(new Event('nutrifit:meal-logged'))   // el diario de Progreso se recarga sin cerrar la app
     onClose()
   }
 

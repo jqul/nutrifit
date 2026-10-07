@@ -9,6 +9,7 @@ import { sendPush } from '../../lib/usePushNotifications'
 import { DEMO_APPOINTMENTS } from '../../lib/demo-data'
 import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
+import { useRealtimeRefresh } from '../../hooks/useRealtimeRefresh'
 import { toast } from '../shared/Toast'
 import { ChevronLeft, ChevronRight, Plus, Check, X, Trash2, Video, List, CalendarDays } from 'lucide-react'
 
@@ -57,8 +58,9 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
   const days = weekDays(anchor)
   const rangeKey = `${days[0].getTime()}`
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  // `quiet`: recarga en segundo plano (un cambio en directo) sin el parpadeo de "cargando".
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) setLoading(true)
     const start = days[0]
     const end = new Date(days[6]); end.setDate(end.getDate() + 1)
     if (demoMode) {
@@ -80,6 +82,9 @@ export function CalendarTab({ nutricionistaId, clients, demoMode }: {
   }, [nutricionistaId, rangeKey, demoMode])
 
   useEffect(() => { load() }, [load])
+
+  // Una cita nueva (p. ej. un cliente que la pide) aparece sola, sin cerrar y abrir la app.
+  useRealtimeRefresh('appointments', `nutricionista_id=eq.${nutricionistaId}`, () => load(true), !demoMode)
 
   const saveAppointment = async () => {
     if (!form.title.trim()) { toast('Ponle un título a la cita', 'warn'); return }

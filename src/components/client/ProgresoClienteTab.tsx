@@ -71,6 +71,11 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
   }, [clientId, demoMode])
 
   useEffect(() => { load() }, [load])
+  // Un producto escaneado en Dieta entra en el diario de aquí: recargar al instante.
+  useEffect(() => {
+    window.addEventListener('nutrifit:meal-logged', load)
+    return () => window.removeEventListener('nutrifit:meal-logged', load)
+  }, [load])
 
   const handleAddWeight = async () => {
     const kg = parseFloat(newWeight)
