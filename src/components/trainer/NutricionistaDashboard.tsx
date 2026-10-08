@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { UserProfile, ClientData } from '../../types'
 import { useNutricionistaClients, NewClientInput } from '../../hooks/useNutricionistaClients'
 import { Button } from '../shared/Button'
@@ -20,7 +20,7 @@ import { ControlCenter } from './ControlCenter'
 import { priorityOf, ClientPanelTab } from '../../lib/controlCenter'
 import { useTodayAppointments } from '../../hooks/useTodayAppointments'
 import { useReviewedThisWeek } from '../../hooks/useClientReviews'
-import { sortByAttention } from '../../lib/clientListSummary'
+import { sortClients, ClientSort, CLIENT_SORT_LABELS } from '../../lib/clientListSummary'
 import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboardNav'
 import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag, ChevronDown, ChevronRight } from 'lucide-react'
 import { bajaReasonLabel } from '../../lib/clientBaja'
@@ -59,6 +59,20 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   // se combina con la búsqueda por texto (ambos deben cumplirse).
   const [quickFilter, setQuickFilter] = useState('all')
   const [showBajas, setShowBajas] = useState(false)
+  const [sortMode, setSortMode] = useState<ClientSort>('atencion')
+  const searchRef = useRef<HTMLInputElement>(null)
+  // "/" salta a la búsqueda de clientes (como en Notion, GitHub...), salvo que ya se esté escribiendo en un campo.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || view !== 'clientes') return
+      const el = document.activeElement
+      if (el instanceof HTMLElement && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))) return
+      e.preventDefault()
+      searchRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [view])
   const todayAppointments = useTodayAppointments(userProfile.uid, !!demoClients)
   const reviewedClientIds = useReviewedThisWeek(!!demoClients)
   const todayApptClientIds = useMemo(() => new Set(todayAppointments.map(a => a.clientId).filter((id): id is string => !!id)), [todayAppointments])
@@ -79,7 +93,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
       if (quickFilter.startsWith('tag:')) return c.tags.includes(quickFilter.slice(4))
       return true
     })
-  const sorted = sortByAttention(filtered)
+  const sorted = sortClients(filtered, sortMode)
   const topStreak = Math.max(0, ...clients.map(c => c.streak || 0))
 
   const handleCreate = async () => {
@@ -216,7 +230,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
               <div className="space-y-3 mb-5">
                 <div className="relative max-w-sm">
                   <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar cliente..."
+                  <input ref={searchRef} value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar cliente… (pulsa /)"
                     className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
                 </div>
                 <div className="flex gap-1.5 flex-wrap">
@@ -228,6 +242,13 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
                     <FilterChip key={t} active={quickFilter === `tag:${t}`} onClick={() => setQuickFilter(`tag:${t}`)} label={t} icon={Tag} />
                   ))}
                 </div>
+                <label className="flex items-center gap-2 text-xs text-muted">
+                  Ordenar por
+                  <select value={sortMode} onChange={e => setSortMode(e.target.value as ClientSort)}
+                    className="px-2.5 py-1.5 bg-card border border-border rounded-lg text-xs text-ink outline-none focus:ring-2 focus:ring-accent/20">
+                    {(Object.keys(CLIENT_SORT_LABELS) as ClientSort[]).map(k => <option key={k} value={k}>{CLIENT_SORT_LABELS[k]}</option>)}
+                  </select>
+                </label>
               </div>
             )}
 

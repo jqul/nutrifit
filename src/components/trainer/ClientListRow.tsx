@@ -1,6 +1,6 @@
 import { ClientWithStats } from '../../hooks/useNutricionistaClients'
 import { goalLabel } from '../../lib/constants'
-import { weightDeltaTone, formatKg, formatWeightDelta } from '../../lib/clientListSummary'
+import { weightDeltaTone, formatKg, formatWeightDelta, daysSinceActivity, activityLabel } from '../../lib/clientListSummary'
 import { HEALTH_BADGE, TONE_CLASS } from './healthStyles'
 import { Flame, Copy, Crown, ChevronRight } from 'lucide-react'
 
@@ -19,6 +19,7 @@ export function ClientListRow({ client: c, isTopStreak, onOpen, onCopyLink }: {
   const BadgeIcon = badge.icon
   const adherence = c.adherence7d || 0
   const tone = weightDeltaTone(c.goal, c.weightDeltaKg ?? null)
+  const idleDays = daysSinceActivity(c.lastActivity)
 
   return (
     <div role="button" tabIndex={0} onClick={onOpen}
@@ -32,6 +33,9 @@ export function ClientListRow({ client: c, isTopStreak, onOpen, onCopyLink }: {
             {isTopStreak && <Crown className="w-4 h-4 text-accent flex-shrink-0" aria-label="Mejor racha" />}
           </p>
           {c.goal && <p className="text-xs text-muted mt-0.5 truncate">{goalLabel(c.goal)}</p>}
+          <p className={`text-xs mt-0.5 ${idleDays == null || idleDays >= 5 ? 'text-warn font-semibold' : 'text-muted'}`}>
+            Última actividad: {activityLabel(idleDays).toLowerCase()}
+          </p>
           <span className={`md:hidden inline-flex items-center gap-1 px-2.5 py-1 mt-2 rounded-full text-xs font-semibold max-w-full ${badge.pill}`}>
             <BadgeIcon className="w-3.5 h-3.5 flex-shrink-0" /> <span className="truncate">{c.healthLabel || 'Activo'}</span>
           </span>

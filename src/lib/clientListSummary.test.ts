@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { summarizeWeight, weightDeltaTone, sortByAttention, formatKg, formatWeightDelta } from './clientListSummary'
+import { summarizeWeight, weightDeltaTone, sortByAttention, formatKg, formatWeightDelta, daysSinceActivity, activityLabel, sortClients } from './clientListSummary'
 
 const today = new Date('2026-10-04T12:00:00')
 const d = (daysAgo: number) => {
@@ -83,4 +83,25 @@ describe('formatKg / formatWeightDelta', () => {
     expect(formatWeightDelta(null)).toBe('sin variación')
     expect(formatWeightDelta(undefined)).toBe('sin variación')
   })
+})
+
+describe('daysSinceActivity / activityLabel', () => {
+  const today = new Date(2026, 9, 8)
+  it('counts calendar days and has a label for each case', () => {
+    expect(daysSinceActivity('2026-10-08', today)).toBe(0)
+    expect(daysSinceActivity('2026-10-02', today)).toBe(6)
+    expect(daysSinceActivity(undefined, today)).toBeNull()
+    expect([activityLabel(0), activityLabel(1), activityLabel(6), activityLabel(null)]).toEqual(['Hoy', 'Ayer', 'Hace 6 días', 'Sin actividad'])
+  })
+})
+
+describe('sortClients', () => {
+  const today = new Date(2026, 9, 8)
+  const cl = (name: string, over: Record<string, unknown> = {}) => ({ name, surname: '', adherence7d: 80, lastActivity: '2026-10-07', healthStatus: 'active' as const, ...over })
+  const clients = [cl('Marta', { adherence7d: 94, lastActivity: '2026-10-08' }), cl('Laura', { adherence7d: 61, lastActivity: '2026-10-02', healthStatus: 'attention' as const }), cl('Carlos', { adherence7d: 82, lastActivity: undefined })]
+  it('by name', () => expect(sortClients(clients, 'nombre', today).map(c => c.name)).toEqual(['Carlos', 'Laura', 'Marta']))
+  it('by adherence, the lowest first', () => expect(sortClients(clients, 'adherencia', today).map(c => c.name)).toEqual(['Laura', 'Carlos', 'Marta']))
+  it('by activity, the oldest first and no activity at the very top', () => expect(sortClients(clients, 'actividad', today).map(c => c.name)).toEqual(['Carlos', 'Laura', 'Marta']))
+  it('by attention keeps the usual order', () => expect(sortClients(clients, 'atencion', today)[0].name).toBe('Laura'))
+  it('does not modify the original list', () => { const copy = [...clients]; sortClients(clients, 'nombre', today); expect(clients).toEqual(copy) })
 })
