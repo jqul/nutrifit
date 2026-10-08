@@ -14,8 +14,10 @@ const QUICK_GRAMS = [30, 50, 100, 150, 200]
  * Lo que se hace con un producto escaneado: elegir cuánto se come, ver sus macros y, si se quiere, apuntarlo en el
  * diario de comidas (lo que ve también el nutricionista). Antes solo mostraba los valores por 100 g y no se podía hacer nada.
  */
-export function ScannedFoodSheet({ food, clientId, demoMode, onClose, onScanAnother }: {
+export function ScannedFoodSheet({ food, clientId, demoMode, dayKcal, kcalTarget, onClose, onScanAnother }: {
   food: ScannedFood; clientId: string; demoMode?: boolean
+  /** Lo que lleva comido hoy y su objetivo, para ver cómo queda el día al añadirlo. */
+  dayKcal?: number; kcalTarget?: number
   onClose: () => void; onScanAnother: () => void
 }) {
   const [gramsText, setGramsText] = useState('100')
@@ -32,7 +34,7 @@ export function ScannedFoodSheet({ food, clientId, demoMode, onClose, onScanAnot
         id: 'demo-' + Date.now(), clientId, date: toLocalISODate(new Date()), mealName: food.name,
         note: scannedFoodNote(food, grams), photoUrl: null, createdAt: Date.now(),
       }])
-      toast('Añadido a "Extras de hoy" (modo demo: no se guarda de verdad)', 'ok'); onClose(); return
+      toast(kcalTarget ? `+${m.kcal} kcal añadidas · llevas ${(dayKcal ?? 0) + m.kcal} de ${kcalTarget} (demo: no se guarda)` : 'Añadido a "Extras de hoy" (modo demo: no se guarda de verdad)', 'ok'); onClose(); return
     }
     setSaving(true)
     const { error } = await supabase.from('meal_logs').insert({
@@ -40,7 +42,7 @@ export function ScannedFoodSheet({ food, clientId, demoMode, onClose, onScanAnot
     })
     setSaving(false)
     if (error) { toast('No se pudo añadir al diario: ' + error.message, 'warn'); return }
-    toast('Añadido a "Extras de hoy" ✓ (también en Progreso → Diario)', 'ok')
+    toast(kcalTarget ? `+${m.kcal} kcal añadidas · llevas ${(dayKcal ?? 0) + m.kcal} de ${kcalTarget}` : `+${m.kcal} kcal añadidas a Extras de hoy`, 'ok')
     window.dispatchEvent(new Event('nutrifit:meal-logged'))   // Hoy, Dieta y Progreso recargan el diario sin cerrar la app
     onClose()
   }
@@ -69,6 +71,11 @@ export function ScannedFoodSheet({ food, clientId, demoMode, onClose, onScanAnot
           ))}
         </div>
         {!valid && <p className="text-xs text-warn">Pon una cantidad entre 1 y 5.000 g.</p>}
+        {valid && kcalTarget ? (
+          <p className="text-sm text-center" aria-live="polite">
+            Hoy llevas <span className="font-semibold">{dayKcal ?? 0}</span> → <span className="font-semibold">{(dayKcal ?? 0) + m.kcal}</span> <span className="text-muted">de {kcalTarget} kcal</span>
+          </p>
+        ) : null}
 
         <div className="space-y-2">
           <Button className="w-full" onClick={addToDiary} loading={saving} disabled={!valid}><BookPlus className="w-4 h-4" /> Añadir a mi diario de hoy</Button>

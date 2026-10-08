@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { balanceByDay, balanceOfDay, dayOfWeekOf, mealMacros, plannedColumns, plannedMealsOn, plannedOf } from './dayBalance'
+import { balanceByDay, balanceOfDay, balanceStatus, dayOfWeekOf, mealMacros, plannedColumns, plannedMealsOn, plannedOf } from './dayBalance'
 import { scannedExtrasOf } from './scannedLogs'
 import { scannedFoodNote } from './openFoodFacts'
 import type { DietMeal, MealLog } from '../types'
@@ -85,4 +85,15 @@ describe('balanceByDay', () => {
     expect(days[0].pctOfTarget).toBe(58)
   })
   it('is empty when nothing is logged in the period', () => expect(balanceByDay(plan, 1800, logs, '2026-11-01')).toEqual([]))
+})
+
+describe('balanceStatus', () => {
+  it('is within the target between 90% and 105%', () => {
+    expect(balanceStatus(1800, 2000)).toEqual({ tone: 'ok', text: 'Dentro del objetivo' })
+    expect(balanceStatus(2100, 2000).tone).toBe('ok')
+  })
+  it('says how many kcal are missing or over', () => {
+    expect(balanceStatus(1620, 2000)).toEqual({ tone: 'low', text: 'Te faltan 380 kcal para el objetivo' })
+    expect(balanceStatus(2250, 2000)).toEqual({ tone: 'high', text: 'Te pasas 250 kcal del objetivo' })
+  })
 })

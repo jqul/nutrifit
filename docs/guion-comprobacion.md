@@ -230,6 +230,7 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] En **Requieren atención**, cada cliente muestra todos sus motivos y una línea **«→ Sugerido: …»** (p. ej. «Escríbele antes de tocar el plan…»). El botón de la derecha abre la pestaña del primer motivo.
 - [ ] En la tarjeta de totales, si hay clientes sin incidencias, una línea explica por qué están bien (con check-in esta semana, adherencia ≥ 80 %, en racha).
 - [ ] Con una **cuenta nueva** (sin clientes), el Inicio muestra **«Empieza en 3 minutos»**: perfil, primer cliente, primer plan y enviar el acceso, con barra de progreso. El botón **Hacer** lleva al primer paso que falta (Ajustes, nuevo cliente, el plan del cliente o su ficha) y cada paso se tacha al cumplirse. Cuando están los cuatro, el recuadro desaparece. En la demo no sale.
+- [ ] Al escanear un producto, la hoja muestra **«Hoy llevas X → Y de Z kcal»** según la cantidad elegida; al añadirlo sale **«+162 kcal añadidas · llevas Y de Z»**. En Dieta, el balance dice **«Dentro del objetivo»**, **«Te faltan N kcal…»** o **«Te pasas N kcal…»**.
 
 ## Qué contarme
 

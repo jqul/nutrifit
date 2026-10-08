@@ -15,7 +15,7 @@ import { buildWAUrl } from '../../lib/whatsapp'
 import { AdviceCard } from './AdviceCard'
 import { ExtrasHoyCard } from './ExtrasHoyCard'
 import { DayBalanceBar } from '../shared/DayBalanceBar'
-import { balanceOfDay, mealMacros } from '../../lib/dayBalance'
+import { balanceOfDay, balanceStatus, mealMacros } from '../../lib/dayBalance'
 import { scannedExtrasOf } from '../../lib/scannedLogs'
 import { ScannedFoodSheet } from './ScannedFoodSheet'
 import { BottomSheet } from '../shared/BottomSheet'
@@ -208,7 +208,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         )
       })()}
       {scannedFood && (
-        <ScannedFoodSheet food={scannedFood} clientId={clientId} demoMode={demoMode}
+        <ScannedFoodSheet food={scannedFood} clientId={clientId} demoMode={demoMode} dayKcal={balance.total.kcal} kcalTarget={plan.kcalTarget}
           onClose={() => setScannedFood(null)} onScanAnother={() => { setScannedFood(null); setScannerOpen(true) }} />
       )}
       <div className="card p-5">
@@ -237,9 +237,12 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-sm"><span className="font-semibold">Hoy llevas {balance.total.kcal} kcal</span>
                 <span className="text-muted"> de {plan.kcalTarget}{balance.pctOfTarget != null ? ` (${balance.pctOfTarget}%)` : ''}</span></p>
-              {balance.total.kcal > plan.kcalTarget && <p className="text-xs font-semibold text-warn">+{balance.total.kcal - plan.kcalTarget} kcal</p>}
             </div>
             <DayBalanceBar planKcal={balance.plan.kcal} extrasKcal={balance.extras.kcal} targetKcal={plan.kcalTarget} />
+            {plan.kcalTarget > 0 && (() => {
+              const status = balanceStatus(balance.total.kcal, plan.kcalTarget)
+              return <p className={`text-xs font-semibold ${status.tone === 'ok' ? 'text-ok' : status.tone === 'high' ? 'text-warn' : 'text-muted'}`}>{status.text}</p>
+            })()}
             <p className="text-xs text-muted">
               <span className="inline-block w-2 h-2 rounded-full bg-ok mr-1" />Plan {balance.plan.kcal}
               <span className="inline-block w-2 h-2 rounded-full bg-notice ml-3 mr-1" />Extras {balance.extras.kcal}

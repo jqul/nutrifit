@@ -90,3 +90,14 @@ export function balanceByDay(planMeals: DietMeal[], targetKcal: number | null, l
     return balance.doneMeals + balance.extrasCount > 0 ? [balance] : []
   })
 }
+
+export interface BalanceStatus { tone: 'ok' | 'low' | 'high'; text: string }
+
+/** Una frase sobre cómo va el día: dentro del objetivo (entre el 90 % y el 105 %), le faltan kcal o se ha pasado. */
+export function balanceStatus(totalKcal: number, targetKcal: number): BalanceStatus {
+  const ratio = totalKcal / targetKcal
+  const diff = Math.abs(Math.round(targetKcal - totalKcal))
+  if (ratio > 1.05) return { tone: 'high', text: `Te pasas ${diff} kcal del objetivo` }
+  if (ratio < 0.9) return { tone: 'low', text: `Te faltan ${diff} kcal para el objetivo` }
+  return { tone: 'ok', text: 'Dentro del objetivo' }
+}
