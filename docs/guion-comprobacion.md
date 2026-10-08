@@ -226,6 +226,9 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 
 - [ ] Abre **Seguimiento** de un cliente con actividad nueva: arriba sale **«Actividad nueva sin revisar»** y el aviso del inicio **sigue ahí** (abrir la pestaña ya no lo quita).
 - [ ] Pulsa **Marcar como revisado**: el banner pasa a «Revisado hoy · no hay actividad nueva pendiente» y, al volver al inicio, el aviso «Check-in o encuesta sin revisar» desaparece.
+- [ ] En **Inicio**, bajo la fecha hay una frase con tu día («Hoy: 1 cita, 1 cliente para actuar hoy y 3 revisiones semanales pendientes.»).
+- [ ] En **Requieren atención**, cada cliente muestra todos sus motivos y una línea **«→ Sugerido: …»** (p. ej. «Escríbele antes de tocar el plan…»). El botón de la derecha abre la pestaña del primer motivo.
+- [ ] En la tarjeta de totales, si hay clientes sin incidencias, una línea explica por qué están bien (con check-in esta semana, adherencia ≥ 80 %, en racha).
 
 ## Qué contarme
 

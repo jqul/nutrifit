@@ -100,3 +100,67 @@ export function monthlyRevenue(clients: { monthlyPrice: number | null }[]): { to
   }
   return { total, withoutPrice }
 }
+
+/**
+ * Qué mirar o hacer primero con un cliente que pide atención: no solo "aquí hay un problema" sino por dónde empezar.
+ * Reglas sencillas y explicables sobre lo que ya se sabe del cliente (el semáforo y sus avisos), nada de adivinar.
+ * Devuelve null si no hay nada que sugerir.
+ */
+export function recommendedAction(client: PrioritizableClient & { adherence7d?: number }): string | null {
+  const kinds = new Set((client.alerts || []).filter(a => a.kind !== 'goal_reached').map(a => a.kind))
+  const reason = client.healthReason
+  if (reason === 'inactive') {
+    return kinds.size > 0
+      ? 'Escríbele antes de tocar el plan: sin datos recientes no se puede saber si funciona.'
+      : 'Escríbele para retomar el contacto.'
+  }
+  if (kinds.has('low_adherence')) return 'Averigua qué le cuesta del plan antes de modificarlo.'
+  if (kinds.has('weight_stalled')) {
+    return (client.adherence7d ?? 0) >= 80
+      ? 'Sigue bien el plan y el peso no se mueve: valora ajustarlo.'
+      : 'Mira primero la adherencia: el peso parado puede deberse a no seguir el plan.'
+  }
+  if (reason === 'biomarker') return 'Revisa la analítica y valora si cambia algo del plan.'
+  if (kinds.has('high_hunger') || kinds.has('low_energy')) return 'Revisa hambre y energía de la semana: el plan puede estar demasiado ajustado.'
+  if (kinds.has('no_weigh_in')) return 'Pídele que se pese esta semana para poder valorar su evolución.'
+  if (reason === 'unreviewed') return 'Revisa su check-in o encuesta y márcalo como revisado.'
+  if (reason === 'billing') return 'Genera la factura de este mes en su ficha.'
+  return null
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+/** La frase de "tu día": lo que hay hoy en un vistazo. Lo que está a cero no se menciona. */
+export function dayHeadline(d: { appointments: number; actToday: number; pendingReviews: number; goalsReached: number }): string {
+  const parts = [
+    d.appointments > 0 && plural(d.appointments, 'cita', 'citas'),
+    d.actToday > 0 && plural(d.actToday, 'cliente para actuar hoy', 'clientes para actuar hoy'),
+    d.pendingReviews > 0 && plural(d.pendingReviews, 'revisión semanal pendiente', 'revisiones semanales pendientes'),
+    d.goalsReached > 0 && plural(d.goalsReached, 'objetivo alcanzado', 'objetivos alcanzados'),
+  ].filter((p): p is string => !!p)
+  if (parts.length === 0) return 'Hoy no tienes nada urgente.'
+  if (parts.length === 1) return `Hoy: ${parts[0]}.`
+  return `Hoy: ${parts.slice(0, -1).join(', ')} y ${parts[parts.length - 1]}.`
+}
+
+export interface OkBreakdown { total: number; recentCheckin: number; goodAdherence: number; onStreak: number }
+
+/** De los clientes sin incidencias, por qué están bien: da tranquilidad saber que "todo correcto" no es "sin datos". */
+export function okBreakdown(
+  clients: (PrioritizableClient & { lastCheckin?: string; adherence7d?: number; streak?: number })[],
+  today: Date,
+): OkBreakdown {
+  const ok = clients.filter(c => priorityOf(c) === 'ok')
+  const day = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
+  const recent = (iso?: string) => {
+    if (!iso) return false
+    const [y, m, dd] = iso.split('-').map(Number)
+    return (day(today) - Date.UTC(y, m - 1, dd)) / 86400000 <= 7
+  }
+  return {
+    total: ok.length,
+    recentCheckin: ok.filter(c => recent(c.lastCheckin)).length,
+    goodAdherence: ok.filter(c => (c.adherence7d ?? 0) >= 80).length,
+    onStreak: ok.filter(c => (c.streak ?? 0) >= 3).length,
+  }
+}

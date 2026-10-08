@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 import { Appointment } from '../../types'
 import { ClientWithStats } from '../../hooks/useNutricionistaClients'
 import { pendingReviews } from '../../lib/weeklyReview'
-import { attentionList, goalReachedClients, greeting, monthlyRevenue, summarizePriorities, Priority, ClientPanelTab } from '../../lib/controlCenter'
+import { attentionList, goalReachedClients, greeting, monthlyRevenue, recommendedAction, dayHeadline, okBreakdown, summarizePriorities, Priority, ClientPanelTab } from '../../lib/controlCenter'
 import { Button } from '../shared/Button'
 
 const MAX_ATTENTION = 6
@@ -50,6 +50,7 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
     return pendingReviews(clients, reviewedClientIds).sort((a, b) => (order.get(a.id) ?? 1e6) - (order.get(b.id) ?? 1e6) || `${a.name} ${a.surname}`.localeCompare(`${b.name} ${b.surname}`, 'es'))
   }, [clients, attention, reviewedClientIds])
   const revenue = useMemo(() => monthlyRevenue(clients), [clients])
+  const ok = useMemo(() => okBreakdown(clients, new Date()), [clients])
   const clientName = (id: string | null) => {
     const c = id ? clients.find(x => x.id === id) : null
     return c ? `${c.name} ${c.surname}`.trim() : null
@@ -64,6 +65,12 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
       <div>
         <h1 className="text-2xl font-serif font-bold">{greeting(now, displayName)}</h1>
         <p className="text-sm text-muted mt-1 first-letter:uppercase">{today}</p>
+        {clients.length > 0 && (
+          <p className="text-sm mt-2">{dayHeadline({
+            appointments: todayAppointments.filter(a => a.status !== 'cancelada').length, actToday: summary.today,
+            pendingReviews: pending.length, goalsReached: reached.length,
+          })}</p>
+        )}
       </div>
 
       {clients.length === 0 ? (
@@ -88,6 +95,15 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
                 </button>
               ))}
             </div>
+            {ok.total > 0 && (
+              <p className="text-xs text-muted mt-3 pt-3 border-t border-border/60">
+                <span className="font-semibold text-ink">{ok.total} sin incidencias</span>
+                {ok.recentCheckin > 0 && <> · {ok.recentCheckin} con check-in esta semana</>}
+                {ok.goodAdherence > 0 && <> · {ok.goodAdherence} con adherencia de 80% o más</>}
+                {ok.onStreak > 0 && <> · {ok.onStreak} en racha</>}
+                . No necesitas actuar con ellos ahora.
+              </p>
+            )}
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -129,6 +145,7 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
                 <div className="card divide-y divide-border/60 overflow-hidden">
                   {attention.slice(0, MAX_ATTENTION).map(({ client: c, priority, issues }) => {
                     const first = issues[0]
+                    const suggestion = recommendedAction(c)
                     return (
                       <button key={c.id} onClick={() => onOpenClient(c, first.tab)}
                         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-bg-alt/60 transition-colors">
@@ -136,9 +153,10 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-semibold truncate">{c.name} {c.surname}</span>
                           <span className="block text-xs text-muted">
-                            {issues.slice(0, 2).map(i => i.label).join(' · ')}
-                            {issues.length > 2 && ` · +${issues.length - 2}`}
+                            {issues.slice(0, 3).map(i => i.label).join(' · ')}
+                            {issues.length > 3 && ` · +${issues.length - 3}`}
                           </span>
+                          {suggestion && <span className="block text-xs text-ink/80 mt-1">→ {suggestion}</span>}
                         </span>
                         <span className="flex items-center gap-0.5 text-xs font-semibold text-accent flex-shrink-0">
                           {TAB_ACTION[first.tab]} <ChevronRight className="w-4 h-4" />
