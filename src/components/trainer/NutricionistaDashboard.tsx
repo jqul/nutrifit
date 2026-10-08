@@ -25,6 +25,8 @@ import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboard
 import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag, ChevronDown, ChevronRight } from 'lucide-react'
 import { bajaReasonLabel } from '../../lib/clientBaja'
 import { toast } from '../shared/Toast'
+import { useHasDietPlan } from '../../hooks/useHasDietPlan'
+import { onboardingSteps, OnboardingStepId } from '../../lib/onboarding'
 
 const EMPTY_FORM: NewClientInput = {
   name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
@@ -39,6 +41,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   onSwitchToAdmin?: () => void
 }) {
   const { clients, bajas, loading, addClient, fetchClients } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
+  const hasPlan = useHasDietPlan(userProfile.uid, !demoClients)
   const [view, setView] = useState<View>('inicio')
   // Última sección vista en cada grupo, para que volver a un grupo te deje donde estabas.
   const [lastViewByGroup, setLastViewByGroup] = useState<Partial<Record<string, View>>>({})
@@ -158,6 +161,18 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             seleccionado, el formulario a medio rellenar... */}
         <div className={view === 'inicio' ? '' : 'hidden'}>
           <ControlCenter displayName={userProfile.displayName} clients={clients} loading={loading}
+            onboarding={demoClients ? undefined : {
+              steps: onboardingSteps({
+                profileComplete: !!userProfile.displayName.trim() && !!(userProfile.logoUrl || userProfile.contactPhone),
+                clientCount: clients.length, hasPlan, anyClientEntered: clients.some(c => !!c.authUserId),
+              }),
+              onAction: (id: OnboardingStepId) => {
+                if (id === 'profile') goToView('ajustes')
+                else if (id === 'client' || clients.length === 0) { goToView('clientes'); setModalOpen(true) }
+                else if (id === 'plan') onSelectClient(clients[0], 'dieta')
+                else onSelectClient(clients.find(c => !c.authUserId) ?? clients[0], 'perfil')
+              },
+            }}
             todayAppointments={todayAppointments}
             reviewedClientIds={reviewedClientIds}
             onOpenClient={(c, tab) => onSelectClient(c, tab)}

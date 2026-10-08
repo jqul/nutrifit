@@ -5,6 +5,8 @@ import { ClientWithStats } from '../../hooks/useNutricionistaClients'
 import { pendingReviews } from '../../lib/weeklyReview'
 import { attentionList, goalReachedClients, greeting, monthlyRevenue, recommendedAction, dayHeadline, okBreakdown, summarizePriorities, Priority, ClientPanelTab } from '../../lib/controlCenter'
 import { Button } from '../shared/Button'
+import { OnboardingChecklist } from './OnboardingChecklist'
+import { OnboardingStep, OnboardingStepId } from '../../lib/onboarding'
 
 const MAX_ATTENTION = 6
 const MAX_REVIEWS = 5
@@ -25,8 +27,10 @@ const PRIORITY_STYLE: Record<Priority, { dot: string; label: string }> = {
  * necesita mi atención ahora?" antes que a "¿qué clientes tengo?": prioridades,
  * citas de hoy, quién necesita algo y una línea de negocio.
  */
-export function ControlCenter({ displayName, clients, loading, todayAppointments, reviewedClientIds, onOpenClient, onShowClients, onGoToCalendar, onGoToBusiness, onNewClient }: {
+export function ControlCenter({ displayName, clients, loading, onboarding, todayAppointments, reviewedClientIds, onOpenClient, onShowClients, onGoToCalendar, onGoToBusiness, onNewClient }: {
   displayName: string
+  /** Primeros pasos tras registrarse; sin esto (demo) no se muestran. */
+  onboarding?: { steps: OnboardingStep[]; onAction: (id: OnboardingStepId) => void }
   clients: ClientWithStats[]
   loading: boolean
   todayAppointments: Appointment[]
@@ -72,6 +76,8 @@ export function ControlCenter({ displayName, clients, loading, todayAppointments
           })}</p>
         )}
       </div>
+
+      {onboarding && <OnboardingChecklist steps={onboarding.steps} onAction={onboarding.onAction} />}
 
       {clients.length === 0 ? (
         <div className="card p-10 text-center space-y-4">
