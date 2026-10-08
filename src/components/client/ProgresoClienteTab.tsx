@@ -12,6 +12,7 @@ import { WeightChart } from '../shared/WeightChart'
 import { HealthTimeline } from '../shared/HealthTimeline'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { printProgressReport } from '../../lib/printProgressReport'
+import { progressReading, ProgressReading } from '../../lib/progressReading'
 import { Camera, Flame, UtensilsCrossed, Plus, FileDown, Moon } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
@@ -164,6 +165,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
       <WeightImpactCard weights={weights} goalKg={client.goalWeightKg} />
+      <ReadingCard reading={progressReading({ weights, goal: client.goal, goalWeightKg: client.goalWeightKg, adherence7d, streak })} personalMode={personalMode} />
 
       <div className={`grid gap-2 ${personalMode ? 'grid-cols-1 max-w-[160px]' : 'grid-cols-3'}`}>
         <StatCard label="Racha" value={`${streak}d`} icon={<Flame className="w-4 h-4 text-accent" />} />
@@ -297,6 +299,21 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
 /** Muro de logros — badges desbloqueables calculados al vuelo a partir de
  * datos que ya existen (peso, racha, hidratación, fotos de comida), sin
  * tabla nueva: son hitos, no algo que haya que auditar ni deshacer. */
+/** "¿Cómo vas?": la lectura del progreso en una frase, con el porqué (peso, adherencia y racha). */
+function ReadingCard({ reading, personalMode }: { reading: ProgressReading; personalMode?: boolean }) {
+  const dot = reading.tone === 'good' ? 'bg-ok' : reading.tone === 'attention' ? 'bg-warn' : 'bg-notice'
+  return (
+    <div className="card p-5" aria-live="polite">
+      <p className="text-xs font-bold uppercase tracking-wider text-muted">¿Cómo vas?</p>
+      <p className="font-serif font-bold text-xl leading-snug mt-2 flex items-start gap-2">
+        <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-2 ${dot}`} aria-hidden /> {reading.headline}
+      </p>
+      <p className="text-sm text-muted mt-1.5">{reading.detail}</p>
+      {reading.goalPercent != null && <p className="text-xs text-muted mt-2">{reading.goalPercent}% del camino hacia tu objetivo{personalMode ? '' : ' de peso'}.</p>}
+    </div>
+  )
+}
+
 function AchievementBadges({ weights, streak, checkins, mealLogs }: {
   weights: WeightEntry[]; streak: number; checkins: DailyCheckin[]; mealLogs: MealLog[]
 }) {
@@ -305,7 +322,7 @@ function AchievementBadges({ weights, streak, checkins, mealLogs }: {
   const badges = [
     { icon: '🎯', label: 'Primer pesaje', unlocked: weights.length >= 1 },
     { icon: '🔥', label: '7 días de racha', unlocked: streak >= 7 },
-    { icon: '💧', label: 'Rey/reina del agua', unlocked: hydratedDays >= 5 },
+    { icon: '💧', label: 'Objetivo de hidratación', unlocked: hydratedDays >= 5 },
     { icon: '🥗', label: '10 fotos de comida', unlocked: mealPhotoCount >= 10 },
   ]
   return (
