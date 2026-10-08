@@ -44,13 +44,12 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
   const { updateClient, regenerateToken, deleteClient, dismissClient, reactivateClient, markClientReviewed } = useNutricionistaClients({
     nutricionistaId: userProfile.uid, demoClients: demoMode ? [current] : undefined,
   })
-  // Marca la ficha como revisada en cuanto se abre Seguimiento — así el
-  // aviso de "check-in o encuesta sin revisar" del dashboard desaparece
-  // sin que el nutricionista tenga que hacer nada aparte de mirar.
-  useEffect(() => {
-    if (tab === 'seguimiento') markClientReviewed(current.id)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, current.id])
+  // Abrir Seguimiento ya NO marca la ficha como revisada (un clic equivocado no debe quitar el aviso): se hace con el
+  // botón "Marcar como revisado" de esa pestaña, que es una acción real del nutricionista.
+  const markReviewed = async () => {
+    await markClientReviewed(current.id)
+    setCurrent(prev => ({ ...prev, lastReviewedAt: new Date().toISOString(), hasUnreviewedActivity: false }))
+  }
   // Peso actual para la cabecera (ClientHeader) — mismo dato que carga
   // PerfilTab por su cuenta para su propia ficha; se duplica aquí a
   // propósito para que la cabecera no dependa de qué pestaña esté
@@ -148,7 +147,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
                 demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} />
             </div>
             <div className={tab === 'seguimiento' ? '' : 'hidden'}>
-              <SeguimientoTab client={current} onUpdate={handleUpdate} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
+              <SeguimientoTab client={current} review={{ unreviewed: !!current.hasUnreviewedActivity, lastReviewedAt: current.lastReviewedAt, onMark: markReviewed }} onUpdate={handleUpdate} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
                 nutricionistaName={userProfile.displayName}
                 demoData={demoMode ? {
                   weights: DEMO_WEIGHTS[current.id] || [],

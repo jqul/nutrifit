@@ -221,6 +221,12 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] El nutricionista ve en el Seguimiento del cliente **«Balance de los últimos 7 días»**: por día, kcal frente al objetivo, desglose plan/extras y el exceso si se pasa, más un recuadro **«Fuera del plan»** con las kcal escaneadas y la media diaria. Al marcar una comida como hecha en Hoy se guarda la **opción elegida** (p. ej. «Opción B») y lo que aportaba en ese momento, así el balance es exacto aunque el plan tenga opciones o se edite después; el diario muestra la opción junto al nombre de la comida. Los registros anteriores se estiman con el plan.
 - [ ] Lo mismo con el resto de hojas y ventanas del modo cliente (sustituir un alimento, comer fuera, guías): ya no las tapa la barra de abajo.
 
+
+## 17. Revisión explícita y avisos con sugerencia
+
+- [ ] Abre **Seguimiento** de un cliente con actividad nueva: arriba sale **«Actividad nueva sin revisar»** y el aviso del inicio **sigue ahí** (abrir la pestaña ya no lo quita).
+- [ ] Pulsa **Marcar como revisado**: el banner pasa a «Revisado hoy · no hay actividad nueva pendiente» y, al volver al inicio, el aviso «Check-in o encuesta sin revisar» desaparece.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

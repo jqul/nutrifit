@@ -23,6 +23,8 @@ export interface ClientWithStats extends ClientData {
   healthStatus?: ClientHealthStatus
   healthLabel?: string
   healthReason?: ClientHealthReason
+  /** Hay un check-in o una encuesta más reciente que la última revisión de la ficha. */
+  hasUnreviewedActivity?: boolean
   /** Avisos del Centro de control (peso estancado, hambre alta...) — ver clientAlerts.ts. */
   alerts?: ClientAlert[]
   /** Último check-in o pesaje (YYYY-MM-DD): base de la retención por actividad (retention.ts). */
@@ -90,6 +92,7 @@ export function withStats(
       healthStatus: health.status,
       healthLabel: health.label,
       healthReason: health.reason,
+      hasUnreviewedActivity: unreviewed,
       alerts: computeClientAlerts({
         checkins, weights, goal: c.goal, goalWeightKg: c.goalWeightKg, createdAt: c.createdAt,
       }, today),

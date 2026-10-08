@@ -11,6 +11,7 @@ import { StoragePhoto } from '../../shared/StoragePhoto'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
 import { BalanceSemanalCard } from './BalanceSemanalCard'
+import { RevisionBar } from './RevisionBar'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
 import { DietAdjustmentCard } from './DietAdjustmentCard'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
@@ -46,8 +47,10 @@ interface DemoData {
   bloodMarkers?: BloodMarkerRow[]; clinicalNotes?: ClinicalNote[]; cycles?: CycleEntry[]
 }
 
-export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, nutricionistaName, onUpdate }: {
+export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl, nutricionistaAccentColor, nutricionistaName, onUpdate }: {
   client: ClientData; demoData?: DemoData
+  /** Estado de revisión de la ficha y la acción de marcarla como revisada (la ficha del nutricionista, no la vista previa). */
+  review?: { unreviewed: boolean; lastReviewedAt: string | null; onMark: () => void | Promise<void> }
   nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null; nutricionistaName?: string
   onUpdate?: (updates: Partial<ClientData>) => Promise<boolean>
 }) {
@@ -163,6 +166,7 @@ export function SeguimientoTab({ client, demoData, nutricionistaLogoUrl, nutrici
 
   return (
     <div className="max-w-2xl space-y-6">
+      {review && <RevisionBar review={review} />}
       <WeeklyReviewCard client={client} checkins={checkins} weights={weights} demoMode={demoMode} />
       <DietAdjustmentCard client={client} checkins={checkins} weights={weights} demoMode={demoMode} />
 
