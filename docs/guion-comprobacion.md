@@ -244,6 +244,11 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] **Lo importante: lee cada tema con la app delante y apunta lo que no coincida** (un botón que se llama distinto, un paso que falta). Es la guía que seguirá tu nutricionista.
 - [ ] En una cuenta nueva, el recuadro «Empieza en 3 minutos» tiene el enlace «¿Dudas? Mira la guía de uso».
 
+## 19. Aviso de versión nueva
+
+- [ ] Con la app **abierta** (en el ordenador o en el móvil), tras un despliegue nuevo, al volver a la pestaña o pasados unos minutos sale abajo **«Hay una versión nueva. Actualiza para ver lo último.»** con **Actualizar** (recarga) y **Luego** (lo oculta hasta que se vuelva a abrir la app).
+- [ ] Sin despliegue nuevo no sale nunca. Sin conexión tampoco molesta.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

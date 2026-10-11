@@ -5,6 +5,7 @@ import type { ClientPanelTab } from './lib/controlCenter'
 import { Auth } from './components/shared/Auth'
 import { ResetPassword } from './components/shared/ResetPassword'
 import { useToast, ToastContainer } from './components/shared/Toast'
+import { UpdateBanner } from './components/shared/UpdateBanner'
 import { useAuthBootstrap } from './lib/useAuthBootstrap'
 import { useAccentOverride } from './lib/useAccentOverride'
 import { DEMO_NUTRICIONISTA_PROFILE, DEMO_CLIENTS } from './lib/demo-data'
@@ -169,6 +170,7 @@ export default function App() {
       )}
 
       <ToastContainer toasts={toasts} />
+      <UpdateBanner />
     </Suspense>
   )
 }
