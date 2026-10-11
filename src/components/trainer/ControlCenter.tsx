@@ -27,7 +27,7 @@ const PRIORITY_STYLE: Record<Priority, { dot: string; label: string }> = {
  * necesita mi atención ahora?" antes que a "¿qué clientes tengo?": prioridades,
  * citas de hoy, quién necesita algo y una línea de negocio.
  */
-export function ControlCenter({ displayName, clients, loading, onboarding, todayAppointments, reviewedClientIds, onOpenClient, onShowClients, onGoToCalendar, onGoToBusiness, onNewClient }: {
+export function ControlCenter({ displayName, clients, loading, onboarding, onGoToHelp, todayAppointments, reviewedClientIds, onOpenClient, onShowClients, onGoToCalendar, onGoToBusiness, onNewClient }: {
   displayName: string
   /** Primeros pasos tras registrarse; sin esto (demo) no se muestran. */
   onboarding?: { steps: OnboardingStep[]; onAction: (id: OnboardingStepId) => void }
@@ -42,6 +42,8 @@ export function ControlCenter({ displayName, clients, loading, onboarding, today
   onShowClients: (filter: 'all' | 'risk') => void
   onGoToCalendar: () => void
   onGoToBusiness: () => void
+  /** Abre la guía de uso. */
+  onGoToHelp?: () => void
   onNewClient: () => void
 }) {
   const now = new Date()
@@ -77,7 +79,7 @@ export function ControlCenter({ displayName, clients, loading, onboarding, today
         )}
       </div>
 
-      {onboarding && <OnboardingChecklist steps={onboarding.steps} onAction={onboarding.onAction} />}
+      {onboarding && <OnboardingChecklist steps={onboarding.steps} onAction={onboarding.onAction} onHelp={onGoToHelp} />}
 
       {clients.length === 0 ? (
         <div className="card p-10 text-center space-y-4">

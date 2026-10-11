@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { NAV_GROUPS, groupOfView, viewForGroup, View } from './dashboardNav'
 
 // Si se añade una sección al tipo View y no a un grupo, esta lista deja de cubrirla.
-const ALL_VIEWS: View[] = ['inicio', 'clientes', 'calendario', 'negocio', 'conversor', 'micronutrientes', 'plantillas', 'difusion', 'ajustes']
+const ALL_VIEWS: View[] = ['inicio', 'clientes', 'calendario', 'negocio', 'conversor', 'micronutrientes', 'plantillas', 'difusion', 'ajustes', 'ayuda']
 
 describe('NAV_GROUPS', () => {
   it('puts every view in exactly one group', () => {

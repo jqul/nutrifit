@@ -1,22 +1,12 @@
-import { Fragment } from 'react'
 import { LEGAL_REVIEWED } from '../../legal/entity'
 import { LEGAL_DOCUMENTS, LegalSlug, fillTemplate, pendingItems } from '../../legal/documents'
-import { Inline, parseMarkdown } from '../../lib/miniMarkdown'
+import { MarkdownArticle } from './MarkdownArticle'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
-
-function renderInline(parts: Inline[]) {
-  return parts.map((p, i) => {
-    if (p.type === 'bold') return <strong key={i} className="font-semibold text-ink">{p.text}</strong>
-    if (p.type === 'link') return <a key={i} href={p.href} className="text-accent underline underline-offset-2">{p.text}</a>
-    return <Fragment key={i}>{p.text}</Fragment>
-  })
-}
 
 /** Un texto legal (privacidad, condiciones, contrato de encargado…) a pantalla completa, con la lista de los demás. */
 export function LegalPage({ slug }: { slug: LegalSlug }) {
   const doc = LEGAL_DOCUMENTS.find(d => d.slug === slug) ?? LEGAL_DOCUMENTS[0]
   const text = fillTemplate(doc.raw)
-  const blocks = parseMarkdown(text)
   const pending = pendingItems(text)
   const isDraft = !LEGAL_REVIEWED || pending.length > 0
 
@@ -44,20 +34,7 @@ export function LegalPage({ slug }: { slug: LegalSlug }) {
           </div>
         )}
 
-        <article className="space-y-3 text-sm leading-relaxed text-muted">
-          {blocks.map((b, i) => {
-            if (b.type === 'h1') return <h1 key={i} className="text-3xl font-serif font-bold text-ink pt-2">{renderInline(b.inline)}</h1>
-            if (b.type === 'h2') return <h2 key={i} className="text-lg font-serif font-bold text-ink pt-4">{renderInline(b.inline)}</h2>
-            if (b.type === 'h3') return <h3 key={i} className="text-base font-semibold text-ink pt-2">{renderInline(b.inline)}</h3>
-            if (b.type === 'hr') return <hr key={i} className="border-border my-6" />
-            if (b.type === 'ul') return (
-              <ul key={i} className="list-disc pl-5 space-y-1.5">
-                {b.items.map((it, j) => <li key={j}>{renderInline(it)}</li>)}
-              </ul>
-            )
-            return <p key={i}>{renderInline(b.inline)}</p>
-          })}
-        </article>
+        <MarkdownArticle source={text} />
 
         <nav aria-label="Otros textos legales" className="border-t border-border pt-5 mt-8">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Otros textos</p>

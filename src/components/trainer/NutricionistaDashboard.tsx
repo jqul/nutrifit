@@ -16,6 +16,7 @@ import { AjustesTab } from './AjustesTab'
 import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
 import { ImportWeightHistoryModal } from './ImportWeightHistoryModal'
+import { HelpCenter } from './HelpCenter'
 import { ClientListRow } from './ClientListRow'
 import { ControlCenter } from './ControlCenter'
 import { priorityOf, ClientPanelTab } from '../../lib/controlCenter'
@@ -195,6 +196,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             onShowClients={filter => { setQuickFilter(filter); goToView('clientes') }}
             onGoToCalendar={() => goToView('calendario')}
             onGoToBusiness={() => goToView('negocio')}
+            onGoToHelp={() => goToView('ayuda')}
             onNewClient={() => { goToView('clientes'); setModalOpen(true) }} />
         </div>
         <div className={view === 'calendario' ? '' : 'hidden'}>
@@ -215,6 +217,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         <div className={view === 'difusion' ? '' : 'hidden'}>
           <DifusionTab clients={clients} nutricionistaId={userProfile.uid} demoMode={!!demoClients} />
         </div>
+        {view === 'ayuda' && <HelpCenter />}
         <div className={view === 'ajustes' ? '' : 'hidden'}>
           <AjustesTab userProfile={userProfile} demoMode={!!demoClients} onUpdateProfile={onUpdateProfile} />
         </div>

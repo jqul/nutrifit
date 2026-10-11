@@ -5,7 +5,7 @@ import { OnboardingStep, OnboardingStepId, nextOnboardingStep, onboardingProgres
  * "Empieza en 3 minutos": los primeros pasos tras registrarse. Se calcula de lo que el nutricionista ya ha hecho y
  * desaparece solo cuando están todos; el botón lleva al primer paso que falta.
  */
-export function OnboardingChecklist({ steps, onAction }: { steps: OnboardingStep[]; onAction: (id: OnboardingStepId) => void }) {
+export function OnboardingChecklist({ steps, onAction, onHelp }: { steps: OnboardingStep[]; onAction: (id: OnboardingStepId) => void; onHelp?: () => void }) {
   const progress = onboardingProgress(steps)
   const next = nextOnboardingStep(steps)
   if (progress.complete || !next) return null
@@ -40,6 +40,9 @@ export function OnboardingChecklist({ steps, onAction }: { steps: OnboardingStep
           )
         })}
       </ol>
+      {onHelp && (
+        <button type="button" onClick={onHelp} className="mt-3 text-xs font-semibold text-accent">¿Dudas? Mira la guía de uso →</button>
+      )}
     </section>
   )
 }

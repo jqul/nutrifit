@@ -237,6 +237,13 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] **Clientes que ya tenías:** en **Clientes → Importar clientes** el archivo puede traer también **Peso** y **Peso objetivo** (el peso queda como primer pesaje). Para su historial, **Importar historial de peso**: sube un CSV/Excel con **Cliente** (nombre y apellidos, email o teléfono), **Fecha** y **Peso (kg)** — hay una plantilla descargable. Antes de importar enseña cuántos pesajes de cuántos clientes y **qué filas no puede leer y por qué**; los pesajes que ya existen no se pisan. Prueba con un Excel español (punto y coma, decimales con coma: 72,5).
 - [ ] En **Seguimiento** del cliente, bajo la gráfica de peso, **«Añadir un pesaje con fecha»** apunta uno anterior (p. ej. el de la primera consulta).
 
+## 18. Guía de uso (pestaña Ayuda)
+
+- [ ] La última pestaña del menú, **Ayuda**, abre la guía con nueve temas (Empieza aquí, Clientes, Planes de dieta, Seguimiento, Citas/mensajes/avisos, Inicio/negocio/herramientas, Ajustes, La app del cliente, Preguntas y problemas). En el móvil la lista de temas se desplaza en horizontal.
+- [ ] El buscador encuentra apartados (prueba «baja», «historial de peso», «plantilla») y al pulsar uno abre su tema.
+- [ ] **Lo importante: lee cada tema con la app delante y apunta lo que no coincida** (un botón que se llama distinto, un paso que falta). Es la guía que seguirá tu nutricionista.
+- [ ] En una cuenta nueva, el recuadro «Empieza en 3 minutos» tiene el enlace «¿Dudas? Mira la guía de uso».
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

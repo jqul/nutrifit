@@ -3,7 +3,7 @@
 // sección (View) pertenece a exactamente un grupo; los grupos con más de una
 // sección muestran un segundo nivel de pestañas.
 
-export type View = 'inicio' | 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'micronutrientes' | 'plantillas' | 'difusion' | 'ajustes'
+export type View = 'inicio' | 'clientes' | 'calendario' | 'negocio' | 'conversor' | 'micronutrientes' | 'plantillas' | 'difusion' | 'ajustes' | 'ayuda'
 
 export interface NavGroup {
   id: string
@@ -19,6 +19,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { id: 'negocio', label: 'Negocio', views: [{ id: 'negocio', label: 'Negocio' }] },
   { id: 'herramientas', label: 'Herramientas', views: [{ id: 'conversor', label: 'Conversor' }, { id: 'micronutrientes', label: 'Micronutrientes' }] },
   { id: 'ajustes', label: 'Ajustes', views: [{ id: 'ajustes', label: 'Ajustes' }] },
+  { id: 'ayuda', label: 'Ayuda', views: [{ id: 'ayuda', label: 'Ayuda' }] },
 ]
 
 /** Grupo al que pertenece una sección. */
