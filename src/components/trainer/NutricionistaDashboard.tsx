@@ -29,7 +29,7 @@ import { useHasDietPlan } from '../../hooks/useHasDietPlan'
 import { onboardingSteps, OnboardingStepId } from '../../lib/onboarding'
 
 const EMPTY_FORM: NewClientInput = {
-  name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '',
+  name: '', surname: '', phone: '', email: '', goal: '', heightCm: '', gender: '', birthDate: '', allergies: '', weightKg: '', goalWeightKg: '',
 }
 
 export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, demoClients, onUpdateProfile, onSwitchToAdmin }: {
@@ -337,6 +337,18 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Nacimiento</label>
               <input type="date" value={form.birthDate} onChange={e => setForm({ ...form, birthDate: e.target.value })}
+                className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Peso actual (kg)</label>
+              <input type="text" inputMode="decimal" value={form.weightKg} onChange={e => setForm({ ...form, weightKg: e.target.value })} placeholder="Ej. 72,5"
+                className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Peso objetivo (kg)</label>
+              <input type="text" inputMode="decimal" value={form.goalWeightKg} onChange={e => setForm({ ...form, goalWeightKg: e.target.value })} placeholder="Opcional"
                 className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm" />
             </div>
           </div>

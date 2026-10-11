@@ -233,6 +233,7 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Al escanear un producto, la hoja muestra **«Hoy llevas X → Y de Z kcal»** según la cantidad elegida; al añadirlo sale **«+162 kcal añadidas · llevas Y de Z»**. En Dieta, el balance dice **«Dentro del objetivo»**, **«Te faltan N kcal…»** o **«Te pasas N kcal…»**.
 - [ ] En **Progreso** del cliente, bajo la tarjeta verde, **«¿Cómo vas?»** da una lectura en una frase (p. ej. «Vas en la dirección prevista · Mantén el plan actual»), avisa si el peso va al revés o la adherencia es baja y dice el % del camino hacia el objetivo. El logro del agua se llama ahora **«Objetivo de hidratación»**.
 - [ ] En **Clientes**, cada fila muestra **«Última actividad: hoy / ayer / hace N días»** (en rojo si hace 5 días o más, o ninguna). El selector **«Ordenar por»** cambia entre atención, nombre, adherencia y última actividad. La tecla **/** salta al buscador (si no estás escribiendo en otro campo).
+- [ ] **Nuevo cliente** pide también **Peso actual** y **Peso objetivo** (opcionales; acepta coma, p. ej. 72,5). Si pones un peso imposible (texto, menos de 20 o más de 400 kg) avisa y no crea. Al crearlo, su ficha ya muestra **Peso inicial / actual / Meta** y el peso sale en la gráfica, sin esperar a que el cliente lo apunte.
 
 ## Qué contarme
 

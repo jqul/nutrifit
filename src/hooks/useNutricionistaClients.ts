@@ -11,6 +11,7 @@ import { toast } from '../components/shared/Toast'
 import { DEMO_CHECKINS, DEMO_INVOICES, DEMO_BLOOD_MARKERS, DEMO_SURVEY_RESPONSES, DEMO_WEIGHTS } from '../lib/demo-data'
 import { InvoiceRow, BloodMarkerRow, SurveyResponseRow } from '../lib/supabase-types'
 import { generateClientToken } from '../lib/token'
+import { parseWeightKg } from '../lib/weightInput'
 import { fetchAllRows, fetchAllRowsForIds } from '../lib/fetchAll'
 import { BajaReason } from '../lib/clientBaja'
 import { ActivitySummary, HISTORY_WINDOW_DAYS, latestDate, weightsWithBounds } from '../lib/activitySummary'
@@ -123,6 +124,9 @@ export interface NewClientInput {
   gender: string
   birthDate: string
   allergies: string
+  /** Peso actual y peso objetivo en kg (texto del formulario, opcionales). El actual queda como primer pesaje. */
+  weightKg: string
+  goalWeightKg: string
 }
 
 export function useNutricionistaClients({ nutricionistaId, demoClients }: Options) {
@@ -205,6 +209,10 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
 
   const addClient = async (newClient: NewClientInput) => {
     const token = generateClientToken()
+    const weightParsed = parseWeightKg(newClient.weightKg)
+    const goalParsed = parseWeightKg(newClient.goalWeightKg)
+    if (weightParsed.status === 'invalid') { toast('El peso actual no es válido (entre 20 y 400 kg)', 'warn'); return false }
+    if (goalParsed.status === 'invalid') { toast('El peso objetivo no es válido (entre 20 y 400 kg)', 'warn'); return false }
     if (demoClients) {
       const demoClient: ClientData = {
         id: `demo-new-${Date.now()}`, nutricionistaId, token,
@@ -213,14 +221,14 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
         goal: newClient.goal.trim() || null, heightCm: newClient.heightCm ? parseFloat(newClient.heightCm) : null,
         gender: newClient.gender || null, birthDate: newClient.birthDate || null,
         allergies: newClient.allergies.trim(), notes: '', reportNotes: '', consentAcceptedAt: null, consentSignedName: null,
-        monthlyPrice: null, goalWeightKg: null, customMessages: {}, tags: [],
+        monthlyPrice: null, goalWeightKg: goalParsed.status === 'ok' ? goalParsed.kg : null, customMessages: {}, tags: [],
         createdAt: Date.now(), lastReviewedAt: null,
       }
       setClients(prev => [...prev, ...withStats([demoClient], {})])
       toast('Cliente añadido (modo demo — no se guarda)', 'ok')
       return true
     }
-    const { error } = await supabase.from('clientes').insert({
+    const { data: created, error } = await supabase.from('clientes').insert({
       nutricionista_id: nutricionistaId,
       token,
       name: newClient.name.trim(),
@@ -232,11 +240,21 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
       gender: newClient.gender || null,
       birth_date: newClient.birthDate || null,
       allergies: newClient.allergies.trim(),
+      goal_weight_kg: goalParsed.status === 'ok' ? goalParsed.kg : null,
       notes: '',
       created_at: new Date().toISOString(),
-    })
+    }).select('id').single()
     if (error) { toast('Error: ' + error.message, 'warn'); return false }
-    toast('Cliente creado ✓', 'ok')
+    // El peso actual es su primer pesaje: así aparece ya en el perfil y en la gráfica.
+    if (weightParsed.status === 'ok' && created) {
+      const { error: weightError } = await supabase.from('weight_logs').insert({
+        client_id: created.id, date: toLocalISODate(new Date()), weight_kg: weightParsed.kg, note: '',
+      })
+      if (weightError) toast('Cliente creado, pero no se pudo guardar su peso: añádelo desde su ficha', 'warn')
+      else toast('Cliente creado ✓', 'ok')
+    } else {
+      toast('Cliente creado ✓', 'ok')
+    }
     await fetchClients()
     return true
   }
