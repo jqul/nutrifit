@@ -12,6 +12,7 @@ import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
 import { SurveyHistory } from './SurveyHistory'
 import { BalanceSemanalCard } from './BalanceSemanalCard'
 import { RevisionBar } from './RevisionBar'
+import { AddPastWeight } from './AddPastWeight'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
 import { DietAdjustmentCard } from './DietAdjustmentCard'
 import { DEMO_CUSTOM_SURVEYS, DEMO_SURVEY_RESPONSES } from '../../../lib/demo-data'
@@ -180,6 +181,7 @@ export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl,
           </p>
         )}
         <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} />
+        <AddPastWeight clientId={client.id} demoMode={demoMode} onAdded={load} />
       </div>
 
       <div className="card p-5 space-y-4">

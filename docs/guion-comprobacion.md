@@ -234,6 +234,8 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] En **Progreso** del cliente, bajo la tarjeta verde, **«¿Cómo vas?»** da una lectura en una frase (p. ej. «Vas en la dirección prevista · Mantén el plan actual»), avisa si el peso va al revés o la adherencia es baja y dice el % del camino hacia el objetivo. El logro del agua se llama ahora **«Objetivo de hidratación»**.
 - [ ] En **Clientes**, cada fila muestra **«Última actividad: hoy / ayer / hace N días»** (en rojo si hace 5 días o más, o ninguna). El selector **«Ordenar por»** cambia entre atención, nombre, adherencia y última actividad. La tecla **/** salta al buscador (si no estás escribiendo en otro campo).
 - [ ] **Nuevo cliente** pide también **Peso actual** y **Peso objetivo** (opcionales; acepta coma, p. ej. 72,5). Si pones un peso imposible (texto, menos de 20 o más de 400 kg) avisa y no crea. Al crearlo, su ficha ya muestra **Peso inicial / actual / Meta** y el peso sale en la gráfica, sin esperar a que el cliente lo apunte.
+- [ ] **Clientes que ya tenías:** en **Clientes → Importar clientes** el archivo puede traer también **Peso** y **Peso objetivo** (el peso queda como primer pesaje). Para su historial, **Importar historial de peso**: sube un CSV/Excel con **Cliente** (nombre y apellidos, email o teléfono), **Fecha** y **Peso (kg)** — hay una plantilla descargable. Antes de importar enseña cuántos pesajes de cuántos clientes y **qué filas no puede leer y por qué**; los pesajes que ya existen no se pisan. Prueba con un Excel español (punto y coma, decimales con coma: 72,5).
+- [ ] En **Seguimiento** del cliente, bajo la gráfica de peso, **«Añadir un pesaje con fecha»** apunta uno anterior (p. ej. el de la primera consulta).
 
 ## Qué contarme
 

@@ -15,6 +15,7 @@ import { PlantillasTab } from './PlantillasTab'
 import { AjustesTab } from './AjustesTab'
 import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
+import { ImportWeightHistoryModal } from './ImportWeightHistoryModal'
 import { ClientListRow } from './ClientListRow'
 import { ControlCenter } from './ControlCenter'
 import { priorityOf, ClientPanelTab } from '../../lib/controlCenter'
@@ -22,7 +23,7 @@ import { useTodayAppointments } from '../../hooks/useTodayAppointments'
 import { useReviewedThisWeek } from '../../hooks/useClientReviews'
 import { sortClients, ClientSort, CLIENT_SORT_LABELS } from '../../lib/clientListSummary'
 import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboardNav'
-import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, LogOut, Search, Upload, History, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag, ChevronDown, ChevronRight } from 'lucide-react'
 import { bajaReasonLabel } from '../../lib/clientBaja'
 import { toast } from '../shared/Toast'
 import { useHasDietPlan } from '../../hooks/useHasDietPlan'
@@ -52,6 +53,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   }
   const [modalOpen, setModalOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [form, setForm] = useState<NewClientInput>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [query, setQuery] = useState('')
@@ -221,7 +223,8 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
               <h1 className="text-2xl font-serif font-bold">Clientes</h1>
               <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="w-4 h-4" /> Importar CSV/Excel</Button>
+                <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="w-4 h-4" /> Importar clientes</Button>
+                {clients.length > 0 && <Button variant="outline" onClick={() => setHistoryOpen(true)}><History className="w-4 h-4" /> Importar historial de peso</Button>}
                 <Button onClick={() => setModalOpen(true)}><Plus className="w-4 h-4" /> Nuevo cliente</Button>
               </div>
             </div>
@@ -361,6 +364,8 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         </div>
       </Modal>
 
+      <ImportWeightHistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} demoMode={!!demoClients} onImported={fetchClients}
+        clients={clients.map(c => ({ id: c.id, name: c.name, surname: c.surname, email: c.email, phone: c.phone }))} />
       <ImportClientsModal open={importOpen} onClose={() => setImportOpen(false)} nutricionistaId={userProfile.uid}
         demoMode={!!demoClients} onImported={fetchClients} />
     </div>
