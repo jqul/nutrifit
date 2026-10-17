@@ -264,6 +264,7 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] **Paso 3:** resumen de lo que se guardará; avisa de que **el cliente no tiene acceso hasta que le envíes su enlace**. «Traer ahora» crea todo; los pesajes que ya existían no se pisan.
 - [ ] **Al terminar:** lista de los clientes creados con **Copiar enlace** (uno a uno) y **Copiar todos los enlaces** (nombre: enlace, para pegar en WhatsApp). Comprueba que un enlace copiado abre la app de ese cliente.
 - [ ] «Ya los tengo creados: solo quiero el historial» salta el paso 1.
+- [ ] **Pegar la tabla** (en el paso 1 y en el 2): abre un PDF de texto o una hoja, selecciona la tabla, cópiala y pégala. En el historial prueba también líneas sueltas «Laura Gómez 01/09/2026 70,5 kg» sin cabeceras. Siempre enseña lo que ha entendido antes de guardar; un PDF que sea una foto no se puede copiar.
 - [ ] Un Excel español (punto y coma, decimales con coma) se lee bien; las plantillas descargables encajan con lo que pide.
 - [ ] En la **ficha de un cliente**, bajo su resumen, hay cuatro atajos: **Ver progreso**, **Editar plan**, **Escribir** y **Registrar peso** (este último lleva a Seguimiento y abre el formulario de pesaje con fecha).
 

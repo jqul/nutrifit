@@ -7,6 +7,7 @@ import { toast } from '../shared/Toast'
 import { generateClientToken } from '../../lib/token'
 import { toLocalISODate } from '../../lib/date'
 import { readTable } from '../../lib/spreadsheet'
+import { parsePastedTable, parsePastedHistory } from '../../lib/pastedTable'
 import { parseWeightKg } from '../../lib/weightInput'
 import { parseWeightHistory, ImportClient } from '../../lib/weightHistoryImport'
 import { CLIENT_TEMPLATE, HISTORY_TEMPLATE, ClientRowReview, hasNameColumn, reviewClientRows, rowsToClients } from '../../lib/clientImport'
@@ -39,6 +40,26 @@ function FileDrop({ fileName, onFile }: { fileName: string; onFile: (f: File) =>
       <span className="text-sm font-medium">{fileName || 'Elige un archivo .csv o .xlsx'}</span>
       <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f) }} />
     </label>
+  )
+}
+
+/** Para datos que están en un PDF o en otro sitio sin archivo que subir: se pega la tabla y se enseña antes de guardar nada. */
+function PasteBox({ onUse, headers }: { onUse: (text: string) => void; headers: string }) {
+  const [open, setOpen] = useState(false)
+  const [text, setText] = useState('')
+  if (!open) {
+    return <button type="button" onClick={() => setOpen(true)} className="text-sm font-semibold text-accent text-left">¿Está en un PDF o no tienes archivo? Pega la tabla</button>
+  }
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted">Abre el PDF (o la hoja), <strong className="text-ink">selecciona la tabla, cópiala y pégala aquí</strong>{headers}. Después la compruebas antes de guardar nada.</p>
+      <textarea value={text} onChange={e => setText(e.target.value)} rows={6} aria-label="Tabla pegada" spellCheck={false}
+        className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-xs font-mono outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent resize-y" />
+      <div className="flex gap-2">
+        <Button onClick={() => onUse(text)} disabled={!text.trim()}>Usar esta tabla</Button>
+        <Button variant="ghost" onClick={() => { setOpen(false); setText('') }}>Cancelar</Button>
+      </div>
+    </div>
   )
 }
 
@@ -86,23 +107,22 @@ export function TraerClientesWizard({ open, onClose, nutricionistaId, existingCl
     return parseWeightHistory(historyTable, pool)
   }, [historyTable, existingClients, toCreate])
 
+  const useClientsTable = (table: string[][], label: string) => {
+    setClientsError(''); setClientRows(null); setClientsFile(label)
+    if (!hasNameColumn(table)) { setClientsError('No encuentro la columna «Nombre» en la primera fila. Revisa las cabeceras o usa la plantilla.'); return }
+    const parsed = rowsToClients(table)
+    if (parsed.length === 0) { setClientsError('No hay ninguna fila con datos.'); return }
+    setClientRows(reviewClientRows(parsed, existingClients))
+  }
   const handleClientsFile = async (file: File) => {
-    setClientsError(''); setClientRows(null); setClientsFile(file.name)
-    try {
-      const table = await readTable(file)
-      if (!hasNameColumn(table)) { setClientsError('No encuentro la columna «Nombre» en la primera fila. Revisa las cabeceras o usa la plantilla.'); return }
-      const parsed = rowsToClients(table)
-      if (parsed.length === 0) { setClientsError('No hay ninguna fila con datos.'); return }
-      setClientRows(reviewClientRows(parsed, existingClients))
-    } catch (e) {
-      console.error(e); setClientsError('No he podido leer el archivo. Prueba a guardarlo de nuevo como CSV o .xlsx.')
-    }
+    try { useClientsTable(await readTable(file), file.name) }
+    catch (e) { console.error(e); setClientsFile(file.name); setClientsError('No he podido leer el archivo. Prueba a guardarlo de nuevo como CSV o .xlsx.') }
   }
 
+  const useHistoryTable = (table: string[][], label: string) => { setHistoryError(''); setHistoryFile(label); setHistoryTable(table) }
   const handleHistoryFile = async (file: File) => {
-    setHistoryError(''); setHistoryTable(null); setHistoryFile(file.name)
-    try { setHistoryTable(await readTable(file)) }
-    catch (e) { console.error(e); setHistoryError('No he podido leer el archivo. Prueba a guardarlo de nuevo como CSV o .xlsx.') }
+    try { useHistoryTable(await readTable(file), file.name) }
+    catch (e) { console.error(e); setHistoryFile(file.name); setHistoryTable(null); setHistoryError('No he podido leer el archivo. Prueba a guardarlo de nuevo como CSV o .xlsx.') }
   }
 
   const historyReady = !!history && history.missingColumns.length === 0
@@ -203,6 +223,7 @@ export function TraerClientesWizard({ open, onClose, nutricionistaId, existingCl
               <Download className="w-4 h-4" /> Descargar plantilla de ejemplo
             </button>
             <FileDrop fileName={clientsFile} onFile={handleClientsFile} />
+            <PasteBox onUse={text => useClientsTable(parsePastedTable(text), 'Tabla pegada')} headers=", con la primera fila de cabeceras (al menos Nombre)" />
             {clientsError && <p className="text-sm text-warn flex items-start gap-1.5"><AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" /> {clientsError}</p>}
             {clientRows && (
               <div className="space-y-2">
@@ -244,6 +265,7 @@ export function TraerClientesWizard({ open, onClose, nutricionistaId, existingCl
               <Download className="w-4 h-4" /> Descargar plantilla de ejemplo
             </button>
             <FileDrop fileName={historyFile} onFile={handleHistoryFile} />
+            <PasteBox onUse={text => useHistoryTable(parsePastedHistory(text), 'Tabla pegada')} headers=", con cabeceras (Cliente, Fecha, Peso) o con una línea por pesaje: nombre, fecha y peso" />
             {historyError && <p className="text-sm text-warn flex items-start gap-1.5"><AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" /> {historyError}</p>}
             {history && history.missingColumns.length > 0 && (
               <p className="text-sm text-warn flex items-start gap-1.5"><AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />

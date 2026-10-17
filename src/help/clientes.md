@@ -19,6 +19,8 @@ Si ya llevabas a clientes en una hoja de cálculo, **Clientes → Traer clientes
 
 Al terminar tienes el **enlace de cada cliente para copiar** (uno a uno o todos juntos) para mandárselo. **Hasta que se lo envíes no puede entrar a su app.** Después, abre su ficha y hazle el plan.
 
+**¿Tus datos están en un PDF?** No hace falta archivo: en cada paso pulsa **Pega la tabla**, abre el PDF, selecciona la tabla, cópiala y pégala. Funciona con lo que sale de un PDF de texto (columnas separadas por espacios) y de Excel o Google Sheets. En el historial, si el PDF no tiene cabeceras, vale una línea por pesaje (nombre, fecha y peso). Siempre ves la tabla entendida antes de guardar nada. Si el PDF es una **foto o un escaneo** (no se puede seleccionar el texto), no se puede copiar: habría que pasarlo a mano o a una hoja de cálculo.
+
 Si solo quieres añadir historial a clientes que ya tienes creados, usa el mismo botón y pulsa **Ya los tengo creados: solo quiero el historial**. De momento se importa el **peso**; las medidas, las fotos y los check-ins se registran desde la propia app.
 
 Para un solo pesaje: en **Seguimiento** del cliente, bajo la gráfica de peso, **Añadir un pesaje con fecha** (o el atajo **Registrar peso** de la cabecera de su ficha).
