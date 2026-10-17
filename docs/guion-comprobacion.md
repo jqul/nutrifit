@@ -268,6 +268,13 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Un Excel español (punto y coma, decimales con coma) se lee bien; las plantillas descargables encajan con lo que pide.
 - [ ] En la **ficha de un cliente**, bajo su resumen, hay cuatro atajos: **Ver progreso**, **Editar plan**, **Escribir** y **Registrar peso** (este último lleva a Seguimiento y abre el formulario de pesaje con fecha).
 
+## 22. Editor del plan en dos niveles
+
+- [ ] En el **plan de un cliente nuevo** (sin comidas) sale arriba **«Un plan en tres pasos»** (objetivo, comidas, revisar y guardar).
+- [ ] En un plan **sencillo** (mismas comidas todos los días, sin opciones ni suplementos) **no se ven** las pestañas de los días, los selectores de día/ON-OFF de cada comida, el botón de opciones intercambiables ni la Suplementación. En su lugar hay una línea **«Opciones avanzadas»**: al pulsarla aparece todo, y **«Ocultar opciones avanzadas»** lo pliega.
+- [ ] En un plan que **ya usa** algo avanzado (menú por días, ON/OFF, opciones o suplementos) las opciones avanzadas salen abiertas y no se pueden ocultar (para no esconder lo que el plan usa).
+- [ ] Guardar y recargar un plan avanzado mantiene todo (comidas por día, opciones, suplementos).
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

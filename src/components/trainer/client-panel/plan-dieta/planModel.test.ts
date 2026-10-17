@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { EditableItem, EditableMeal, buildSavePlanPayload, numOrNull, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, scaleItemToQuantity, applyFitToMeals, demoPlanToEditable } from './planModel'
+import { EditableItem, EditableMeal, buildSavePlanPayload, numOrNull, usesAdvancedOptions, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, scaleItemToQuantity, applyFitToMeals, demoPlanToEditable } from './planModel'
 import { DEMO_DIET_PLANS } from '../../../../lib/demo-data'
 
 const item = (over: Partial<EditableItem> = {}): EditableItem => ({
@@ -157,5 +157,22 @@ describe('buildSavePlanPayload', () => {
 describe('numOrNull', () => {
   it('reads numbers and rejects the rest', () => {
     expect([numOrNull('12.5'), numOrNull(''), numOrNull(undefined), numOrNull('abc'), numOrNull('0')]).toEqual([12.5, null, null, null, 0])
+  })
+})
+
+describe('usesAdvancedOptions', () => {
+  const basic = { dayOfWeek: null, dayType: null, optionGroup: null }
+  it('is false for a simple plan: the same meals every day, no options, no supplements', () => {
+    expect(usesAdvancedOptions([basic, basic], [])).toBe(false)
+    expect(usesAdvancedOptions([], [])).toBe(false)
+  })
+  it('is true as soon as the plan uses a weekly menu, ON/OFF days, alternative options or supplements', () => {
+    expect(usesAdvancedOptions([{ ...basic, dayOfWeek: 2 }], [])).toBe(true)
+    expect(usesAdvancedOptions([{ ...basic, dayType: 'on' }], [])).toBe(true)
+    expect(usesAdvancedOptions([{ ...basic, optionGroup: 'g1' }], [])).toBe(true)
+    expect(usesAdvancedOptions([basic], [{ id: 's' }])).toBe(true)
+  })
+  it('counts Monday (day 0) as a weekly menu, not as "no day"', () => {
+    expect(usesAdvancedOptions([{ ...basic, dayOfWeek: 0 }], [])).toBe(true)
   })
 })

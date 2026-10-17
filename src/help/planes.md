@@ -16,12 +16,21 @@ Todo se hace en la ficha del cliente, pestaña **Plan de dieta**.
 - También puedes **Insertar receta…** (de tu recetario o del sistema) o **Importar** las comidas desde un Excel/CSV en lugar de meterlas a mano.
 - Arriba ves **«Suma de las comidas vs. objetivo»** con barras: si no cuadra con el objetivo, **Ajustar comidas al objetivo** propone cantidades nuevas (primero te enseña la vista previa; no cambia nada hasta que pulsas **Aplicar al plan**).
 
+## Opciones avanzadas
+
+El editor empieza con lo básico: **objetivo, comidas y alimentos**. Lo demás está plegado en **Opciones avanzadas** (debajo de «Comidas») y se muestra solo cuando lo necesitas, o directamente si el plan ya lo usa:
+
+- Un **menú distinto cada día** de la semana.
+- **Varias opciones** para la misma comida.
+- **Días de entrenamiento y descanso** (ON/OFF).
+- **Suplementos**.
+
 ## Opciones, días y entrenamiento
 
 - **Opciones intercambiables:** **Convertir en opciones intercambiables** deja varias alternativas para la misma comida («Opción A», «Opción B»…). El cliente elige cuál toma cada día, y tú verás cuál eligió.
 - **Día de la semana:** una comida puede ser solo de un día (lunes, martes…) o de **Todos los días**.
 - **Carb cycling:** marca una comida como de día de **entrenamiento (ON)** o de **descanso (OFF)** y el cliente indica qué tipo de día es hoy.
-- **Suplementación:** añade suplementos con su dosis y cuándo tomarlos; puedes ocultarlos al cliente.
+- **Suplementación** (en Opciones avanzadas): añade suplementos con su dosis y cuándo tomarlos; puedes ocultarlos al cliente.
 
 ## Sustituir un alimento
 

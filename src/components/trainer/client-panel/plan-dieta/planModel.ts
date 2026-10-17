@@ -160,3 +160,12 @@ export function buildSavePlanPayload(form: {
     supplements: form.supplements.map(s => ({ name: s.name, dose: s.dose, timing: s.timing, visible_to_client: s.visibleToClient })),
   }
 }
+
+/**
+ * ¿Usa el plan algo de las opciones avanzadas del editor? Un menú por días de la semana, días de entrenamiento o descanso
+ * (ON/OFF), opciones intercambiables de una comida o suplementos. Si sí, el editor las muestra siempre; si no, quedan
+ * plegadas para no abrumar.
+ */
+export function usesAdvancedOptions(meals: Pick<EditableMeal, 'dayOfWeek' | 'dayType' | 'optionGroup'>[], supplements: unknown[]): boolean {
+  return supplements.length > 0 || meals.some(m => m.dayOfWeek != null || m.dayType != null || !!m.optionGroup)
+}

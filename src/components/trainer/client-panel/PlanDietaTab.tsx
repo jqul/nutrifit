@@ -27,7 +27,7 @@ import { Modal } from '../../shared/Modal'
 import { FoodDraft, blankFoodDraft, draftToColumns, normalizeFoodName } from '../../../lib/foodDraft'
 import { createOwnFood } from '../../../lib/ownFoods'
 import {
-  EditableItem, EditableMeal, EditableSupplement, buildSavePlanPayload, DAY_LABELS, MACRO_LABELS, newId, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, applyFitToMeals, demoPlanToEditable,
+  EditableItem, EditableMeal, EditableSupplement, buildSavePlanPayload, DAY_LABELS, MACRO_LABELS, newId, sumItemMacros, sumMealsMacros, scaleRecipeToKcal, applyFitToMeals, demoPlanToEditable, usesAdvancedOptions,
 } from './plan-dieta/planModel'
 import { NumInput, MacroProgressBar, MicroInput } from './plan-dieta/PlanInputs'
 import { ActionMenu } from './plan-dieta/ActionMenu'
@@ -369,6 +369,12 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
   const visibleMeals = meals.filter(m => selectedDay === 'all' ? m.dayOfWeek == null : (m.dayOfWeek === selectedDay || m.dayOfWeek == null))
   const usesWeeklyMenu = meals.some(m => m.dayOfWeek != null)
+  // Dos niveles: lo básico (objetivos, comidas, alimentos) siempre a la vista; lo avanzado (menú por días, opciones
+  // intercambiables, ON/OFF y suplementos) plegado hasta que se necesita. Si el plan ya lo usa, se muestra sin más.
+  const [advancedWanted, setAdvancedWanted] = useState(false)
+  const planUsesAdvanced = usesAdvancedOptions(meals, supplements)
+  const advanced = advancedWanted || planUsesAdvanced
+  const hideAdvanced = () => { setAdvancedWanted(false); setSelectedDay('all'); setSelectedDayType('all') }
   // En "Cualquiera" no tiene sentido sumar la variante ON y la OFF de la
   // misma comida a la vez (se contaría dos veces un mismo hueco) — así que
   // ahí solo cuentan las comidas sin dayType (las que aplican cualquier
@@ -620,6 +626,18 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         </div>
       )}
 
+      {!(parseFloat(kcalTarget) > 0) && meals.length === 0 && (
+        <div className="card p-5 bg-accent/5 border-accent/20">
+          <p className="font-serif font-bold text-lg">Un plan en tres pasos</p>
+          <ol className="mt-2 space-y-1.5 text-sm">
+            <li><span className="font-bold text-accent">1.</span> <strong>Pon el objetivo</strong> de kcal y macros: la calculadora metabólica te lo propone, o aplica una plantilla de arriba.</li>
+            <li><span className="font-bold text-accent">2.</span> <strong>Añade las comidas</strong> y sus alimentos.</li>
+            <li><span className="font-bold text-accent">3.</span> <strong>Revisa</strong> que las barras cuadren con el objetivo y pulsa <strong>Guardar plan</strong>.</li>
+          </ol>
+          <p className="mt-2 text-xs text-muted">Lo demás (un menú distinto cada día, varias opciones, ON/OFF, suplementos) está en «Opciones avanzadas», más abajo, para cuando lo necesites.</p>
+        </div>
+      )}
+
       <div className="card p-5 space-y-4">
         <div className="flex items-center justify-between gap-2">
           <p className="font-semibold text-sm">Objetivo del plan</p>
@@ -729,7 +747,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="font-semibold text-sm">Comidas</p>
           <div className="flex items-center gap-2">
-            {selectedDay !== 'all' && (
+            {advanced && selectedDay !== 'all' && (
               <select value={copyFromDay} onChange={e => { setCopyFromDay(e.target.value); if (e.target.value !== '') copyDayMeals() }}
                 className="px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
                 <option value="">Copiar comidas de...</option>
@@ -744,6 +762,22 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           </div>
         </div>
 
+        {!advanced ? (
+          <button type="button" onClick={() => setAdvancedWanted(true)}
+            className="w-full flex items-center justify-between gap-3 rounded-xl border border-dashed border-border px-4 py-3 text-left hover:border-accent/40 hover:bg-bg-alt/50 transition-colors">
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold">Opciones avanzadas</span>
+              <span className="block text-xs text-muted">Un menú distinto cada día, varias opciones para una comida, días de entrenamiento y descanso (ON/OFF) y suplementos.</span>
+            </span>
+            <ChevronDown className="w-4 h-4 text-muted flex-shrink-0" />
+          </button>
+        ) : (
+          <>
+          {!planUsesAdvanced && (
+            <button type="button" onClick={hideAdvanced} className="flex items-center gap-1 text-xs font-semibold text-muted hover:text-ink">
+              <ChevronUp className="w-3.5 h-3.5" /> Ocultar opciones avanzadas
+            </button>
+          )}
         <div className="flex gap-1 overflow-x-auto pb-1">
           <button onClick={() => setSelectedDay('all')}
             className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
@@ -764,6 +798,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           <p className="text-xs text-muted -mt-1.5">
             Se muestran las comidas de {DAY_LABELS[selectedDay as number]}, más las de "Todos los días" si las hay.
           </p>
+        )}
+          </>
         )}
 
         {visibleMeals.length === 0 && (
@@ -805,6 +841,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                 className="w-28 px-3 py-2 bg-bg border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20" />
               <input type="number" value={meal.kcalTarget} onChange={e => updateMeal(meal.id, { kcalTarget: e.target.value })} placeholder="Kcal"
                 className="w-20 px-3 py-2 bg-bg border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20" />
+              {advanced && (<>
               <select value={meal.dayOfWeek ?? ''} onChange={e => updateMeal(meal.id, { dayOfWeek: e.target.value === '' ? null : parseInt(e.target.value, 10) })}
                 title="Día de la semana"
                 className="px-2 py-2 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
@@ -823,6 +860,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               ) : (
                 <button onClick={() => addOption(meal)} title="Convertir en opciones intercambiables" className="p-2 text-muted hover:text-accent"><Layers className="w-4 h-4" /></button>
               )}
+              </>)}
               {meal.items.length > 0 && (
                 <button onClick={() => closeMeal(meal.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-accent hover:bg-accent/10 transition-colors">
                   <Check className="w-3.5 h-3.5" /> Listo
@@ -1050,7 +1088,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
       <ShoppingListPreview meals={meals} />
 
-      <div className="space-y-3">
+      {advanced && <div className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="font-semibold text-sm">Suplementación</p>
           <button onClick={addSupplement} className="flex items-center gap-1 text-xs font-bold text-accent"><Plus className="w-3.5 h-3.5" /> Añadir</button>
@@ -1072,7 +1110,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
             <button onClick={() => removeSupplement(sup.id)} className="p-1.5 text-muted hover:text-warn"><Trash2 className="w-3.5 h-3.5" /></button>
           </div>
         ))}
-      </div>
+      </div>}
 
       {(recipes.length > 0 || editingRecipe) && (
         <div className="space-y-3">
