@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { toast } from '../../shared/Toast'
@@ -15,6 +15,12 @@ export function AddPastWeight({ clientId, demoMode, onAdded }: { clientId: strin
   const [date, setDate] = useState(today)
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
+  // El atajo "Registrar peso" de la cabecera de la ficha abre este formulario.
+  useEffect(() => {
+    const openForm = () => setOpen(true)
+    window.addEventListener('nutrifit:add-weight', openForm)
+    return () => window.removeEventListener('nutrifit:add-weight', openForm)
+  }, [])
 
   const save = async () => {
     const w = parseWeightKg(text)

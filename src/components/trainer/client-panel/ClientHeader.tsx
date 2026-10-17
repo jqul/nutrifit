@@ -4,7 +4,29 @@ import { buildWAUrl } from '../../../lib/whatsapp'
 import { calcBmi, bmiCategory } from '../../../lib/bmi'
 import { weightDeltaTone, formatKg, formatWeightDelta } from '../../../lib/clientListSummary'
 import { HEALTH_BADGE, TONE_CLASS } from '../healthStyles'
-import { AlertTriangle, MessageCircle, Flame } from 'lucide-react'
+import { AlertTriangle, MessageCircle, Flame, LineChart, UtensilsCrossed, Send, Scale } from 'lucide-react'
+import type { ClientPanelTab } from '../../../lib/controlCenter'
+
+/** Atajos de la ficha: lo que más se hace con un cliente, sin tener que recordar en qué pestaña está. */
+function QuickActions({ onGoTo }: { onGoTo: (tab: ClientPanelTab) => void }) {
+  const actions: { label: string; icon: typeof LineChart; run: () => void }[] = [
+    { label: 'Ver progreso', icon: LineChart, run: () => onGoTo('seguimiento') },
+    { label: 'Editar plan', icon: UtensilsCrossed, run: () => onGoTo('dieta') },
+    { label: 'Escribir', icon: Send, run: () => onGoTo('mensajes') },
+    // Lleva a Seguimiento y abre el formulario de "Añadir un pesaje con fecha".
+    { label: 'Registrar peso', icon: Scale, run: () => { onGoTo('seguimiento'); setTimeout(() => window.dispatchEvent(new Event('nutrifit:add-weight')), 50) } },
+  ]
+  return (
+    <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border/60" role="group" aria-label="Acciones rápidas">
+      {actions.map(a => (
+        <button key={a.label} type="button" onClick={a.run}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-bg text-xs font-semibold hover:bg-bg-alt transition-colors">
+          <a.icon className="w-3.5 h-3.5 text-accent" /> {a.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 const BMI_CATEGORY_CLASS: Record<string, string> = {
   'bajo peso': 'text-notice', normal: 'text-ok', sobrepeso: 'text-notice', obesidad: 'text-warn',
@@ -20,7 +42,7 @@ const BMI_CATEGORY_CLASS: Record<string, string> = {
  * Adherencia y racha vienen del listado de clientes (ClientWithStats); si la
  * ficha se abre sin pasar por él se muestra "—" en vez de inventar un dato.
  */
-export function ClientHeader({ client, currentWeight }: { client: ClientWithStats; currentWeight: number | null }) {
+export function ClientHeader({ client, currentWeight, onGoTo }: { client: ClientWithStats; currentWeight: number | null; onGoTo?: (tab: ClientPanelTab) => void }) {
   const badge = HEALTH_BADGE[client.healthStatus || 'active']
   const BadgeIcon = badge.icon
   const weight = currentWeight ?? client.weightKg ?? null
@@ -107,6 +129,7 @@ export function ClientHeader({ client, currentWeight }: { client: ClientWithStat
             {details.map((d, i) => <span key={i} className="flex gap-2">{i > 0 && <span aria-hidden>·</span>}{d}</span>)}
           </p>
         )}
+        {onGoTo && <QuickActions onGoTo={onGoTo} />}
       </div>
 
       {client.allergies && (

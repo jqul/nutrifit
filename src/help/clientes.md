@@ -9,25 +9,19 @@
 
 Después, en su ficha, copia su enlace (**Perfil → Copiar enlace**) y envíaselo.
 
-## Importar clientes que ya tienes
+## Traer clientes que ya tienes (con su historial)
 
-Si ya llevas a clientes en una hoja de cálculo:
+Si ya llevabas a clientes en una hoja de cálculo, **Clientes → Traer clientes** te guía en tres pasos, para que cada uno llegue con su ficha **y** con lo que ya había hecho:
 
-- **Clientes → Importar clientes** y sube un archivo **.csv o .xlsx**.
-- Reconoce las columnas por su nombre, en cualquier orden: Nombre, Apellidos, Teléfono, Email, Objetivo, Altura, Género, Nacimiento, Alergias, **Peso** y **Peso objetivo**.
-- Antes de importar ves una vista previa. Las filas sin nombre se ignoran.
+- **1. Clientes.** Sube un archivo **.csv o .xlsx**. Reconoce las columnas por su nombre, en cualquier orden: **Nombre** (obligatoria), Apellidos, Teléfono, Email, Objetivo, Altura, Género, Nacimiento, Alergias, **Peso** y **Peso objetivo**. Te enseña quién es nuevo y **quién ya existe** (esos se omiten, no se duplican). Hay una plantilla de ejemplo para descargar.
+- **2. Historial (opcional).** Otro archivo con una fila por pesaje y tres columnas: **Cliente** (nombre y apellidos, o su email, o su teléfono), **Fecha** y **Peso (kg)**. Se empareja tanto con los clientes que vas a crear como con los que ya tenías. Si un nombre coincide con varios clientes, **no adivina**: te dice qué fila revisar y que uses el email o el teléfono. Funciona con el Excel en español (separado por punto y coma, con decimales con coma).
+- **3. Confirmar.** Ves qué se va a guardar (clientes nuevos, pesajes) y **qué filas no se han podido leer y por qué**. Las buenas se importan igualmente. **Si un cliente ya tiene un pesaje ese día, se respeta el suyo**: nunca se pisa nada.
 
-## Importar su historial de peso
+Al terminar tienes el **enlace de cada cliente para copiar** (uno a uno o todos juntos) para mandárselo. **Hasta que se lo envíes no puede entrar a su app.** Después, abre su ficha y hazle el plan.
 
-Para que cada cliente conserve lo que ya hizo y puedas seguir su mejora hacia su objetivo:
+Si solo quieres añadir historial a clientes que ya tienes creados, usa el mismo botón y pulsa **Ya los tengo creados: solo quiero el historial**. De momento se importa el **peso**; las medidas, las fotos y los check-ins se registran desde la propia app.
 
-- **Primero crea a los clientes** (a mano o importándolos).
-- Luego **Clientes → Importar historial de peso** y sube un archivo con una fila por pesaje, con tres columnas: **Cliente** (nombre y apellidos, o su email, o su teléfono), **Fecha** y **Peso (kg)**.
-- Pulsa **Descargar plantilla de ejemplo** si no sabes cómo prepararlo. Funciona con el Excel en español (separado por punto y coma, con decimales con coma).
-- Antes de importar te dice **cuántos pesajes de cuántos clientes** va a guardar y **qué filas no ha podido leer y por qué** (fecha mal escrita, peso imposible, cliente que no encuentra…). Las buenas se importan igualmente.
-- **Si un cliente ya tiene un pesaje ese día, se respeta el suyo.** Nunca se pisa nada.
-
-Para un solo pesaje: en **Seguimiento** del cliente, bajo la gráfica de peso, **Añadir un pesaje con fecha**.
+Para un solo pesaje: en **Seguimiento** del cliente, bajo la gráfica de peso, **Añadir un pesaje con fecha** (o el atajo **Registrar peso** de la cabecera de su ficha).
 
 ## La lista de Clientes
 

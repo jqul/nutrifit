@@ -14,8 +14,7 @@ import { MicronutrientesTab } from './MicronutrientesTab'
 import { PlantillasTab } from './PlantillasTab'
 import { AjustesTab } from './AjustesTab'
 import { DifusionTab } from './DifusionTab'
-import { ImportClientsModal } from './ImportClientsModal'
-import { ImportWeightHistoryModal } from './ImportWeightHistoryModal'
+import { TraerClientesWizard } from './TraerClientesWizard'
 import { HelpCenter } from './HelpCenter'
 import { CommandPalette } from './CommandPalette'
 import { Command } from '../../lib/commands'
@@ -28,7 +27,7 @@ import { useTodayAppointments } from '../../hooks/useTodayAppointments'
 import { useReviewedThisWeek } from '../../hooks/useClientReviews'
 import { sortClients, ClientSort, CLIENT_SORT_LABELS } from '../../lib/clientListSummary'
 import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboardNav'
-import { Plus, LogOut, Search, Upload, History, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag, ChevronDown, ChevronRight } from 'lucide-react'
 import { bajaReasonLabel } from '../../lib/clientBaja'
 import { toast } from '../shared/Toast'
 import { useClientsWithPlan } from '../../hooks/useClientsWithPlan'
@@ -58,7 +57,6 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   }
   const [modalOpen, setModalOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
-  const [historyOpen, setHistoryOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [helpSlug, setHelpSlug] = useState<string | undefined>(undefined)
   // Ctrl+K (o ⌘K) abre el buscador de acciones desde cualquier sección.
@@ -126,8 +124,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
     { id: 'go-negocio', label: 'Ir a Negocio', hint: 'Consulta', keywords: ['ingresos', 'retencion', 'bajas', 'facturas'], group: 'Ir a', run: () => goToView('negocio') },
     { id: 'go-ajustes', label: 'Ir a Ajustes', hint: 'Cuenta, avisos, marca', keywords: ['contrasena', 'logo', 'avisos', 'consentimiento', 'preguntas'], group: 'Ir a', run: () => goToView('ajustes') },
     { id: 'act-new-client', label: 'Nuevo cliente', hint: 'Crear', keywords: ['crear cliente', 'alta', 'anadir cliente'], group: 'Acciones', run: () => { goToView('clientes'); setModalOpen(true) } },
-    { id: 'act-import', label: 'Importar clientes desde un archivo', hint: 'CSV o Excel', keywords: ['traer', 'excel', 'csv', 'subir'], group: 'Acciones', run: () => { goToView('clientes'); setImportOpen(true) } },
-    ...(clients.length > 0 ? [{ id: 'act-history', label: 'Importar historial de peso', hint: 'CSV o Excel', keywords: ['pesos', 'progreso anterior', 'evolucion'], group: 'Acciones', run: () => { goToView('clientes'); setHistoryOpen(true) } }] : []),
+    { id: 'act-import', label: 'Traer clientes desde un archivo', hint: 'CSV o Excel, con su historial de peso', keywords: ['importar', 'excel', 'csv', 'subir', 'historial de peso', 'pesos', 'progreso anterior', 'evolucion'], group: 'Acciones', run: () => { goToView('clientes'); setImportOpen(true) } },
     { id: 'act-new-template', label: 'Crear una plantilla de plan', hint: 'Planes y recursos', keywords: ['duplicar plan', 'plantilla'], group: 'Acciones', run: () => goToView('plantillas') },
     { id: 'act-help', label: 'Abrir la guía de uso', hint: 'Ayuda', keywords: ['tutorial', 'como se hace', 'ayuda'], group: 'Ayuda', run: () => openHelp() },
     ...clients.flatMap<Command>(c => {
@@ -277,8 +274,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
               <h1 className="text-2xl font-serif font-bold">Clientes</h1>
               <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="w-4 h-4" /> Importar clientes</Button>
-                {clients.length > 0 && <Button variant="outline" onClick={() => setHistoryOpen(true)}><History className="w-4 h-4" /> Importar historial de peso</Button>}
+                <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="w-4 h-4" /> Traer clientes</Button>
                 <Button onClick={() => setModalOpen(true)}><Plus className="w-4 h-4" /> Nuevo cliente</Button>
               </div>
             </div>
@@ -419,10 +415,8 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
       </Modal>
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={paletteCommands} dynamic={helpCommands} />
-      <ImportWeightHistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} demoMode={!!demoClients} onImported={fetchClients}
-        clients={clients.map(c => ({ id: c.id, name: c.name, surname: c.surname, email: c.email, phone: c.phone }))} />
-      <ImportClientsModal open={importOpen} onClose={() => setImportOpen(false)} nutricionistaId={userProfile.uid}
-        demoMode={!!demoClients} onImported={fetchClients} />
+      <TraerClientesWizard open={importOpen} onClose={() => setImportOpen(false)} nutricionistaId={userProfile.uid} demoMode={!!demoClients} onImported={fetchClients}
+        existingClients={clients.map(c => ({ id: c.id, name: c.name, surname: c.surname, email: c.email, phone: c.phone }))} />
     </div>
   )
 }

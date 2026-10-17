@@ -1,4 +1,4 @@
-# Negocio y herramientas
+# Inicio, negocio y herramientas
 
 ## Inicio: tu día
 
@@ -14,7 +14,7 @@ La primera pestaña responde a «¿qué necesita mi atención ahora?»:
 
 Los clientes que están bien salen explicados («12 sin incidencias · 9 con check-in esta semana…») para que sepas que no necesitas actuar con ellos.
 
-## Negocio
+## Negocio (en Consulta)
 
 - **Ingresos estimados:** la suma de los precios mensuales que has puesto a tus clientes. Los que no tienen precio se cuentan aparte.
 - **Activos, nuevos este mes, posibles bajas y retención:** cómo evoluciona tu cartera.
@@ -24,8 +24,8 @@ Los clientes que están bien salen explicados («12 sin incidencias · 9 con che
 
 ## Conversor de alimentos
 
-En **Herramientas → Conversor** buscas un alimento y ves sus valores (kcal, proteínas, carbohidratos, grasas, fibra y nutrientes ampliados) para cualquier cantidad. Con **Sustituir por otro alimento** buscas otro y te dice qué cantidad da lo mismo. También puedes **Guardar alimento** para añadirlo a tus alimentos propios.
+En **Planes y recursos → Conversor** buscas un alimento y ves sus valores (kcal, proteínas, carbohidratos, grasas, fibra y nutrientes ampliados) para cualquier cantidad. Con **Sustituir por otro alimento** buscas otro y te dice qué cantidad da lo mismo. También puedes **Guardar alimento** para añadirlo a tus alimentos propios.
 
 ## Micronutrientes
 
-En **Herramientas → Micronutrientes** eliges un **grupo de alimentos** y el **micronutriente a resaltar** (hierro, calcio…) y ves qué alimentos aportan más. Útil para pensar en qué incluir en un plan.
+En **Planes y recursos → Micronutrientes** eliges un **grupo de alimentos** y el **micronutriente a resaltar** (hierro, calcio…) y ves qué alimentos aportan más. Útil para pensar en qué incluir en un plan.

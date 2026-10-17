@@ -2,7 +2,7 @@
 
 ## Calendario
 
-En **Comunicación → Calendario** ves la semana con tus citas.
+En **Consulta → Calendario** ves la semana con tus citas.
 
 - **Nueva cita:** pon el título, elige el cliente (o **Sin cliente** para bloquear la agenda), la fecha y hora, la duración y, si quieres, un enlace de videollamada. Con **Número de semanas** puedes repetirla.
 - Al crearla, el cliente recibe una notificación: «Nueva cita confirmada».
@@ -18,7 +18,7 @@ En su ficha, pestaña **Mensajes**: plantillas de mensaje para mandarle por **Wh
 
 ## Difusión
 
-**Comunicación → Difusión** manda el mismo mensaje a un grupo de clientes, en tres pasos:
+**Consulta → Difusión** manda el mismo mensaje a un grupo de clientes, en tres pasos:
 
 - **¿A quién se lo mandas?** Eliges a los clientes por **etiqueta** (por ejemplo, todos los «Deportista»).
 - **¿Qué les quieres decir?** El texto, con {{cliente}} para el nombre. Puedes enviarlo como **notificación push** (con título) o por **WhatsApp**.

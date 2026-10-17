@@ -131,7 +131,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <BajaBanner client={current} onReactivate={handleReactivate} />
-        <ClientHeader client={current} currentWeight={sidebarWeight} />
+        <ClientHeader client={current} currentWeight={sidebarWeight} onGoTo={next => { setTab(next); window.scrollTo({ top: 0 }) }} />
         <div className="min-w-0">
             {/* Montadas siempre, solo ocultas con CSS — si no, cambiar de
                 pestaña (ej. a Notas y volver) borra cualquier edición del plan

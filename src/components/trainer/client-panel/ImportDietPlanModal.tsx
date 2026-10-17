@@ -5,6 +5,7 @@ import { Modal } from '../../shared/Modal'
 import { Button } from '../../shared/Button'
 import { toast } from '../../shared/Toast'
 import { Upload, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { readTable } from '../../../lib/spreadsheet'
 import type { EditableItem, EditableMeal } from './plan-dieta/planModel'
 
 interface ParsedRow {
@@ -53,38 +54,6 @@ function rowsToParsed(rows: string[][]): ParsedRow[] {
       kcal: get(r, 'kcal'), proteinG: get(r, 'proteinG'), carbsG: get(r, 'carbsG'), fatG: get(r, 'fatG'),
     }))
     .filter(r => r.meal || r.food)
-}
-
-/** Parser CSV sencillo con soporte de campos entre comillas (RFC4180 básico) — igual que ImportClientsModal. */
-function parseCSV(text: string): string[][] {
-  const rows: string[][] = []
-  let row: string[] = []
-  let field = ''
-  let inQuotes = false
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i]
-    if (inQuotes) {
-      if (c === '"') {
-        if (text[i + 1] === '"') { field += '"'; i++ }
-        else inQuotes = false
-      } else field += c
-    } else if (c === '"') inQuotes = true
-    else if (c === ',' || c === ';') { row.push(field); field = '' }
-    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = '' }
-    else if (c === '\r') { /* ignore */ }
-    else field += c
-  }
-  if (field !== '' || row.length > 0) { row.push(field); rows.push(row) }
-  return rows.filter(r => r.length > 0)
-}
-
-async function parseXLSX(file: File): Promise<string[][]> {
-  const XLSX = await import('xlsx')
-  const buf = await file.arrayBuffer()
-  const wb = XLSX.read(buf, { type: 'array' })
-  const sheet = wb.Sheets[wb.SheetNames[0]]
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as unknown[][]
-  return rows.map(r => r.map(cell => String(cell ?? '')))
 }
 
 function normalizeFoodName(s: string): string {
@@ -154,8 +123,7 @@ export function ImportDietPlanModal({ open, onClose, foods, onImport }: {
   const handleFile = async (file: File) => {
     setParsing(true); setParseError(''); setFileName(file.name)
     try {
-      const isExcel = /\.xlsx?$/i.test(file.name)
-      const rows = isExcel ? await parseXLSX(file) : parseCSV(await file.text())
+      const rows = await readTable(file)
       const parsed = rowsToParsed(rows)
       if (parsed.length === 0) { setParseError('No se ha encontrado ninguna fila con datos.'); setMeals([]); return }
       const { meals: built, unmatched: notFound } = rowsToMeals(parsed, foods)

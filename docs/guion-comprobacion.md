@@ -256,6 +256,17 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] **Inicio:** un cliente que ya sale en «Requieren atención» **no se repite** en «Revisión semanal» (en su fila pone «Revisión semanal pendiente»).
 - [ ] **Primeros pasos** (antes «Empieza en 3 minutos»): cada paso abre al cliente concreto que falta (el que no tiene plan, el que no ha entrado) y **Ahora no** lo recoge en una línea.
 
+## 21. Traer clientes (con su historial) y atajos de la ficha
+
+- [ ] **Clientes → Traer clientes** abre un asistente de tres pasos (Clientes → Historial → Confirmar). Sustituye a los dos botones anteriores (Importar clientes / Importar historial de peso).
+- [ ] **Paso 1:** sube un Excel/CSV con Nombre (y lo que tengas: Apellidos, Teléfono, Email, Peso, Peso objetivo…). Enseña cuántos son nuevos, **cuántos ya existen (se omiten)** y cuántas filas no tienen nombre. Sube el mismo archivo **dos veces** (segunda vez, tras traerlo): ahora todos deben salir «Ya existe» y no debe crear duplicados.
+- [ ] **Paso 2 (opcional):** sube el historial (Cliente, Fecha, Peso). Debe emparejar tanto con clientes **nuevos del paso 1** como con los **ya existentes**, y listar las filas que no puede leer. Un nombre repetido (dos «Ana») **no se adivina**: pide email, teléfono o apellidos.
+- [ ] **Paso 3:** resumen de lo que se guardará; avisa de que **el cliente no tiene acceso hasta que le envíes su enlace**. «Traer ahora» crea todo; los pesajes que ya existían no se pisan.
+- [ ] **Al terminar:** lista de los clientes creados con **Copiar enlace** (uno a uno) y **Copiar todos los enlaces** (nombre: enlace, para pegar en WhatsApp). Comprueba que un enlace copiado abre la app de ese cliente.
+- [ ] «Ya los tengo creados: solo quiero el historial» salta el paso 1.
+- [ ] Un Excel español (punto y coma, decimales con coma) se lee bien; las plantillas descargables encajan con lo que pide.
+- [ ] En la **ficha de un cliente**, bajo su resumen, hay cuatro atajos: **Ver progreso**, **Editar plan**, **Escribir** y **Registrar peso** (este último lleva a Seguimiento y abre el formulario de pesaje con fecha).
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

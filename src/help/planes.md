@@ -40,7 +40,7 @@ Pulsa el icono ⟲ junto a un alimento. Por defecto sugiere **Mismo grupo** (otr
 
 ## Plantillas, recetas y alimentos propios
 
-En **Planificación**:
+En **Planes y recursos**:
 
 - **Planes:** planes completos que reutilizas con otros clientes. Créalos con **Guardar como plantilla** desde cualquier plan.
 - **Recetas:** platos con foto y pasos. Créalas con **Guardar esta comida como receta** o desde aquí.

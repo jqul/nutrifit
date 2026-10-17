@@ -24,7 +24,7 @@ El plan se muestra cuando tiene **kcal y comidas guardadas**. En su ficha → **
 ## Quiero meter lo que un cliente ya hizo antes
 
 - Su **peso inicial y su objetivo**: al crearlo, o en su ficha.
-- Su **historial de peso**: **Clientes → Importar historial de peso** (un archivo con cliente, fecha y peso) o, para uno suelto, **Seguimiento → Añadir un pesaje con fecha**.
+- Su **historial de peso**: **Clientes → Traer clientes** (un archivo con cliente, fecha y peso; si ya los tienes creados, pulsa «solo quiero el historial») o, para uno suelto, **Registrar peso** en la cabecera de su ficha.
 - Más datos (analíticas, notas): pestañas **Analíticas** y **Notas** de su ficha.
 
 ## ¿Qué pasa si cometo un error en un plan?
@@ -41,4 +41,4 @@ La eliminación es **irreversible**. Para casos así existe la **baja**, que lo 
 
 ## No encuentro algo
 
-Pulsa **/** en **Clientes** para buscar a un cliente. Los planes, recetas, alimentos propios y guías están en **Planificación**. Los ajustes de tu cuenta, tus avisos y tu marca, en **Ajustes**.
+Pulsa **Ctrl + K** y escribe lo que buscas (una acción, un cliente o un tema de esta guía). Los planes, recetas, alimentos propios y guías están en **Planes y recursos**. Los ajustes de tu cuenta, tus avisos y tu marca, en **Ajustes**.
