@@ -9,17 +9,24 @@ export interface NavGroup {
   id: string
   label: string
   views: { id: View; label: string }[]
+  /** Secciones de uso menos frecuente (Ajustes, Ayuda): se muestran aparte, a la derecha del menú. */
+  secondary?: boolean
 }
 
+// Cuatro secciones de trabajo, nombradas por lo que se hace en ellas, y dos de uso ocasional aparte.
 export const NAV_GROUPS: NavGroup[] = [
   { id: 'inicio', label: 'Inicio', views: [{ id: 'inicio', label: 'Inicio' }] },
   { id: 'clientes', label: 'Clientes', views: [{ id: 'clientes', label: 'Clientes' }] },
-  { id: 'planificacion', label: 'Planificación', views: [{ id: 'plantillas', label: 'Plantillas y recursos' }] },
-  { id: 'comunicacion', label: 'Comunicación', views: [{ id: 'calendario', label: 'Calendario' }, { id: 'difusion', label: 'Difusión' }] },
-  { id: 'negocio', label: 'Negocio', views: [{ id: 'negocio', label: 'Negocio' }] },
-  { id: 'herramientas', label: 'Herramientas', views: [{ id: 'conversor', label: 'Conversor' }, { id: 'micronutrientes', label: 'Micronutrientes' }] },
-  { id: 'ajustes', label: 'Ajustes', views: [{ id: 'ajustes', label: 'Ajustes' }] },
-  { id: 'ayuda', label: 'Ayuda', views: [{ id: 'ayuda', label: 'Ayuda' }] },
+  {
+    id: 'planes', label: 'Planes y recursos',
+    views: [{ id: 'plantillas', label: 'Plantillas, recetas y guías' }, { id: 'conversor', label: 'Conversor' }, { id: 'micronutrientes', label: 'Micronutrientes' }],
+  },
+  {
+    id: 'consulta', label: 'Consulta',
+    views: [{ id: 'calendario', label: 'Calendario' }, { id: 'difusion', label: 'Difusión' }, { id: 'negocio', label: 'Negocio' }],
+  },
+  { id: 'ajustes', label: 'Ajustes', secondary: true, views: [{ id: 'ajustes', label: 'Ajustes' }] },
+  { id: 'ayuda', label: 'Ayuda', secondary: true, views: [{ id: 'ayuda', label: 'Ayuda' }] },
 ]
 
 /** Grupo al que pertenece una sección. */

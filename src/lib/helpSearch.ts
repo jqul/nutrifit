@@ -16,6 +16,7 @@ export function searchHelp(topics: HelpSource[], query: string, limit = 12): Hel
     let heading = topic.title
     let lines: string[] = []
     const flush = () => {
+      if (lines.length === 0) return   // un título sin texto debajo (el de arriba del tema) no es un resultado
       const text = norm(`${heading} ${lines.join(' ')}`)
       if (words.every(w => text.includes(w))) {
         const inHeading = words.every(w => norm(heading).includes(w))

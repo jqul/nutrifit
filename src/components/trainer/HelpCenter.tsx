@@ -7,8 +7,8 @@ import { MarkdownArticle } from '../shared/MarkdownArticle'
 /**
  * La guía de uso: qué es cada cosa y cómo se hace, por temas, con buscador. El texto vive en src/help/*.md.
  */
-export function HelpCenter() {
-  const [slug, setSlug] = useState(HELP_TOPICS[0].slug)
+export function HelpCenter({ initialSlug }: { initialSlug?: string }) {
+  const [slug, setSlug] = useState(HELP_TOPICS.some(t => t.slug === initialSlug) ? initialSlug! : HELP_TOPICS[0].slug)
   const [query, setQuery] = useState('')
   const topic = HELP_TOPICS.find(t => t.slug === slug) ?? HELP_TOPICS[0]
   const hits = useMemo(() => searchHelp(HELP_TOPICS, query), [query])

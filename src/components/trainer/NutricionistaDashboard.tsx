@@ -17,6 +17,10 @@ import { DifusionTab } from './DifusionTab'
 import { ImportClientsModal } from './ImportClientsModal'
 import { ImportWeightHistoryModal } from './ImportWeightHistoryModal'
 import { HelpCenter } from './HelpCenter'
+import { CommandPalette } from './CommandPalette'
+import { Command } from '../../lib/commands'
+import { HELP_TOPICS } from '../../help/topics'
+import { searchHelp } from '../../lib/helpSearch'
 import { ClientListRow } from './ClientListRow'
 import { ControlCenter } from './ControlCenter'
 import { priorityOf, ClientPanelTab } from '../../lib/controlCenter'
@@ -27,7 +31,7 @@ import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboard
 import { Plus, LogOut, Search, Upload, History, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag, ChevronDown, ChevronRight } from 'lucide-react'
 import { bajaReasonLabel } from '../../lib/clientBaja'
 import { toast } from '../shared/Toast'
-import { useHasDietPlan } from '../../hooks/useHasDietPlan'
+import { useClientsWithPlan } from '../../hooks/useClientsWithPlan'
 import { onboardingSteps, OnboardingStepId } from '../../lib/onboarding'
 
 const EMPTY_FORM: NewClientInput = {
@@ -43,7 +47,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   onSwitchToAdmin?: () => void
 }) {
   const { clients, bajas, loading, addClient, fetchClients } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
-  const hasPlan = useHasDietPlan(userProfile.uid, !demoClients)
+  const clientsWithPlan = useClientsWithPlan(userProfile.uid, !demoClients)
   const [view, setView] = useState<View>('inicio')
   // Última sección vista en cada grupo, para que volver a un grupo te deje donde estabas.
   const [lastViewByGroup, setLastViewByGroup] = useState<Partial<Record<string, View>>>({})
@@ -55,6 +59,16 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   const [modalOpen, setModalOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const [helpSlug, setHelpSlug] = useState<string | undefined>(undefined)
+  // Ctrl+K (o ⌘K) abre el buscador de acciones desde cualquier sección.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen(o => !o) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   const [form, setForm] = useState<NewClientInput>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [query, setQuery] = useState('')
@@ -99,6 +113,36 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
   const sorted = sortClients(filtered, sortMode)
   const topStreak = Math.max(0, ...clients.map(c => c.streak || 0))
 
+  // Las acciones del buscador (Ctrl+K): ir a una sección, hacer algo, abrir un cliente o leer la ayuda.
+  const openHelp = (slug?: string) => { setHelpSlug(slug); goToView('ayuda') }
+  const paletteCommands: Command[] = [
+    { id: 'go-inicio', label: 'Ir a Inicio', hint: 'Tu día', keywords: ['hoy', 'atencion', 'resumen'], group: 'Ir a', run: () => goToView('inicio') },
+    { id: 'go-clientes', label: 'Ir a Clientes', hint: 'Lista', keywords: ['lista', 'buscar cliente'], group: 'Ir a', run: () => goToView('clientes') },
+    { id: 'go-plantillas', label: 'Ir a Plantillas, recetas y guías', hint: 'Planes y recursos', keywords: ['planes', 'recetas', 'alimentos', 'guias'], group: 'Ir a', run: () => goToView('plantillas') },
+    { id: 'go-conversor', label: 'Ir al Conversor de alimentos', hint: 'Planes y recursos', keywords: ['convertir', 'equivalencias'], group: 'Ir a', run: () => goToView('conversor') },
+    { id: 'go-micro', label: 'Ir a Micronutrientes', hint: 'Planes y recursos', keywords: ['vitaminas', 'minerales', 'hierro', 'calcio'], group: 'Ir a', run: () => goToView('micronutrientes') },
+    { id: 'go-calendario', label: 'Ir al Calendario', hint: 'Consulta', keywords: ['cita', 'citas', 'agenda', 'nueva cita', 'crear cita'], group: 'Ir a', run: () => goToView('calendario') },
+    { id: 'go-difusion', label: 'Ir a Difusión', hint: 'Consulta', keywords: ['mensaje', 'whatsapp', 'notificacion', 'enviar a todos'], group: 'Ir a', run: () => goToView('difusion') },
+    { id: 'go-negocio', label: 'Ir a Negocio', hint: 'Consulta', keywords: ['ingresos', 'retencion', 'bajas', 'facturas'], group: 'Ir a', run: () => goToView('negocio') },
+    { id: 'go-ajustes', label: 'Ir a Ajustes', hint: 'Cuenta, avisos, marca', keywords: ['contrasena', 'logo', 'avisos', 'consentimiento', 'preguntas'], group: 'Ir a', run: () => goToView('ajustes') },
+    { id: 'act-new-client', label: 'Nuevo cliente', hint: 'Crear', keywords: ['crear cliente', 'alta', 'anadir cliente'], group: 'Acciones', run: () => { goToView('clientes'); setModalOpen(true) } },
+    { id: 'act-import', label: 'Importar clientes desde un archivo', hint: 'CSV o Excel', keywords: ['traer', 'excel', 'csv', 'subir'], group: 'Acciones', run: () => { goToView('clientes'); setImportOpen(true) } },
+    ...(clients.length > 0 ? [{ id: 'act-history', label: 'Importar historial de peso', hint: 'CSV o Excel', keywords: ['pesos', 'progreso anterior', 'evolucion'], group: 'Acciones', run: () => { goToView('clientes'); setHistoryOpen(true) } }] : []),
+    { id: 'act-new-template', label: 'Crear una plantilla de plan', hint: 'Planes y recursos', keywords: ['duplicar plan', 'plantilla'], group: 'Acciones', run: () => goToView('plantillas') },
+    { id: 'act-help', label: 'Abrir la guía de uso', hint: 'Ayuda', keywords: ['tutorial', 'como se hace', 'ayuda'], group: 'Ayuda', run: () => openHelp() },
+    ...clients.flatMap<Command>(c => {
+      const name = `${c.name} ${c.surname}`.trim()
+      return [
+        { id: `c-${c.id}`, label: name, hint: 'Abrir ficha', keywords: ['cliente'], group: 'Clientes', run: () => onSelectClient(c) },
+        { id: `c-${c.id}-plan`, label: `Plan de ${name}`, hint: 'Plan de dieta', keywords: ['dieta'], group: 'Clientes', run: () => onSelectClient(c, 'dieta') },
+        { id: `c-${c.id}-seg`, label: `Seguimiento de ${name}`, hint: 'Peso, adherencia, revisión', keywords: ['progreso', 'peso'], group: 'Clientes', run: () => onSelectClient(c, 'seguimiento') },
+      ]
+    }),
+  ]
+  const helpCommands = (q: string): Command[] => searchHelp(HELP_TOPICS, q, 3).map(h => ({
+    id: `help-${h.slug}-${h.heading}`, label: `Ayuda: ${h.heading}`, hint: h.topicTitle, group: 'Ayuda', run: () => openHelp(h.slug),
+  }))
+
   const handleCreate = async () => {
     if (!form.name.trim()) { toast('Introduce el nombre del cliente', 'warn'); return }
     setSaving(true)
@@ -132,6 +176,11 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
                 <ShieldCheck className="w-3.5 h-3.5" /> Admin
               </button>
             )}
+            <button type="button" onClick={() => setPaletteOpen(true)} title="Buscar o ir a… (Ctrl+K)" aria-label="Buscar o ir a"
+              className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-border text-xs text-muted hover:text-ink hover:bg-bg-alt transition-colors">
+              <Search className="w-3.5 h-3.5" /> <span className="hidden md:inline">Buscar o ir a…</span>
+              <kbd className="hidden lg:inline text-[10px] border border-border rounded px-1">Ctrl K</kbd>
+            </button>
             <div className="hidden sm:block"><InstallAppButton variant="link" /></div>
             <PushToggle nutricionistaId={demoClients ? undefined : userProfile.uid} />
             <ThemeToggle />
@@ -142,13 +191,14 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
           </div>
         </div>
         <nav aria-label="Secciones" className="max-w-5xl mx-auto px-6 flex gap-1 overflow-x-auto">
-          {NAV_GROUPS.map(g => {
+          {NAV_GROUPS.map((g, i) => {
             const active = g.id === activeGroup.id
             return (
               <button key={g.id} onClick={() => goToView(viewForGroup(g, lastViewByGroup))}
                 aria-current={active ? 'page' : undefined}
                 ref={el => { if (active) el?.scrollIntoView({ inline: 'nearest', block: 'nearest' }) }}
-                className={`px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                className={`px-3 sm:px-4 py-2.5 text-sm border-b-2 transition-colors whitespace-nowrap ${g.secondary ? 'font-normal text-xs sm:text-sm' : 'font-medium'} ${
+                  g.secondary && !NAV_GROUPS[i - 1]?.secondary ? 'ml-auto ' : ''}${
                   active ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'
                 }`}>
                 {g.label}
@@ -181,12 +231,13 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             onboarding={demoClients ? undefined : {
               steps: onboardingSteps({
                 profileComplete: !!userProfile.displayName.trim() && !!(userProfile.logoUrl || userProfile.contactPhone),
-                clientCount: clients.length, hasPlan, anyClientEntered: clients.some(c => !!c.authUserId),
+                clientCount: clients.length, hasPlan: clientsWithPlan.size > 0, anyClientEntered: clients.some(c => !!c.authUserId),
               }),
               onAction: (id: OnboardingStepId) => {
                 if (id === 'profile') goToView('ajustes')
                 else if (id === 'client' || clients.length === 0) { goToView('clientes'); setModalOpen(true) }
-                else if (id === 'plan') onSelectClient(clients[0], 'dieta')
+                // Cada paso lleva al cliente concreto que falta, no al primero de la lista.
+                else if (id === 'plan') onSelectClient(clients.find(c => !clientsWithPlan.has(c.id)) ?? clients[0], 'dieta')
                 else onSelectClient(clients.find(c => !c.authUserId) ?? clients[0], 'perfil')
               },
             }}
@@ -217,7 +268,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         <div className={view === 'difusion' ? '' : 'hidden'}>
           <DifusionTab clients={clients} nutricionistaId={userProfile.uid} demoMode={!!demoClients} />
         </div>
-        {view === 'ayuda' && <HelpCenter />}
+        {view === 'ayuda' && <HelpCenter key={helpSlug ?? 'inicio'} initialSlug={helpSlug} />}
         <div className={view === 'ajustes' ? '' : 'hidden'}>
           <AjustesTab userProfile={userProfile} demoMode={!!demoClients} onUpdateProfile={onUpdateProfile} />
         </div>
@@ -367,6 +418,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
         </div>
       </Modal>
 
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={paletteCommands} dynamic={helpCommands} />
       <ImportWeightHistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} demoMode={!!demoClients} onImported={fetchClients}
         clients={clients.map(c => ({ id: c.id, name: c.name, surname: c.surname, email: c.email, phone: c.phone }))} />
       <ImportClientsModal open={importOpen} onClose={() => setImportOpen(false)} nutricionistaId={userProfile.uid}

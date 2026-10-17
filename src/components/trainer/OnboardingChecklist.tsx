@@ -1,19 +1,31 @@
+import { useState } from 'react'
 import { CheckCircle2, Circle, ChevronRight } from 'lucide-react'
 import { OnboardingStep, OnboardingStepId, nextOnboardingStep, onboardingProgress } from '../../lib/onboarding'
 
 /**
- * "Empieza en 3 minutos": los primeros pasos tras registrarse. Se calcula de lo que el nutricionista ya ha hecho y
- * desaparece solo cuando están todos; el botón lleva al primer paso que falta.
+ * "Primeros pasos" tras registrarse. Se calcula de lo que el nutricionista ya ha hecho y desaparece solo cuando están
+ * todos; el botón lleva al primer paso que falta y, para cada cliente, al que de verdad lo necesita. "Ahora no" lo
+ * recoge en una línea (no bloquea nada; vuelve a salir completo la próxima vez que se abre la app).
  */
 export function OnboardingChecklist({ steps, onAction, onHelp }: { steps: OnboardingStep[]; onAction: (id: OnboardingStepId) => void; onHelp?: () => void }) {
+  const [collapsed, setCollapsed] = useState(false)
   const progress = onboardingProgress(steps)
   const next = nextOnboardingStep(steps)
   if (progress.complete || !next) return null
 
+  if (collapsed) {
+    return (
+      <button type="button" onClick={() => setCollapsed(false)} className="w-full flex items-center justify-between gap-3 card px-4 py-3 text-left">
+        <span className="text-sm"><span className="font-semibold">Primeros pasos</span> <span className="text-muted">· {progress.done} de {progress.total}</span></span>
+        <span className="text-xs font-semibold text-accent">Mostrar</span>
+      </button>
+    )
+  }
+
   return (
     <section aria-labelledby="onboarding-title" className="card p-5">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="onboarding-title" className="font-serif font-bold text-lg">Empieza en 3 minutos</h2>
+        <h2 id="onboarding-title" className="font-serif font-bold text-lg">Primeros pasos</h2>
         <p className="text-xs font-semibold text-muted">{progress.done} de {progress.total}</p>
       </div>
       <div className="h-1.5 rounded-full bg-bg-alt overflow-hidden mt-3" role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Progreso de los primeros pasos">
@@ -40,9 +52,10 @@ export function OnboardingChecklist({ steps, onAction, onHelp }: { steps: Onboar
           )
         })}
       </ol>
-      {onHelp && (
-        <button type="button" onClick={onHelp} className="mt-3 text-xs font-semibold text-accent">¿Dudas? Mira la guía de uso →</button>
-      )}
+      <div className="mt-3 flex items-center justify-between gap-3">
+        {onHelp ? <button type="button" onClick={onHelp} className="text-xs font-semibold text-accent">¿Dudas? Mira la guía de uso →</button> : <span />}
+        <button type="button" onClick={() => setCollapsed(true)} className="text-xs text-muted hover:text-ink">Ahora no</button>
+      </div>
     </section>
   )
 }

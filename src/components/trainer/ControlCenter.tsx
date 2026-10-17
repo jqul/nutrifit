@@ -55,6 +55,10 @@ export function ControlCenter({ displayName, clients, loading, onboarding, onGoT
     const order = new Map(attention.map((a, i) => [a.client.id, i]))
     return pendingReviews(clients, reviewedClientIds).sort((a, b) => (order.get(a.id) ?? 1e6) - (order.get(b.id) ?? 1e6) || `${a.name} ${a.surname}`.localeCompare(`${b.name} ${b.surname}`, 'es'))
   }, [clients, attention, reviewedClientIds])
+  // Un cliente ya visible en "Requieren atención" no se repite en "Revisión semanal": allí se marca con una etiqueta.
+  const shownAttentionIds = useMemo(() => new Set(attention.slice(0, MAX_ATTENTION).map(a => a.client.id)), [attention])
+  const pendingIds = useMemo(() => new Set(pending.map(c => c.id)), [pending])
+  const pendingOnly = useMemo(() => pending.filter(c => !shownAttentionIds.has(c.id)), [pending, shownAttentionIds])
   const revenue = useMemo(() => monthlyRevenue(clients), [clients])
   const ok = useMemo(() => okBreakdown(clients, new Date()), [clients])
   const clientName = (id: string | null) => {
@@ -163,6 +167,7 @@ export function ControlCenter({ displayName, clients, loading, onboarding, onGoT
                           <span className="block text-xs text-muted">
                             {issues.slice(0, 3).map(i => i.label).join(' · ')}
                             {issues.length > 3 && ` · +${issues.length - 3}`}
+                            {pendingIds.has(c.id) && ' · Revisión semanal pendiente'}
                           </span>
                           {suggestion && <span className="block text-xs text-ink/80 mt-1">→ {suggestion}</span>}
                         </span>
@@ -177,14 +182,14 @@ export function ControlCenter({ displayName, clients, loading, onboarding, onGoT
             </section>
           </div>
 
-          {pending.length > 0 && (
+          {pendingOnly.length > 0 && (
             <section aria-labelledby="cc-reviews">
               <div className="flex items-baseline justify-between gap-3 mb-2">
                 <h2 id="cc-reviews" className="text-sm font-semibold">Revisión semanal</h2>
-                <span className="text-xs text-muted">{pending.length} {pending.length === 1 ? 'pendiente' : 'pendientes'}</span>
+                <span className="text-xs text-muted">{pendingOnly.length} {pendingOnly.length === 1 ? 'pendiente' : 'pendientes'}</span>
               </div>
               <div className="card divide-y divide-border/60 overflow-hidden">
-                {pending.slice(0, MAX_REVIEWS).map(c => (
+                {pendingOnly.slice(0, MAX_REVIEWS).map(c => (
                   <button key={c.id} onClick={() => onOpenClient(c, 'seguimiento')}
                     className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-bg-alt/60 transition-colors">
                     <span className="text-sm font-semibold truncate">{c.name} {c.surname}</span>
@@ -194,8 +199,8 @@ export function ControlCenter({ displayName, clients, loading, onboarding, onGoT
                   </button>
                 ))}
               </div>
-              {pending.length > MAX_REVIEWS && (
-                <p className="text-xs text-muted mt-2">y {pending.length - MAX_REVIEWS} más — se abren desde Clientes.</p>
+              {pendingOnly.length > MAX_REVIEWS && (
+                <p className="text-xs text-muted mt-2">y {pendingOnly.length - MAX_REVIEWS} más — se abren desde Clientes.</p>
               )}
             </section>
           )}

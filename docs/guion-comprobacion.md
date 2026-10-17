@@ -249,6 +249,13 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Con la app **abierta** (en el ordenador o en el móvil), tras un despliegue nuevo, al volver a la pestaña o pasados unos minutos sale abajo **«Hay una versión nueva. Actualiza para ver lo último.»** con **Actualizar** (recarga) y **Luego** (lo oculta hasta que se vuelva a abrir la app).
 - [ ] Sin despliegue nuevo no sale nunca. Sin conexión tampoco molesta.
 
+## 20. Menú más corto y buscador de acciones
+
+- [ ] El menú tiene **cuatro secciones** (Inicio, Clientes, Planes y recursos, Consulta) y, aparte a la derecha, **Ajustes** y **Ayuda**. **Planes y recursos** agrupa Plantillas/recetas/guías, Conversor y Micronutrientes; **Consulta** agrupa Calendario, Difusión y Negocio. Todo sigue ahí, solo cambia dónde.
+- [ ] **Ctrl+K** (⌘K en Mac) o el botón **Buscar o ir a…** de la cabecera abre un buscador: prueba «cita», «importar», «plan», el nombre de un cliente, «baja». Flechas + Intro para elegir, Esc para cerrar. Los resultados incluyen apartados de la Ayuda.
+- [ ] **Inicio:** un cliente que ya sale en «Requieren atención» **no se repite** en «Revisión semanal» (en su fila pone «Revisión semanal pendiente»).
+- [ ] **Primeros pasos** (antes «Empieza en 3 minutos»): cada paso abre al cliente concreto que falta (el que no tiene plan, el que no ha entrado) y **Ahora no** lo recoge en una línea.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.
