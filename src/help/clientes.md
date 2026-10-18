@@ -9,19 +9,25 @@
 
 Después, en su ficha, copia su enlace (**Perfil → Copiar enlace**) y envíaselo.
 
-## Traer clientes que ya tienes (con su historial)
+## Traer clientes que ya tienes (con todo lo que ya tenías de ellos)
 
-Si ya llevabas a clientes en una hoja de cálculo, **Clientes → Traer clientes** te guía en tres pasos, para que cada uno llegue con su ficha **y** con lo que ya había hecho:
+Si ya llevabas a clientes en hojas de cálculo, **Clientes → Traer clientes** te guía en tres pasos, para que cada uno llegue con su ficha **y** con su historia:
 
-- **1. Clientes.** Sube un archivo **.csv o .xlsx**. Reconoce las columnas por su nombre, en cualquier orden: **Nombre** (obligatoria), Apellidos, Teléfono, Email, Objetivo, Altura, Género, Nacimiento, Alergias, **Peso** y **Peso objetivo**. Te enseña quién es nuevo y **quién ya existe** (esos se omiten, no se duplican). Hay una plantilla de ejemplo para descargar.
-- **2. Historial (opcional).** Otro archivo con una fila por pesaje y tres columnas: **Cliente** (nombre y apellidos, o su email, o su teléfono), **Fecha** y **Peso (kg)**. Se empareja tanto con los clientes que vas a crear como con los que ya tenías. Si un nombre coincide con varios clientes, **no adivina**: te dice qué fila revisar y que uses el email o el teléfono. Funciona con el Excel en español (separado por punto y coma, con decimales con coma).
-- **3. Confirmar.** Ves qué se va a guardar (clientes nuevos, pesajes) y **qué filas no se han podido leer y por qué**. Las buenas se importan igualmente. **Si un cliente ya tiene un pesaje ese día, se respeta el suyo**: nunca se pisa nada.
+- **1. Clientes.** Sube un archivo **.csv o .xlsx**. Reconoce las columnas por su nombre, en cualquier orden: **Nombre** (obligatoria), Apellidos, Teléfono, Email, Objetivo, Altura, Género, Nacimiento, Alergias, **Peso**, **Peso objetivo** y **Notas** (tus notas privadas). Te enseña quién es nuevo y **quién ya existe** (esos se omiten, no se duplican). Hay una plantilla de ejemplo para descargar.
+- **2. Historial (todo opcional).** Tres tipos, cada uno en su archivo y con su plantilla. En todos, la primera columna identifica al cliente (**Cliente** con nombre y apellidos, o su email, o su teléfono) y se empareja tanto con los que vas a crear como con los que ya tenías. Si un nombre coincide con varios clientes, **no adivina**: te dice qué fila revisar y que uses el email o el teléfono.
+  - **Historial de peso:** Cliente, **Fecha** y **Peso (kg)**.
+  - **Notas de consulta:** Cliente, **Fecha** y **Nota**. Se añaden a las **notas privadas** de su ficha (la pestaña Notas), una línea por consulta con su fecha, **sin tocar lo que ya hubiera escrito**. **El cliente nunca las ve.**
+  - **Analíticas:** Cliente, **Fecha**, **Marcador** y **Valor** (o una columna por marcador: Glucosa, Colesterol total…). NutriFit lleva por ahora glucosa, colesterol total, LDL, HDL, triglicéridos, GOT, GPT, hierro, vitamina D y TSH, **en sus unidades habituales** (mg/dL, U/L, µg/dL, ng/mL, µU/mL). Si tu hoja trae otra unidad (mmol/L, por ejemplo) o un marcador que NutriFit no lleva (HbA1c…), te lo dice y esa fila no se importa: **no convierte unidades a ciegas**.
+  Funciona con el Excel en español (separado por punto y coma, con decimales con coma).
+- **3. Confirmar.** Ves qué se va a guardar y **qué filas no se han podido leer y por qué**. Las buenas se importan igualmente. **Nunca se duplica ni se pisa nada**: un pesaje que ya existía ese día, un resultado de analítica ya guardado o una línea de notas que ya estaba se respetan, así que puedes repetir la importación.
 
 Al terminar tienes el **enlace de cada cliente para copiar** (uno a uno o todos juntos) para mandárselo. **Hasta que se lo envíes no puede entrar a su app.** Después, abre su ficha y hazle el plan.
 
-**¿Tus datos están en un PDF?** No hace falta archivo: en cada paso pulsa **Pega la tabla**, abre el PDF, selecciona la tabla, cópiala y pégala. Funciona con lo que sale de un PDF de texto (columnas separadas por espacios) y de Excel o Google Sheets. En el historial, si el PDF no tiene cabeceras, vale una línea por pesaje (nombre, fecha y peso). Siempre ves la tabla entendida antes de guardar nada. Si el PDF es una **foto o un escaneo** (no se puede seleccionar el texto), no se puede copiar: habría que pasarlo a mano o a una hoja de cálculo.
+**¿Tus datos están en un PDF?** No hace falta archivo: en cada apartado pulsa **Pega la tabla**, abre el PDF, selecciona la tabla, cópiala y pégala. Funciona con lo que sale de un PDF de texto (columnas separadas por espacios) y de Excel o Google Sheets. En el historial de peso, si el PDF no tiene cabeceras, vale una línea por pesaje (nombre, fecha y peso). Siempre ves la tabla entendida antes de guardar nada. Si el PDF es una **foto o un escaneo** (no se puede seleccionar el texto), no se puede copiar: habría que pasarlo a mano o a una hoja de cálculo.
 
-Si solo quieres añadir historial a clientes que ya tienes creados, usa el mismo botón y pulsa **Ya los tengo creados: solo quiero el historial**. De momento se importa el **peso**; las medidas, las fotos y los check-ins se registran desde la propia app.
+**Lo que no entra por hoja de cálculo.** Las **fotos de progreso** y los **PDF originales de las analíticas** se suben desde la ficha del cliente (Seguimiento y Analíticas), el **plan de dieta** que ya tenía se trae con **Importar** dentro de su plan, y los check-ins diarios los registra el propio cliente desde su app.
+
+Si solo quieres añadir historial a clientes que ya tienes creados, usa el mismo botón y pulsa **Ya los tengo creados: solo quiero su historial**.
 
 Para un solo pesaje: en **Seguimiento** del cliente, bajo la gráfica de peso, **Añadir un pesaje con fecha** (o el atajo **Registrar peso** de la cabecera de su ficha).
 

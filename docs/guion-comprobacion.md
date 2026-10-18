@@ -275,6 +275,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] En un plan que **ya usa** algo avanzado (menú por días, ON/OFF, opciones o suplementos) las opciones avanzadas salen abiertas y no se pueden ocultar (para no esconder lo que el plan usa).
 - [ ] Guardar y recargar un plan avanzado mantiene todo (comidas por día, opciones, suplementos).
 
+## 23. Traer todo el historial de un cliente anterior
+
+- [ ] **Traer clientes → paso 2 (Historial)** tiene tres bloques desplegables: **Historial de peso**, **Notas de consulta** y **Analíticas**, cada uno con su plantilla descargable y su «Pega la tabla».
+- [ ] **Notas de consulta:** súbelas para un cliente que ya tenga algo escrito en **Notas**. Tras traer, en su ficha → Notas ves lo de antes **intacto** y debajo «— Historial anterior (importado) —» con una línea «[01/09/2026] texto» por consulta. **Repite la importación**: no se duplican. Comprueba en la app del **cliente** que **no** ve esas notas.
+- [ ] **Analíticas:** con una hoja larga (Cliente, Fecha, Marcador, Valor) y con una ancha (una columna por marcador). En la ficha → Analíticas aparecen con su rango. Una fila con **mmol/L** o con **HbA1c** sale en «filas sin importar» con su motivo. Repetir la importación no duplica resultados.
+- [ ] La columna **Notas** del archivo de clientes llega a las notas privadas de cada cliente nuevo.
+- [ ] En el paso de confirmar y en el resumen final aparecen los tres tipos con sus cifras, y si algo falla a medias se dice qué (y lo demás se guarda).
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

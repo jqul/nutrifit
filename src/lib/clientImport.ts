@@ -8,6 +8,8 @@ export interface ParsedClient {
   name: string; surname: string; phone: string; email: string
   goal: string; heightCm: string; gender: string; birthDate: string; allergies: string
   weightKg: string; goalWeightKg: string
+  /** Notas privadas del nutricionista sobre el cliente (la pestaña Notas de su ficha; el cliente no las ve). */
+  notes: string
 }
 
 // Alias de cabeceras aceptadas (sin acentos ni mayúsculas) para cada campo: admite plantillas en español o inglés.
@@ -23,6 +25,7 @@ export const CLIENT_HEADER_ALIASES: Record<keyof ParsedClient, string[]> = {
   allergies: ['alergias', 'allergies', 'alergias / intolerancias'],
   weightKg: ['peso', 'peso actual', 'peso (kg)', 'peso actual (kg)', 'weight', 'weight (kg)'],
   goalWeightKg: ['peso objetivo', 'peso objetivo (kg)', 'peso meta', 'objetivo de peso', 'goal weight'],
+  notes: ['notas', 'nota', 'observaciones', 'notas privadas', 'comentarios', 'notes'],
 }
 
 export function rowsToClients(rows: string[][]): ParsedClient[] {
@@ -36,6 +39,7 @@ export function rowsToClients(rows: string[][]): ParsedClient[] {
       name: cell(r, cols.name), surname: cell(r, cols.surname), phone: cell(r, cols.phone), email: cell(r, cols.email),
       goal: cell(r, cols.goal), heightCm: cell(r, cols.heightCm), gender: cell(r, cols.gender), birthDate: cell(r, cols.birthDate),
       allergies: cell(r, cols.allergies), weightKg: cell(r, cols.weightKg), goalWeightKg: cell(r, cols.goalWeightKg),
+      notes: cell(r, cols.notes),
     }))
 }
 
@@ -82,5 +86,7 @@ export function reviewClientRows(rows: ParsedClient[], existing: ImportClient[])
   })
 }
 
-export const CLIENT_TEMPLATE = 'Nombre;Apellidos;Teléfono;Email;Objetivo;Altura (cm);Peso (kg);Peso objetivo (kg)\nLaura;Gómez;600111222;laura@correo.es;perder_peso;165;70,5;64\nCarlos;Ruiz;611333444;;ganar_masa;180;78;84\n'
+export const CLIENT_TEMPLATE = 'Nombre;Apellidos;Teléfono;Email;Objetivo;Altura (cm);Peso (kg);Peso objetivo (kg);Alergias;Notas\nLaura;Gómez;600111222;laura@correo.es;perder_peso;165;70,5;64;Lactosa;Prefiere cenar pronto\nCarlos;Ruiz;611333444;;ganar_masa;180;78;84;;\n'
 export const HISTORY_TEMPLATE = 'Cliente;Fecha;Peso (kg)\nLaura Gómez;01/09/2026;72,0\nLaura Gómez;15/09/2026;70,5\nCarlos Ruiz;01/09/2026;78\n'
+export const NOTES_TEMPLATE = 'Cliente;Fecha;Nota\nLaura Gómez;01/09/2026;Primera consulta. Objetivo: perder 6 kg. Intolerancia a la lactosa.\nLaura Gómez;15/09/2026;Mejor energía. Adherencia buena.\nCarlos Ruiz;01/09/2026;Entrena 4 días. Quiere ganar masa.\n'
+export const LABS_TEMPLATE = 'Cliente;Fecha;Marcador;Valor\nLaura Gómez;01/09/2026;Glucosa;92\nLaura Gómez;01/09/2026;Colesterol total;201,5\nLaura Gómez;01/09/2026;Vitamina D;24\nCarlos Ruiz;01/09/2026;Glucosa;88\n'

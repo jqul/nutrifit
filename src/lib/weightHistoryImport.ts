@@ -1,10 +1,11 @@
 // Importar el historial de peso que un cliente ya tenía antes de usar NutriFit (una hoja de cálculo del nutricionista),
 // para poder seguir su evolución y su objetivo desde el primer día. Reconoce las columnas por su nombre y empareja cada
 // fila con un cliente existente por email, teléfono o nombre.
-import { detectColumns, stripAccents } from './spreadsheet'
+import { detectColumns } from './spreadsheet'
+import { CLIENT_ID_ALIASES, ImportClient, matchClient } from './clientMatch'
 import { parseWeightKg } from './weightInput'
 
-export interface ImportClient { id: string; name: string; surname: string; email: string; phone: string }
+export type { ImportClient } from './clientMatch'
 export interface HistoryEntry { clientId: string; clientName: string; date: string; weightKg: number }
 export interface HistoryProblem { /** Número de fila en el archivo (la primera de datos es la 2). */ row: number; reason: string }
 export interface HistoryParse {
@@ -18,16 +19,11 @@ export interface HistoryParse {
 }
 
 const ALIASES = {
-  client: ['cliente', 'nombre', 'paciente', 'nombre y apellidos', 'nombre completo', 'name', 'client'],
-  surname: ['apellidos', 'apellido', 'surname', 'last name'],
-  email: ['email', 'correo', 'e-mail'],
-  phone: ['telefono', 'phone', 'movil'],
+  ...CLIENT_ID_ALIASES,
   date: ['fecha', 'date', 'dia'],
   weight: ['peso', 'peso (kg)', 'kg', 'weight', 'weight (kg)'],
 }
 
-const norm = (s: string) => stripAccents(s).toLowerCase().replace(/\s+/g, ' ').trim()
-const digits = (s: string) => s.replace(/\D/g, '')
 
 const pad = (n: number) => String(n).padStart(2, '0')
 function isRealDate(y: number, m: number, d: number): boolean {
@@ -54,33 +50,6 @@ export function parseDateCell(text: string): string | null {
     return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`
   }
   return null
-}
-
-type Match = { ok: true; client: ImportClient } | { ok: false; reason: string }
-
-function matchClient(cell: { client: string; surname: string; email: string; phone: string }, clients: ImportClient[]): Match {
-  const email = cell.email.trim().toLowerCase()
-  if (email) {
-    const found = clients.filter(c => c.email.trim().toLowerCase() === email)
-    if (found.length === 1) return { ok: true, client: found[0] }
-  }
-  const phone = digits(cell.phone)
-  if (phone.length >= 6) {
-    const found = clients.filter(c => digits(c.phone).slice(-9) === phone.slice(-9) && digits(c.phone).length >= 6)
-    if (found.length === 1) return { ok: true, client: found[0] }
-  }
-  const given = norm(`${cell.client} ${cell.surname}`)
-  if (!given) return { ok: false, reason: 'No hay cliente (ni email ni teléfono ni nombre)' }
-  const exact = clients.filter(c => norm(`${c.name} ${c.surname}`) === given)
-  if (exact.length === 1) return { ok: true, client: exact[0] }
-  if (exact.length > 1) return { ok: false, reason: `Hay varios clientes llamados «${cell.client}»: usa su email o teléfono` }
-  // Solo el nombre de pila, si es único.
-  if (!cell.surname.trim()) {
-    const byFirst = clients.filter(c => norm(c.name) === given)
-    if (byFirst.length === 1) return { ok: true, client: byFirst[0] }
-    if (byFirst.length > 1) return { ok: false, reason: `«${cell.client}» coincide con varios clientes: añade los apellidos` }
-  }
-  return { ok: false, reason: `No hay ningún cliente que se llame «${`${cell.client} ${cell.surname}`.trim()}»` }
 }
 
 /** Convierte la tabla del archivo (primera fila = cabeceras) en pesajes listos para guardar, con lo que no se ha podido leer. */
