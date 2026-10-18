@@ -283,6 +283,13 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] La columna **Notas** del archivo de clientes llega a las notas privadas de cada cliente nuevo.
 - [ ] En el paso de confirmar y en el resumen final aparecen los tres tipos con sus cifras, y si algo falla a medias se dice qué (y lo demás se guarda).
 
+## 24. Página de presentación (landing)
+
+- [ ] La web principal (sin sesión) cuenta: **qué hace** («Sabes a quién escribir hoy…»), **el problema**, **cómo funciona** en tres pasos, **qué incluye** (pestañas Para ti / Para tu cliente / Para tu consulta), **preguntas frecuentes** y una llamada final. **Ver demo en vivo** abre la demo y **Solicitar acceso** el registro.
+- [ ] **Lee todo el texto con ojo crítico:** ¿es verdad cada frase? ¿falta algo que quieras que se cuente? Los textos están en src/landing/content.ts. No hay precios, cifras ni opiniones de clientes inventadas (un test lo vigila).
+- [ ] Se ve bien en el **móvil** (sin desplazarte de lado) y en oscuro.
+- [ ] La barra de la demo dice «Solicitar acceso →» (ya no «gratis»).
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

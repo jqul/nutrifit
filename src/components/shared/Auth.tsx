@@ -1,21 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { Eye, EyeOff, Check, ArrowRight, Briefcase, User } from 'lucide-react'
-import { InstallAppButton } from './InstallAppButton'
-import { LandingPreview } from './LandingPreview'
-import { LegalLinks } from './LegalLinks'
+import { Landing } from './Landing'
 import { LEGAL_REVIEWED, LEGAL_VERSION } from '../../legal/entity'
 
 interface AuthProps { onAuth: () => void; onDemo?: () => void }
-
-const FEATURES = [
-  { title: 'Plan de dieta', desc: 'Macros, comidas, suplementación y consejo personalizado por cliente.' },
-  { title: 'Seguimiento de peso', desc: 'Gráfica de evolución sincronizada, sin depender del móvil del cliente.' },
-  { title: 'Fotos de progreso', desc: 'El cliente sube fotos y tú ves su evolución visual.' },
-  { title: 'Check-in diario', desc: 'Adherencia, hambre, energía y ánimo cada día, sin preguntarlo por WhatsApp.' },
-  { title: 'Panel del cliente', desc: 'Acceso desde el móvil con un enlace personal. Sin descargar nada.' },
-  { title: 'Adherencia y racha', desc: 'Ve de un vistazo quién sigue el plan y quién necesita un empujón.' },
-]
 
 export function Auth({ onAuth, onDemo }: AuthProps) {
   const [view, setView] = useState<'landing' | 'login' | 'register' | 'forgot'>('landing')
@@ -65,63 +54,7 @@ export function Auth({ onAuth, onDemo }: AuthProps) {
     setLoading(false); setRegistered(true)
   }
 
-  if (view === 'landing') return (
-    <div className="min-h-screen bg-bg flex flex-col">
-      <nav className="border-b border-border bg-bg/90 backdrop-blur-sm sticky top-0 z-10" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="text-xl font-serif font-bold">Nutri<span className="text-accent italic">Fit</span></span>
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block"><InstallAppButton variant="link" /></div>
-            {onDemo && (
-              <button onClick={onDemo} className="hidden sm:block px-3 py-2 text-sm text-muted hover:text-ink transition-colors">Ver demo</button>
-            )}
-            <button onClick={() => setView('login')} className="px-4 py-2 text-sm font-medium text-muted hover:text-ink transition-colors">Entrar →</button>
-            <button onClick={() => setView('register')} className="px-4 py-2 bg-ink text-white rounded-lg text-sm font-semibold hover:opacity-90">Solicitar acceso</button>
-          </div>
-        </div>
-      </nav>
-      <section className="flex flex-col items-center justify-center px-6 pt-20 pb-16 text-center relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-accent/5 blur-3xl" />
-        </div>
-        <p className="relative text-xs font-bold uppercase tracking-[0.25em] text-accent mb-8">· Software para nutricionistas ·</p>
-        <h1 className="relative text-6xl sm:text-7xl lg:text-8xl font-serif font-bold leading-[0.92] mb-8 max-w-4xl">
-          Un panel<br /><span className="text-accent italic">único</span><br />por cliente
-        </h1>
-        <p className="relative text-lg text-muted max-w-lg mx-auto mb-12 leading-relaxed">
-          Cada cliente tiene su propio espacio: plan de dieta, seguimiento de peso, fotos y check-ins diarios.
-        </p>
-        <div className="relative flex flex-col sm:flex-row gap-3 justify-center mb-16">
-          {onDemo && (
-            <button onClick={onDemo} className="flex items-center justify-center gap-2 px-8 py-4 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 shadow-lg">
-              Ver demo en vivo <ArrowRight className="w-4 h-4" />
-            </button>
-          )}
-          <button onClick={() => setView('register')} className={`flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-sm font-semibold transition-all ${
-            onDemo ? 'border border-border text-muted hover:border-ink hover:text-ink' : 'bg-ink text-white hover:opacity-90 shadow-lg'
-          }`}>
-            Solicitar acceso
-          </button>
-        </div>
-      </section>
-      <LandingPreview />
-      <section className="max-w-5xl mx-auto px-6 py-20 w-full">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent mb-4 text-center">Qué incluye</p>
-        <h2 className="text-4xl sm:text-5xl font-serif font-bold text-center mb-16 max-w-2xl mx-auto leading-tight">Todo lo que necesitas para gestionar a tus clientes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {FEATURES.map(({ title, desc }) => (
-            <div key={title} className="card p-8 hover:border-accent/40 hover:shadow-sm transition-all group">
-              <p className="font-serif font-bold text-base mb-2">{title}</p>
-              <p className="text-sm text-muted leading-relaxed">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-      <footer className="border-t border-border mt-auto px-6 py-6 max-w-5xl mx-auto w-full">
-        <LegalLinks slugs={['terminos', 'privacidad', 'encargado', 'cookies', 'aviso']} />
-      </footer>
-    </div>
-  )
+  if (view === 'landing') return <Landing onDemo={onDemo} onLogin={() => setView('login')} onRegister={() => setView('register')} />
 
   if (registered) return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">

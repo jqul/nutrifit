@@ -64,7 +64,7 @@ function DemoCTA({ onRegister, onLogin }: { onRegister: () => void; onLogin: () 
       <p className="text-sm font-medium sm:hidden">¿Te convence NutriFit?</p>
       <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
         <button onClick={onLogin} className="text-sm text-muted hover:text-ink px-3 py-1.5 rounded-lg hover:bg-bg-alt transition-colors">Entrar</button>
-        <button onClick={onRegister} className="text-sm font-semibold bg-accent text-white px-4 py-1.5 rounded-lg hover:opacity-90 transition-opacity">Solicitar acceso gratis →</button>
+        <button onClick={onRegister} className="text-sm font-semibold bg-accent text-white px-4 py-1.5 rounded-lg hover:opacity-90 transition-opacity">Solicitar acceso →</button>
         <button onClick={() => setDismissed(true)} className="text-muted/50 hover:text-muted ml-1 text-lg leading-none" aria-label="Cerrar">×</button>
       </div>
     </div>
