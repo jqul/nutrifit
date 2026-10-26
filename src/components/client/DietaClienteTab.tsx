@@ -18,6 +18,7 @@ import { DayBalanceBar } from '../shared/DayBalanceBar'
 import { balanceOfDay, balanceStatus, mealMacros } from '../../lib/dayBalance'
 import { scannedExtrasOf } from '../../lib/scannedLogs'
 import { ScannedFoodSheet } from './ScannedFoodSheet'
+import { ExtrasQuickLogSheet } from './ExtrasQuickLogSheet'
 import { BottomSheet } from '../shared/BottomSheet'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
 import { ScannedFood } from '../../lib/openFoodFacts'
@@ -26,7 +27,7 @@ import { eatingOutGuideFromRow } from '../../lib/mappers'
 import { DEMO_EATING_OUT_GUIDES } from '../../lib/demo-data'
 import {
   Utensils, ShoppingCart, Check, Download, Repeat, CalendarDays, ChevronDown, ChevronUp, Layers, Flame, Moon,
-  Barcode, MessageCircle, ChefHat, BookOpen, UtensilsCrossed,
+  Barcode, MessageCircle, ChefHat, BookOpen, UtensilsCrossed, ListPlus,
 } from 'lucide-react'
 
 const MACRO_LABELS: Record<MacroKey, string> = { kcal: 'kcal', proteinG: 'proteína', carbsG: 'carbohidratos', fatG: 'grasas' }
@@ -73,6 +74,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   const logsToday = mealLogsOf(mealLogsSnap, clientId)
   const [scannerOpen, setScannerOpen] = useState(false)
   const [scannedFood, setScannedFood] = useState<ScannedFood | null>(null)
+  const [addingFoods, setAddingFoods] = useState(false)
   const [viewingRecipe, setViewingRecipe] = useState<RecipeRow | null>(null)
   // "¿Vas a comer fuera?" — null = eligiendo tipo de restaurante, id = viendo
   // sus pautas. Puramente informativo, no depende del plan ni se guarda.
@@ -211,6 +213,10 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         <ScannedFoodSheet food={scannedFood} clientId={clientId} demoMode={demoMode} dayKcal={balance.total.kcal} kcalTarget={plan.kcalTarget}
           onClose={() => setScannedFood(null)} onScanAnother={() => { setScannedFood(null); setScannerOpen(true) }} />
       )}
+      {addingFoods && (
+        <ExtrasQuickLogSheet clientId={clientId} foods={foods} demoMode={demoMode} dayKcal={balance.total.kcal} kcalTarget={plan.kcalTarget}
+          onClose={() => setAddingFoods(false)} />
+      )}
       <div className="card p-5">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
@@ -258,8 +264,11 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <ToolButton icon={<Barcode className="w-4 h-4" />} label="Escanear producto" onClick={() => setScannerOpen(true)} />
+        <ToolButton icon={<ListPlus className="w-4 h-4" />} label="Añadir varios alimentos" onClick={() => setAddingFoods(true)} />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
         <ToolButton icon={<UtensilsCrossed className="w-4 h-4" />} label="¿Vas a comer fuera?" onClick={() => { setEatingOutOpen(true); setEatingOutGuideId(null) }} />
         <ToolButton icon={<Download className="w-4 h-4" />} label="Descargar PDF" onClick={() => printDietPlan(client, plan)} />
       </div>

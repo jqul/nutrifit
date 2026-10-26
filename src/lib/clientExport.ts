@@ -32,6 +32,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { table: 'diet_plan_changes', order: 'changed_at' },
   { table: 'diet_plan_versions', order: 'version_number' },
   { table: 'diet_plans', order: 'created_at' },
+  { table: 'extra_log_items', order: 'created_at' },
   { table: 'invoices', order: 'created_at' },
   { table: 'lab_reports', order: 'date' },
   { table: 'meal_logs', order: 'created_at' },

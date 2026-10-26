@@ -1,0 +1,33 @@
+feature,area,priority,original,clone,notes
+Log a meal by typing a free-text sentence,logging,must,yes,no,
+Log a meal by photo,logging,must,yes,no,
+Log a meal by barcode scan,logging,must,yes,no,
+AI calorie/macro breakdown per logged meal,logging,must,yes,no,
+Editable per-ingredient rows with live weight correction,logging,must,yes,no,
+Conversational follow-up correction that rebuilds the estimate,logging,must,yes,no,
+Day totals view (kcal + macros vs. goal),dashboard,must,yes,no,
+Food catalog search (public database),catalog,must,yes,no,use Open Food Facts directly; do not scrape 0xCal's own community catalog
+Pantry: save a resolved food for reuse,pantry,must,yes,no,
+Pantry reordering by use count + time-of-day,pantry,should,yes,no,
+Energy/macro sanity check at catalog write time (Atwater formula),catalog,should,yes,no,
+On-device OCR nutrition-label fallback when a barcode has no match,logging,should,yes,no,
+Voice meal logging via microphone,logging,should,yes,no,
+Intermittent fasting windows (12:12/14:10/16:8/custom),fasting,should,yes,no,
+Fasting progress bar inline with the day log (no separate tab),fasting,should,yes,no,
+Weight tracking graph,tracking,should,yes,no,
+Per-screen contextual help ("?" explains the numbers),ui,should,yes,no,
+Drinks counted for hydration and caffeine separately,tracking,could,yes,no,
+Dark mode,ui,could,yes,no,
+Multi-panel layout for larger screens,ui,could,yes,no,
+Subscription paywall with short free trial,monetization,must,yes,no,NutriFit's monetization model differs (trainer/client); re-scope, don't copy pricing
+No-account / fully local storage,architecture,should,yes,no,conflicts with NutriFit's existing accounts; resolve in replica-architect, don't copy as-is
+No ads,business model,must,yes,no,
+Public weekly accuracy benchmark vs. competitors,trust/marketing,could,yes,no,run the same kind of benchmark on your own pipeline; do not reuse 0xCal's published numbers
+LiDAR/depth "Ruler" plate measurement,logging,could,yes,skip,iOS LiDAR hardware API; no web equivalent, needs its own portion-sizing substitute
+Ruler+ enhanced mode on LiDAR-capable devices,logging,could,yes,skip,hardware-dependent, same as above
+Fasting shield (blocks food apps via Screen Time),fasting,could,yes,skip,iOS Screen Time API, no web equivalent
+Apple Health sync (steps/workouts/weight adjust budget),integrations,should,yes,skip,iOS-only API
+Wearable integrations via Apple Health (Garmin/Whoop/Oura/Withings/Fitbit/Strava/Polar/veSync),integrations,could,yes,skip,all depend on Apple Health, no web equivalent
+Home screen widgets,platform,could,yes,skip,iOS-only surface
+Apple Watch companion app,platform,could,yes,skip,iOS-only surface
+Siri Shortcuts (log meal, check remaining calories),platform,could,yes,skip,iOS-only API
