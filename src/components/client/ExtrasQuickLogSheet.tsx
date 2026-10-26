@@ -5,6 +5,7 @@ import { toast } from '../shared/Toast'
 import { supabase } from '../../lib/supabase'
 import { toLocalISODate } from '../../lib/date'
 import { computeMacros } from '../../lib/foodConversion'
+import { getMealLogsSnapshot, mealLogsOf, publishMealLogs } from '../../lib/mealProgress'
 import { Food } from '../../types'
 import { History, Keyboard, ListPlus, Search, Trash2 } from 'lucide-react'
 
@@ -103,7 +104,15 @@ export function ExtrasQuickLogSheet({ clientId, foods, demoMode, dayKcal, kcalTa
     const date = toLocalISODate(new Date())
     const note = `${total.kcal} kcal · P ${comma(total.proteinG)} g · C ${comma(total.carbsG)} g · G ${comma(total.fatG)} g (varios alimentos)`
 
-    if (demoMode) { toast(kcalTarget ? `+${total.kcal} kcal añadidas (modo demo: no se guarda de verdad)` : 'Añadido a "Extras de hoy" (modo demo: no se guarda de verdad)', 'ok'); setSaving(false); onClose(); return }
+    if (demoMode) {
+      // Igual que ScannedFoodSheet: en la demo no hay base de datos, pero sí se ve en "Extras de hoy" mientras
+      // se prueba — si no, parece que guardar no hace nada.
+      publishMealLogs(clientId, [...mealLogsOf(getMealLogsSnapshot(), clientId), {
+        id: 'demo-' + Date.now(), clientId, date, mealName: name, note, photoUrl: null, createdAt: Date.now(),
+      }])
+      toast(kcalTarget ? `+${total.kcal} kcal añadidas · llevas ${(dayKcal ?? 0) + total.kcal} de ${kcalTarget} (demo: no se guarda)` : 'Añadido a "Extras de hoy" (modo demo: no se guarda de verdad)', 'ok')
+      setSaving(false); onClose(); return
+    }
 
     const { data: logRow, error: logError } = await supabase.from('meal_logs')
       .insert({ client_id: clientId, date, meal_name: name, note }).select().single()

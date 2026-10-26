@@ -43,7 +43,9 @@ export function ExtrasHoyCard({ logs, clientId, demoMode, kcalTarget, personalMo
           <li key={log.id} className="flex items-center gap-3 border border-border rounded-xl px-3 py-2">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold truncate">{log.mealName}</p>
-              <p className="text-xs text-muted">{comma(info.grams)} g · {info.kcal} kcal · P {comma(info.proteinG)} · C {comma(info.carbsG)} · G {comma(info.fatG)}</p>
+              {/* grams es 0 para un registro de varios alimentos (ExtrasQuickLogSheet): son varios ingredientes con
+                  pesos distintos, no una sola cantidad que mostrar — ver scannedLogs.ts. */}
+              <p className="text-xs text-muted">{info.grams > 0 ? `${comma(info.grams)} g · ` : ''}{info.kcal} kcal · P {comma(info.proteinG)} · C {comma(info.carbsG)} · G {comma(info.fatG)}</p>
             </div>
             <button type="button" onClick={() => remove({ log, info })} disabled={removing === log.id}
               aria-label={`Quitar ${log.mealName}`}
