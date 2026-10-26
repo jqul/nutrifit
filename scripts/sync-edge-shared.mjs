@@ -24,6 +24,7 @@ export const FUNCTION_TARGETS = {
   'send-nutricionista-risk-alerts': ['fetchAll'],
   'send-billing-reminders': ['fetchAll'],
   'send-survey-reminders': ['fetchAll'],
+  'send-appointment-reminders': ['fetchAll'],
 }
 export const targetDir = (fn) => join(FUNCTIONS_DIR, fn, 'shared')
 
