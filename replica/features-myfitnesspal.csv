@@ -1,0 +1,17 @@
+feature,area,priority,original,clone,notes
+Food search against a large catalog,logging,must,yes,no,already covered by NutriFit's foods + Open Food Facts
+Barcode scanning,logging,must,yes,no,already covered by BarcodeScanner.tsx + openFoodFacts.ts
+Quick Add: log raw kcal/macros with no food match,logging,should,yes,no,genuine gap — today an unmatched row in ExtrasQuickLogSheet is excluded entirely with no fallback
+Swipe-to-copy a recent/frequent entry,logging,should,yes,no,genuine gap — highest-leverage shortcut per MFP's own usage data; NutriFit's QUICK_GRAMS buttons only shortcut the amount, not picking the food again
+Copy a previous day's entries to today,logging,could,yes,no,real gap but smaller payoff than swipe-to-copy; revisit if clients ask
+Multi-day diary (view/edit a past day),diary,could,yes,no,extras are hard-coded to "today" in ScannedFoodSheet/ExtrasQuickLogSheet; a real but not urgent gap
+Water tracking,hydration,could,partial,no,already partly covered — waterL already exists on DailyCheckin; a dedicated quick counter would be a smaller, separate improvement
+Recipe import from a URL,recipes,could,yes,skip,MFP's own users report it's unreliable on vague instructions; not worth building something already known to be weak
+Streak / commitment popups,retention,could,yes,skip,MFP's own users ask to mute it; gamification nudges don't fit a trainer-sold relationship model
+Multi-day logging gate (Premium paywall mechanic),monetization,could,yes,skip,a paywall mechanic from a different business model, not a feature
+AI Coach (nutrition Q&A, meal suggestions from photos),ai,could,yes,skip,same call already made against 0xCal — an AI "coaching" a client undercuts the real nutricionista
+GLP-1 medication logging,health,could,yes,skip,different product surface, no evidence any NutriFit client/nutricionista needs it
+Device sync hub (Garmin/Fitbit/Apple Watch/etc.),integrations,could,yes,skip,general fitness tracking, not this product's scope; no evidence anyone asked
+Workout and step tracking,fitness,could,yes,skip,out of scope for a nutrition-plan app
+Meal Plan Builder + grocery list generation (Premium+),planning,could,yes,no,already covered — NutriFit's diet-plan editor + buildShoppingList already does this, nutricionista-authored instead of AI-generated
+Net Carbs Mode (keto/low-carb macro display),macros,could,yes,no,niche; only worth it if nutricionistas report enough keto/low-carb clients to justify a display toggle
