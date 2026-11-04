@@ -15,6 +15,8 @@ import { computeMacros, convertQuantity, MacroKey } from '../../../lib/foodConve
 import { SubstituteItem, suggestSubstitutes, substituteGrams } from '../../../lib/exchangeGroups'
 import { FitResult, fitPlanToTargets } from '../../../lib/planFit'
 import { FitPlanModal } from './plan-dieta/FitPlanModal'
+import { MenuProposalModal } from './plan-dieta/MenuProposalModal'
+import { ProposedMeal } from '../../../lib/menuProposal'
 import { buildWAUrl } from '../../../lib/whatsapp'
 import { Button } from '../../shared/Button'
 import { BarcodeScanner } from '../../shared/BarcodeScanner'
@@ -476,6 +478,18 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     return Array.from(groups.values())
   }
 
+  const [menuProposalOpen, setMenuProposalOpen] = useState(false)
+  /** Añade (o sustituye) las comidas de un menú propuesto, en el día que se está editando. */
+  const applyMenuProposal = (proposed: ProposedMeal[], mode: 'add' | 'replace') => {
+    const day = selectedDay === 'all' ? null : selectedDay
+    const created: EditableMeal[] = proposed.map(p => ({
+      id: newId(), name: p.slot.name, time: p.slot.time, kcalTarget: String(p.kcalTarget), dayOfWeek: day,
+      optionGroup: null, optionLabel: null, dayType: null, items: p.items,
+    }))
+    setMeals(prev => [...(mode === 'replace' ? prev.filter(m => m.dayOfWeek !== day) : prev), ...created])
+    setMenuProposalOpen(false)
+    toast(`Menú añadido: ${created.length} comidas — recuerda guardar el plan ✓`, 'ok')
+  }
   const addMeal = () => setMeals([...meals, {
     id: newId(), name: 'Comida', time: '', kcalTarget: '', dayOfWeek: selectedDay === 'all' ? null : selectedDay,
     optionGroup: null, optionLabel: null, dayType: null, items: [],
@@ -794,6 +808,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
               </select>
             )}
             <button onClick={addMeal} className="flex items-center gap-1 text-xs font-bold text-accent"><Plus className="w-3.5 h-3.5" /> Añadir comida</button>
+            <button onClick={() => setMenuProposalOpen(true)} title="Arma un día con tus recetas, ajustado al objetivo del plan"
+              className="flex items-center gap-1 text-xs font-bold text-accent"><ChefHat className="w-3.5 h-3.5" /> Proponer menú</button>
             <button onClick={() => setImportOpen(true)} title="Importar comidas desde un Excel o CSV, en vez de meterlas a mano"
               className="flex items-center gap-1 text-xs font-bold text-muted hover:text-accent"><FileSpreadsheet className="w-3.5 h-3.5" /> Importar</button>
           </div>
@@ -1248,6 +1264,9 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       </Modal>
       <FitPlanModal open={fitPreview != null} onClose={() => setFitPreview(null)} fit={fitPreview} targets={fitTargets}
         scopeLabel={fitScopeLabel} sharedNote={fitSharedNote} onApply={applyFit} />
+      <MenuProposalModal open={menuProposalOpen} onClose={() => setMenuProposalOpen(false)} recipes={recipes}
+        targetKcal={parseFloat(kcalTarget) || 0} targetProteinG={parseFloat(proteinG) || 0} allergies={client.allergies}
+        hasMeals={meals.some(m => m.dayOfWeek === (selectedDay === 'all' ? null : selectedDay))} onApply={applyMenuProposal} />
       <ImportDietPlanModal open={importOpen} onClose={() => setImportOpen(false)} foods={foods}
         onImport={imported => setMeals(prev => [...prev, ...imported])} />
     </div>

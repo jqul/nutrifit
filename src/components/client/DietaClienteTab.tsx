@@ -20,6 +20,7 @@ import { scannedExtrasOf } from '../../lib/scannedLogs'
 import { ScannedFoodSheet } from './ScannedFoodSheet'
 import { ExtrasQuickLogSheet } from './ExtrasQuickLogSheet'
 import { BottomSheet } from '../shared/BottomSheet'
+import { RecipeBookSheet } from './RecipeBookSheet'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
 import { ScannedFood } from '../../lib/openFoodFacts'
 import { DEFAULT_EATING_OUT_GUIDES, DefaultEatingOutGuide } from '../../lib/eatingOutGuides'
@@ -78,6 +79,9 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   const [scannedFood, setScannedFood] = useState<ScannedFood | null>(null)
   const [addingFoods, setAddingFoods] = useState(false)
   const [viewingRecipe, setViewingRecipe] = useState<RecipeRow | null>(null)
+  // Libro de recetas: las que el nutricionista ha marcado como visibles, estén o no en el plan.
+  const [bookRecipes, setBookRecipes] = useState<RecipeRow[]>([])
+  const [bookOpen, setBookOpen] = useState(false)
   // "¿Vas a comer fuera?" — null = eligiendo tipo de restaurante, id = viendo
   // sus pautas. Puramente informativo, no depende del plan ni se guarda.
   const [eatingOutOpen, setEatingOutOpen] = useState(false)
@@ -115,6 +119,11 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
     setDayType(v)
     if (plan) saveDayType(plan.id, v)
   }
+
+  useEffect(() => {
+    if (demoMode) { setBookRecipes((demoRecipes || []).filter(r => r.in_recipe_book)); return }
+    supabase.from('recipes').select('*').eq('in_recipe_book', true).order('name').then(({ data }) => setBookRecipes(data || []))
+  }, [demoMode, demoRecipes])
 
   useEffect(() => {
     supabase.from('foods').select('*').order('name').then(({ data }) => setFoods((data || []).map(foodFromRow)))
@@ -282,6 +291,11 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         <ToolButton icon={<UtensilsCrossed className="w-4 h-4" />} label="¿Vas a comer fuera?" onClick={() => { setEatingOutOpen(true); setEatingOutGuideId(null) }} />
         <ToolButton icon={<Download className="w-4 h-4" />} label="Descargar PDF" onClick={() => printDietPlan(client, plan)} />
       </div>
+
+      {bookRecipes.length > 0 && (
+        <ToolButton icon={<BookOpen className="w-4 h-4" />} label={`Libro de recetas (${bookRecipes.length})`} onClick={() => setBookOpen(true)} />
+      )}
+      <RecipeBookSheet open={bookOpen} onClose={() => setBookOpen(false)} recipes={bookRecipes} hideNumbers={hideNumbers} />
 
       {!hideNumbers && <ExtrasHoyCard logs={logsToday} clientId={clientId} demoMode={demoMode} kcalTarget={plan.kcalTarget} personalMode={personalMode} />}
 
