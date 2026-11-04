@@ -37,6 +37,15 @@ El editor empieza con lo básico: **objetivo, comidas y alimentos**. Lo demás e
 
 Pulsa el icono ⟲ junto a un alimento. Por defecto sugiere **Mismo grupo** (otra carne, otro pescado…) con los gramos que dan las **mismas raciones**; **Todos** permite cualquier alimento igualando el macro que elijas. Si el cliente tiene alergias o intolerancias, **nunca** te sugiere nada que choque con ellas. El cliente también puede sustituir desde su app.
 
+## Fases del plan
+
+Para llevar a un cliente por etapas (por ejemplo **Definición** 4 semanas y luego **Mantenimiento** 2), usa la tarjeta **Fases del plan**, encima del objetivo, en la pestaña **Plan de dieta**:
+
+- **Añadir fase:** nombre, **fecha de inicio y de fin** (ambas incluidas), un texto de **qué se hace en esa fase** (**lo ve el cliente**, no es para notas internas) y, si quieres, la **plantilla de plan** que le corresponde (solo de referencia). La fase nueva se propone justo a continuación de la última y con 4 semanas de duración. Dos fases del mismo cliente no pueden solaparse.
+- **Qué ve el cliente:** en **Hoy**, la tarjeta **Tu fase · 2 de 3** con los días que quedan, su barra de avance, lo que se hace en ella y cuál viene después. Si la siguiente empieza en menos de dos semanas, también la avisa.
+- **Aviso para ti:** en **Inicio** sale **Fases por revisar** cuando una fase termina en 3 días o menos (te dice cuál es la siguiente, o que no hay otra), o cuando la última terminó hace menos de dos semanas y no hay nada después. Al pulsar abres su plan. La propia tarjeta también lo avisa.
+- Las fases son una **línea de tiempo con aviso**: **no cambian el plan solas**. Cuando una fase empieza, cargas tú la plantilla o ajustas el plan.
+
 ## Guardar
 
 - Pulsa **Guardar plan**. Se guarda **todo o nada**: si falla (por ejemplo, se corta la conexión), te avisa y el plan queda como estaba.

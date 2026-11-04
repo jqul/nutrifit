@@ -17,8 +17,10 @@ export function useToast() {
   return { toasts, show, dismiss }
 }
 export function toast(message: string, type?: 'ok' | 'warn' | 'info') { toastFn?.(message, type) }
-export function ToastContainer({ toasts }: { toasts: ReturnType<typeof useToast>['toasts'] }) {
-  const { dismiss } = useToast()
+// Los avisos y `dismiss` vienen de quien llama a useToast() (App): si el contenedor llamara también a useToast(), su
+// efecto (que se monta más tarde, dentro del Suspense) se quedaría con la función global y los avisos irían a un estado
+// que nadie pinta.
+export function ToastContainer({ toasts, onDismiss }: { toasts: ReturnType<typeof useToast>['toasts']; onDismiss: (id: number) => void }) {
   if (!toasts.length) return null
   return (
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none">
@@ -30,7 +32,7 @@ export function ToastContainer({ toasts }: { toasts: ReturnType<typeof useToast>
             {t.type === 'ok' ? <CheckCircle2 className="w-4 h-4" /> : t.type === 'warn' ? <AlertTriangle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
           </span>
           <span className="flex-1">{t.message}</span>
-          <button onClick={() => dismiss(t.id)} className="flex-shrink-0 opacity-70 hover:opacity-100"><X className="w-3.5 h-3.5" /></button>
+          <button onClick={() => onDismiss(t.id)} className="flex-shrink-0 opacity-70 hover:opacity-100"><X className="w-3.5 h-3.5" /></button>
         </div>
       ))}
     </div>

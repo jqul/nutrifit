@@ -103,7 +103,7 @@ export default function App() {
   const openClient = (c: ClientData, tab?: ClientPanelTab) => { setInitialClientTab(tab); setSelectedClient(c) }
   const closeClient = () => { setSelectedClient(null); setInitialClientTab(undefined) }
   const [adminSubview, setAdminSubview] = useState<'admin' | 'trainer'>('admin')
-  const { toasts } = useToast()
+  const { toasts, dismiss: dismissToast } = useToast()
   useAccentOverride(view === 'trainer' ? userProfile?.accentColor : null)
 
   if (view === 'loading') return <LoadingScreen />
@@ -169,7 +169,7 @@ export default function App() {
         )
       )}
 
-      <ToastContainer toasts={toasts} />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       <UpdateBanner />
     </Suspense>
   )

@@ -111,3 +111,11 @@ evolution and the client app (harbiz.io).
 | F3 | **Logros** in the client's Progreso (first weigh-in, 7/30-day streak, % of the goal reached…), pure function over data we already have | small |
 | F4 | Photo comparison by date (if missing) | small |
 | F5 | Recipe portion size + allergen tags (feeds the menu proposal and the client's allergy check) | small–medium |
+
+### Fases del plan (F1), first version built on feat/fases (migration 0065)
+
+A per-client timeline (name, dates, text for the client, optional reference template). The client sees «Tu fase · 2 de 3» in Hoy;
+the nutritionist sees «Fases por revisar» in the control center when a phase ends within 3 days or ended without a successor.
+**It does not change the plan on its own** (that step needs a cron + save_diet_plan as service role; still a proposal). The
+push digest does not include phase endings yet (it would need a new alert kind in the shared code and a redeploy of
+send-nutricionista-alerts).

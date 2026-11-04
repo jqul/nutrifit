@@ -26,6 +26,7 @@ Abre el icono y entra directamente en **su** app. Para recibir notificaciones, t
 - **Check-in:** «¿Seguiste el plan hoy?», hambre, energía, ánimo, agua y digestión, en unos segundos.
 - **Pauta de suplementos** y **próximas citas** (puede pedir una).
 - Su **objetivo del día** y su progreso.
+- **Tu fase:** si tienes fases en su plan, en cuál está («2 de 3»), cuántos días le quedan y qué se hace en ella.
 
 ### Dieta
 
