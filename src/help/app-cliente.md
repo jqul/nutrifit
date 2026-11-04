@@ -31,6 +31,7 @@ Abre el icono y entra directamente en **su** app. Para recibir notificaciones, t
 
 - Su objetivo diario y, si ha marcado comidas o añadido extras, **«Hoy llevas X kcal de Y»** con cuánto le falta o se pasa.
 - Su plan: cada comida con sus alimentos y cantidades (y, si hay **opciones**, elige cuál toma), las **recetas** y el botón ⟲ para **sustituir un alimento** por otro equivalente (nunca uno que choque con sus alergias).
+- **Libro de recetas:** si has marcado recetas como visibles, aparece un botón con ellas (buscador y filtro por tipo de comida, con ingredientes y pasos), aunque no estén en su plan.
 - **Lista de la compra** generada del plan.
 - **¿Vas a comer fuera?:** pautas según el tipo de restaurante.
 - **Escanear producto:** apunta la cámara al código de barras de un producto y ve sus kcal y macros por la cantidad que ha tomado. **Añadir a mi diario** lo guarda en **Extras de hoy** (con la papelera para quitarlo) y cuenta en su balance del día. Tú lo ves en su Seguimiento como «fuera del plan». Si la cámara no funciona, puede escribir el código a mano.

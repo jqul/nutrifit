@@ -13,6 +13,7 @@ Todo se hace en la ficha del cliente, pestaña **Plan de dieta**.
 
 - **Añadir comida:** nombre (Desayuno, Comida…), hora y, si quieres, las kcal que debe aportar.
 - **Añadir alimento:** busca en el catálogo, pon la cantidad y se calculan sus kcal y macros. Si no existe, escribe el nombre y elige **Crear … como alimento propio**.
+- **Proponer menú** (junto a «Añadir comida»): arma un día con tus recetas, repartiendo las kcal del objetivo en desayuno, comida, merienda y cena, y escalando cada receta a lo que le toca. Respeta las alergias del cliente, no repite recetas y prefiere las de proteína parecida a la del plan. **Otra propuesta** te da una alternativa, y **Añadir al plan** o **Sustituir las comidas** lo lleva al editor, donde lo ajustas como siempre (no se guarda hasta que pulsas Guardar plan). No usa IA: solo tus recetas; si faltan recetas de algún tipo, ese hueco queda sin cubrir.
 - También puedes **Insertar receta…** (de tu recetario o del sistema) o **Importar** las comidas desde un Excel/CSV en lugar de meterlas a mano.
 - Arriba ves **«Suma de las comidas vs. objetivo»** con barras: si no cuadra con el objetivo, **Ajustar comidas al objetivo** propone cantidades nuevas (primero te enseña la vista previa; no cambia nada hasta que pulsas **Aplicar al plan**).
 
@@ -52,7 +53,7 @@ Pulsa el icono ⟲ junto a un alimento. Por defecto sugiere **Mismo grupo** (otr
 En **Planes y recursos**:
 
 - **Planes:** planes completos que reutilizas con otros clientes. Créalos con **Guardar como plantilla** desde cualquier plan.
-- **Recetas:** platos con foto y pasos. Créalas con **Guardar esta comida como receta** o desde aquí.
+- **Recetas:** platos con foto y pasos. Créalas con **Guardar esta comida como receta** o desde aquí. A cada una le puedes poner un **tipo de comida** (desayuno, comida, merienda, cena, snack) y **etiquetas** (por ejemplo «rápida» o «batch cooking»), y en la lista las encuentras con el **buscador** y los **filtros**. Marca **Visible en el libro de recetas de mis clientes** para que cualquier cliente tuyo la vea en su app aunque no esté en su plan; las que no marques solo las ve quien las tenga en su plan.
 - **Mis alimentos:** los productos que añades tú al catálogo. Solo los ves tú, y los clientes los ven con sus valores. Si un alimento ya está en un plan, su nombre queda bloqueado.
 - **Guías:** contenido fijo que ven todos tus clientes (guías de apoyo y pautas para comer fuera de casa).
 

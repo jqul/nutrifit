@@ -254,6 +254,11 @@ export interface RecipeRow {
   photo_url: string | null
   steps: string | null // pasos de preparación, texto libre (un paso por línea)
   created_at: string
+  // 0062: opcionales porque las filas antiguas y los datos de demo no los traen
+  meal_type?: 'desayuno' | 'comida' | 'merienda' | 'cena' | 'snack' | null
+  tags?: string[]
+  /** El cliente la ve en su libro de recetas aunque no esté en su plan. */
+  in_recipe_book?: boolean
 }
 
 export interface MealLogRow {

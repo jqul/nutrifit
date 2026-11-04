@@ -298,6 +298,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Tú sigues viendo todo en su Seguimiento y en su plan. Desmárcalo: su app vuelve a mostrar las cifras.
 - [ ] Un cliente **sin** marcar no cambia en nada.
 
+## 26. Recetas: tipo, etiquetas, libro del cliente y menú propuesto
+
+- [ ] **Planes y recursos → Recetas:** crea o edita una receta y ponle **tipo de comida**, **etiquetas** y marca **Visible en el libro de recetas de mis clientes**. En la lista salen sus etiquetas y «En el libro del cliente». El **buscador** y los filtros (tipo y etiquetas) reducen la lista.
+- [ ] En la app de un cliente tuyo (su enlace): en **Dieta** aparece **Libro de recetas (N)** con solo las recetas que marcaste. Se abre cada una con ingredientes y pasos. Con **Ocultar calorías y macros** activado no sale ninguna cifra. Si no marcas ninguna, el botón no aparece.
+- [ ] **Seguridad:** una receta que **no** está en el libro y **no** está en el plan de ese cliente no la ve (aunque sea tuya). Una que está en su plan sí la ve, esté o no en el libro.
+- [ ] **Plan de dieta → Proponer menú** (con kcal en el objetivo y varias recetas con tipo): sale un día con una receta por comida y las cantidades escaladas. **Otra propuesta** cambia las recetas. Un cliente con alergia a la lactosa no recibe recetas con lácteos. **Añadir al plan** las mete como comidas (con su objetivo de kcal); **Sustituir las comidas** quita las que había en ese día. Hasta **Guardar plan** no se guarda nada.
+- [ ] Sin recetas, o sin kcal en el objetivo, el menú lo dice en vez de fallar.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

@@ -57,3 +57,16 @@ Recommendation: P1 → P3 → P2, in that order; skip P4/P5 for now.
 ## Out of scope
 
 Payments, booking, video calls, training/workout programs (the product decision «no cobros» stands).
+
+## Update 2026-11-04 (second pass): P1, P2 and P3 built
+
+All three proposals above were built on `feat/recetas` (migration 0062):
+
+- **P1 — recipe metadata:** `recipes.meal_type`, `recipes.tags`, editor fields, search + filters in the recipe list.
+- **P2 — client recipe book:** `recipes.in_recipe_book` + a «Libro de recetas» button in the client's Dieta tab. Visibility is
+  per recipe (visible to every client of the nutritionist, or only through the plan); **by client tag was not built**.
+  This also **tightened the RLS**: until now a client could read *every* recipe of their nutritionist through the API
+  (the app only showed the ones in their plan); now they read a recipe only if it is in their book or in their active plan.
+- **P3 — «Proponer menú»:** `menuProposal.ts`, no AI. Splits the daily kcal (25/35/10/30 %), picks one recipe per slot
+  by type, allergens, protein density and how little it has to be scaled (0.5×–2×), never repeats a recipe, offers variants.
+- Still not built: P4 (plan by email) and P5 (AI generation), by decision.

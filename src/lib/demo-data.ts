@@ -481,7 +481,7 @@ export const DEMO_EATING_OUT_GUIDES: EatingOutGuideRow[] = [
 
 export const DEMO_RECIPES: RecipeRow[] = [
   {
-    id: 'demo-recipe-system-001', nutricionista_id: null, name: 'Bowl de avena con plátano y almendras', created_at: '',
+    id: 'demo-recipe-system-001', nutricionista_id: null, name: 'Bowl de avena con plátano y almendras', created_at: '', meal_type: 'desayuno', tags: ['rápida'],
     photo_url: placeholderPhoto('Bowl avena', '#c98a2b'), steps: null,
     items: [
       { id: 'pr1-1', foodName: 'Avena', quantity: '50', unit: 'g', kcal: '195', proteinG: '8.5', carbsG: '33', fatG: '3.5', fiberG: '5.1', sugarG: '0.5', sodiumMg: '1', saturatedFatG: '0.7', calciumMg: '27', ironMg: '2.2', zincMg: '2' },
@@ -491,7 +491,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-system-002', nutricionista_id: null, name: 'Pollo con arroz integral y brócoli', created_at: '',
+    id: 'demo-recipe-system-002', nutricionista_id: null, name: 'Pollo con arroz integral y brócoli', created_at: '', meal_type: 'comida', tags: ['batch cooking'],
     photo_url: placeholderPhoto('Pollo arroz', '#4a7a3d'), steps: null,
     items: [
       { id: 'pr2-1', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: '248', proteinG: '46.5', carbsG: '0', fatG: '5.4', fiberG: '0', sugarG: '0', sodiumMg: '111', saturatedFatG: '1.5', calciumMg: '9', ironMg: '0.6', zincMg: '1.1' },
@@ -501,7 +501,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-system-003', nutricionista_id: null, name: 'Boloñesa de pasta integral con carne', created_at: '',
+    id: 'demo-recipe-system-003', nutricionista_id: null, name: 'Boloñesa de pasta integral con carne', created_at: '', meal_type: 'comida', tags: ['batch cooking'],
     photo_url: placeholderPhoto('Boloñesa', '#b5573d'),
     steps: '1. Pica la cebolla y sofríela en el aceite de oliva a fuego medio hasta que esté transparente.\n2. Añade la ternera picada y dora bien, deshaciendo los grumos.\n3. Incorpora el tomate triturado, sazona y cuece 15-20 min a fuego bajo.\n4. Mientras, cuece la pasta integral según el envase.\n5. Mezcla la pasta con la salsa y sirve.',
     items: [
@@ -513,7 +513,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-system-004', nutricionista_id: null, name: 'Boloñesa de pasta integral con tofu (plant-based)', created_at: '',
+    id: 'demo-recipe-system-004', nutricionista_id: null, name: 'Boloñesa de pasta integral con tofu (plant-based)', created_at: '', meal_type: 'cena', tags: ['vegana'],
     photo_url: placeholderPhoto('Boloñesa tofu', '#7a8a3d'), steps: null,
     items: [
       { id: 'pr4-1', foodName: 'Pasta integral (cocida)', quantity: '200', unit: 'g', kcal: '248', proteinG: '10.6', carbsG: '50', fatG: '2.2', fiberG: '9', sugarG: '1.4', sodiumMg: '6', saturatedFatG: '0.4', calciumMg: '26', ironMg: '2.6', zincMg: '2' },
@@ -524,7 +524,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-system-005', nutricionista_id: null, name: 'Ensalada de garbanzos con aguacate', created_at: '',
+    id: 'demo-recipe-system-005', nutricionista_id: null, name: 'Ensalada de garbanzos con aguacate', created_at: '', meal_type: 'cena', tags: ['rápida', 'sin horno'],
     photo_url: placeholderPhoto('Ens. garbanzos', '#6b8f3f'), steps: null,
     items: [
       { id: 'pr5-1', foodName: 'Garbanzos (cocidos)', quantity: '150', unit: 'g', kcal: '246', proteinG: '13.5', carbsG: '40.5', fatG: '3.9', fiberG: '11.4', sugarG: '7.2', sodiumMg: '11', saturatedFatG: '0.5', calciumMg: '74', ironMg: '4.4', zincMg: '2.3' },
@@ -535,7 +535,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '', photo_url: null,
+    id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '', meal_type: 'desayuno', tags: ['rápida'], in_recipe_book: true, photo_url: null,
     steps: '1. Pon la avena en un bol con el yogur natural.\n2. Añade los arándanos por encima.\n3. Termina con un chorrito de miel.',
     items: [
       { id: 'dr1i1', foodName: 'Avena', quantity: '40', unit: 'g', kcal: '150', proteinG: '5', carbsG: '27', fatG: '3' },
@@ -545,7 +545,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '',
+    id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '', meal_type: 'comida', tags: ['batch cooking'], in_recipe_book: true,
     photo_url: placeholderPhoto('Pollo arroz', '#3f6d8f'),
     steps: '1. Cuece el arroz integral según las instrucciones del paquete.\n2. Salpimienta la pechuga de pollo y hazla a la plancha 4-5 minutos por cada lado.\n3. Cuece la verdura al vapor 8-10 minutos, hasta que esté tierna pero crujiente.\n4. Sirve el pollo troceado sobre el arroz, con la verdura al lado.',
     items: [

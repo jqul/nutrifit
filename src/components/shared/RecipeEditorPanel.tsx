@@ -5,6 +5,7 @@ import { Food } from '../../types'
 import { toast } from './Toast'
 import { Button } from './Button'
 import { RecipePhotoUpload } from './RecipePhotoUpload'
+import { MEAL_TYPES, MealType, parseTags } from '../../lib/recipeMeta'
 import { Plus, Trash2, X } from 'lucide-react'
 
 export interface EditableRecipeItem {
@@ -47,6 +48,9 @@ export function RecipeEditorPanel({ nutricionistaId, demoMode, foods, initial, o
   const [name, setName] = useState(initial?.name || '')
   const [steps, setSteps] = useState(initial?.steps || '')
   const [photoUrl, setPhotoUrl] = useState<string | null>(initial?.photo_url ?? null)
+  const [mealType, setMealType] = useState<MealType | ''>(initial?.meal_type ?? '')
+  const [tagsText, setTagsText] = useState((initial?.tags ?? []).join(', '))
+  const [inRecipeBook, setInRecipeBook] = useState(initial?.in_recipe_book ?? false)
   const [items, setItems] = useState<EditableRecipeItem[]>(() => {
     const initialItems = ((initial?.items as EditableRecipeItem[] | null) || []).map(i => ({ ...i, id: i.id || newId() }))
     return initialItems.length ? initialItems : [blankItem()]
@@ -64,9 +68,10 @@ export function RecipeEditorPanel({ nutricionistaId, demoMode, foods, initial, o
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); onClose(); return }
     setSaving(true)
     const stepsValue = steps.trim() || null
+    const meta = { meal_type: mealType || null, tags: parseTags(tagsText), in_recipe_book: inRecipeBook }
     const { error } = initial
-      ? await supabase.from('recipes').update({ name: name.trim(), steps: stepsValue, photo_url: photoUrl, items: cleanItems }).eq('id', initial.id)
-      : await supabase.from('recipes').insert({ nutricionista_id: nutricionistaId, name: name.trim(), steps: stepsValue, photo_url: photoUrl, items: cleanItems })
+      ? await supabase.from('recipes').update({ name: name.trim(), steps: stepsValue, photo_url: photoUrl, items: cleanItems, ...meta }).eq('id', initial.id)
+      : await supabase.from('recipes').insert({ nutricionista_id: nutricionistaId, name: name.trim(), steps: stepsValue, photo_url: photoUrl, items: cleanItems, ...meta })
     setSaving(false)
     if (error) { toast('Error: ' + error.message, 'warn'); return }
     toast(initial ? 'Receta actualizada ✓' : `Receta "${name.trim()}" creada ✓`, 'ok')
@@ -80,6 +85,21 @@ export function RecipeEditorPanel({ nutricionistaId, demoMode, foods, initial, o
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre de la receta" autoFocus
           className="flex-1 px-3 py-2 bg-bg border border-border rounded-lg text-sm font-semibold outline-none focus:ring-2 focus:ring-accent/20" />
         <button onClick={onClose} className="p-2 text-muted hover:text-warn"><X className="w-4 h-4" /></button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Tipo de comida</label>
+          <select value={mealType} onChange={e => setMealType(e.target.value as MealType | '')}
+            className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+            <option value="">Sin clasificar</option>
+            {MEAL_TYPES.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Etiquetas (separadas por comas)</label>
+          <input value={tagsText} onChange={e => setTagsText(e.target.value)} placeholder="rápida, sin horno, batch cooking"
+            className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+        </div>
       </div>
       <div className="space-y-1.5">
         {items.map(item => {
@@ -122,6 +142,13 @@ export function RecipeEditorPanel({ nutricionistaId, demoMode, foods, initial, o
           placeholder={'1. Cuece la pasta...\n2. Dora la carne...'}
           className="w-full px-2.5 py-2 bg-bg border border-border rounded-lg text-xs outline-none resize-none focus:ring-2 focus:ring-accent/20" />
       </div>
+      <label className="flex items-start gap-2 cursor-pointer">
+        <input type="checkbox" className="mt-0.5 accent-accent" checked={inRecipeBook} onChange={e => setInRecipeBook(e.target.checked)} />
+        <span className="text-xs">
+          <span className="font-semibold">Visible en el libro de recetas de mis clientes</span>
+          <span className="block text-muted">Si no la marcas, solo la ve quien la tenga en su plan.</span>
+        </span>
+      </label>
       <div className="flex items-center gap-2 pt-1">
         <Button size="sm" onClick={handleSave} loading={saving}>Guardar receta</Button>
         <Button size="sm" variant="ghost" onClick={onClose}>Cancelar</Button>
