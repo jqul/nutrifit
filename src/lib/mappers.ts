@@ -44,6 +44,7 @@ export function clientFromRow(row: ClienteRow): ClientData {
     bajaAt: row.baja_at ? new Date(row.baja_at).getTime() : null,
     bajaReason: row.baja_reason ?? null,
     bajaNote: row.baja_note || '',
+    hideNumbers: row.hide_numbers === true,
   }
 }
 
@@ -66,6 +67,7 @@ export function clientToRow(client: Partial<ClientData>): Partial<ClienteRow> {
   if (client.goalWeightKg !== undefined) row.goal_weight_kg = client.goalWeightKg
   if (client.customMessages !== undefined) row.custom_messages = client.customMessages
   if (client.tags !== undefined) row.tags = client.tags
+  if (client.hideNumbers !== undefined) row.hide_numbers = client.hideNumbers
   return row
 }
 

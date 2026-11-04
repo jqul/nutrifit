@@ -8,7 +8,7 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function mealHtml(meal: DietMeal): string {
+function mealHtml(meal: DietMeal, showNumbers: boolean): string {
   const labelHtml = meal.optionLabel ? `<span class="option-tag">${esc(meal.optionLabel)}</span>` : ''
   const dayTypeHtml = meal.dayType === 'on' ? `<span class="daytype-tag daytype-on">🔥 Día ON</span>`
     : meal.dayType === 'off' ? `<span class="daytype-tag daytype-off">🌙 Día OFF</span>` : ''
@@ -16,7 +16,7 @@ function mealHtml(meal: DietMeal): string {
     <div class="meal">
       <div class="meal-head">
         <strong>${labelHtml}${esc(meal.name)}</strong>
-        <span>${dayTypeHtml}${meal.time ? esc(meal.time) : ''}${meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</span>
+        <span>${dayTypeHtml}${meal.time ? esc(meal.time) : ''}${showNumbers && meal.kcalTarget != null ? ` · ${meal.kcalTarget} kcal` : ''}</span>
       </div>
       ${meal.items.length ? `<ul>${meal.items.map(i => `<li><span>${esc(i.foodName)}</span><span>${esc(i.quantity)} ${esc(i.unit)}</span></li>`).join('')}</ul>` : ''}
     </div>
@@ -41,9 +41,9 @@ function groupMeals(meals: DietMeal[]): DietMeal[][] {
   return groups
 }
 
-function mealGroupHtml(group: DietMeal[]): string {
-  if (group.length === 1 && !group[0].optionGroup) return mealHtml(group[0])
-  return `<div class="option-group"><p class="option-group-label">Opciones intercambiables — elige una</p>${group.map(mealHtml).join('')}</div>`
+function mealGroupHtml(group: DietMeal[], showNumbers: boolean): string {
+  if (group.length === 1 && !group[0].optionGroup) return mealHtml(group[0], showNumbers)
+  return `<div class="option-group"><p class="option-group-label">Opciones intercambiables — elige una</p>${group.map(m => mealHtml(m, showNumbers)).join('')}</div>`
 }
 
 /**
@@ -58,6 +58,8 @@ export function printDietPlan(client: ClientData, plan: DietPlan, branding?: Pri
   const accent = branding?.accentColor && /^#[0-9a-fA-F]{3,8}$/.test(branding.accentColor) ? branding.accentColor : '#b5573d'
   const logoHtml = branding?.logoUrl ? `<img class="logo" src="${esc(branding.logoUrl)}" alt="">` : ''
 
+  // Si el nutricionista oculta las cifras a este cliente, el PDF tampoco las lleva.
+  const showNumbers = client.hideNumbers !== true
   const visibleSupplements = plan.supplements.filter(s => s.visibleToClient)
   const today = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -67,11 +69,11 @@ export function printDietPlan(client: ClientData, plan: DietPlan, branding?: Pri
   // muestran igual que antes, sin cabeceras de día.
   const usesWeeklyMenu = plan.meals.some(m => m.dayOfWeek != null)
   const everyDayMeals = plan.meals.filter(m => m.dayOfWeek == null)
-  const mealsHtml = !usesWeeklyMenu ? groupMeals(plan.meals).map(mealGroupHtml).join('') : (
+  const mealsHtml = !usesWeeklyMenu ? groupMeals(plan.meals).map(g => mealGroupHtml(g, showNumbers)).join('') : (
     DAY_LABELS.map((label, day) => {
       const dayMeals = plan.meals.filter(m => m.dayOfWeek === day)
       if (dayMeals.length === 0 && everyDayMeals.length === 0) return ''
-      return `<h3>${esc(label)}</h3>${groupMeals(dayMeals).map(mealGroupHtml).join('')}${groupMeals(everyDayMeals).map(mealGroupHtml).join('')}`
+      return `<h3>${esc(label)}</h3>${groupMeals(dayMeals).map(g => mealGroupHtml(g, showNumbers)).join('')}${groupMeals(everyDayMeals).map(g => mealGroupHtml(g, showNumbers)).join('')}`
     }).join('')
   )
 
@@ -120,13 +122,13 @@ export function printDietPlan(client: ClientData, plan: DietPlan, branding?: Pri
 <body>
   ${logoHtml ? `<div class="brand">${logoHtml}<h1 style="margin:0">${esc(client.name)} ${esc(client.surname)}</h1></div>` : `<h1>${esc(client.name)} ${esc(client.surname)}</h1>`}
   <p class="sub">Plan de dieta — generado el ${esc(today)}</p>
-  <div class="macros">
+  ${showNumbers ? `<div class="macros">
     <div class="macro"><b>${plan.kcalTarget}</b><span>Kcal</span></div>
     <div class="macro"><b>${plan.proteinG}g</b><span>Proteína</span></div>
     <div class="macro"><b>${plan.carbsG}g</b><span>Carbos</span></div>
     <div class="macro"><b>${plan.fatG}g</b><span>Grasas</span></div>
     <div class="macro"><b>${plan.fiberG}g</b><span>Fibra</span></div>
-  </div>
+  </div>` : ''}
   ${plan.advice ? `<div class="advice">${esc(plan.advice)}</div>` : ''}
   <h3>Comidas</h3>
   ${mealsHtml}

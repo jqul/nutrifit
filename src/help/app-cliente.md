@@ -35,6 +35,8 @@ Abre el icono y entra directamente en **su** app. Para recibir notificaciones, t
 - **¿Vas a comer fuera?:** pautas según el tipo de restaurante.
 - **Escanear producto:** apunta la cámara al código de barras de un producto y ve sus kcal y macros por la cantidad que ha tomado. **Añadir a mi diario** lo guarda en **Extras de hoy** (con la papelera para quitarlo) y cuenta en su balance del día. Tú lo ves en su Seguimiento como «fuera del plan». Si la cámara no funciona, puede escribir el código a mano.
 
+**Si has marcado «Ocultar calorías y macros» en su Perfil**, no ve ninguna cifra: solo «Tu plan de hoy» con las comidas hechas, y el plan con alimentos y cantidades. Sin escáner, sin extras, sin balance y con un PDF sin cifras.
+
 ### Progreso
 
 - Su **peso**: titular desde que empezó, gráfica y la caja para apuntar el peso de hoy.

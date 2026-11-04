@@ -328,7 +328,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
                 <p className="text-xs text-muted">{mealsDoneCount} de {todaysMeals.length} completadas</p>
               </div>
             </div>
-            {totalKcalTarget != null && <span className="text-xs font-semibold text-muted flex-shrink-0">Objetivo: {totalKcalTarget} kcal</span>}
+            {!client.hideNumbers && totalKcalTarget != null && <span className="text-xs font-semibold text-muted flex-shrink-0">Objetivo: {totalKcalTarget} kcal</span>}
           </div>
           <div className="divide-y divide-border/60">
             {todaysMeals.map(meal => {
@@ -346,7 +346,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
                         {meal.name} <span className="font-normal text-muted">· {meal.time}</span>
                         {isNext && <span className="ml-1.5 align-middle text-xs font-bold px-2 py-0.5 rounded-full bg-accent text-white no-underline">Siguiente</span>}
                       </p>
-                      {meal.kcalTarget != null && (
+                      {!client.hideNumbers && meal.kcalTarget != null && (
                         <span className="text-xs font-semibold text-muted bg-bg-alt px-2 py-0.5 rounded-full flex-shrink-0">{meal.kcalTarget} kcal</span>
                       )}
                     </div>
