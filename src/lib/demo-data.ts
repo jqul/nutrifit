@@ -1,3 +1,4 @@
+import type { MetricDefinition, MetricValue } from './bodyMetrics'
 import type { PlanPhase } from './planPhases'
 import { UserProfile, ClientData, DietPlan, WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, FollowedPlan, MealLog, Appointment, ClinicalNote } from '../types'
 import { PlanVersionRow, PlanSnapshot } from './planVersions'
@@ -829,4 +830,26 @@ export function demoPlanPhases(todayISO: string): PlanPhase[] {
     { id: 'demo-phase-2', clientId: 'demo-client-001', name: 'Mantenimiento', description: 'Subimos calorías para estabilizar el peso antes de empezar otra fase.', startDate: add(18), endDate: add(31), templateId: null },
     { id: 'demo-phase-3', clientId: 'demo-client-002', name: 'Volumen', description: 'Superávit controlado para ganar masa.', startDate: add(-25), endDate: add(2), templateId: 'demo-tpl-002' },
   ]
+}
+
+/** Medidas de ejemplo para la demo (fechas relativas a hoy). La métrica «Pliegue tricipital» está oculta al cliente a propósito. */
+export const DEMO_METRIC_DEFS: MetricDefinition[] = [
+  { id: 'demo-metric-fat', key: 'body_fat_pct', name: '% grasa corporal', unit: '%', clientVisible: true, sortOrder: 0 },
+  { id: 'demo-metric-waist', key: 'waist_cm', name: 'Cintura', unit: 'cm', clientVisible: true, sortOrder: 1 },
+  { id: 'demo-metric-hip', key: 'hip_cm', name: 'Cadera', unit: 'cm', clientVisible: true, sortOrder: 2 },
+  { id: 'demo-metric-chest', key: 'chest_cm', name: 'Pecho', unit: 'cm', clientVisible: true, sortOrder: 3 },
+  { id: 'demo-metric-arm', key: 'arm_cm', name: 'Brazo', unit: 'cm', clientVisible: true, sortOrder: 4 },
+  { id: 'demo-metric-thigh', key: 'thigh_cm', name: 'Muslo', unit: 'cm', clientVisible: true, sortOrder: 5 },
+  { id: 'demo-metric-fold', key: null, name: 'Pliegue tricipital', unit: 'mm', clientVisible: false, sortOrder: 6 },
+]
+
+export function demoBodyMetrics(todayISO: string): MetricValue[] {
+  const add = (days: number) => new Date(new Date(`${todayISO}T00:00:00Z`).getTime() + days * 86400000).toISOString().slice(0, 10)
+  const rows: [string, number, number][] = [
+    ['demo-metric-fat', -56, 29.4], ['demo-metric-fat', -28, 28.1], ['demo-metric-fat', -2, 26.8],
+    ['demo-metric-waist', -56, 84], ['demo-metric-waist', -28, 82], ['demo-metric-waist', -2, 79.5],
+    ['demo-metric-hip', -56, 104], ['demo-metric-hip', -28, 103], ['demo-metric-hip', -2, 101.5],
+    ['demo-metric-fold', -28, 22], ['demo-metric-fold', -2, 20],
+  ]
+  return rows.map(([metricId, days, value], i) => ({ id: `demo-bm-${i}`, clientId: 'demo-client-001', metricId, date: add(days), value }))
 }

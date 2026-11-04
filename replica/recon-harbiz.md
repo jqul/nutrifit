@@ -119,3 +119,11 @@ the nutritionist sees «Fases por revisar» in the control center when a phase e
 **It does not change the plan on its own** (that step needs a cron + save_diet_plan as service role; still a proposal). The
 push digest does not include phase endings yet (it would need a new alert kind in the shared code and a redeploy of
 send-nutricionista-alerts).
+
+### Medidas corporales (F2) built on feat/medidas (migration 0066)
+
+`metric_definitions` (standard ones created once per nutritionist, plus custom ones; each can be hidden from the client) and
+`body_metrics` (value + date, one per client/metric/day). The nutritionist records them in Seguimiento; the client reads the
+visible ones in Progreso → «Tus medidas». The client cannot write them yet (Harbiz lets clients add their own records: possible
+follow-up). **Correction to the table above:** NutriFit already had client **achievements** (`AchievementBadges` in Progreso: first
+weigh-in, streaks, hydration goal, meal photos), so F3 is not a gap.

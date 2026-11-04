@@ -323,6 +323,16 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Una fase ya terminada hace menos de 2 semanas y sin otra detrás también sale en **Fases por revisar**.
 - [ ] Los **avisos emergentes** (por ejemplo «Fase añadida ✓» o el motivo de un error) se ven abajo a la derecha: antes de esta versión no salían.
 
+## 29. Medidas corporales
+
+- [ ] Ficha de un cliente → **Seguimiento**: tarjeta **Medidas corporales** (debajo del peso). La primera vez se crean solas las métricas estándar (% grasa, cintura, cadera, pecho, brazo, muslo).
+- [ ] **Añadir medidas**: pon cintura y cadera con coma (82,5) y guarda. Salen con fecha y mini gráfica. Una segunda toma otro día muestra el cambio **desde la anterior** y **desde la primera**. Una casilla con letras o 0 no deja guardar y dice cuál; una fecha futura tampoco.
+- [ ] Repite el mismo día: sustituye la medida, no la duplica. Pulsa la métrica → historial → borra una medida.
+- [ ] **Métricas**: crea una propia («Pliegue tricipital», mm) **oculta al cliente**, y apunta un valor. En la app del **cliente** (Progreso → **Tus medidas**) salen las visibles y **no** la oculta. Quita la ocultación y aparece.
+- [ ] Eliminar una métrica propia pide confirmación y borra sus medidas.
+- [ ] **Exportar datos** del cliente incluye las medidas y sus nombres (apartado «metricas»).
+- [ ] Un cliente de **otro** nutricionista, o tú desde otro cliente, no ve estas medidas.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

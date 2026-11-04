@@ -34,6 +34,16 @@ Aplicar el reajuste cambia las kcal y los carbohidratos del plan, **no toca las 
 - **Añadir un pesaje con fecha:** apunta uno anterior (p. ej. el de la primera consulta).
 - Si la clienta registra el inicio de su periodo desde su app, la gráfica marca la semana previa para no confundir la retención de líquidos con grasa.
 
+## Medidas corporales
+
+Debajo de la gráfica de peso, la tarjeta **Medidas corporales** guarda lo que mides en consulta además del peso: **% de grasa**, **cintura**, **cadera**, **pecho**, **brazo** y **muslo**, y las **métricas propias** que quieras (masa muscular, pliegue tricipital…).
+
+- **Añadir medidas:** elige la fecha (no puede ser futura) y rellena **solo lo que hayas medido**; admite coma o punto (82,5). Si ya había una medida ese día, se sustituye. En cada casilla ves la última medida como pista.
+- **La evolución:** por cada métrica, la última medida con su fecha, el cambio **desde la anterior** y **desde la primera**, y una mini gráfica. Pulsa una métrica para ver su historial y **borrar** una medida mal puesta.
+- **Métricas** (arriba a la derecha): crea una **métrica propia** (nombre y unidad) y decide, métrica a métrica, si **la ve el cliente en su app o queda oculta**. Lo que ocultas no llega al cliente ni consultando la base de datos. Las métricas valen para todos tus clientes; eliminar una métrica propia borra también sus medidas de **todos** (te lo pregunta antes).
+- El cliente ve las que le dejas visibles en **Progreso → Tus medidas**, con su cambio desde la primera. Por ahora las apuntas tú; el cliente no las escribe.
+- Las medidas también salen en **Exportar datos** del cliente.
+
 ## Adherencia y check-ins
 
 - **Adherencia** a 7 y 30 días y la **racha** de días seguidos.
