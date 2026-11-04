@@ -47,8 +47,10 @@ import {
   ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, Send, Layers, FileSpreadsheet, Pill, Pencil, Check,
 } from 'lucide-react'
 
-export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutricionistaLogoUrl, nutricionistaAccentColor, demoPlan, personalMode }: {
+export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutricionistaLogoUrl, nutricionistaAccentColor, demoPlan, personalMode, onUpdateClient }: {
   client: ClientData; nutricionistaId: string; nutricionistaName?: string
+  /** Para el interruptor «Ocultar calorías y macros»; sin él no se muestra (modo personal). */
+  onUpdateClient?: (updates: Partial<ClientData>) => Promise<boolean>
   nutricionistaLogoUrl?: string | null; nutricionistaAccentColor?: string | null
   demoPlan?: DietPlan
   // true en modo personal (ver PersonalModeShell) — el "cliente" es quien
@@ -673,6 +675,20 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
             </button>
           )}
         </div>
+        {onUpdateClient && !personalMode && (
+          <label className="flex items-start gap-2 cursor-pointer -mt-1">
+            <input type="checkbox" className="mt-0.5 accent-accent" checked={client.hideNumbers === true}
+              onChange={async e => {
+                const hide = e.target.checked
+                const ok = await onUpdateClient({ hideNumbers: hide })
+                if (ok) toast(hide ? 'Su app ya no muestra calorías ni macros' : 'Su app vuelve a mostrar calorías y macros', 'ok')
+              }} />
+            <span className="text-xs">
+              <span className="font-semibold">Ocultar calorías y macros a este cliente</span>
+              <span className="block text-muted">{client.hideNumbers ? 'Ahora mismo su app muestra el plan sin ninguna cifra. Tú lo ves todo.' : 'Si lo marcas, su app muestra el plan (comidas y cantidades) sin ninguna cifra. Tú lo ves todo.'}</span>
+            </span>
+          </label>
+        )}
         {targetsEditable ? (
           <>
         {showCalculator && (

@@ -306,6 +306,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] **Plan de dieta → Proponer menú** (con kcal en el objetivo y varias recetas con tipo): sale un día con una receta por comida y las cantidades escaladas. **Otra propuesta** cambia las recetas. Un cliente con alergia a la lactosa no recibe recetas con lácteos. **Añadir al plan** las mete como comidas (con su objetivo de kcal); **Sustituir las comidas** quita las que había en ese día. Hasta **Guardar plan** no se guarda nada.
 - [ ] Sin recetas, o sin kcal en el objetivo, el menú lo dice en vez de fallar.
 
+## 27. Más recetas, guías por etiqueta y el interruptor en el plan
+
+- [ ] **Plan de dieta** de un cliente: bajo «Objetivo del plan» hay **Ocultar calorías y macros a este cliente**. Marcarlo y desmarcarlo cambia lo mismo que en su Perfil (y su app lo refleja).
+- [ ] Al editar una receta: **tiempo de preparación**, **vídeo** (solo https de YouTube o Vimeo: otro enlace da un aviso y no guarda), **tipos de dieta** y, si marcas «Visible en el libro…», **«Solo con etiqueta…»** con las etiquetas de tus clientes. En la lista se ven esos datos y hay filtro por tipo de dieta.
+- [ ] Pon a un cliente una etiqueta (p. ej. «Deportista»). Una receta del libro limitada a **otra** etiqueta **no** aparece en su libro; una limitada a **la suya** sí; una sin etiquetas, sí. Una receta que esté en su plan la ve siempre.
+- [ ] En el libro del cliente, la receta muestra minutos, tipo de dieta y **Ver el vídeo** (abre en otra pestaña).
+- [ ] **Planes y recursos → Guías:** al editar una guía, **Solo con etiqueta…** la limita; un cliente sin esa etiqueta no la ve en «Más → Guías». Nota: la **vista previa del cliente** la ve el nutricionista, así que ahí salen todas.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

@@ -167,6 +167,8 @@ export interface GuideRow {
   body: string
   sort_order: number
   created_at: string
+  /** 0064: vacío = lo ven todos los clientes; con etiquetas = solo los que tengan alguna. */
+  visible_tags?: string[]
 }
 
 export interface EatingOutGuideRow {
@@ -259,6 +261,11 @@ export interface RecipeRow {
   tags?: string[]
   /** El cliente la ve en su libro de recetas aunque no esté en su plan. */
   in_recipe_book?: boolean
+  /** 0064: si no está vacío, solo los clientes con alguna de estas etiquetas la ven en su libro. */
+  book_tags?: string[]
+  diet_types?: string[]
+  prep_minutes?: number | null
+  video_url?: string | null
 }
 
 export interface MealLogRow {

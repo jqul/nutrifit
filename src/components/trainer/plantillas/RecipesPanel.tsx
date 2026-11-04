@@ -5,7 +5,7 @@ import { Food } from '../../../types'
 import { DEMO_RECIPES } from '../../../lib/demo-data'
 import { toast } from '../../shared/Toast'
 import { RecipeEditorPanel } from '../../shared/RecipeEditorPanel'
-import { MEAL_TYPES, MealType, allTags, filterRecipes, mealTypeLabel } from '../../../lib/recipeMeta'
+import { DIET_TYPES, MEAL_TYPES, MealType, allTags, filterRecipes, mealTypeLabel } from '../../../lib/recipeMeta'
 import { Trash2, Plus, Copy, BookOpen, Search } from 'lucide-react'
 
 /** Recetario: recetas propias (editables) y las del sistema (solo copiar). */
@@ -15,6 +15,7 @@ export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionis
   const [query, setQuery] = useState('')
   const [mealTypeFilter, setMealTypeFilter] = useState<MealType | null>(null)
   const [tagFilter, setTagFilter] = useState<string | null>(null)
+  const [dietFilter, setDietFilter] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (demoMode) { setRecipes(DEMO_RECIPES); return }
@@ -40,7 +41,7 @@ export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionis
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
     const { error } = await supabase.from('recipes').insert({
       nutricionista_id: nutricionistaId, name: `${r.name} (copia)`, items: r.items, steps: r.steps, photo_url: r.photo_url,
-      meal_type: r.meal_type ?? null, tags: r.tags ?? [],
+      meal_type: r.meal_type ?? null, tags: r.tags ?? [], diet_types: r.diet_types ?? [], prep_minutes: r.prep_minutes ?? null, video_url: r.video_url ?? null,
     })
     if (error) { toast('Error: ' + error.message, 'warn'); return }
     toast(`"${r.name}" copiada a tus recetas ✓`, 'ok')
@@ -85,6 +86,10 @@ export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionis
                 <button key={m.id} onClick={() => setMealTypeFilter(mealTypeFilter === m.id ? null : m.id)} aria-pressed={mealTypeFilter === m.id}
                   className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${mealTypeFilter === m.id ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'}`}>{m.label}</button>
               ))}
+              {DIET_TYPES.filter(d => recipes.some(r => (r.diet_types ?? []).includes(d))).map(d => (
+                <button key={d} onClick={() => setDietFilter(dietFilter === d ? null : d)} aria-pressed={dietFilter === d}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${dietFilter === d ? 'bg-ok text-white' : 'bg-ok/10 text-ok hover:bg-ok/20'}`}>{d}</button>
+              ))}
               {allTags(recipes).slice(0, 12).map(tag => (
                 <button key={tag} onClick={() => setTagFilter(tagFilter === tag ? null : tag)} aria-pressed={tagFilter === tag}
                   className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${tagFilter === tag ? 'bg-accent text-white' : 'bg-accent/10 text-accent hover:bg-accent/20'}`}>#{tag}</button>
@@ -94,7 +99,7 @@ export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionis
         )}
 
         {(() => {
-          const shown = filterRecipes(recipes, { query, mealType: mealTypeFilter, tag: tagFilter })
+          const shown = filterRecipes(recipes, { query, mealType: mealTypeFilter, tag: tagFilter, dietType: dietFilter })
           const systemRecipes = shown.filter(r => r.nutricionista_id === null)
           const ownRecipes = shown.filter(r => r.nutricionista_id !== null)
           if (shown.length === 0 && recipes.length > 0) {
@@ -152,11 +157,13 @@ function RecipeListCard({ recipe: r, onClick, onDelete, onCopy }: {
             {items.length} alimento{items.length === 1 ? '' : 's'}
             {items.length > 0 && ` (${items.map(i => i.foodName).filter(Boolean).join(', ')})`}
           </p>
-          {(r.meal_type || (r.tags && r.tags.length > 0) || r.in_recipe_book) && (
+          {(r.meal_type || (r.tags && r.tags.length > 0) || (r.diet_types && r.diet_types.length > 0) || r.prep_minutes || r.in_recipe_book) && (
             <p className="text-xs mt-1 flex flex-wrap items-center gap-1">
               {r.meal_type && <span className="px-1.5 py-0.5 rounded-full bg-bg-alt text-muted font-medium">{mealTypeLabel(r.meal_type)}</span>}
+              {r.prep_minutes ? <span className="text-muted">{r.prep_minutes} min</span> : null}
+              {(r.diet_types ?? []).map(d => <span key={d} className="px-1.5 py-0.5 rounded-full bg-ok/10 text-ok">{d}</span>)}
               {(r.tags ?? []).map(tag => <span key={tag} className="px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">#{tag}</span>)}
-              {r.in_recipe_book && <span className="inline-flex items-center gap-1 text-ok font-medium"><BookOpen className="w-3 h-3" /> En el libro del cliente</span>}
+              {r.in_recipe_book && <span className="inline-flex items-center gap-1 text-ok font-medium"><BookOpen className="w-3 h-3" /> {(r.book_tags ?? []).length > 0 ? `En el libro de: ${(r.book_tags ?? []).map(x => '#' + x).join(' ')}` : 'En el libro del cliente'}</span>}
             </p>
           )}
         </div>

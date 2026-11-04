@@ -144,7 +144,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
             <div className={tab === 'dieta' ? '' : 'hidden'}>
               <PlanDietaTab client={current} nutricionistaId={userProfile.uid} nutricionistaName={userProfile.displayName}
                 nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}
-                demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} />
+                demoPlan={demoMode ? DEMO_DIET_PLANS[current.id] : undefined} onUpdateClient={handleUpdate} />
             </div>
             <div className={tab === 'seguimiento' ? '' : 'hidden'}>
               <SeguimientoTab client={current} review={{ unreviewed: !!current.hasUnreviewedActivity, lastReviewedAt: current.lastReviewedAt, onMark: markReviewed }} onUpdate={handleUpdate} nutricionistaLogoUrl={userProfile.logoUrl} nutricionistaAccentColor={userProfile.accentColor}

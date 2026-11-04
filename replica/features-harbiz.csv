@@ -6,9 +6,14 @@ Meal options,plans,must,yes,yes,already covered by optionGroup
 Shopping list,client app,should,yes,yes,already covered; grouped by aisle
 Hide calories and macros from a client,client app,should,yes,yes,built on feat/harbiz-mejoras (migration 0061)
 Plan sent by email,delivery,could,yes,no,PDF and WhatsApp cover it; needs an email provider
-Recipe metadata (meal type / tags),recipes,should,yes,yes,built on feat/recetas (diet type not built)
-Recipe visibility (book / plan only),recipes,should,yes,yes,built on feat/recetas; by client tag not built
+Recipe metadata (meal type / tags),recipes,should,yes,yes,built (meal type, tags, diet type, prep time, video)
+Recipe visibility (book / plan only),recipes,should,yes,yes,built (feat/recetas + feat/harbiz-2: by client tag)
 Client recipe book,client app,should,yes,yes,built on feat/recetas
 Menu proposed from the nutritionist's own recipes (no AI),plans,should,no,yes,built on feat/recetas (menuProposal.ts)
 AI plan generation,plans,could,yes,no,needs an explicit product decision (P5)
 Multi-phase programs,plans,could,yes,no,not evaluated
+Guide visibility by client tag,client app,could,yes,yes,built on feat/harbiz-2 (migration 0064)
+Body metrics / custom metrics with per-metric hide,tracking,should,yes,no,proposal F2
+Phases / programs (timeline with plan per phase),plans,should,yes,no,proposal F1 - biggest gap
+Client achievements,client app,could,yes,no,proposal F3
+Recipe portion size and allergen tags,recipes,could,yes,no,proposal F5

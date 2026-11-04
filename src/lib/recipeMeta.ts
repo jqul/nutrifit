@@ -14,6 +14,9 @@ export function mealTypeLabel(t: string | null | undefined): string {
   return MEAL_TYPES.find(m => m.id === t)?.label ?? ''
 }
 
+export const DIET_TYPES = ['vegetariana', 'vegana', 'sin gluten', 'sin lactosa', 'alta en proteína', 'baja en carbohidratos'] as const
+export type DietType = typeof DIET_TYPES[number]
+
 const MAX_TAGS = 8
 const MAX_TAG_LENGTH = 30
 
@@ -28,9 +31,9 @@ export function parseTags(text: string): string[] {
   return tags
 }
 
-interface Searchable { name: string; meal_type?: string | null; tags?: string[] | null }
+interface Searchable { name: string; meal_type?: string | null; tags?: string[] | null; diet_types?: string[] | null }
 
-export interface RecipeFilter { query?: string; mealType?: MealType | null; tag?: string | null }
+export interface RecipeFilter { query?: string; mealType?: MealType | null; tag?: string | null; dietType?: string | null }
 
 const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 
@@ -39,6 +42,7 @@ export function filterRecipes<T extends Searchable>(recipes: T[], filter: Recipe
   return recipes.filter(r => {
     if (filter.mealType && r.meal_type !== filter.mealType) return false
     if (filter.tag && !(r.tags ?? []).includes(filter.tag)) return false
+    if (filter.dietType && !(r.diet_types ?? []).includes(filter.dietType)) return false
     if (!q) return true
     return fold(r.name).includes(q) || (r.tags ?? []).some(t => fold(t).includes(q))
   })
@@ -49,4 +53,24 @@ export function allTags(recipes: { tags?: string[] | null }[]): string[] {
   const counts = new Map<string, number>()
   for (const r of recipes) for (const t of r.tags ?? []) counts.set(t, (counts.get(t) ?? 0) + 1)
   return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([t]) => t)
+}
+
+/**
+ * Un enlace de vídeo que se pueda abrir sin riesgo: solo https y solo YouTube o Vimeo (donde los nutricionistas suben
+ * los suyos). Devuelve el enlace limpio o null si no vale.
+ */
+export function safeVideoUrl(raw: string | null | undefined): string | null {
+  const text = (raw ?? '').trim()
+  if (!text) return null
+  let url: URL
+  try { url = new URL(text) } catch { return null }
+  if (url.protocol !== 'https:') return null
+  const host = url.hostname.replace(/^www./, '').replace(/^m./, '')
+  return ['youtube.com', 'youtu.be', 'vimeo.com'].includes(host) ? url.toString() : null
+}
+
+/** Minutos de preparación escritos a mano → entero entre 1 y 1440, o null. */
+export function parsePrepMinutes(text: string): number | null {
+  const n = parseInt(text, 10)
+  return Number.isFinite(n) && n >= 1 && n <= 1440 ? n : null
 }

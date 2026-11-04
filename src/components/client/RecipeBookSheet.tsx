@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { RecipeRow } from '../../lib/supabase-types'
-import { MEAL_TYPES, MealType, filterRecipes, mealTypeLabel } from '../../lib/recipeMeta'
+import { MEAL_TYPES, MealType, filterRecipes, mealTypeLabel, safeVideoUrl } from '../../lib/recipeMeta'
 import { sumItemMacros, EditableItem } from '../trainer/client-panel/plan-dieta/planModel'
 import { BottomSheet } from '../shared/BottomSheet'
-import { ChefHat, Search } from 'lucide-react'
+import { ChefHat, Clock, PlayCircle, Search } from 'lucide-react'
 
 /**
  * El libro de recetas del cliente: las que su nutricionista ha marcado como visibles (aunque no estén en su plan), con
@@ -28,6 +28,15 @@ export function RecipeBookSheet({ open, onClose, recipes, hideNumbers }: {
         <div className="space-y-3">
           <button onClick={() => setViewing(null)} className="text-xs font-bold text-accent">← Todas las recetas</button>
           {viewing.photo_url && <img src={viewing.photo_url} alt={viewing.name} className="w-full aspect-video object-cover rounded-xl" />}
+          {(viewing.prep_minutes || (viewing.diet_types ?? []).length > 0) && (
+            <p className="flex flex-wrap items-center gap-1.5 text-xs">
+              {viewing.prep_minutes ? <span className="inline-flex items-center gap-1 text-muted"><Clock className="w-3 h-3" /> {viewing.prep_minutes} min</span> : null}
+              {(viewing.diet_types ?? []).map(d => <span key={d} className="px-1.5 py-0.5 rounded-full bg-ok/10 text-ok font-medium">{d}</span>)}
+            </p>
+          )}
+          {safeVideoUrl(viewing.video_url) && (
+            <a href={safeVideoUrl(viewing.video_url)!} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-accent"><PlayCircle className="w-4 h-4" /> Ver el vídeo</a>
+          )}
           {!hideNumbers && kcal > 0 && <p className="text-xs text-muted">Aprox. {kcal} kcal la receta entera</p>}
           {items.length > 0 && (
             <div>
@@ -82,7 +91,7 @@ export function RecipeBookSheet({ open, onClose, recipes, hideNumbers }: {
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold truncate">{r.name}</span>
                   <span className="block text-xs text-muted truncate">
-                    {[mealTypeLabel(r.meal_type), ...(r.tags ?? []).map(t => `#${t}`)].filter(Boolean).join(' · ') || 'Receta'}
+                    {[mealTypeLabel(r.meal_type), r.prep_minutes ? `${r.prep_minutes} min` : '', ...(r.diet_types ?? []), ...(r.tags ?? []).map(t => `#${t}`)].filter(Boolean).join(' · ') || 'Receta'}
                   </span>
                 </span>
               </button>
