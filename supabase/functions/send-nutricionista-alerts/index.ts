@@ -50,6 +50,8 @@ const supabase = createClient(
 // Las citas de "mañana" y su hora se calculan en la zona horaria del producto.
 const TIME_ZONE = "Europe/Madrid"
 const CHECKIN_WINDOW_DAYS = 21
+// Nutricionistas procesados a la vez (ver el bucle principal).
+const CONCURRENCY = 5
 
 const dayInTz = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(d) // YYYY-MM-DD
 const timeInTz = (d: Date) => new Intl.DateTimeFormat("es-ES", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" }).format(d)
@@ -95,14 +97,21 @@ Deno.serve(async (req: Request) => {
       subsByNutri.set(s.nutricionista_id, list)
     }
 
+    // Cada nutricionista tarda ~0,25 s (varias consultas): en serie, con cientos serían minutos. Se procesan en lotes
+    // de CONCURRENCY a la vez: el mismo trabajo, sin saturar la base de datos. Cada uno toca solo sus propios datos,
+    // así que el orden y el paralelismo no cambian el resultado.
     const summary: Row[] = []
-    for (const [nutricionistaId, nutriSubs] of subsByNutri) {
-      try {
-        summary.push(await processNutricionista(nutricionistaId, nutriSubs, dryRun))
-      } catch (err) {
-        // Un nutricionista con problemas no debe impedir los avisos de los demás.
-        summary.push({ nutricionistaId, error: String(err) })
-      }
+    const entries = [...subsByNutri]
+    for (let i = 0; i < entries.length; i += CONCURRENCY) {
+      const batch = await Promise.all(entries.slice(i, i + CONCURRENCY).map(async ([nutricionistaId, nutriSubs]): Promise<Row> => {
+        try {
+          return await processNutricionista(nutricionistaId, nutriSubs, dryRun)
+        } catch (err) {
+          // Un nutricionista con problemas no debe impedir los avisos de los demás.
+          return { nutricionistaId, error: String(err) }
+        }
+      }))
+      summary.push(...batch)
     }
 
     return new Response(JSON.stringify({ dryRun, nutricionistas: summary.length, summary }), {
