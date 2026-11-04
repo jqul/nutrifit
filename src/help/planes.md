@@ -5,7 +5,7 @@ Todo se hace en la ficha del cliente, pestaña **Plan de dieta**.
 ## Crear el plan
 
 - Si el cliente no tiene plan, pulsa **Crear plan de dieta**.
-- **Objetivo del plan:** kcal, proteína, carbohidratos, grasas y fibra al día. La **Calculadora metabólica** te ayuda a calcularlo (fórmulas Mifflin-St Jeor, Harris-Benedict o Katch-McArdle, con su actividad).
+- **Objetivo del plan:** kcal, proteína, carbohidratos, grasas y fibra al día. La **Calculadora metabólica** te ayuda a calcularlo (fórmulas Mifflin-St Jeor, Harris-Benedict o Katch-McArdle, con su actividad). Los macros se pueden escribir en **gramos** o como **% de las kcal** (debajo de los campos: «Macros en»), y te dice a cuánto suma el reparto; por dentro se guarda siempre en gramos.
 - **Consejo del nutricionista:** un texto corto que el cliente ve en su app («Prioriza la proteína…»). Verás cómo lo verá.
 - Para empezar rápido: **Aplicar plantilla**, o **Copiar comidas de…** otro cliente.
 

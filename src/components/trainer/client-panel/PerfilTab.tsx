@@ -297,6 +297,26 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDis
         )}
       </div>
 
+      {!personalMode && (
+        <div className="card p-5 space-y-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Lo que ve en su app</p>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" className="mt-1 w-4 h-4 accent-accent" checked={client.hideNumbers === true}
+              onChange={async e => {
+                const hide = e.target.checked
+                const ok = await onUpdate({ hideNumbers: hide })
+                if (ok) toast(hide ? 'Su app ya no muestra calorías ni macros' : 'Su app vuelve a mostrar calorías y macros', 'ok')
+              }} />
+            <span className="text-sm">
+              <span className="font-semibold">Ocultar calorías y macros a este cliente</span>
+              <span className="block text-xs text-muted mt-0.5">
+                Verá su plan (comidas, alimentos y cantidades), pero ninguna cifra de energía o nutrientes: tampoco en el PDF. Se esconden también el escáner de productos y los extras, que solo sirven para contar. Tú lo ves todo igual. Útil si ver las cifras le agobia o le sienta mal.
+              </span>
+            </span>
+          </label>
+        </div>
+      )}
+
       {!personalMode && onDismiss && <DarDeBajaCard client={client} onDismiss={onDismiss} />}
 
       <div className="card p-5 space-y-3">

@@ -53,6 +53,8 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   personalMode?: boolean
 }) {
   const clientId = client.id
+  // El nutricionista puede ocultar kcal y macros a este cliente: ve el plan, pero ninguna cifra.
+  const hideNumbers = client.hideNumbers === true
   const [plan, setPlan] = useState<DietPlan | null>(demoPlan ?? null)
   const [loading, setLoading] = useState(!demoPlan)
   const [checked, setChecked] = useState<Set<string>>(new Set())
@@ -220,8 +222,12 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
       <div className="card p-5">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs text-muted">Tu objetivo diario</p>
-            <p className="font-serif font-bold text-4xl leading-none mt-1">{plan.kcalTarget}<span className="font-sans text-base font-medium text-muted ml-1">kcal</span></p>
+            {hideNumbers ? (
+              <p className="font-serif font-bold text-2xl leading-none">Tu plan de hoy</p>
+            ) : (<>
+              <p className="text-xs text-muted">Tu objetivo diario</p>
+              <p className="font-serif font-bold text-4xl leading-none mt-1">{plan.kcalTarget}<span className="font-sans text-base font-medium text-muted ml-1">kcal</span></p>
+            </>)}
           </div>
           {todaysMeals.length > 0 && (
             <div className="text-right flex-shrink-0">
@@ -230,7 +236,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
             </div>
           )}
         </div>
-        {split && (
+        {!hideNumbers && split && (
           <div className="flex h-2 rounded-full overflow-hidden mt-4 bg-bg-alt" role="img"
             aria-label={`Reparto de energía: ${split.proteinPct}% proteína, ${split.carbsPct}% carbohidratos, ${split.fatPct}% grasas`}>
             <div className="bg-protein" style={{ width: `${split.proteinPct}%` }} />
@@ -238,7 +244,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
             <div className="bg-fat" style={{ width: `${split.fatPct}%` }} />
           </div>
         )}
-        {balance.total.kcal > 0 && (
+        {!hideNumbers && balance.total.kcal > 0 && (
           <div className="mt-4 pt-4 border-t border-border space-y-2" aria-live="polite">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-sm"><span className="font-semibold">Hoy llevas {balance.total.kcal} kcal</span>
@@ -256,24 +262,28 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
             </p>
           </div>
         )}
-        <div className="grid grid-cols-4 gap-2 mt-3">
-          <MacroStat dot="bg-protein" label="Proteína" value={plan.proteinG} />
-          <MacroStat dot="bg-notice" label="Carbos" value={plan.carbsG} />
-          <MacroStat dot="bg-fat" label="Grasas" value={plan.fatG} />
-          <MacroStat dot="bg-ok" label="Fibra" value={plan.fiberG} />
-        </div>
+        {!hideNumbers && (
+          <div className="grid grid-cols-4 gap-2 mt-3">
+            <MacroStat dot="bg-protein" label="Proteína" value={plan.proteinG} />
+            <MacroStat dot="bg-notice" label="Carbos" value={plan.carbsG} />
+            <MacroStat dot="bg-fat" label="Grasas" value={plan.fatG} />
+            <MacroStat dot="bg-ok" label="Fibra" value={plan.fiberG} />
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <ToolButton icon={<Barcode className="w-4 h-4" />} label="Escanear producto" onClick={() => setScannerOpen(true)} />
-        <ToolButton icon={<ListPlus className="w-4 h-4" />} label="Añadir varios alimentos" onClick={() => setAddingFoods(true)} />
-      </div>
+      {!hideNumbers && (
+        <div className="grid grid-cols-2 gap-2">
+          <ToolButton icon={<Barcode className="w-4 h-4" />} label="Escanear producto" onClick={() => setScannerOpen(true)} />
+          <ToolButton icon={<ListPlus className="w-4 h-4" />} label="Añadir varios alimentos" onClick={() => setAddingFoods(true)} />
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <ToolButton icon={<UtensilsCrossed className="w-4 h-4" />} label="¿Vas a comer fuera?" onClick={() => { setEatingOutOpen(true); setEatingOutGuideId(null) }} />
         <ToolButton icon={<Download className="w-4 h-4" />} label="Descargar PDF" onClick={() => printDietPlan(client, plan)} />
       </div>
 
-      <ExtrasHoyCard logs={logsToday} clientId={clientId} demoMode={demoMode} kcalTarget={plan.kcalTarget} personalMode={personalMode} />
+      {!hideNumbers && <ExtrasHoyCard logs={logsToday} clientId={clientId} demoMode={demoMode} kcalTarget={plan.kcalTarget} personalMode={personalMode} />}
 
       {plan.advice && <AdviceCard advice={plan.advice} personalMode={personalMode} />}
 
@@ -323,7 +333,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
                                 ? `${g.length} opciones: ${g.map(m => m.name).filter(Boolean).join(' · ')}`
                                 : `${g[0].name}${g[0].items.length > 0 ? `: ${g[0].items.map(i => i.foodName).filter(Boolean).join(', ')}` : ''}`}
                             </span>
-                            {g.length === 1 && g[0].kcalTarget != null && <span className="text-muted flex-shrink-0">{g[0].kcalTarget} kcal</span>}
+                            {!hideNumbers && g.length === 1 && g[0].kcalTarget != null && <span className="text-muted flex-shrink-0">{g[0].kcalTarget} kcal</span>}
                           </p>
                         ))}
                       </div>
@@ -391,7 +401,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
                     <p className="font-semibold text-sm">{meal.name}</p>
                     <div className="flex items-center gap-2 text-xs text-muted flex-shrink-0">
                       {meal.time && <span>{meal.time}</span>}
-                      {meal.kcalTarget != null && <span>{meal.kcalTarget} kcal</span>}
+                      {!hideNumbers && meal.kcalTarget != null && <span>{meal.kcalTarget} kcal</span>}
                     </div>
                   </div>
                   {done && (
@@ -409,11 +419,11 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
                   )}
                 </div>
               </div>
-              {meal.items.length > 0 && <MealMacroPills items={meal.items} />}
+              {!hideNumbers && meal.items.length > 0 && <MealMacroPills items={meal.items} />}
               {meal.items.length > 0 && (
                 <ul className="space-y-1 mt-2">
                   {meal.items.map(item => (
-                    <MealItemRow key={item.id} item={item} foods={foods} allergies={client.allergies} demoMode={demoMode} personalMode={personalMode} />
+                    <MealItemRow key={item.id} item={item} foods={foods} allergies={client.allergies} demoMode={demoMode} personalMode={personalMode} hideNumbers={hideNumbers} />
                   ))}
                 </ul>
               )}
@@ -436,7 +446,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         </div>
       )}
 
-      <ShoppingList meals={resolveChosenMeals(plan.meals.filter(matchesDayType), optionChoices)} foods={foods} checked={checked} onToggle={toggleChecked} />
+      <ShoppingList meals={resolveChosenMeals(plan.meals.filter(matchesDayType), optionChoices)} foods={foods} checked={checked} onToggle={toggleChecked} hideNumbers={hideNumbers} />
 
       {viewingRecipe && (
         <BottomSheet open onClose={() => setViewingRecipe(null)} title={viewingRecipe.name}>
@@ -465,7 +475,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
  * equivalentes ("sistema de intercambios") — puramente informativo: no
  * modifica el plan real, solo muestra por cuánto se podría cambiar
  * manteniendo el mismo macro. El cambio real solo lo hace el nutricionista. */
-function MealItemRow({ item, foods, allergies, demoMode, personalMode }: { item: DietMealItem; foods: Food[]; allergies: string; demoMode?: boolean; personalMode?: boolean }) {
+function MealItemRow({ item, foods, allergies, demoMode, personalMode, hideNumbers }: { item: DietMealItem; foods: Food[]; allergies: string; demoMode?: boolean; personalMode?: boolean; hideNumbers?: boolean }) {
   const [open, setOpen] = useState(false)
   const canSubstitute = foods.length > 0
 
@@ -481,7 +491,7 @@ function MealItemRow({ item, foods, allergies, demoMode, personalMode }: { item:
           </button>
         )}
       </div>
-      {canSubstitute && <SubstituteSheet open={open} onClose={() => setOpen(false)} item={item} foods={foods} allergies={allergies} demoMode={demoMode} personalMode={personalMode} />}
+      {canSubstitute && <SubstituteSheet open={open} onClose={() => setOpen(false)} item={item} foods={foods} allergies={allergies} demoMode={demoMode} personalMode={personalMode} hideNumbers={hideNumbers} />}
     </li>
   )
 }
@@ -491,8 +501,8 @@ function MealItemRow({ item, foods, allergies, demoMode, personalMode }: { item:
  * solo salen alimentos del MISMO GRUPO (otra carne, otro cereal, otra fruta…)
  * con las mismas raciones; "Todos" abre cualquier alimento igualando un macro.
  * Nunca se sugiere nada que choque con las alergias del cliente. */
-function SubstituteSheet({ open, onClose, item, foods, allergies, demoMode, personalMode }: {
-  open: boolean; onClose: () => void; item: DietMealItem; foods: Food[]; allergies: string; demoMode?: boolean; personalMode?: boolean
+function SubstituteSheet({ open, onClose, item, foods, allergies, demoMode, personalMode, hideNumbers }: {
+  open: boolean; onClose: () => void; item: DietMealItem; foods: Food[]; allergies: string; demoMode?: boolean; personalMode?: boolean; hideNumbers?: boolean
 }) {
   const [matchBy, setMatchBy] = useState<MacroKey>('proteinG')
   const [scope, setScope] = useState<'group' | 'all'>('group')
@@ -529,6 +539,8 @@ function SubstituteSheet({ open, onClose, item, foods, allergies, demoMode, pers
           <p className="text-xs text-muted">
             Tu plato son <strong className="text-ink">{view.rations != null ? `${String(view.rations).replace('.', ',')} ${view.rations === 1 ? 'ración' : 'raciones'}` : 'una ración'}</strong> ({view.group.rationText.replace(/ \(.*\)$/, '')} cada una). Las cantidades de abajo dan lo mismo.
           </p>
+        ) : hideNumbers ? (
+          <p className="text-xs text-muted">Las cantidades de abajo dan una pauta parecida a tu plato.</p>
         ) : (
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">Igualar por</span>
@@ -566,7 +578,7 @@ function SubstituteSheet({ open, onClose, item, foods, allergies, demoMode, pers
   )
 }
 
-function ShoppingList({ meals, foods, checked, onToggle }: { meals: DietMeal[]; foods: Food[]; checked: Set<string>; onToggle: (key: string) => void }) {
+function ShoppingList({ meals, foods, checked, onToggle, hideNumbers }: { meals: DietMeal[]; foods: Food[]; checked: Set<string>; onToggle: (key: string) => void; hideNumbers?: boolean }) {
   const items = buildShoppingList(meals)
   if (items.length === 0) return null
   const aisles = groupShoppingItemsByAisle(items, foods)
@@ -599,7 +611,7 @@ function ShoppingList({ meals, foods, checked, onToggle }: { meals: DietMeal[]; 
               {aisle.items.map(item => {
                 const isChecked = checked.has(item.key)
                 const qtyLabel = item.totalQty !== null ? `${item.totalQty}${item.unit ? ` ${item.unit}` : ''}` : item.parts.join(' + ')
-                const fiberRounded = Math.round(item.fiberG * 10) / 10
+                const fiberRounded = hideNumbers ? 0 : Math.round(item.fiberG * 10) / 10
                 return (
                   <li key={item.key}>
                     <button onClick={() => onToggle(item.key)} className="w-full flex items-center gap-2.5 text-left py-1">
