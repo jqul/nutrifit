@@ -314,6 +314,15 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] En el libro del cliente, la receta muestra minutos, tipo de dieta y **Ver el vídeo** (abre en otra pestaña).
 - [ ] **Planes y recursos → Guías:** al editar una guía, **Solo con etiqueta…** la limita; un cliente sin esa etiqueta no la ve en «Más → Guías». Nota: la **vista previa del cliente** la ve el nutricionista, así que ahí salen todas.
 
+## 28. Fases del plan
+
+- [ ] **Plan de dieta** de un cliente → tarjeta **Fases del plan** → **Añadir fase** («Definición», de hoy a dentro de 4 semanas, con un texto «en esta fase…» y una plantilla). La segunda fase se propone justo después de la primera.
+- [ ] Una fase que **se solape** con otra, o que acabe antes de empezar, no se guarda y sale el motivo. Editar y eliminar funcionan.
+- [ ] En la app del **cliente** (su enlace) → **Hoy**: tarjeta **Tu fase · 1 de 2**, con los días que quedan, la barra y el texto. Si no tiene fases, no sale nada. Entre dos fases (si la siguiente empieza en menos de 2 semanas), sale **Tu próxima fase**.
+- [ ] Pon una fase que **termine dentro de 2 días**: en **Inicio** aparece **Fases por revisar** con su nombre y la frase («termina en 3 días…»); al pulsar abre su plan. Con 10 días por delante, no aparece.
+- [ ] Una fase ya terminada hace menos de 2 semanas y sin otra detrás también sale en **Fases por revisar**.
+- [ ] Los **avisos emergentes** (por ejemplo «Fase añadida ✓» o el motivo de un error) se ven abajo a la derecha: antes de esta versión no salían.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

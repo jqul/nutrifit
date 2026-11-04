@@ -7,6 +7,7 @@ import { attentionList, goalReachedClients, greeting, monthlyRevenue, recommende
 import { Button } from '../shared/Button'
 import { OnboardingChecklist } from './OnboardingChecklist'
 import { OnboardingStep, OnboardingStepId } from '../../lib/onboarding'
+import { ClientPhaseReview } from '../../hooks/usePhaseReviews'
 
 const MAX_ATTENTION = 6
 const MAX_REVIEWS = 5
@@ -27,12 +28,14 @@ const PRIORITY_STYLE: Record<Priority, { dot: string; label: string }> = {
  * necesita mi atención ahora?" antes que a "¿qué clientes tengo?": prioridades,
  * citas de hoy, quién necesita algo y una línea de negocio.
  */
-export function ControlCenter({ displayName, clients, loading, onboarding, onGoToHelp, todayAppointments, reviewedClientIds, onOpenClient, onShowClients, onGoToCalendar, onGoToBusiness, onNewClient }: {
+export function ControlCenter({ displayName, clients, loading, phaseReviews = [], onboarding, onGoToHelp, todayAppointments, reviewedClientIds, onOpenClient, onShowClients, onGoToCalendar, onGoToBusiness, onNewClient }: {
   displayName: string
   /** Primeros pasos tras registrarse; sin esto (demo) no se muestran. */
   onboarding?: { steps: OnboardingStep[]; onAction: (id: OnboardingStepId) => void }
   clients: ClientWithStats[]
   loading: boolean
+  /** Fases del plan que terminan pronto (o terminaron sin otra detrás). */
+  phaseReviews?: ClientPhaseReview<ClientWithStats>[]
   todayAppointments: Appointment[]
   /** Clientes cuya revisión semanal de esta semana ya está decidida. */
   reviewedClientIds: Set<string>
@@ -202,6 +205,27 @@ export function ControlCenter({ displayName, clients, loading, onboarding, onGoT
               {pendingOnly.length > MAX_REVIEWS && (
                 <p className="text-xs text-muted mt-2">y {pendingOnly.length - MAX_REVIEWS} más — se abren desde Clientes.</p>
               )}
+            </section>
+          )}
+
+          {phaseReviews.length > 0 && (
+            <section aria-labelledby="cc-phases">
+              <div className="flex items-baseline justify-between gap-3 mb-2">
+                <h2 id="cc-phases" className="text-sm font-semibold">Fases por revisar</h2>
+                <span className="text-xs text-muted">{phaseReviews.length} {phaseReviews.length === 1 ? 'cliente' : 'clientes'}</span>
+              </div>
+              <div className="card divide-y divide-border/60 overflow-hidden">
+                {phaseReviews.slice(0, MAX_REVIEWS).map(({ client: c, review }) => (
+                  <button key={c.id} onClick={() => onOpenClient(c, 'dieta')}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-bg-alt/60 transition-colors">
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold truncate">{c.name} {c.surname}</span>
+                      <span className="block text-xs text-muted">{review.text}</span>
+                    </span>
+                    <span className="flex items-center gap-0.5 text-xs font-semibold text-accent flex-shrink-0">Ver plan <ChevronRight className="w-4 h-4" /></span>
+                  </button>
+                ))}
+              </div>
             </section>
           )}
 

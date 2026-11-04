@@ -138,6 +138,19 @@ export interface DietSupplementRow {
   visible_to_client: boolean
 }
 
+/** Fases del plan de un cliente (0065). Las fechas son YYYY-MM-DD, ambas incluidas. */
+export interface PlanPhaseRow {
+  id: string
+  client_id: string
+  nutricionista_id: string
+  name: string
+  description: string
+  start_date: string
+  end_date: string
+  template_id: string | null
+  created_at: string
+}
+
 export interface DietTemplateRow {
   id: string
   nutricionista_id: string

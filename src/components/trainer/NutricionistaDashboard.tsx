@@ -22,6 +22,7 @@ import { HELP_TOPICS } from '../../help/topics'
 import { searchHelp } from '../../lib/helpSearch'
 import { ClientListRow } from './ClientListRow'
 import { ControlCenter } from './ControlCenter'
+import { usePhaseReviews } from '../../hooks/usePhaseReviews'
 import { priorityOf, ClientPanelTab } from '../../lib/controlCenter'
 import { useTodayAppointments } from '../../hooks/useTodayAppointments'
 import { useReviewedThisWeek } from '../../hooks/useClientReviews'
@@ -47,6 +48,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
 }) {
   const { clients, bajas, loading, addClient, fetchClients } = useNutricionistaClients({ nutricionistaId: userProfile.uid, demoClients })
   const clientsWithPlan = useClientsWithPlan(userProfile.uid, !demoClients)
+  const phaseReviews = usePhaseReviews(userProfile.uid, clients, !!demoClients)
   const [view, setView] = useState<View>('inicio')
   // Última sección vista en cada grupo, para que volver a un grupo te deje donde estabas.
   const [lastViewByGroup, setLastViewByGroup] = useState<Partial<Record<string, View>>>({})
@@ -224,7 +226,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
             interno entero: la búsqueda del Conversor, el alimento
             seleccionado, el formulario a medio rellenar... */}
         <div className={view === 'inicio' ? '' : 'hidden'}>
-          <ControlCenter displayName={userProfile.displayName} clients={clients} loading={loading}
+          <ControlCenter displayName={userProfile.displayName} clients={clients} loading={loading} phaseReviews={phaseReviews}
             onboarding={demoClients ? undefined : {
               steps: onboardingSteps({
                 profileComplete: !!userProfile.displayName.trim() && !!(userProfile.logoUrl || userProfile.contactPhone),

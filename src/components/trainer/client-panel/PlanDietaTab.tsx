@@ -16,6 +16,7 @@ import { SubstituteItem, suggestSubstitutes, substituteGrams } from '../../../li
 import { FitResult, fitPlanToTargets } from '../../../lib/planFit'
 import { FitPlanModal } from './plan-dieta/FitPlanModal'
 import { MenuProposalModal } from './plan-dieta/MenuProposalModal'
+import { PlanPhasesCard } from './plan-dieta/PlanPhasesCard'
 import { ProposedMeal } from '../../../lib/menuProposal'
 import { buildWAUrl } from '../../../lib/whatsapp'
 import { Button } from '../../shared/Button'
@@ -656,6 +657,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           <p className="mt-2 text-xs text-muted">Lo demás (un menú distinto cada día, varias opciones, ON/OFF, suplementos) está en «Opciones avanzadas», más abajo, para cuando lo necesites.</p>
         </div>
       )}
+
+      {!personalMode && <PlanPhasesCard clientId={client.id} nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />}
 
       <div className="card p-5 space-y-4">
         <div className="flex items-center justify-between gap-2">

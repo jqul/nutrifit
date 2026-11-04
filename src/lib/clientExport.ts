@@ -36,6 +36,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { table: 'invoices', order: 'created_at' },
   { table: 'lab_reports', order: 'date' },
   { table: 'meal_logs', order: 'created_at' },
+  { table: 'plan_phases', order: 'start_date' },
   { table: 'progress_photos', order: 'date' },
   { table: 'survey_responses', order: 'submitted_at' },
   { table: 'weight_logs', order: 'date' },

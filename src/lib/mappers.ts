@@ -1,8 +1,9 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
   WeightLogRow, CycleLogRow, GuideRow, EatingOutGuideRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
-  ClientProfileRow, AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, ClinicalNoteRow,
+  ClientProfileRow, PlanPhaseRow, AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, ClinicalNoteRow,
 } from './supabase-types'
+import type { PlanPhase } from './planPhases'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
   WeightEntry, CycleEntry, Guide, EatingOutGuide, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
@@ -13,6 +14,13 @@ import {
  * viajan hasta su navegador, así que se rellenan con valores vacíos. */
 export function clienteRowFromProfile(p: ClientProfileRow): ClienteRow {
   return { ...p, notes: null, report_notes: null, notes_updated_at: null, monthly_price: null, custom_messages: null, tags: [], last_reviewed_at: null }
+}
+
+export function planPhaseFromRow(row: PlanPhaseRow): PlanPhase {
+  return {
+    id: row.id, clientId: row.client_id, name: row.name, description: row.description || '',
+    startDate: row.start_date, endDate: row.end_date, templateId: row.template_id,
+  }
 }
 
 export function clientFromRow(row: ClienteRow): ClientData {

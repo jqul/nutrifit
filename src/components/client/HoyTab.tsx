@@ -1,3 +1,4 @@
+import { ClientPhaseCard } from './ClientPhaseCard'
 import { useState, useEffect, useCallback } from 'react'
 import { ClientData, FollowedPlan, Appointment, DietPlan, MealLog, DietMeal } from '../../types'
 import { supabase } from '../../lib/supabase'
@@ -317,6 +318,8 @@ export function HoyTab({ client, demoMode, personalMode }: {
       </div>
 
       <PendingSurveys client={client} demoMode={demoMode} />
+
+      {!personalMode && <ClientPhaseCard clientId={client.id} demoMode={demoMode} />}
 
       {/* ── Comidas del día ── */}
       {todaysMeals.length > 0 && (
