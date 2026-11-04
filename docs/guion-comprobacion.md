@@ -290,6 +290,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Se ve bien en el **móvil** (sin desplazarte de lado) y en oscuro.
 - [ ] La barra de la demo dice «Solicitar acceso →» (ya no «gratis»).
 
+## 25. Ocultar calorías y macros a un cliente
+
+- [ ] En la ficha de un cliente → **Perfil**, tarjeta **Lo que ve en su app**: marca **Ocultar calorías y macros a este cliente**. Sale el aviso y la casilla se queda marcada al recargar.
+- [ ] Abre su app (**Vista previa cliente** o su enlace): en **Hoy** y **Dieta** no aparece **ninguna** cifra de kcal, macros ni fibra; Dieta empieza con «Tu plan de hoy» y las comidas hechas; no están **Escanear producto**, **Añadir varios alimentos** ni **Extras de hoy**. El plan sigue con sus alimentos y cantidades, las opciones, las recetas y la lista de la compra.
+- [ ] **Descargar PDF** en su app: sin la fila de kcal/macros ni «· X kcal» en las comidas.
+- [ ] Tú sigues viendo todo en su Seguimiento y en su plan. Desmárcalo: su app vuelve a mostrar las cifras.
+- [ ] Un cliente **sin** marcar no cambia en nada.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

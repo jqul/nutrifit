@@ -65,6 +65,8 @@ export interface ClientData {
   bajaAt?: number | null
   bajaReason?: string | null
   bajaNote?: string
+  /** Si es true, su app no muestra calorías ni macros (el plan sí). Lo decide el nutricionista. */
+  hideNumbers?: boolean
 }
 
 export interface DietMealItem {

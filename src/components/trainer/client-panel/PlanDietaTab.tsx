@@ -38,6 +38,7 @@ import { ShoppingListPreview } from './plan-dieta/ShoppingListPreview'
 import { FoodTagFilterPills, FoodTagBadges } from './plan-dieta/FoodTagWidgets'
 import { PlanHistory } from './PlanHistory'
 import { PlanVersions } from './PlanVersions'
+import { gramsToPercent, percentToGrams, percentTotal } from '../../../lib/macroUnits'
 import { diffPlanTargets, formatPlanChange, targetsFromForm, PlanTargets } from '../../../lib/planChanges'
 import {
   Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
@@ -58,6 +59,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   const [saving, setSaving] = useState(false)
   const [planId, setPlanId] = useState<string | null>(demoPlan ? demoPlan.id : null)
   const [kcalTarget, setKcalTarget] = useState(demoEditable?.kcalTarget ?? '')
+  // Cómo se escriben los macros en pantalla: en gramos (como se guardan) o como % de las kcal.
+  const [macroUnit, setMacroUnit] = useState<'g' | '%'>('g')
   const [proteinG, setProteinG] = useState(demoEditable?.proteinG ?? '')
   const [carbsG, setCarbsG] = useState(demoEditable?.carbsG ?? '')
   const [fatG, setFatG] = useState(demoEditable?.fatG ?? '')
@@ -669,11 +672,45 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         )}
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
           <NumInput label="Kcal" value={kcalTarget} onChange={setKcalTarget} />
-          <NumInput label="Proteína (g)" value={proteinG} onChange={setProteinG} />
-          <NumInput label="Carbos (g)" value={carbsG} onChange={setCarbsG} />
-          <NumInput label="Grasas (g)" value={fatG} onChange={setFatG} />
+          {(() => {
+            const kcal = parseFloat(kcalTarget)
+            const asPct = macroUnit === '%' && kcal > 0
+            const macroField = (label: string, macro: 'proteinG' | 'carbsG' | 'fatG', value: string, set: (v: string) => void) => {
+              if (!asPct) return <NumInput key={macro} label={`${label} (g)`} value={value} onChange={set} />
+              const pct = gramsToPercent(kcal, parseFloat(value), macro)
+              return <NumInput key={macro} label={`${label} (%)`} value={pct == null ? '' : String(pct)}
+                onChange={v => { const g = percentToGrams(kcal, parseFloat(v), macro); set(g == null ? '' : String(g)) }} />
+            }
+            return (<>
+              {macroField('Proteína', 'proteinG', proteinG, setProteinG)}
+              {macroField('Carbos', 'carbsG', carbsG, setCarbsG)}
+              {macroField('Grasas', 'fatG', fatG, setFatG)}
+            </>)
+          })()}
           <NumInput label="Fibra (g)" value={fiberG} onChange={setFiberG} />
         </div>
+        {parseFloat(kcalTarget) > 0 && (() => {
+          const kcal = parseFloat(kcalTarget)
+          const total = percentTotal(kcal, { proteinG: parseFloat(proteinG), carbsG: parseFloat(carbsG), fatG: parseFloat(fatG) })
+          return (
+            <div className="flex items-center justify-between gap-3 flex-wrap -mt-1">
+              <div className="flex items-center gap-1.5" role="group" aria-label="Unidad de los macros">
+                <span className="text-xs text-muted">Macros en</span>
+                {(['g', '%'] as const).map(u => (
+                  <button key={u} onClick={() => setMacroUnit(u)} aria-pressed={macroUnit === u}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${macroUnit === u ? 'bg-ink text-white' : 'bg-bg-alt text-muted hover:text-ink'}`}>
+                    {u === 'g' ? 'gramos' : '% de las kcal'}
+                  </button>
+                ))}
+              </div>
+              {total != null && (
+                <p className={`text-xs ${Math.abs(total - 100) <= 3 ? 'text-muted' : 'text-warn'}`}>
+                  Reparto: {total}% de las kcal{Math.abs(total - 100) > 3 ? ' (no suma 100)' : ''}
+                </p>
+              )}
+            </div>
+          )
+        })()}
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Consejo del nutricionista</label>
           <textarea value={advice} onChange={e => setAdvice(e.target.value)} rows={2}

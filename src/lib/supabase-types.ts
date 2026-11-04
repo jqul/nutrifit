@@ -46,6 +46,8 @@ export interface ClienteRow {
   baja_at?: string | null
   baja_reason?: string | null
   baja_note?: string | null
+  /** El nutricionista oculta kcal y macros a este cliente (0061). */
+  hide_numbers?: boolean
 }
 
 /** Lo que devuelve get_my_client_profile(): la ficha SIN los campos internos del

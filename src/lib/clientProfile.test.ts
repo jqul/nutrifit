@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clienteRowFromProfile, clientFromRow } from './mappers'
+import { clienteRowFromProfile, clientFromRow, clientToRow } from './mappers'
 import { ClientProfileRow } from './supabase-types'
 
 const profile: ClientProfileRow = {
@@ -34,5 +34,22 @@ describe('clienteRowFromProfile', () => {
     expect(data.reportNotes).toBe('')
     expect(data.monthlyPrice).toBeNull()
     expect(data.tags).toEqual([])
+  })
+})
+
+describe('hide_numbers (ocultar calorías y macros al cliente)', () => {
+  it('is off by default, also for profiles that do not carry the column', () => {
+    expect(clientFromRow(clienteRowFromProfile(profile)).hideNumbers).toBe(false)
+  })
+
+  it('reaches the client app when the nutritionist turned it on', () => {
+    const data = clientFromRow(clienteRowFromProfile({ ...profile, hide_numbers: true }))
+    expect(data.hideNumbers).toBe(true)
+  })
+
+  it('is written back only when it is part of the update', () => {
+    expect(clientToRow({ hideNumbers: true }).hide_numbers).toBe(true)
+    expect(clientToRow({ hideNumbers: false }).hide_numbers).toBe(false)
+    expect('hide_numbers' in clientToRow({ name: 'Ana' })).toBe(false)
   })
 })

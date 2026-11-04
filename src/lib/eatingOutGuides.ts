@@ -62,7 +62,7 @@ export const DEFAULT_EATING_OUT_GUIDES: DefaultEatingOutGuide[] = [
     id: 'comida_rapida', emoji: '🌯', label: 'Comida rápida (kebab, bocatería, wok...)',
     tips: [
       'Si puedes elegir el pan, prioriza uno integral o de tamaño normal en vez del más grande disponible.',
-      'Pide extra de verdura/ensalada dentro del bocadillo o kebab — suele ser gratis y ayuda a saciar sin sumar muchas kcal.',
+      'Pide extra de verdura/ensalada dentro del bocadillo o kebab — suele ser gratis y ayuda a saciar sin recargar el plato.',
       'Modera las salsas (mayonesa, alioli, picante con nata) — pide "poca" o que la pongan aparte para controlar la cantidad.',
       'Si es wok/buffet libre, empieza con un plato de verdura y proteína antes de repetir — llegar con hambre a un buffet suele acabar en raciones más grandes de lo planeado.',
     ],
