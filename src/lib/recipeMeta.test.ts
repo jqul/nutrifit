@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseTags, filterRecipes, allTags, mealTypeLabel } from './recipeMeta'
+import { parseTags, filterRecipes, allTags, mealTypeLabel, safeVideoUrl, parsePrepMinutes } from './recipeMeta'
 
 const recipes = [
   { name: 'Tortilla de patata', meal_type: 'cena', tags: ['rápida', 'sin horno'] },
@@ -49,5 +49,47 @@ describe('allTags / mealTypeLabel', () => {
     expect(mealTypeLabel('cena')).toBe('Cena')
     expect(mealTypeLabel(null)).toBe('')
     expect(mealTypeLabel('otra')).toBe('')
+  })
+})
+
+describe('filtering by diet type', () => {
+  const diet = [
+    { name: 'Curry de garbanzos', diet_types: ['vegana', 'sin lactosa'] },
+    { name: 'Pollo asado', diet_types: ['sin gluten'] },
+    { name: 'Vieja' },
+  ]
+  it('keeps only the recipes that carry that diet type', () => {
+    expect(filterRecipes(diet, { dietType: 'vegana' }).map(r => r.name)).toEqual(['Curry de garbanzos'])
+    expect(filterRecipes(diet, { dietType: 'sin gluten' }).map(r => r.name)).toEqual(['Pollo asado'])
+    expect(filterRecipes(diet, { dietType: 'vegetariana' })).toHaveLength(0)
+  })
+})
+
+describe('safeVideoUrl', () => {
+  it('accepts https links to YouTube and Vimeo', () => {
+    expect(safeVideoUrl('https://www.youtube.com/watch?v=abc123')).toBe('https://www.youtube.com/watch?v=abc123')
+    expect(safeVideoUrl('https://youtu.be/abc123')).toBe('https://youtu.be/abc123')
+    expect(safeVideoUrl(' https://vimeo.com/12345 ')).toBe('https://vimeo.com/12345')
+  })
+  it('rejects anything else: other sites, plain http, scripts, junk and empty', () => {
+    expect(safeVideoUrl('https://evil.example.com/video')).toBeNull()
+    expect(safeVideoUrl('http://youtube.com/watch?v=1')).toBeNull()
+    expect(safeVideoUrl('javascript:alert(1)')).toBeNull()
+    expect(safeVideoUrl('https://youtube.com.evil.com/x')).toBeNull()
+    expect(safeVideoUrl('no es un enlace')).toBeNull()
+    expect(safeVideoUrl('')).toBeNull()
+    expect(safeVideoUrl(null)).toBeNull()
+  })
+})
+
+describe('parsePrepMinutes', () => {
+  it('accepts whole minutes in a sensible range and rejects the rest', () => {
+    expect(parsePrepMinutes('25')).toBe(25)
+    expect(parsePrepMinutes(' 90 ')).toBe(90)
+    expect(parsePrepMinutes('0')).toBeNull()
+    expect(parsePrepMinutes('-5')).toBeNull()
+    expect(parsePrepMinutes('2000')).toBeNull()
+    expect(parsePrepMinutes('')).toBeNull()
+    expect(parsePrepMinutes('rápido')).toBeNull()
   })
 })

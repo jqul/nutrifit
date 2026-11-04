@@ -70,3 +70,44 @@ All three proposals above were built on `feat/recetas` (migration 0062):
 - **P3 — «Proponer menú»:** `menuProposal.ts`, no AI. Splits the daily kcal (25/35/10/30 %), picks one recipe per slot
   by type, allergens, protein density and how little it has to be scaled (0.5×–2×), never repeats a recipe, offers variants.
 - Still not built: P4 (plan by email) and P5 (AI generation), by decision.
+
+## Update 2026-11-04 (third pass): more research and what was built
+
+Sources (public pages, read 2026-11-04; paraphrased, nothing copied):
+help-center articles on creating nutrition plans, on creating/sharing recipes, on the Library section, on the initial client
+questionnaire and on the new forms (intercom.help/harbiz-help), and the product pages on nutrition planning, client
+evolution and the client app (harbiz.io).
+
+### What else Harbiz does that is relevant (and where NutriFit stands)
+
+| # | Harbiz | NutriFit today | Verdict |
+| --- | --- | --- | --- |
+| N1 | **Programs**: weekly blocks that bundle nutrition, forms, videos, documents, scheduled messages and progress records; can auto-archive the client at the end and chain into another program; assignable to a client or a group | weekly menu, templates, recurring surveys and scheduled messages exist separately; **no phases** (e.g. 4 weeks deficit → 2 weeks maintenance) | **Biggest gap.** Proposal F1 |
+| N2 | **Body metrics**: weight, % fat, body measurements, **custom metrics**, history, graphs, and the professional can hide a metric from the client | weight + progress photos + lab results; **no body measurements / custom metrics** | Gap. Proposal F2 |
+| N3 | Photo comparison across dates | progress photos exist; comparison view not checked | Check, maybe small |
+| N4 | Recipe fields: portion size, prep time, category, allergens + diet type, tags, YouTube/Vimeo link | name, photo, steps, meal type, tags | **Diet type, prep time, video built**; portion size and allergen tagging not built |
+| N5 | Recipe/document visibility: all / hidden / **by client tag** | per recipe: plan-only / book / book by tag (built) | **Built** (migration 0064) |
+| N6 | Documents visible to all, none, or by tag | guides: all clients | **Built** for guides (migration 0064) |
+| N7 | A hidden recipe inside a plan shows the client only the ingredient list | our client sees the steps of any recipe in their plan | Not built; low value |
+| N8 | Initial questionnaire with switchable fields (goal, phone, starting weight, height, sex, PAR-Q) feeding the TDEE formulas and the first weight | anamnesis + consent + custom questions exist; fields are not switchable | Partial; low value |
+| N9 | Forms: short/long text, single/multiple choice, number, 1-5 scale, yes/no, file; export a client's answers; auto-assign on purchase | custom surveys + anamnesis question types; export exists in GDPR export | Mostly covered |
+| N10 | Client app: today's plan, weekly summary, schedule, nutrition, progress + **achievements**, chat, **community groups**, videos, files, store | Hoy, Dieta, Progreso («Tu semana»), Más, guides, messages; no achievements, no groups | Achievements = small retention win (F3). Groups/store: skip (no payments) |
+| N11 | Habit tracking is just water at meals + reminders (their own blog is thin on it) | check-in has water, hunger, energy, mood, digestion | We are ahead |
+| N12 | Weak points users report: nutrition UI for building recipes, small food/menu base, price vs. performance, no clinical features | — | Our angle: simpler editor + clinical data (labs, notes, consent) |
+
+### Built in this pass (feat/harbiz-2, migration 0064)
+
+- Recipe visibility **by client tag** and guide visibility **by client tag** (enforced by the read policies, tested with
+  simulated roles); recipe **diet types**, **prep time** and **video link** (https YouTube/Vimeo only).
+- The **«Ocultar calorías y macros»** switch now also sits in the client's **Plan de dieta** tab, next to the plan
+  objective (it was only at the bottom of Perfil, which was hard to find).
+
+### Proposals (not built)
+
+| id | idea | cost |
+| --- | --- | --- |
+| F1 | **Fases del plan**: a client timeline (name, dates, plan/template per phase), «estás en la fase 2 de 3», a reminder to the nutritionist when a phase ends. Automatic plan switching only as a second step | medium (table + panel + one more alert); automatic switch = high (cron + save_diet_plan as service) |
+| F2 | **Medidas corporales y métricas propias** (% grasa, cintura, cadera…, history, chart, per-metric «ocultar al cliente») | medium (table + RLS + charts + hide flag) |
+| F3 | **Logros** in the client's Progreso (first weigh-in, 7/30-day streak, % of the goal reached…), pure function over data we already have | small |
+| F4 | Photo comparison by date (if missing) | small |
+| F5 | Recipe portion size + allergen tags (feeds the menu proposal and the client's allergy check) | small–medium |

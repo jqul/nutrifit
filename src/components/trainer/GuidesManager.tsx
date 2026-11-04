@@ -4,11 +4,12 @@ import { GuideRow } from '../../lib/supabase-types'
 import { DEMO_GUIDES } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
 import { Button } from '../shared/Button'
+import { TagVisibilityPicker, useClientTags } from '../shared/TagVisibilityPicker'
 import { Plus, Trash2, X } from 'lucide-react'
 
 function newId() { return crypto.randomUUID() }
 
-interface GuideEditorState { mode: 'new' | 'edit'; id?: string; title: string; emoji: string; body: string }
+interface GuideEditorState { mode: 'new' | 'edit'; id?: string; title: string; emoji: string; body: string; visibleTags: string[] }
 
 /**
  * Biblioteca de guías del nutricionista — contenido fijo que ve TODO su
@@ -20,6 +21,7 @@ export function GuidesManager({ nutricionistaId, demoMode }: { nutricionistaId: 
   const [guides, setGuides] = useState<GuideRow[]>(demoMode ? DEMO_GUIDES : [])
   const [loading, setLoading] = useState(!demoMode)
   const [editor, setEditor] = useState<GuideEditorState | null>(null)
+  const clientTags = useClientTags(nutricionistaId, demoMode)
 
   const load = useCallback(async () => {
     if (demoMode) { setGuides(DEMO_GUIDES); return }
@@ -31,15 +33,15 @@ export function GuidesManager({ nutricionistaId, demoMode }: { nutricionistaId: 
 
   useEffect(() => { load() }, [load])
 
-  const openNew = () => setEditor({ mode: 'new', title: '', emoji: '📄', body: '' })
-  const openEdit = (g: GuideRow) => setEditor({ mode: 'edit', id: g.id, title: g.title, emoji: g.emoji, body: g.body })
+  const openNew = () => setEditor({ mode: 'new', title: '', emoji: '📄', body: '', visibleTags: [] })
+  const openEdit = (g: GuideRow) => setEditor({ mode: 'edit', id: g.id, title: g.title, emoji: g.emoji, body: g.body, visibleTags: g.visible_tags ?? [] })
   const closeEditor = () => setEditor(null)
 
   const save = async () => {
     if (!editor) return
     if (!editor.title.trim()) { toast('Ponle un título a la guía', 'warn'); return }
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); closeEditor(); return }
-    const payload = { title: editor.title.trim(), emoji: editor.emoji.trim() || '📄', body: editor.body }
+    const payload = { title: editor.title.trim(), emoji: editor.emoji.trim() || '📄', body: editor.body, visible_tags: editor.visibleTags }
     if (editor.mode === 'new') {
       const { error } = await supabase.from('guides').insert({
         id: newId(), nutricionista_id: nutricionistaId, sort_order: guides.length, ...payload,
@@ -75,8 +77,8 @@ export function GuidesManager({ nutricionistaId, demoMode }: { nutricionistaId: 
         )}
       </div>
       <p className="text-xs text-muted mb-3">
-        Las ve <strong>todo</strong> tu cliente en su app ("Más" → Guías) — no es contenido por cliente, es tu biblioteca
-        de recursos: raciones, cómo leer etiquetas, batch cooking, comer fuera de casa...
+        Las ven tus clientes en su app ("Más" → Guías): <strong>todos</strong>, o solo los que tengan una etiqueta que elijas en cada guía.
+        Es tu biblioteca de recursos: raciones, cómo leer etiquetas, batch cooking, comer fuera de casa...
       </p>
 
       {editor && (
@@ -92,6 +94,7 @@ export function GuidesManager({ nutricionistaId, demoMode }: { nutricionistaId: 
           <textarea value={editor.body} onChange={e => setEditor({ ...editor, body: e.target.value })}
             placeholder="Escribe la guía — se muestra tal cual, con tus saltos de línea" rows={6}
             className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm outline-none resize-y focus:ring-2 focus:ring-accent/20" />
+          <TagVisibilityPicker value={editor.visibleTags} onChange={visibleTags => setEditor({ ...editor, visibleTags })} available={clientTags} what="esta guía" />
           <div className="flex items-center gap-2 pt-1">
             <Button size="sm" onClick={save}>Guardar guía</Button>
             <Button size="sm" variant="ghost" onClick={closeEditor}>Cancelar</Button>
@@ -112,7 +115,7 @@ export function GuidesManager({ nutricionistaId, demoMode }: { nutricionistaId: 
                 <span className="text-xl flex-shrink-0">{g.emoji}</span>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm truncate">{g.title}</p>
-                  <p className="text-xs text-muted mt-0.5 truncate">{g.body || 'Sin contenido todavía'}</p>
+                  <p className="text-xs text-muted mt-0.5 truncate">{(g.visible_tags ?? []).length > 0 && <span className="text-accent font-medium">{(g.visible_tags ?? []).map(t => '#' + t).join(' ')} · </span>}{g.body || 'Sin contenido todavía'}</p>
                 </div>
               </div>
               <button onClick={e => { e.stopPropagation(); deleteGuide(g.id) }} className="p-2 text-muted hover:text-warn flex-shrink-0" title="Eliminar guía">
