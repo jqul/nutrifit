@@ -25,6 +25,7 @@ export const EXPORT_TABLES: ExportTable[] = [
   { table: 'anamnesis', order: 'completed_at' },
   { table: 'appointments', order: 'start_at' },
   { table: 'blood_markers', order: 'date' },
+  { table: 'body_metrics', order: 'date' },
   { table: 'client_clinical_notes', order: 'date' },
   { table: 'client_reviews', order: 'week_start' },
   { table: 'cycle_logs', order: 'start_date' },
@@ -65,6 +66,8 @@ export interface ClientExportBundle {
   datos: Record<string, Row[]>
   planesDeDieta: (Row & { comidas: Row[]; suplementos: Row[] })[]
   encuestas: Row[]
+  /** Qué es cada medida corporal (nombre y unidad), para entender sus valores. */
+  metricas: Row[]
   archivos: ExportFile[]
   noIncluido: Record<string, string>
 }
@@ -102,6 +105,10 @@ export async function collectClientExport(client: ClientData, src: ExportSource,
   const surveyIds = [...new Set((datos.survey_responses ?? []).map(r => String(r.survey_id)))]
   const encuestas = surveyIds.length ? await guard('custom_surveys', () => src.rows('custom_surveys', 'id', surveyIds, 'created_at'), []) : []
 
+  // Qué es cada medida corporal (nombre y unidad): sus valores solo se entienden con ellas.
+  const metricIds = [...new Set((datos.body_metrics ?? []).map(r => String(r.metric_id)))]
+  const metricas = metricIds.length ? await guard('metric_definitions', () => src.rows('metric_definitions', 'id', metricIds, 'sort_order'), []) : []
+
   // 4) Ficheros: fotos de progreso y de comidas, PDFs de analíticas.
   const wanted: { bucket: string; path: string; tipo: string }[] = []
   const add = (bucket: string, value: unknown, tipo: string) => {
@@ -137,6 +144,7 @@ export async function collectClientExport(client: ClientData, src: ExportSource,
     datos,
     planesDeDieta,
     encuestas,
+    metricas,
     archivos,
     noIncluido: EXPORT_EXCLUDED,
   }

@@ -1,9 +1,10 @@
 import {
   ClienteRow, DietPlanRow, DietMealRow, DietMealItemRow, DietSupplementRow,
   WeightLogRow, CycleLogRow, GuideRow, EatingOutGuideRow, ProgressPhotoRow, DailyCheckinRow, FoodRow, MessageTemplateRow,
-  ClientProfileRow, PlanPhaseRow, AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, ClinicalNoteRow,
+  ClientProfileRow, PlanPhaseRow, MetricDefinitionRow, BodyMetricRow, AppointmentRow, MealLogRow, AnamnesisRow, InvoiceRow, CustomSurveyRow, SurveyResponseRow, BloodMarkerRow, ClinicalNoteRow,
 } from './supabase-types'
 import type { PlanPhase } from './planPhases'
+import type { MetricDefinition, MetricValue } from './bodyMetrics'
 import {
   ClientData, DietPlan, DietMeal, DietMealItem, DietSupplement,
   WeightEntry, CycleEntry, Guide, EatingOutGuide, ProgressPhotoSession, DailyCheckin, Food, MessageTemplate,
@@ -14,6 +15,14 @@ import {
  * viajan hasta su navegador, así que se rellenan con valores vacíos. */
 export function clienteRowFromProfile(p: ClientProfileRow): ClienteRow {
   return { ...p, notes: null, report_notes: null, notes_updated_at: null, monthly_price: null, custom_messages: null, tags: [], last_reviewed_at: null }
+}
+
+export function metricDefinitionFromRow(row: MetricDefinitionRow): MetricDefinition {
+  return { id: row.id, key: row.key, name: row.name, unit: row.unit || '', clientVisible: row.client_visible, sortOrder: row.sort_order }
+}
+
+export function bodyMetricFromRow(row: BodyMetricRow): MetricValue {
+  return { id: row.id, clientId: row.client_id, metricId: row.metric_id, date: row.date, value: Number(row.value) }
 }
 
 export function planPhaseFromRow(row: PlanPhaseRow): PlanPhase {

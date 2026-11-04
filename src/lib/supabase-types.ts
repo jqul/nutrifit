@@ -138,6 +138,27 @@ export interface DietSupplementRow {
   visible_to_client: boolean
 }
 
+/** Qué se mide (0066): % de grasa, cintura… o una métrica propia. */
+export interface MetricDefinitionRow {
+  id: string
+  nutricionista_id: string
+  key: string | null
+  name: string
+  unit: string
+  client_visible: boolean
+  sort_order: number
+  created_at: string
+}
+
+export interface BodyMetricRow {
+  id: string
+  client_id: string
+  metric_id: string
+  date: string
+  value: number | string
+  created_at: string
+}
+
 /** Fases del plan de un cliente (0065). Las fechas son YYYY-MM-DD, ambas incluidas. */
 export interface PlanPhaseRow {
   id: string

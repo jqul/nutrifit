@@ -6,6 +6,7 @@ import { WeightEntry, CycleEntry, DailyCheckin, ProgressPhotoSession, MealLog, C
 import { BloodMarkerRow, DietPlanChangeRow } from '../../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../../lib/adherence'
 import { WeightChart } from '../../shared/WeightChart'
+import { BodyMetricsCard } from './BodyMetricsCard'
 import { HealthTimeline } from '../../shared/HealthTimeline'
 import { StoragePhoto } from '../../shared/StoragePhoto'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
@@ -183,6 +184,8 @@ export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl,
         <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} />
         <AddPastWeight clientId={client.id} demoMode={demoMode} onAdded={load} />
       </div>
+
+      <BodyMetricsCard clientId={client.id} nutricionistaId={client.nutricionistaId} demoMode={demoMode} />
 
       <div className="card p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">

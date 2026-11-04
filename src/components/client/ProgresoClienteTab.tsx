@@ -9,6 +9,7 @@ import { computeWeightProgress } from '../../lib/weightProgress'
 import { summarizeProgress, formatChangeKg, formatTimeSince } from '../../lib/progressHeadline'
 import { toLocalISODate } from '../../lib/date'
 import { WeightChart } from '../shared/WeightChart'
+import { ClientMetricsCard } from './ClientMetricsCard'
 import { HealthTimeline } from '../shared/HealthTimeline'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { printProgressReport } from '../../lib/printProgressReport'
@@ -197,6 +198,8 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
           </button>
         </div>
       </div>
+
+      {!personalMode && <ClientMetricsCard clientId={clientId} demoMode={demoMode} />}
 
       <AchievementBadges weights={weights} streak={streak} checkins={checkins} mealLogs={mealLogs} />
 

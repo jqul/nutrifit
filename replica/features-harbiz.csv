@@ -13,7 +13,7 @@ Menu proposed from the nutritionist's own recipes (no AI),plans,should,no,yes,bu
 AI plan generation,plans,could,yes,no,needs an explicit product decision (P5)
 Multi-phase programs,plans,could,yes,no,not evaluated
 Guide visibility by client tag,client app,could,yes,yes,built on feat/harbiz-2 (migration 0064)
-Body metrics / custom metrics with per-metric hide,tracking,should,yes,no,proposal F2
+Body metrics / custom metrics with per-metric hide,tracking,should,yes,yes,built on feat/medidas (migration 0066); client entry not built
 Phases / programs (timeline with plan per phase),plans,should,yes,yes,first version built on feat/fases (timeline + warning; no automatic plan switch)
-Client achievements,client app,could,yes,no,proposal F3
+Client achievements,client app,could,yes,yes,already existed (AchievementBadges)
 Recipe portion size and allergen tags,recipes,could,yes,no,proposal F5
