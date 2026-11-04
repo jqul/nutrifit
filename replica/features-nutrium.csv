@@ -1,0 +1,21 @@
+feature,area,priority,original,clone,notes
+Automated appointment reminders (reduce no-shows),scheduling,should,yes,no,genuine gap — NutriFit has 4 scheduled cron jobs (billing/risk/survey/nutricionista alerts) but none for upcoming appointments; today reminders are a manual WhatsApp template tap
+In-app direct chat (persistent, both sides),messaging,should,yes,no,real gap — NutriFit's "Mensajes" is a WhatsApp deep-link template, no in-app thread or history either side can review later; a genuine but large build (delivery, push, presence)
+Personalized meal plans with automatic calculations,planning,must,yes,no,already covered — NutriFit's diet-plan editor + metabolicCalculator.ts
+Customizable templates,planning,must,yes,no,already covered — DietTemplate / plantillas
+Recipe library,content,must,yes,no,already covered — recipes table + RecipeEditorPanel
+Nutritional assessment with per-nutrient detail,assessment,must,yes,no,already covered — foods table's extended fields (fiber/sugar/sodium/etc.), anamnesis, blood markers
+Progress tracking with visual reports,tracking,must,yes,no,already covered — ProgresoClienteTab, WeightChart, HealthTimeline
+Payments and billing,business,must,yes,no,already covered — Invoice type, billing reminders cron
+Patient profiles with GDPR/HIPAA-aligned handling,compliance,must,yes,no,already covered — clientExport.ts (GDPR export), consent document flow
+Calendar and bookings,scheduling,must,yes,no,already covered — appointments table + CalendarTab
+Patient app: meal plan + food diary,patient app,must,yes,no,already covered — DietaClienteTab + extras logging (this session's own work)
+Online consultation link (Zoom/Google Meet),scheduling,should,partial,no,already partly covered — Appointment.videoLink exists (paste a link); no built-in calling, which is fine
+Built-in video calling (not Zoom/Meet),scheduling,could,yes,skip,a real-time infra build, disproportionate to the actual need already met by a pasted video link
+AI-generated consultation notes (from Nutrium's own calls only),documentation,could,yes,skip,same call made against 0xCal and MyFitnessPal — AI writing clinical-adjacent notes in a health app is cost+trust risk not yet asked for
+"Puntuaciones con IA" (AI scores),ai,could,yes,skip,no public detail on what's scored or how; same AI-skepticism stance as above
+Real patient testimonials/reviews,marketing,could,yes,skip,a marketing/credibility feature on Nutrium's own public site, not a practice tool
+Nutrium Academy courses,education,could,yes,skip,a separate content/education business line, not a product feature
+100+ shareable infographics library,content,could,yes,no,niche nice-to-have; NutriFit already has Guides + EatingOutGuides covering a similar role (educational content for clients)
+Academic partnerships (free access for students/teachers),business,could,yes,skip,a go-to-market program, not a product feature
+Multi-staff / administrator access,accounts,could,yes,skip,real structural gap (NutriFit is single-nutricionista per account) but no evidence of demand; a business-model change, not a feature
