@@ -133,7 +133,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDis
     const ok = await onUpdate({
       name: form.name, surname: form.surname, phone: form.phone, email: form.email,
       goal: form.goal, heightCm: form.heightCm, gender: form.gender, birthDate: form.birthDate,
-      allergies: form.allergies, monthlyPrice: form.monthlyPrice, goalWeightKg: form.goalWeightKg,
+      allergies: form.allergies, foodDislikes: form.foodDislikes ?? '', monthlyPrice: form.monthlyPrice, goalWeightKg: form.goalWeightKg,
       tags: form.tags,
     })
     setSaving(false)
@@ -156,6 +156,13 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDis
 
   if (!editing) return (
     <div className="space-y-6 max-w-lg">
+      {client.foodDislikes && (
+        <div className="bg-bg-alt rounded-2xl p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted mb-0.5">No le gusta</p>
+          <p className="text-sm text-ink">{client.foodDislikes}</p>
+        </div>
+      )}
+
       <div className="card p-5 space-y-3">
         <Field label="Nombre" value={`${client.name} ${client.surname}`} />
         <Field label="Teléfono" value={client.phone || '—'} />
@@ -366,6 +373,13 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDis
         <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Alergias / intolerancias</label>
         <textarea value={form.allergies} onChange={e => setForm({ ...form, allergies: e.target.value })} rows={2}
           className="w-full px-3 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm resize-none" />
+      </div>
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Lo que no le gusta (no es alergia)</label>
+        <textarea value={form.foodDislikes ?? ''} onChange={e => setForm({ ...form, foodDislikes: e.target.value.slice(0, 500) })} rows={2}
+          placeholder="Pescado, coliflor, setas…"
+          className="w-full px-3 py-2.5 bg-card border border-border rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-sm resize-none" />
+        <p className="text-xs text-muted mt-1">Separado por comas. «Proponer menú» y las sustituciones lo evitan, y el editor del plan te avisa si lo añades. El propio cliente también puede apuntarlo en su app.</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Input label="Precio mensual (€)" type="number" value={form.monthlyPrice?.toString() || ''} onChange={v => setForm({ ...form, monthlyPrice: v ? parseFloat(v) : null })} />

@@ -67,6 +67,8 @@ export interface ClientData {
   bajaNote?: string
   /** Si es true, su app no muestra calorías ni macros (el plan sí). Lo decide el nutricionista. */
   hideNumbers?: boolean
+  /** Lo que no le gusta comer, escrito a mano (separado por comas). Lo evitan «Proponer menú» y las sustituciones. */
+  foodDislikes?: string
 }
 
 export interface DietMealItem {

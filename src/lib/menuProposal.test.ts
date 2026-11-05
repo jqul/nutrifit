@@ -61,6 +61,16 @@ describe('proposeMenu', () => {
     expect(none.meals[0].recipe?.id).toBe('a1')
   })
 
+  it('skips a recipe with something the client does not like, by name or by ingredient', () => {
+    const fish = recipe('f1', 'Salmón al horno', 500, 35, { meal_type: 'comida' })
+    const withMushrooms = recipe('f2', 'Arroz salteado', 500, 20, { meal_type: 'comida' }, 'Setas')
+    const fine = recipe('f3', 'Pollo con arroz', 500, 30, { meal_type: 'comida' })
+    const p = proposeMenu({ recipes: [fish, withMushrooms, fine], targetKcal: 1429, dislikes: 'salmón, seta', slots: [DEFAULT_SLOTS[1]] })
+    expect(p.meals[0].recipe?.id).toBe('f3')
+    expect(proposeMenu({ recipes: [fish], targetKcal: 1429, dislikes: 'salmon', slots: [DEFAULT_SLOTS[1]] }).meals[0].recipe).toBeNull()
+    expect(proposeMenu({ recipes: [fish], targetKcal: 1429, slots: [DEFAULT_SLOTS[1]] }).meals[0].recipe?.id).toBe('f1')
+  })
+
   it('never repeats a recipe in two slots of the same day', () => {
     const untyped = recipe('u1', 'Plato único', 500, 30)
     const p = proposeMenu({ recipes: [untyped], targetKcal: 2000, slots: [DEFAULT_SLOTS[0], DEFAULT_SLOTS[3]] })

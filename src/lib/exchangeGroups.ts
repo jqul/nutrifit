@@ -10,6 +10,7 @@
 import { Food } from '../types'
 import { MacroKey, gramsForAbsoluteMacro, rankSubstitutesByMacros } from './foodConversion'
 import { detectAllergenConflict } from './allergens'
+import { dislikeMatch, parseDislikes } from './foodDislikes'
 
 export type ExchangeGroupId =
   | 'proteina_animal' | 'proteina_vegetal' | 'legumbres' | 'cereales' | 'fruta' | 'verdura' | 'lacteos' | 'bebidas_vegetales' | 'grasas'
@@ -86,6 +87,8 @@ export interface SubstitutionResult {
   suggestions: SubstituteSuggestion[]
   /** Candidatos que se han quitado por coincidir con las alergias del cliente. */
   hiddenByAllergy: number
+  /** Candidatos que se han quitado porque al cliente no le gustan (aparte de los de las alergias). */
+  hiddenByDislike: number
 }
 
 /** Cuánto se aleja de un plato un alimento servido en `grams`: macros pasados a kcal (4/4/9) + un castigo por cambiar el tamaño de la porción. */
@@ -111,11 +114,13 @@ export function suggestSubstitutes(input: {
   scope: 'group' | 'all'
   matchBy: MacroKey
   allergies?: string
+  /** Lo que no le gusta al cliente (texto libre): esos alimentos no se sugieren. */
+  dislikes?: string
   limit?: number
   /** Filtro extra sobre los CANDIDATOS (p. ej. etiquetas dietéticas); el alimento original se busca siempre en `foods`. */
   candidateFilter?: (food: Food) => boolean
 }): SubstitutionResult {
-  const { item, foods, scope, allergies = '', limit = 6, candidateFilter } = input
+  const { item, foods, scope, allergies = '', dislikes = '', limit = 6, candidateFilter } = input
   const original = foods.find(f => sameName(f.name, item.foodName))
   const groupId = original ? groupOfFood(original) : null
   const group = groupId ? EXCHANGE_GROUPS[groupId] : null
@@ -124,8 +129,11 @@ export function suggestSubstitutes(input: {
   let candidates = foods.filter(f => !sameName(f.name, item.foodName) && (!candidateFilter || candidateFilter(f)))
   if (useGroup) candidates = candidates.filter(f => groupOfFood(f) === group.id)
 
-  const safe = candidates.filter(f => !detectAllergenConflict(allergies, f.name))
-  const hiddenByAllergy = candidates.length - safe.length
+  const allergySafe = candidates.filter(f => !detectAllergenConflict(allergies, f.name))
+  const hiddenByAllergy = candidates.length - allergySafe.length
+  const dislikeTerms = parseDislikes(dislikes)
+  const safe = dislikeTerms.length ? allergySafe.filter(f => !dislikeMatch(dislikeTerms, f.name)) : allergySafe
+  const hiddenByDislike = allergySafe.length - safe.length
 
   const originalMacros = { kcal: item.kcal, proteinG: item.proteinG, carbsG: item.carbsG, fatG: item.fatG }
 
@@ -134,7 +142,7 @@ export function suggestSubstitutes(input: {
     const grams = Math.round((item.grams ?? group.ration.grams) * 10) / 10
     const ranked = [...safe].sort((a, b) => distanceAt(a, grams, originalMacros, grams) - distanceAt(b, grams, originalMacros, grams))
     return {
-      group, grouped: true, matchBy: 'kcal', rations: roundRation(grams / group.ration.grams), hiddenByAllergy,
+      group, grouped: true, matchBy: 'kcal', rations: roundRation(grams / group.ration.grams), hiddenByAllergy, hiddenByDislike,
       suggestions: ranked.slice(0, limit).map(food => ({ food, grams })),
     }
   }
@@ -148,14 +156,14 @@ export function suggestSubstitutes(input: {
       .filter((r): r is { food: Food; grams: number } => r.grams != null && r.grams <= MAX_SUBSTITUTE_GRAMS)
       .sort((a, b) => distanceAt(a.food, a.grams, originalMacros, item.grams) - distanceAt(b.food, b.grams, originalMacros, item.grams))
     return {
-      group, grouped: true, matchBy, rations, hiddenByAllergy,
+      group, grouped: true, matchBy, rations, hiddenByAllergy, hiddenByDislike,
       suggestions: ranked.slice(0, limit).map(({ food, grams }) => ({ food, grams: Math.round(grams * 10) / 10 })),
     }
   }
 
   const ranked = rankSubstitutesByMacros(originalMacros, item.foodName, safe, matchBy).filter(r => r.grams <= MAX_SUBSTITUTE_GRAMS)
   return {
-    group, grouped: useGroup, matchBy, rations, hiddenByAllergy,
+    group, grouped: useGroup, matchBy, rations, hiddenByAllergy, hiddenByDislike,
     suggestions: ranked.slice(0, limit).map(({ food, grams }) => ({ food, grams: Math.round(grams * 10) / 10 })),
   }
 }

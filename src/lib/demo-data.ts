@@ -59,7 +59,7 @@ export const DEMO_CLIENTS: ClientData[] = [
     phone: '600111222', email: 'maria@demo.nutrifit.app',
     birthDate: '1990-04-12', gender: 'Mujer', heightCm: 165,
     goal: 'perder_peso',
-    allergies: 'Intolerancia a la lactosa',
+    allergies: 'Intolerancia a la lactosa', foodDislikes: 'merluza, salmón',
     notes: 'Prefiere comidas sencillas de preparar entre semana, cocina los domingos para toda la semana.',
     reportNotes: 'Evolución muy buena, ritmo de pérdida sostenible. Mantener la pauta actual y revisar en 4 semanas. Reforzar la hidratación los días de más calor.',
     consentAcceptedAt: null, consentSignedName: null,

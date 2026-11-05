@@ -41,6 +41,7 @@ Para un solo pesaje: en **Seguimiento** del cliente, bajo la gráfica de peso, *
 ## El Perfil del cliente
 
 - **Datos y alertas médicas:** alergias e intolerancias, etiquetas para agruparlos (por ejemplo «Deportista»).
+- **Lo que no le gusta** (en **Editar**, debajo de las alergias): alimentos que prefiere evitar, separados por comas («pescado, coliflor, setas»). **No es una alergia**: no es un riesgo, es una preferencia. «Proponer menú» se salta las recetas que lo llevan, las sustituciones no se lo sugieren y el editor del plan te avisa (un icono 👎) si añades algo que no le gusta. El propio cliente también lo puede apuntar en su app.
 - **Ocultar calorías y macros** (tarjeta **Lo que ve en su app**, al final del Perfil, y también en **Plan de dieta**, justo debajo de «Objetivo del plan»): para quien se agobia con las cifras (por ejemplo, con antecedentes de trastornos de la conducta alimentaria). Su app muestra el plan (comidas, alimentos y cantidades) **sin ninguna cifra de energía o nutrientes**: ni objetivo diario, ni kcal por comida, ni macros, ni fibra, ni balance del día, tampoco en el **PDF**. Se esconden el **escáner de productos** y los **extras**, que solo sirven para contar. **Tú lo ves todo igual** y puedes quitarlo cuando quieras.
 - **Enlace de acceso:** **Copiar enlace** para enviárselo. **Regenerar enlace** crea uno nuevo y anula el anterior (útil si lo ha compartido por error).
 - **Cuestionario de salud:** lo que respondió el cliente al registrarse.

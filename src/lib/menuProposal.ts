@@ -4,6 +4,7 @@
 import { RecipeRow } from './supabase-types'
 import { EditableItem, scaleRecipeToKcal, sumItemMacros } from '../components/trainer/client-panel/plan-dieta/planModel'
 import { allergenTagConflicts, detectAllergenConflict } from './allergens'
+import { dislikeMatch, parseDislikes } from './foodDislikes'
 import { MealType } from './recipeMeta'
 
 export interface MenuSlot { name: string; time: string; share: number; type: MealType }
@@ -59,11 +60,14 @@ export function proposeMenu(opts: {
   targetKcal: number
   targetProteinG?: number
   allergies?: string
+  /** Lo que no le gusta al cliente (texto libre): se salta la receta que lo lleve, por el nombre o por un ingrediente. */
+  dislikes?: string
   slots?: MenuSlot[]
   /** 0 = la mejor propuesta; 1, 2, 3… = alternativas distintas. */
   variant?: number
 }): MenuProposal {
-  const { recipes, targetKcal, targetProteinG = 0, allergies = '', slots = DEFAULT_SLOTS, variant = 0 } = opts
+  const { recipes, targetKcal, targetProteinG = 0, allergies = '', dislikes = '', slots = DEFAULT_SLOTS, variant = 0 } = opts
+  const dislikeTerms = parseDislikes(dislikes)
   const proteinDensity = targetKcal > 0 && targetProteinG > 0 ? targetProteinG / targetKcal : 0
   const used = new Set<string>()
 
@@ -77,6 +81,7 @@ export function proposeMenu(opts: {
       if (!(totals.kcal > 0) || !(kcalTarget > 0)) continue
       if (allergenTagConflicts(allergies, recipe.allergens).length > 0) continue
       if ([recipe.name, ...items.map(i => i.foodName)].some(n => detectAllergenConflict(allergies, n))) continue
+      if (dislikeTerms.length > 0 && [recipe.name, ...items.map(i => i.foodName)].some(n => dislikeMatch(dislikeTerms, n))) continue
       const factor = kcalTarget / totals.kcal
       if (factor < MIN_FACTOR || factor > MAX_FACTOR) continue
       // Mejor la que tiene la proteína que pide el plan, y la que menos hay que escalar; el resto es variedad.
