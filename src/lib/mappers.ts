@@ -29,6 +29,7 @@ export function planPhaseFromRow(row: PlanPhaseRow): PlanPhase {
   return {
     id: row.id, clientId: row.client_id, name: row.name, description: row.description || '',
     startDate: row.start_date, endDate: row.end_date, templateId: row.template_id,
+    autoApply: row.auto_apply === true, appliedAt: row.applied_at ?? null, applyError: row.apply_error ?? null,
   }
 }
 

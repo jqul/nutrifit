@@ -4,13 +4,13 @@ import { planPhaseFromRow } from '../../../../lib/mappers'
 import { DEMO_DIET_TEMPLATES, demoPlanPhases } from '../../../../lib/demo-data'
 import { toLocalISODate } from '../../../../lib/date'
 import {
-  PlanPhase, formatRange, nextPhaseDefaults, phaseReview, phaseStatus, sortPhases, summarizePhases, validatePhase,
+  PlanPhase, formatRange, madridDay, nextPhaseDefaults, phaseReview, phaseStatus, sortPhases, summarizePhases, validatePhase,
 } from '../../../../lib/planPhases'
 import { toast } from '../../../shared/Toast'
 import { Button } from '../../../shared/Button'
 import { AlertTriangle, CalendarRange, Pencil, Plus, Trash2, X } from 'lucide-react'
 
-interface Draft { id: string | null; name: string; description: string; startDate: string; endDate: string; templateId: string }
+interface Draft { id: string | null; name: string; description: string; startDate: string; endDate: string; templateId: string; autoApply: boolean }
 
 /**
  * «Fases del plan»: la línea de tiempo del cliente (Definición → Mantenimiento…). El cliente ve en qué fase está; el
@@ -40,8 +40,8 @@ export function PlanPhasesCard({ clientId, nutricionistaId, demoMode }: { client
   const review = useMemo(() => phaseReview(phases, today), [phases, today])
   const templateName = (id: string | null) => templates.find(t => t.id === id)?.name
 
-  const openNew = () => setDraft({ id: null, name: '', description: '', templateId: '', ...nextPhaseDefaults(phases, today) })
-  const openEdit = (p: PlanPhase) => setDraft({ id: p.id, name: p.name, description: p.description, startDate: p.startDate, endDate: p.endDate, templateId: p.templateId ?? '' })
+  const openNew = () => setDraft({ id: null, name: '', description: '', templateId: '', autoApply: false, ...nextPhaseDefaults(phases, today) })
+  const openEdit = (p: PlanPhase) => setDraft({ id: p.id, name: p.name, description: p.description, startDate: p.startDate, endDate: p.endDate, templateId: p.templateId ?? '', autoApply: p.autoApply === true })
 
   const save = async () => {
     if (!draft) return
@@ -52,6 +52,9 @@ export function PlanPhasesCard({ clientId, nutricionistaId, demoMode }: { client
     const payload = {
       name: draft.name.trim(), description: draft.description.trim(), start_date: draft.startDate, end_date: draft.endDate,
       template_id: draft.templateId || null,
+      auto_apply: !!draft.templateId && draft.autoApply,
+      // Una fase que aún no ha empezado vuelve a quedar pendiente de aplicarse (si se cambió la plantilla o la fecha).
+      ...(draft.startDate > today ? { applied_at: null, apply_error: null } : {}),
     }
     const { error } = draft.id
       ? await supabase.from('plan_phases').update(payload).eq('id', draft.id)
@@ -108,6 +111,9 @@ export function PlanPhasesCard({ clientId, nutricionistaId, demoMode }: { client
                     {status === 'ended' && <span className="ml-2 text-xs font-medium text-muted">Terminada</span>}
                   </p>
                   <p className="text-xs text-muted">{formatRange(p)}{templateName(p.templateId) ? ` · Plantilla: ${templateName(p.templateId)}` : ''}</p>
+                  {p.autoApply && p.appliedAt && <p className="text-xs text-ok font-medium">Plantilla aplicada al plan el {madridDay(p.appliedAt).split('-').reverse().join('/')}</p>}
+                  {p.autoApply && !p.appliedAt && !p.applyError && status !== 'ended' && <p className="text-xs text-muted">Se aplicará sola al plan el {p.startDate.split('-').reverse().join('/')}.</p>}
+                  {p.applyError && !p.appliedAt && <p className="text-xs text-warn font-medium">No se pudo aplicar la plantilla: {p.applyError}</p>}
                   {p.description && <p className="text-xs text-muted mt-0.5 italic">“{p.description}”</p>}
                 </div>
                 <div className="flex items-center flex-shrink-0">
@@ -140,11 +146,20 @@ export function PlanPhasesCard({ clientId, nutricionistaId, demoMode }: { client
               placeholder="Déficit moderado y mucha proteína…" className={`${input} mt-1 resize-none`} />
           </label>
           {templates.length > 0 && (
-            <label className="block text-xs text-muted">Plantilla de plan de esta fase (opcional, solo de referencia)
-              <select value={draft.templateId} onChange={e => setDraft({ ...draft, templateId: e.target.value })} className={`${input} mt-1`}>
+            <label className="block text-xs text-muted">Plantilla de plan de esta fase (opcional)
+              <select value={draft.templateId} onChange={e => setDraft({ ...draft, templateId: e.target.value, autoApply: e.target.value ? draft.autoApply : false })} className={`${input} mt-1`}>
                 <option value="">Ninguna</option>
                 {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
+            </label>
+          )}
+          {draft.templateId && (
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input type="checkbox" className="mt-0.5 accent-accent" checked={draft.autoApply} onChange={e => setDraft({ ...draft, autoApply: e.target.checked })} />
+              <span className="text-xs">
+                <span className="font-semibold">Aplicar la plantilla sola cuando empiece la fase</span>
+                <span className="block text-muted">Sustituye el plan actual del cliente por el de la plantilla (a las 6-7 de la mañana del día de inicio). El plan anterior queda en «Versiones del plan» y puedes restaurarlo; el cambio sale en el historial como «Cambio de fase».</span>
+              </span>
             </label>
           )}
           <div className="flex items-center gap-2 pt-1">

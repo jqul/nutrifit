@@ -19,7 +19,7 @@ export const FUNCTIONS_DIR = join(root, 'supabase/functions')
 // Qué ficheros de src/lib copia cada función (en orden de dependencia). Solo se
 // copia lo que usa: las que no necesitan los tipos de la app no reciben types.ts.
 export const FUNCTION_TARGETS = {
-  'send-nutricionista-alerts': ['date', 'adherence', 'checkinSignals', 'weightProgress', 'clientAlerts', 'alertDigest', 'fetchAll', 'activitySummary'],
+  'send-nutricionista-alerts': ['date', 'adherence', 'checkinSignals', 'weightProgress', 'clientAlerts', 'alertDigest', 'fetchAll', 'activitySummary', 'planPhases'],
   'send-risk-reminders': ['fetchAll'],
   'send-nutricionista-risk-alerts': ['fetchAll'],
   'send-billing-reminders': ['fetchAll'],

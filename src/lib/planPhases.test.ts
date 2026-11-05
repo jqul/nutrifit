@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  PlanPhase, addDays, daysBetween, formatRange, isISODate, nextPhaseDefaults, phaseReview, phaseStatus, summarizePhases, validatePhase,
+  PlanPhase, addDays, daysBetween, formatRange, isISODate, madridDay, nextPhaseDefaults, phaseDigestNotes, phaseReview, phaseStatus, summarizePhases, validatePhase,
 } from './planPhases'
 
 const phase = (id: string, name: string, startDate: string, endDate: string): PlanPhase =>
@@ -106,5 +106,34 @@ describe('formatting and defaults', () => {
     expect(nextPhaseDefaults([P1, P2], '2026-11-04')).toEqual({ startDate: '2026-12-14', endDate: '2027-01-10' })
     expect(nextPhaseDefaults([], '2026-11-04')).toEqual({ startDate: '2026-11-04', endDate: '2026-12-01' })
     expect(nextPhaseDefaults([P1], '2026-12-20').startDate).toBe('2026-12-20')
+  })
+})
+
+describe('phaseDigestNotes', () => {
+  const entry = (phases: PlanPhase[]) => [{ clientName: 'Ana', phases }]
+  it('says nothing on an ordinary day', () => {
+    expect(phaseDigestNotes(entry([P1, P2]), '2026-11-10')).toEqual([])
+    expect(phaseDigestNotes([], '2026-11-10')).toEqual([])
+  })
+  it('announces a phase that ends in exactly 3 days, and only that day (no daily repeats)', () => {
+    expect(phaseDigestNotes(entry([P1, P2]), '2026-11-27')).toEqual(['Ana: «Definición» termina en 3 días, sigue «Mantenimiento»'])
+    expect(phaseDigestNotes(entry([P1, P2]), '2026-11-28')).toEqual([])
+    expect(phaseDigestNotes(entry([P2]), '2026-12-11')).toEqual(['Ana: «Mantenimiento» termina en 3 días, no hay otra fase'])
+  })
+  it('announces the day after the last phase ended, once', () => {
+    expect(phaseDigestNotes(entry([P2]), '2026-12-14')).toEqual(['Ana: «Mantenimiento» terminó ayer y no hay otra fase'])
+    expect(phaseDigestNotes(entry([P2]), '2026-12-15')).toEqual([])
+  })
+  it('reports a plan changed today by a phase, in Madrid time', () => {
+    const applied = { ...P2, autoApply: true, appliedAt: '2026-11-29T23:30:00Z' } // 00:30 del 30 en Madrid
+    expect(madridDay(applied.appliedAt)).toBe('2026-11-30')
+    expect(phaseDigestNotes(entry([P1, applied]), '2026-11-30')).toEqual(['Ana: plan cambiado a «Mantenimiento» (automático)'])
+    expect(phaseDigestNotes(entry([P1, applied]), '2026-12-01')).toEqual([])
+  })
+  it('reports a template that could not be applied, for the first three days of the phase only', () => {
+    const failed = { ...P2, autoApply: true, appliedAt: null, applyError: 'sin plan' }
+    expect(phaseDigestNotes(entry([P1, failed]), '2026-11-30')).toEqual(['Ana: no se pudo aplicar la plantilla de «Mantenimiento»'])
+    expect(phaseDigestNotes(entry([P1, failed]), '2026-12-02')).toHaveLength(1)
+    expect(phaseDigestNotes(entry([P1, failed]), '2026-12-03')).toEqual([])
   })
 })

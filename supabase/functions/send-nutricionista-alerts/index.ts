@@ -20,8 +20,10 @@ import webpush from "npm:web-push@3.6.7"
 import { createClient } from "jsr:@supabase/supabase-js@2"
 import { computeClientAlerts } from "./shared/clientAlerts.ts"
 import {
-  ActiveAlert, TomorrowAppointment, alertKey, buildDigest, isAppointmentReminderEnabled, planAlertNotifications,
+  ActiveAlert, TomorrowAppointment, alertKey, buildDigest, isAppointmentReminderEnabled, isPhaseNotesEnabled, planAlertNotifications,
 } from "./shared/alertDigest.ts"
+import { phaseDigestNotes } from "./shared/planPhases.ts"
+import type { PlanPhase } from "./shared/planPhases.ts"
 import type { AutomationSettings } from "./shared/alertDigest.ts"
 import type { DailyCheckin, WeightEntry } from "./shared/types.ts"
 import { fetchAllRows, fetchAllRowsForIds } from "./shared/fetchAll.ts"
@@ -209,11 +211,31 @@ async function processNutricionista(nutricionistaId: string, nutriSubs: Row[], d
     }
   }
 
-  const digest = buildDigest(plan.toNotify, appointmentsTomorrow)
+  // ── Fases de los clientes (termina una, se cambió el plan solo, falló una plantilla) ──
+  let phaseNotes: string[] = []
+  if (isPhaseNotesEnabled(settings) && clients?.length) {
+    const phaseRows = await fetchAllRows<Row>((from, to) =>
+      supabase.from("plan_phases").select("id, client_id, name, description, start_date, end_date, template_id, auto_apply, applied_at, apply_error")
+        .eq("nutricionista_id", nutricionistaId).order("id").range(from, to))
+    const byClient = new Map<string, PlanPhase[]>()
+    for (const r of phaseRows) {
+      const list = byClient.get(r.client_id) ?? []
+      list.push({
+        id: r.id, clientId: r.client_id, name: r.name, description: r.description ?? "", startDate: r.start_date, endDate: r.end_date,
+        templateId: r.template_id, autoApply: r.auto_apply, appliedAt: r.applied_at, applyError: r.apply_error,
+      })
+      byClient.set(r.client_id, list)
+    }
+    // Solo los clientes activos (los dados de baja no entran en `clients`).
+    const entries = clients.map((c: Row) => ({ clientName: c.name as string, phases: byClient.get(c.id) ?? [] }))
+    phaseNotes = phaseDigestNotes(entries, dayInTz(new Date()))
+  }
+
+  const digest = buildDigest(plan.toNotify, appointmentsTomorrow, phaseNotes)
 
   const result: Row = {
     nutricionistaId, activeAlerts: active.length, newAlerts: plan.toNotify.length, toClear: plan.keysToClear.length,
-    appointmentsTomorrow: appointmentsTomorrow.length, digest,
+    appointmentsTomorrow: appointmentsTomorrow.length, phaseNotes: phaseNotes.length, digest,
   }
   if (dryRun) return result
 

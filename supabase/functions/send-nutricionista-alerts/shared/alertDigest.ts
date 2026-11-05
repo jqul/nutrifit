@@ -12,6 +12,8 @@ export interface AutomationSettings {
   kinds?: Partial<Record<AlertKind, boolean>>
   /** Recordatorio de las citas de mañana; activado salvo que se desactive. */
   appointments_tomorrow?: boolean
+  /** Avisos de las fases de los clientes (una termina, se aplicó o falló una plantilla); activado salvo que se desactive. */
+  phases?: boolean
 }
 
 export const ALERT_KINDS: AlertKind[] = ['weight_stalled', 'high_hunger', 'low_energy', 'low_adherence', 'no_weigh_in', 'goal_reached']
@@ -22,6 +24,10 @@ export function isKindEnabled(settings: AutomationSettings | null | undefined, k
 
 export function isAppointmentReminderEnabled(settings: AutomationSettings | null | undefined): boolean {
   return settings?.appointments_tomorrow !== false
+}
+
+export function isPhaseNotesEnabled(settings: AutomationSettings | null | undefined): boolean {
+  return settings?.phases !== false
 }
 
 /** Una alerta activa de un cliente concreto. */
@@ -58,7 +64,7 @@ export interface Digest { title: string; body: string }
 const MAX_CLIENTS = 3
 
 /** Texto del push-resumen, o null si no hay nada que contar. */
-export function buildDigest(newAlerts: ActiveAlert[], appointmentsTomorrow: TomorrowAppointment[]): Digest | null {
+export function buildDigest(newAlerts: ActiveAlert[], appointmentsTomorrow: TomorrowAppointment[], phaseNotes: string[] = []): Digest | null {
   const lines: string[] = []
 
   if (newAlerts.length > 0) {
@@ -80,11 +86,16 @@ export function buildDigest(newAlerts: ActiveAlert[], appointmentsTomorrow: Tomo
     lines.push(`Mañana: ${n} ${n === 1 ? 'cita' : 'citas'} (${first}${n > 2 ? ', …' : ''})`)
   }
 
+  if (phaseNotes.length > 0) {
+    const extra = phaseNotes.length - MAX_CLIENTS
+    lines.push(`Fases: ${phaseNotes.slice(0, MAX_CLIENTS).join(' · ')}${extra > 0 ? ` · +${extra} más` : ''}`)
+  }
+
   if (lines.length === 0) return null
 
   const clientCount = new Set(newAlerts.map(a => a.clientId)).size
   const title = clientCount > 0
     ? `${clientCount} ${clientCount === 1 ? 'cliente con avisos nuevos' : 'clientes con avisos nuevos'}`
-    : 'Tienes citas mañana'
+    : appointmentsTomorrow.length > 0 ? 'Tienes citas mañana' : 'Fases de tus clientes'
   return { title, body: lines.join('\n') }
 }

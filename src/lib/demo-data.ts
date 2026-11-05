@@ -827,7 +827,7 @@ export function demoPlanPhases(todayISO: string): PlanPhase[] {
   const add = (days: number) => new Date(new Date(`${todayISO}T00:00:00Z`).getTime() + days * 86400000).toISOString().slice(0, 10)
   return [
     { id: 'demo-phase-1', clientId: 'demo-client-001', name: 'Definición', description: 'Déficit moderado y mucha proteína: aquí se baja grasa sin perder músculo.', startDate: add(-10), endDate: add(17), templateId: 'demo-tpl-001' },
-    { id: 'demo-phase-2', clientId: 'demo-client-001', name: 'Mantenimiento', description: 'Subimos calorías para estabilizar el peso antes de empezar otra fase.', startDate: add(18), endDate: add(31), templateId: null },
+    { id: 'demo-phase-2', clientId: 'demo-client-001', name: 'Mantenimiento', description: 'Subimos calorías para estabilizar el peso antes de empezar otra fase.', startDate: add(18), endDate: add(31), templateId: 'demo-tpl-002', autoApply: true },
     { id: 'demo-phase-3', clientId: 'demo-client-002', name: 'Volumen', description: 'Superávit controlado para ganar masa.', startDate: add(-25), endDate: add(2), templateId: 'demo-tpl-002' },
   ]
 }

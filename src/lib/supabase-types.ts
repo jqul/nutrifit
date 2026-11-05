@@ -169,6 +169,9 @@ export interface PlanPhaseRow {
   start_date: string
   end_date: string
   template_id: string | null
+  auto_apply?: boolean
+  applied_at?: string | null
+  apply_error?: string | null
   created_at: string
 }
 
