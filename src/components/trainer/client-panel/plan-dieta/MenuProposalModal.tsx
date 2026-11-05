@@ -10,21 +10,23 @@ import { RefreshCw } from 'lucide-react'
  * «Proponer menú desde mis recetas»: enseña un día armado con las recetas del nutricionista, ajustado al objetivo del
  * plan, para añadirlo o sustituir las comidas. No usa IA: reparte las kcal y elige entre las recetas que ya existen.
  */
-export function MenuProposalModal({ open, onClose, recipes, targetKcal, targetProteinG, allergies, hasMeals, onApply }: {
+export function MenuProposalModal({ open, onClose, recipes, targetKcal, targetProteinG, allergies, dislikes = '', hasMeals, onApply }: {
   open: boolean
   onClose: () => void
   recipes: RecipeRow[]
   targetKcal: number
   targetProteinG: number
   allergies: string
+  /** Lo que no le gusta al cliente (texto libre). */
+  dislikes?: string
   /** Si el plan ya tiene comidas en el día que se está editando, se ofrece sustituirlas además de añadir. */
   hasMeals: boolean
   onApply: (meals: ProposedMeal[], mode: 'add' | 'replace') => void
 }) {
   const [variant, setVariant] = useState(0)
   const proposal = useMemo(
-    () => proposeMenu({ recipes, targetKcal, targetProteinG, allergies, variant }),
-    [recipes, targetKcal, targetProteinG, allergies, variant],
+    () => proposeMenu({ recipes, targetKcal, targetProteinG, allergies, dislikes, variant }),
+    [recipes, targetKcal, targetProteinG, allergies, dislikes, variant],
   )
   const filled = proposal.meals.filter(m => m.recipe)
   const noTarget = !(targetKcal > 0)
@@ -40,7 +42,7 @@ export function MenuProposalModal({ open, onClose, recipes, targetKcal, targetPr
           <>
             <p className="text-xs text-muted">
               Reparte {targetKcal} kcal en {proposal.meals.length} comidas y elige una receta tuya para cada una, con las cantidades ajustadas.
-              {allergies.trim() ? ' Se saltan las que chocan con sus alergias.' : ''} Es una propuesta: puedes ajustarla después.
+              {allergies.trim() && dislikes.trim() ? ' Se saltan las que chocan con sus alergias o llevan algo que no le gusta.' : allergies.trim() ? ' Se saltan las que chocan con sus alergias.' : dislikes.trim() ? ' Se saltan las que llevan algo que no le gusta.' : ''} Es una propuesta: puedes ajustarla después.
             </p>
             <div className="space-y-2">
               {proposal.meals.map(m => (
@@ -55,7 +57,7 @@ export function MenuProposalModal({ open, onClose, recipes, targetKcal, targetPr
                       {m.recipe.meal_type && <span className="ml-2 text-xs font-normal text-muted">{mealTypeLabel(m.recipe.meal_type)}</span>}
                     </p>
                   ) : (
-                    <p className="text-sm text-warn mt-0.5">Ninguna receta encaja (revisa su tipo de comida, su tamaño o las alergias).</p>
+                    <p className="text-sm text-warn mt-0.5">Ninguna receta encaja (revisa su tipo de comida, su tamaño, las alergias o lo que no le gusta).</p>
                   )}
                 </div>
               ))}

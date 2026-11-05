@@ -86,3 +86,10 @@ shape is comparable.
 `ConsultationBriefModal`, printable page). It compares against the date of the client's last finished appointment (or the last
 4 weeks), lists talking points from plain rules and shows weight, measurements, adherence by month, signals, out-of-range labs,
 phase, plan changes and clinical notes. No AI. G3–G8 remain proposals.
+
+## Update 2026-11-05 (second): G3 built
+
+`clientes.food_dislikes` (migration 0069; the client edits only that column of their own record through `set_my_food_dislikes`).
+«Proponer menú» skips recipes with a disliked food (by name or ingredient), the substitutions hide disliked foods and say how
+many, and the plan editor shows a 👎 on a disliked item. Plain text separated by commas, matched by word start without
+accents («pan» matches «pan integral», not «campana»; plural and singular both match).

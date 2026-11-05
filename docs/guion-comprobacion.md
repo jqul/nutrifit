@@ -358,6 +358,15 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] **Imprimir / PDF** abre una página con el nombre, tu logo y color, y se lee bien en papel (una hoja). Contiene las notas internas: no es para el cliente.
 - [ ] En la tarjeta **Adherencia** hay **Mes a mes**: cada mes con su porcentaje y «días con check-in / días contados». Un cliente que empezó hace 2 semanas **no** muestra meses anteriores a 0 %.
 
+## 33. Lo que no le gusta a un cliente
+
+- [ ] Ficha de un cliente → **Perfil → Editar**: casilla **«Lo que no le gusta (no es alergia)»**. Escribe «pescado, coliflor» y guarda: en el Perfil sale el bloque **No le gusta**.
+- [ ] **Plan de dieta** de ese cliente: añade una comida con «Coliflor al vapor»: sale el icono 👎 con «No le gusta a este cliente: coliflor». Con «pan integral» y la palabra «pan» apuntada también; con «campana» no.
+- [ ] Sustituir un alimento (⟲) en el plan: no sugiere alimentos que no le gustan y dice «N alimentos ocultos porque no le gustan».
+- [ ] **Proponer menú**: no usa recetas que lleven algo que no le gusta (ni por el nombre ni por un ingrediente) y el texto lo dice.
+- [ ] App del **cliente** → **Más → Tus gustos**: escribe «setas», guarda y recarga: se queda. Vuelve a **Dieta** y sustituye un alimento: ya no se sugieren las setas, sin recargar. Mira que el nutricionista lo ve en el Perfil de ese cliente.
+- [ ] El cliente **no** puede cambiar sus alergias ni nada más de su ficha (solo este campo).
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

@@ -13,6 +13,7 @@ import { HoyTab } from './HoyTab'
 import { DietaClienteTab } from './DietaClienteTab'
 import { ProgresoClienteTab } from './ProgresoClienteTab'
 import { GuidesLibrary } from './GuidesLibrary'
+import { FoodDislikesCard } from './FoodDislikesCard'
 import { AnamnesisForm } from './AnamnesisForm'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { useAccentOverride } from '../../lib/useAccentOverride'
@@ -63,6 +64,8 @@ export function ClientAppShell({
   useAccentOverride(accentColor)
 
   const clientName = `${clientData.name} ${clientData.surname}`.trim()
+  // Lo que no le gusta se edita desde «Más»: se guarda aquí para que su plan lo use al momento.
+  const [dislikes, setDislikes] = useState(clientData.foodDislikes ?? '')
 
   const TABS: { id: Tab; icon: typeof Home; label: string }[] = [
     { id: 'hoy', icon: Home, label: 'Hoy' },
@@ -117,7 +120,7 @@ export function ClientAppShell({
           <HoyTab client={clientData} demoMode={demoMode} />
         </div>
         <div className={activeTab === 'dieta' ? '' : 'hidden'}>
-          <DietaClienteTab client={clientData} demoMode={demoMode} demoPlan={demoPlan ?? undefined} demoRecipes={demoRecipes} />
+          <DietaClienteTab client={{ ...clientData, foodDislikes: dislikes }} demoMode={demoMode} demoPlan={demoPlan ?? undefined} demoRecipes={demoRecipes} />
         </div>
         <div className={activeTab === 'progreso' ? '' : 'hidden'}>
           <ProgresoClienteTab client={clientData} demoMode={demoMode} demoData={demoData}
@@ -138,6 +141,10 @@ export function ClientAppShell({
               ) : (
                 <AnamnesisForm clientId={clientData.id} nutricionistaId={clientData.nutricionistaId} demoMode={demoMode} />
               )}
+            </MoreSection>
+
+            <MoreSection title="Tus gustos">
+              <FoodDislikesCard clientId={clientData.id} value={dislikes} onSaved={setDislikes} demoMode={demoMode} readOnly={previewMode} />
             </MoreSection>
 
             <MoreSection title="Recursos">

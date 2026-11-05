@@ -193,6 +193,26 @@ describe('suggestSubstitutes — todos los alimentos', () => {
   })
 })
 
+describe('suggestSubstitutes — lo que no le gusta', () => {
+  it('does not suggest what the client dislikes and counts it apart from the allergies', () => {
+    const r = suggestSubstitutes({ item: item('Pechuga de pollo', 150, pollo), foods: catalog, scope: 'group', matchBy: 'proteinG', dislikes: 'merluza, salmón', limit: 50 })
+    expect(names(r)).not.toContain('Merluza')
+    expect(names(r)).not.toContain('Salmón')
+    expect(names(r)).toContain('Pavo (pechuga)')
+    expect(r.hiddenByDislike).toBe(2)
+    expect(r.hiddenByAllergy).toBe(0)
+  })
+  it('counts an allergen once: as an allergy, not also as a dislike', () => {
+    const r = suggestSubstitutes({ item: item('Pechuga de pollo', 150, pollo), foods: catalog, scope: 'group', matchBy: 'proteinG', allergies: 'alergia al huevo', dislikes: 'huevo', limit: 50 })
+    expect(r.hiddenByAllergy).toBe(1)
+    expect(r.hiddenByDislike).toBe(0)
+  })
+  it('changes nothing without dislikes', () => {
+    const r = suggestSubstitutes({ item: item('Pechuga de pollo', 150, pollo), foods: catalog, scope: 'group', matchBy: 'proteinG', limit: 50 })
+    expect(r.hiddenByDislike).toBe(0)
+  })
+})
+
 describe('suggestSubstitutes — alergias', () => {
   it('never suggests a food the client is allergic to, and says how many it hid', () => {
     const r = suggestSubstitutes({ item: item('Pechuga de pollo', 150, pollo), foods: catalog, scope: 'group', matchBy: 'proteinG', allergies: 'Alergia al huevo y al marisco', limit: 50 })

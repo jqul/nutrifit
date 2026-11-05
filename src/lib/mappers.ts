@@ -63,6 +63,7 @@ export function clientFromRow(row: ClienteRow): ClientData {
     bajaReason: row.baja_reason ?? null,
     bajaNote: row.baja_note || '',
     hideNumbers: row.hide_numbers === true,
+    foodDislikes: row.food_dislikes ?? '',
   }
 }
 
@@ -86,6 +87,7 @@ export function clientToRow(client: Partial<ClientData>): Partial<ClienteRow> {
   if (client.customMessages !== undefined) row.custom_messages = client.customMessages
   if (client.tags !== undefined) row.tags = client.tags
   if (client.hideNumbers !== undefined) row.hide_numbers = client.hideNumbers
+  if (client.foodDislikes !== undefined) row.food_dislikes = client.foodDislikes
   return row
 }
 

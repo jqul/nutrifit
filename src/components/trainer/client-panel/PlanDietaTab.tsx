@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow, RecipeRow } from '../../../lib/supabase-types'
 import { foodFromRow } from '../../../lib/mappers'
 import { detectAllergenConflict } from '../../../lib/allergens'
+import { dislikeMatch } from '../../../lib/foodDislikes'
 import { detectDrugInteraction } from '../../../lib/drugNutrientInteractions'
 import { DietaryTag, foodMatchesTags } from '../../../lib/dietaryTags'
 import { sendPush } from '../../../lib/usePushNotifications'
@@ -44,7 +45,7 @@ import { PlanVersions } from './PlanVersions'
 import { gramsToPercent, percentToGrams, percentTotal } from '../../../lib/macroUnits'
 import { diffPlanTargets, formatPlanChange, targetsFromForm, PlanTargets } from '../../../lib/planChanges'
 import {
-  Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
+  ThumbsDown, Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
   ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, Send, Layers, FileSpreadsheet, Pill, Pencil, Check,
 } from 'lucide-react'
 
@@ -588,7 +589,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     }
   }
   const substitutionFor = (item: EditableItem) => suggestSubstitutes({
-    item: substituteItemOf(item), foods, scope: subScope, matchBy: subMatchBy, allergies: client.allergies,
+    item: substituteItemOf(item), foods, scope: subScope, matchBy: subMatchBy, allergies: client.allergies, dislikes: client.foodDislikes,
     candidateFilter: f => foodMatchesTags(f, activeFoodTags),
   })
 
@@ -943,6 +944,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
             <div className="space-y-2">
               {meal.items.map(item => {
                 const allergenHit = detectAllergenConflict(client.allergies, item.foodName)
+                const dislikeHit = dislikeMatch(client.foodDislikes, item.foodName)
                 const drugHit = detectDrugInteraction(medicacion, item.foodName)
                 const suggestions = openSuggestFor === item.id && item.foodName.trim().length > 0
                   ? foods.filter(f => f.name.toLowerCase().includes(item.foodName.toLowerCase()) && foodMatchesTags(f, activeFoodTags)).slice(0, 6)
@@ -1003,6 +1005,11 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                       {allergenHit && (
                         <span title={`${personalMode ? 'Posible alérgeno para ti' : 'Posible alérgeno para este cliente'}: ${allergenHit.replace('_', ' ')}`} className="flex-shrink-0 text-warn">
                           <AlertTriangle className="w-3.5 h-3.5" />
+                        </span>
+                      )}
+                      {dislikeHit && (
+                        <span title={`${personalMode ? 'No te gusta' : 'No le gusta a este cliente'}: ${dislikeHit}`} className="flex-shrink-0 text-notice">
+                          <ThumbsDown className="w-3.5 h-3.5" />
                         </span>
                       )}
                       {drugHit && (
@@ -1091,6 +1098,11 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
                                 </p>
                                 {view.suggestions.length === 0 && <p className="px-2.5 py-2 text-xs text-muted">Sin sugerencias{view.grouped ? ' en este grupo' : ''}.</p>}
                                 {view.suggestions.map(({ food: f, grams }) => row(f, grams, f.id))}
+                                {view.hiddenByDislike > 0 && (
+                                  <p className="px-2.5 py-1.5 text-xs text-muted border-t border-border">
+                                    {view.hiddenByDislike} {view.hiddenByDislike === 1 ? 'alimento oculto' : 'alimentos ocultos'} porque no le gustan.
+                                  </p>
+                                )}
                                 {view.hiddenByAllergy > 0 && (
                                   <p className="px-2.5 py-1.5 text-xs text-muted border-t border-border">
                                     {view.hiddenByAllergy} {view.hiddenByAllergy === 1 ? 'alimento oculto' : 'alimentos ocultos'} por las alergias del cliente.
@@ -1284,7 +1296,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       <FitPlanModal open={fitPreview != null} onClose={() => setFitPreview(null)} fit={fitPreview} targets={fitTargets}
         scopeLabel={fitScopeLabel} sharedNote={fitSharedNote} onApply={applyFit} />
       <MenuProposalModal open={menuProposalOpen} onClose={() => setMenuProposalOpen(false)} recipes={recipes}
-        targetKcal={parseFloat(kcalTarget) || 0} targetProteinG={parseFloat(proteinG) || 0} allergies={client.allergies}
+        targetKcal={parseFloat(kcalTarget) || 0} targetProteinG={parseFloat(proteinG) || 0} allergies={client.allergies} dislikes={client.foodDislikes ?? ''}
         hasMeals={meals.some(m => m.dayOfWeek === (selectedDay === 'all' ? null : selectedDay))} onApply={applyMenuProposal} />
       <ImportDietPlanModal open={importOpen} onClose={() => setImportOpen(false)} foods={foods}
         onImport={imported => setMeals(prev => [...prev, ...imported])} />

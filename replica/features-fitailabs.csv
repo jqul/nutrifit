@@ -12,7 +12,7 @@ White-label own domain app name and icon,client app,could,yes,no,proposal G6
 Client app with diet recipes shopping list,client app,must,yes,yes,already covered
 CSV/Excel patient import,onboarding,should,yes,yes,already covered (and history import)
 GDPR access traceability log,compliance,could,yes,no,proposal G7
-Food preferences/dislikes per client,plans,should,partial,no,proposal G3 (not a Fitai claim; the gap the research exposed)
+Food preferences/dislikes per client,plans,should,partial,yes,built (migration 0069)
 Weekly menu proposal from own recipes,plans,should,no,no,proposal G4
 Payments subscriptions invoices store,billing,could,yes,no,out of scope (product decision: no payments)
 Bookings classes memberships,scheduling,could,yes,no,not applicable to nutrition

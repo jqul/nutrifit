@@ -51,6 +51,8 @@ Abre el icono y entra directamente en **su** app. Para recibir notificaciones, t
 
 **Guías y recursos** que les has compartido, su **cuestionario de salud**, el botón de **WhatsApp** con su nutricionista y cerrar sesión.
 
+**Tus gustos → Lo que no me gusta:** el cliente apunta los alimentos que prefiere evitar. Las sustituciones de su plan dejan de sugerírselos y su nutricionista lo ve en su ficha. Las **alergias** no se tocan aquí: las apunta el nutricionista.
+
 ## Qué ves tú de todo esto
 
 Sus comidas marcadas, check-ins, pesos, fotos y extras llegan a su ficha: **Inicio** te avisa de quién necesita atención y **Seguimiento** muestra los detalles. Tus **notas privadas** y la valoración de la revisión semanal **nunca** las ve el cliente.
