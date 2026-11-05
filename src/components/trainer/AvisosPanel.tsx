@@ -1,5 +1,5 @@
 import { AlertKind, LOW_ADHERENCE_PCT, NO_WEIGH_IN_DAYS } from '../../lib/clientAlerts'
-import { ALERT_KINDS, AutomationSettings, isAppointmentReminderEnabled, isKindEnabled } from '../../lib/alertDigest'
+import { ALERT_KINDS, AutomationSettings, isAppointmentReminderEnabled, isKindEnabled, isPhaseNotesEnabled } from '../../lib/alertDigest'
 import { useAutomationSettings } from '../../hooks/useAutomationSettings'
 import { toast } from '../shared/Toast'
 
@@ -65,6 +65,14 @@ export function AvisosPanel({ nutricionistaId, demoMode }: { nutricionistaId: st
           </div>
           <Switch label="Citas de mañana" checked={isAppointmentReminderEnabled(settings)}
             onChange={v => update({ ...settings, appointments_tomorrow: v })} />
+        </div>
+        <div className="flex items-center justify-between gap-4 py-4">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Fases de tus clientes</p>
+            <p className="text-xs text-muted">Una fase termina en 3 días (o terminó sin otra detrás), o su plan cambió solo al empezar una fase.</p>
+          </div>
+          <Switch label="Fases de tus clientes" checked={isPhaseNotesEnabled(settings)}
+            onChange={v => update({ ...settings, phases: v })} />
         </div>
       </div>
 

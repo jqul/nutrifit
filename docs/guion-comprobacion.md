@@ -342,6 +342,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Un cliente con «intolerancia a la lactosa» en su ficha: en su **libro de recetas**, la receta marcada con lactosa muestra **⚠ Lleva lactosa**, y al abrirla un aviso rojo. Las demás, no.
 - [ ] **Proponer menú** para ese cliente no usa la receta con lactosa aunque sus ingredientes no la delaten.
 
+## 31. Cambio de plan automático por fases y aviso por notificación
+
+- [ ] **Plan de dieta** de un cliente → **Fases del plan** → añade una fase que **empiece mañana** con una plantilla y marca **Aplicar la plantilla sola cuando empiece la fase**. En la lista sale «Se aplicará sola al plan el …».
+- [ ] **Mañana** (a las 7-8 de la mañana): el plan de ese cliente es el de la plantilla; en la fase sale «Plantilla aplicada al plan el …»; en **Versiones del plan** hay una versión nueva y en **Historial de cambios** el motivo «Cambio de fase: … (automático)». **Restaura la versión anterior** para comprobar que se puede volver atrás.
+- [ ] Prueba también con una fase de un cliente **sin plan**: no se crea nada y en la fase sale «No se pudo aplicar la plantilla: …».
+- [ ] La notificación de la mañana trae la línea **«Fases: …»** cuando una fase termina en 3 días o cuando el plan cambió solo. En **Ajustes → Avisos** hay un interruptor «Fases de tus clientes» y, apagado, esa línea no sale.
+- [ ] Una fase **sin** la casilla marcada no cambia el plan.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

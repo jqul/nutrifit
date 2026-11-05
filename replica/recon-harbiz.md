@@ -134,3 +134,11 @@ The client can now record their own body measurements (only visible metrics, no 
 **allergens** and **servings**: the menu proposal skips a recipe whose allergen tag clashes with the client's allergies, and the
 client's recipe book warns about it. What remains from the Harbiz list: nothing worth doing now (programs with automatic plan
 switching and push alerts for phase endings stay as proposals).
+
+### Fases: automatic plan switch and push (feat/fases-auto, migration 0068)
+
+`plan_phases.auto_apply / applied_at / apply_error`. A pg_cron job (05:00 UTC) calls `apply_due_phase_templates()`, which applies the
+template of each phase that has started (Madrid date), is still running and was not applied yet, by calling `save_diet_plan` as the
+client's nutritionist inside one transaction (so it creates a plan version and a «Cambio de fase» history entry, and the previous plan
+can be restored). Any failure leaves the plan untouched and stores the reason. The daily push digest got a «Fases» line (phase ends
+in 3 days, last phase ended yesterday, plan changed today, template failed), switchable in Ajustes → Avisos.

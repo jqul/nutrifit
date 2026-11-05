@@ -41,10 +41,11 @@ Pulsa el icono ⟲ junto a un alimento. Por defecto sugiere **Mismo grupo** (otr
 
 Para llevar a un cliente por etapas (por ejemplo **Definición** 4 semanas y luego **Mantenimiento** 2), usa la tarjeta **Fases del plan**, encima del objetivo, en la pestaña **Plan de dieta**:
 
-- **Añadir fase:** nombre, **fecha de inicio y de fin** (ambas incluidas), un texto de **qué se hace en esa fase** (**lo ve el cliente**, no es para notas internas) y, si quieres, la **plantilla de plan** que le corresponde (solo de referencia). La fase nueva se propone justo a continuación de la última y con 4 semanas de duración. Dos fases del mismo cliente no pueden solaparse.
+- **Añadir fase:** nombre, **fecha de inicio y de fin** (ambas incluidas), un texto de **qué se hace en esa fase** (**lo ve el cliente**, no es para notas internas) y, si quieres, la **plantilla de plan** que le corresponde. La fase nueva se propone justo a continuación de la última y con 4 semanas de duración. Dos fases del mismo cliente no pueden solaparse.
 - **Qué ve el cliente:** en **Hoy**, la tarjeta **Tu fase · 2 de 3** con los días que quedan, su barra de avance, lo que se hace en ella y cuál viene después. Si la siguiente empieza en menos de dos semanas, también la avisa.
 - **Aviso para ti:** en **Inicio** sale **Fases por revisar** cuando una fase termina en 3 días o menos (te dice cuál es la siguiente, o que no hay otra), o cuando la última terminó hace menos de dos semanas y no hay nada después. Al pulsar abres su plan. La propia tarjeta también lo avisa.
-- Las fases son una **línea de tiempo con aviso**: **no cambian el plan solas**. Cuando una fase empieza, cargas tú la plantilla o ajustas el plan.
+- **Cambio de plan automático (opcional):** si eliges una plantilla, puedes marcar **«Aplicar la plantilla sola cuando empiece la fase»**. Ese día, a primera hora (sobre las 6-7 de la mañana), el plan del cliente se **sustituye** por el de la plantilla. Queda guardado como una versión más en **Versiones del plan** (puedes volver al anterior) y en el historial de cambios como **«Cambio de fase: …»**. Si no se puede (la plantilla se borró, el cliente no tiene plan, números mal escritos en la plantilla), **no se toca el plan** y en la tarjeta de la fase sale el motivo para que lo hagas a mano. Sin la casilla, la fase no cambia nada sola: cargas tú la plantilla.
+- **Aviso por notificación:** en tu resumen diario (el push de la mañana) entra una línea «Fases» cuando una fase termina **dentro de 3 días**, cuando la última terminó **ayer** sin otra detrás, cuando el plan de un cliente **cambió solo** ese día o cuando una plantilla **no se pudo aplicar**. Se puede apagar en Ajustes → Avisos → «Fases de tus clientes».
 
 ## Guardar
 

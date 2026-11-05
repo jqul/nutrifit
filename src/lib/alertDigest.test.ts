@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ActiveAlert, isKindEnabled, isAppointmentReminderEnabled, planAlertNotifications, buildDigest, alertKey } from './alertDigest'
+import { ActiveAlert, isKindEnabled, isAppointmentReminderEnabled, isPhaseNotesEnabled, planAlertNotifications, buildDigest, alertKey } from './alertDigest'
 
 const a = (clientId: string, clientName: string, kind: ActiveAlert['kind'], label: string = kind): ActiveAlert => ({ clientId, clientName, kind, label })
 
@@ -72,5 +72,23 @@ describe('buildDigest', () => {
     expect(only.body).toBe('Mañana: 3 citas (10:00 María, 12:30 Bloqueo, …)')
     const both = buildDigest([a('c1', 'Carlos', 'high_hunger', 'Hambre alta')], [appts[0]])!
     expect(both.body).toBe('Carlos (Hambre alta)\nMañana: 1 cita (10:00 María)')
+  })
+
+  it('adds the phase notes, alone or after the rest, capped like the alerts', () => {
+    const only = buildDigest([], [], ['Ana: «Definición» termina en 3 días, no hay otra fase'])!
+    expect(only.title).toBe('Fases de tus clientes')
+    expect(only.body).toBe('Fases: Ana: «Definición» termina en 3 días, no hay otra fase')
+    const all = buildDigest([a('c1', 'Carlos', 'high_hunger', 'Hambre alta')], [{ time: '10:00', clientName: 'María', title: 'x' }], ['a', 'b', 'c', 'd', 'e'])!
+    expect(all.title).toBe('1 cliente con avisos nuevos')
+    expect(all.body).toBe('Carlos (Hambre alta)\nMañana: 1 cita (10:00 María)\nFases: a · b · c · +2 más')
+    expect(buildDigest([], [], [])).toBeNull()
+  })
+})
+
+describe('isPhaseNotesEnabled', () => {
+  it('is on unless switched off', () => {
+    expect(isPhaseNotesEnabled(null)).toBe(true)
+    expect(isPhaseNotesEnabled({})).toBe(true)
+    expect(isPhaseNotesEnabled({ phases: false })).toBe(false)
   })
 })

@@ -11,8 +11,14 @@ export interface PlanPhase {
   startDate: string
   /** YYYY-MM-DD, incluido. */
   endDate: string
-  /** Plantilla de plan que le corresponde (informativo). */
+  /** Plantilla de plan que le corresponde. */
   templateId: string | null
+  /** Si la plantilla se aplica sola al plan del cliente el día que empieza la fase (0068). */
+  autoApply?: boolean
+  /** Cuándo se aplicó (ISO), si ya se hizo. */
+  appliedAt?: string | null
+  /** Por qué no se pudo aplicar, si falló. */
+  applyError?: string | null
 }
 
 const DAY_MS = 86400000
@@ -150,4 +156,40 @@ export function nextPhaseDefaults(phases: Pick<PlanPhase, 'endDate'>[], todayISO
   const lastEnd = ends[ends.length - 1]
   const startDate = lastEnd && lastEnd >= todayISO ? addDays(lastEnd, 1) : todayISO
   return { startDate, endDate: addDays(startDate, 27) }
+}
+
+const MADRID = 'Europe/Madrid'
+/** El día (YYYY-MM-DD) en Madrid de un instante ISO. */
+export function madridDay(iso: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: MADRID }).format(new Date(iso))
+}
+
+/**
+ * Las frases que entran en el aviso diario por push (una vez, sin guardar estado: solo en los días exactos):
+ *  · una fase que termina dentro de 3 días,
+ *  · la última fase, que terminó ayer sin otra detrás,
+ *  · un plan que se cambió hoy solo por una fase,
+ *  · una plantilla que no se pudo aplicar (los 3 primeros días de la fase).
+ */
+export function phaseDigestNotes(entries: { clientName: string; phases: PlanPhase[] }[], todayISO: string): string[] {
+  const notes: string[] = []
+  for (const { clientName, phases } of entries) {
+    if (phases.length === 0) continue
+    const s = summarizePhases(phases, todayISO)
+    if (s.current && s.daysLeft === REVIEW_WINDOW_DAYS) {
+      notes.push(`${clientName}: «${s.current.name}» termina en ${REVIEW_WINDOW_DAYS} días${s.next ? `, sigue «${s.next.name}»` : ', no hay otra fase'}`)
+    }
+    if (!s.current && !s.next) {
+      const sorted = sortPhases(phases)
+      const last = sorted[sorted.length - 1]
+      if (daysBetween(last.endDate, todayISO) === 1) notes.push(`${clientName}: «${last.name}» terminó ayer y no hay otra fase`)
+    }
+    for (const p of phases) {
+      if (p.appliedAt && madridDay(p.appliedAt) === todayISO) notes.push(`${clientName}: plan cambiado a «${p.name}» (automático)`)
+      else if (p.autoApply && !p.appliedAt && p.applyError && phaseStatus(p, todayISO) === 'active' && daysBetween(p.startDate, todayISO) <= 2) {
+        notes.push(`${clientName}: no se pudo aplicar la plantilla de «${p.name}»`)
+      }
+    }
+  }
+  return notes
 }
