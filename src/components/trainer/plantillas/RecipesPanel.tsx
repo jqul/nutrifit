@@ -7,7 +7,8 @@ import { toast } from '../../shared/Toast'
 import { RecipeEditorPanel } from '../../shared/RecipeEditorPanel'
 import { DIET_TYPES, MEAL_TYPES, MealType, allTags, filterRecipes, mealTypeLabel } from '../../../lib/recipeMeta'
 import { ALLERGEN_LABELS } from '../../../lib/allergens'
-import { Trash2, Plus, Copy, BookOpen, Search } from 'lucide-react'
+import { ImportRecipesModal } from './ImportRecipesModal'
+import { Trash2, Plus, Copy, BookOpen, Search, Upload } from 'lucide-react'
 
 /** Recetario: recetas propias (editables) y las del sistema (solo copiar). */
 export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionistaId: string; demoMode?: boolean; foods: Food[] }) {
@@ -52,6 +53,7 @@ export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionis
   // ── Editor de recetas ────────────────────────────────────────
   // 'new' = receta nueva vacía; RecipeRow = editando una existente; null = cerrado.
   const [recipeEditor, setRecipeEditor] = useState<RecipeRow | 'new' | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
   const closeRecipeEditor = () => setRecipeEditor(null)
   const handleRecipeSaved = () => { closeRecipeEditor(); load() }
 
@@ -62,11 +64,19 @@ export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionis
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-sm flex items-center gap-1.5">Recetario ({recipes.length})</h2>
           {!recipeEditor && (
-            <button onClick={() => setRecipeEditor('new')} className="flex items-center gap-1 text-xs font-bold text-accent">
-              <Plus className="w-3.5 h-3.5" /> Nueva receta
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setImportOpen(true)} className="flex items-center gap-1 text-xs font-bold text-accent">
+                <Upload className="w-3.5 h-3.5" /> Importar
+              </button>
+              <button onClick={() => setRecipeEditor('new')} className="flex items-center gap-1 text-xs font-bold text-accent">
+                <Plus className="w-3.5 h-3.5" /> Nueva receta
+              </button>
+            </div>
           )}
         </div>
+
+        <ImportRecipesModal open={importOpen} onClose={() => setImportOpen(false)} nutricionistaId={nutricionistaId} foods={foods} demoMode={demoMode}
+          existingNames={recipes.filter(r => r.nutricionista_id === nutricionistaId).map(r => r.name)} onImported={load} />
 
         {recipeEditor && (
           <div className="mb-3">
