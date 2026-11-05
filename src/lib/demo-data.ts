@@ -94,8 +94,9 @@ export const DEMO_CLIENTS: ClientData[] = [
     phone: '600555666', email: 'laura@demo.nutrifit.app',
     birthDate: '1988-01-20', gender: 'Mujer', heightCm: 170,
     goal: 'salud',
-    allergies: 'Alergia a los frutos secos',
-    notes: 'Lleva 10 días sin registrar check-in — pendiente de contactar.',
+    allergies: 'Alergia a los frutos secos', foodDislikes: 'coliflor, anchoas',
+    hideNumbers: true,
+    notes: 'Lleva 10 días sin registrar check-in — pendiente de contactar. Su app muestra el plan sin cifras (calorías ni macros) a propósito.',
     reportNotes: '',
     consentAcceptedAt: null, consentSignedName: null,
     monthlyPrice: 40, goalWeightKg: null, customMessages: {}, tags: ['Pérdida de grasa - Nivel 1', 'Riesgo de abandono'],
@@ -484,7 +485,7 @@ export const DEMO_EATING_OUT_GUIDES: EatingOutGuideRow[] = [
 
 export const DEMO_RECIPES: RecipeRow[] = [
   {
-    id: 'demo-recipe-system-001', nutricionista_id: null, name: 'Bowl de avena con plátano y almendras', created_at: '', allergens: ['lactosa', 'frutos_secos'], servings: 1, meal_type: 'desayuno', tags: ['rápida'],
+    id: 'demo-recipe-system-001', nutricionista_id: null, name: 'Bowl de avena con plátano y almendras', created_at: '', allergens: ['lactosa', 'frutos_secos'], servings: 1, meal_type: 'desayuno', tags: ['rápida'], prep_minutes: 5, diet_types: ['vegetariana'],
     photo_url: placeholderPhoto('Bowl avena', '#c98a2b'), steps: null,
     items: [
       { id: 'pr1-1', foodName: 'Avena', quantity: '50', unit: 'g', kcal: '195', proteinG: '8.5', carbsG: '33', fatG: '3.5', fiberG: '5.1', sugarG: '0.5', sodiumMg: '1', saturatedFatG: '0.7', calciumMg: '27', ironMg: '2.2', zincMg: '2' },
@@ -494,8 +495,8 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-system-002', nutricionista_id: null, name: 'Pollo con arroz integral y brócoli', created_at: '', meal_type: 'comida', tags: ['batch cooking'],
-    photo_url: placeholderPhoto('Pollo arroz', '#4a7a3d'), steps: null,
+    id: 'demo-recipe-system-002', nutricionista_id: null, name: 'Pollo con arroz integral y brócoli', created_at: '', meal_type: 'comida', tags: ['batch cooking'], prep_minutes: 30, servings: 2, allergens: [],
+    photo_url: placeholderPhoto('Pollo arroz', '#4a7a3d'), steps: '1. Cuece el arroz integral. 2. Dora el pollo en tacos con un poco de aceite. 3. Añade el brócoli al vapor y mezcla.',
     items: [
       { id: 'pr2-1', foodName: 'Pechuga de pollo', quantity: '150', unit: 'g', kcal: '248', proteinG: '46.5', carbsG: '0', fatG: '5.4', fiberG: '0', sugarG: '0', sodiumMg: '111', saturatedFatG: '1.5', calciumMg: '9', ironMg: '0.6', zincMg: '1.1' },
       { id: 'pr2-2', foodName: 'Arroz integral (cocido)', quantity: '150', unit: 'g', kcal: '167', proteinG: '3.9', carbsG: '34.5', fatG: '1.4', fiberG: '2.7', sugarG: '0.3', sodiumMg: '3', saturatedFatG: '0.3', calciumMg: '6', ironMg: '0.6', zincMg: '0.9' },
@@ -516,7 +517,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-system-004', nutricionista_id: null, name: 'Boloñesa de pasta integral con tofu (plant-based)', created_at: '', meal_type: 'cena', tags: ['vegana'],
+    id: 'demo-recipe-system-004', nutricionista_id: null, name: 'Boloñesa de pasta integral con tofu (plant-based)', created_at: '', meal_type: 'cena', tags: ['vegana'], prep_minutes: 25, diet_types: ['vegana'], allergens: ['gluten', 'soja'],
     photo_url: placeholderPhoto('Boloñesa tofu', '#7a8a3d'), steps: null,
     items: [
       { id: 'pr4-1', foodName: 'Pasta integral (cocida)', quantity: '200', unit: 'g', kcal: '248', proteinG: '10.6', carbsG: '50', fatG: '2.2', fiberG: '9', sugarG: '1.4', sodiumMg: '6', saturatedFatG: '0.4', calciumMg: '26', ironMg: '2.6', zincMg: '2' },
@@ -527,7 +528,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-system-005', nutricionista_id: null, name: 'Ensalada de garbanzos con aguacate', created_at: '', meal_type: 'cena', tags: ['rápida', 'sin horno'],
+    id: 'demo-recipe-system-005', nutricionista_id: null, name: 'Ensalada de garbanzos con aguacate', created_at: '', meal_type: 'cena', tags: ['rápida', 'sin horno'], prep_minutes: 10, diet_types: ['vegana', 'sin gluten'], allergens: [],
     photo_url: placeholderPhoto('Ens. garbanzos', '#6b8f3f'), steps: null,
     items: [
       { id: 'pr5-1', foodName: 'Garbanzos (cocidos)', quantity: '150', unit: 'g', kcal: '246', proteinG: '13.5', carbsG: '40.5', fatG: '3.9', fiberG: '11.4', sugarG: '7.2', sodiumMg: '11', saturatedFatG: '0.5', calciumMg: '74', ironMg: '4.4', zincMg: '2.3' },
@@ -538,7 +539,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '', allergens: ['lactosa'], servings: 1, meal_type: 'desayuno', tags: ['rápida'], in_recipe_book: true, photo_url: null,
+    id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '', allergens: ['lactosa'], servings: 1, meal_type: 'desayuno', tags: ['rápida'], prep_minutes: 5, diet_types: ['vegetariana'], in_recipe_book: true, photo_url: null,
     steps: '1. Pon la avena en un bol con el yogur natural.\n2. Añade los arándanos por encima.\n3. Termina con un chorrito de miel.',
     items: [
       { id: 'dr1i1', foodName: 'Avena', quantity: '40', unit: 'g', kcal: '150', proteinG: '5', carbsG: '27', fatG: '3' },
@@ -548,7 +549,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '', allergens: [], servings: 2, meal_type: 'comida', tags: ['batch cooking'], in_recipe_book: true,
+    id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '', allergens: [], servings: 2, meal_type: 'comida', tags: ['batch cooking'], prep_minutes: 35, diet_types: ['alta en proteína'], in_recipe_book: true,
     photo_url: placeholderPhoto('Pollo arroz', '#3f6d8f'),
     steps: '1. Cuece el arroz integral según las instrucciones del paquete.\n2. Salpimienta la pechuga de pollo y hazla a la plancha 4-5 minutos por cada lado.\n3. Cuece la verdura al vapor 8-10 minutos, hasta que esté tierna pero crujiente.\n4. Sirve el pollo troceado sobre el arroz, con la verdura al lado.',
     items: [
