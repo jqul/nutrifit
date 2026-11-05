@@ -7,6 +7,8 @@ import { BloodMarkerRow, DietPlanChangeRow } from '../../../lib/supabase-types'
 import { calcAdherence, calcStreak } from '../../../lib/adherence'
 import { WeightChart } from '../../shared/WeightChart'
 import { BodyMetricsCard } from './BodyMetricsCard'
+import { ConsultationBriefModal, MonthBars } from './ConsultationBriefModal'
+import { adherenceTrend, monthlyAdherence } from '../../../lib/adherenceHistory'
 import { HealthTimeline } from '../../shared/HealthTimeline'
 import { StoragePhoto } from '../../shared/StoragePhoto'
 import { FOLLOWED_PLAN_LABELS } from '../../../lib/constants'
@@ -26,7 +28,7 @@ import { summarizeSignals, isConcerningCheckin, SignalTone } from '../../../lib/
 import { summarizeWeight, weightDeltaTone, formatWeightDelta } from '../../../lib/clientListSummary'
 import { TONE_CLASS } from '../healthStyles'
 import { toast } from '../../shared/Toast'
-import { Flame, UtensilsCrossed, AlertTriangle, FileDown, Plus } from 'lucide-react'
+import { Flame, UtensilsCrossed, AlertTriangle, FileDown, Plus, ClipboardList } from 'lucide-react'
 
 const INTENSITY_LABELS = ['Ninguna', 'Leve', 'Moderada', 'Intensa']
 
@@ -71,6 +73,7 @@ export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl,
   const [reportNotes, setReportNotes] = useState(client.reportNotes)
   const [savingNotes, setSavingNotes] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
+  const [briefOpen, setBriefOpen] = useState(false)
   const [generatingReport, setGeneratingReport] = useState(false)
   const reportNotesDirty = reportNotes !== client.reportNotes
 
@@ -163,12 +166,22 @@ export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl,
   const streak = calcStreak(checkins, today)
   const recentCheckins = [...checkins].sort((a, b) => b.date.localeCompare(a.date))
   const signals = summarizeSignals(checkins, today)
+  const adherenceMonths = monthlyAdherence(checkins, toLocalISODate(today), { months: 6, startDate: new Date(client.createdAt).toISOString().slice(0, 10) })
+  const trend = adherenceTrend(adherenceMonths)
   const delta7 = summarizeWeight(weights, today, 7)?.deltaKg ?? null
   const delta28 = summarizeWeight(weights, today, 28)?.deltaKg ?? null
 
   return (
     <div className="max-w-2xl space-y-6">
       {review && <RevisionBar review={review} />}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="text-xs text-muted">Antes de ver a este cliente: lo que ha cambiado desde la última consulta, en una página.</p>
+        <button onClick={() => setBriefOpen(true)} className="flex items-center gap-1.5 px-3 py-2 bg-ink text-white rounded-xl text-xs font-bold hover:opacity-90">
+          <ClipboardList className="w-3.5 h-3.5" /> Preparar la consulta
+        </button>
+      </div>
+      <ConsultationBriefModal open={briefOpen} onClose={() => setBriefOpen(false)} client={client} weights={weights} checkins={checkins}
+        bloodMarkers={bloodMarkers} clinicalNotes={clinicalNotes} branding={{ logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor }} demoMode={demoMode} />
       <WeeklyReviewCard client={client} checkins={checkins} weights={weights} demoMode={demoMode} />
       <DietAdjustmentCard client={client} checkins={checkins} weights={weights} demoMode={demoMode} />
 
@@ -203,6 +216,12 @@ export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl,
             </div>
           </div>
         ))}
+        {adherenceMonths.length > 1 && (
+          <div className="pt-2 border-t border-border/60">
+            <p className="text-xs font-semibold text-muted">Mes a mes{trend === 'up' ? ' · subiendo' : trend === 'down' ? ' · bajando' : ''}</p>
+            <MonthBars months={adherenceMonths} />
+          </div>
+        )}
       </div>
 
       <div className="card p-5 space-y-3">

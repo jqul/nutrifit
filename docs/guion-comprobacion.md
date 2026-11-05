@@ -350,6 +350,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] La notificación de la mañana trae la línea **«Fases: …»** cuando una fase termina en 3 días o cuando el plan cambió solo. En **Ajustes → Avisos** hay un interruptor «Fases de tus clientes» y, apagado, esa línea no sale.
 - [ ] Una fase **sin** la casilla marcada no cambia el plan.
 
+## 32. Preparar la consulta y adherencia mes a mes
+
+- [ ] Ficha de un cliente con citas pasadas → **Seguimiento** → **Preparar la consulta**. En el encabezado pone «desde la última consulta (fecha, hace N días)» y la fecha es la de su última cita hecha. Un cliente **sin** citas pasadas dice «últimas 4 semanas (no hay una consulta anterior registrada)».
+- [ ] **Para hablar** tiene sentido para ese cliente (compara con lo que ves a mano: peso, adherencia, analítica nueva, cambios del plan). Si todo va bien, dice «Nada especial que destacar».
+- [ ] El peso va del último pesaje **anterior** a esa fecha al último; las medidas y las analíticas fuera de rango salen con su fecha y las nuevas marcadas.
+- [ ] **Imprimir / PDF** abre una página con el nombre, tu logo y color, y se lee bien en papel (una hoja). Contiene las notas internas: no es para el cliente.
+- [ ] En la tarjeta **Adherencia** hay **Mes a mes**: cada mes con su porcentaje y «días con check-in / días contados». Un cliente que empezó hace 2 semanas **no** muestra meses anteriores a 0 %.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

@@ -2,6 +2,17 @@
 
 En la ficha del cliente, pestaña **Seguimiento**. Aquí ves cómo va y decides si hay que cambiar algo.
 
+## Preparar la consulta
+
+Arriba de **Seguimiento**, el botón **Preparar la consulta** abre una página con **lo que ha cambiado en ese cliente desde la última vez que lo viste**, para empezar la consulta sabiendo de qué hablar:
+
+- **Desde cuándo:** desde la **última cita ya hecha** del cliente en tu calendario (completada, o confirmada y ya pasada). Si no hay ninguna, mira las **últimas 4 semanas** y lo dice.
+- **Para hablar:** una lista corta de cosas que merece la pena mirar, por reglas sencillas (no es IA ni un diagnóstico): no ha hecho check-ins, quiere perder peso y no baja (o baja muy rápido), adherencia baja o a la baja, avisos de esta semana, analíticas nuevas fuera de rango, una fase que termina, cambios del plan desde entonces, o «el peso está estable pero la cintura baja».
+- **Debajo:** el peso (del último pesaje anterior a la fecha al último), las medidas con su cambio, la adherencia (última semana, en el tramo y **mes a mes**), las analíticas fuera de rango (las nuevas marcadas), la fase, los cambios del plan con su motivo y tus notas clínicas desde entonces.
+- **Imprimir / PDF:** una sola página con tu logo y tu color. Es **interno**: lleva notas y avisos que el cliente no ve, así que no se lo mandes.
+
+La tarjeta **Adherencia** de la misma pestaña muestra ahora también la adherencia **mes a mes** de los últimos 6 meses (desde que el cliente empezó, no cuenta los meses anteriores) y si va subiendo o bajando.
+
 ## Marcar como revisado
 
 Cuando un cliente tiene un check-in o una encuesta nuevos, arriba aparece **«Actividad nueva sin revisar»**. Míralo y pulsa **Marcar como revisado**. **Abrir la pestaña no lo marca**: es una acción tuya, para que el aviso del Inicio signifique que de verdad lo has mirado.

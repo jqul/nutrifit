@@ -79,3 +79,10 @@ G8 only if you decide you want a language model, and then as a drafting assistan
 Fitai Labs charges per professional, not per client: unlimited clients on every plan, and a commission on the payments it
 processes that falls as the plan rises. NutriFit has no pricing and no payments, so only the per-professional, unlimited-clients
 shape is comparable.
+
+## Update 2026-11-05: G1 and G2 built
+
+«Preparar la consulta» (G1) and adherence month by month (G2) are in Seguimiento (`consultationBrief.ts`, `adherenceHistory.ts`,
+`ConsultationBriefModal`, printable page). It compares against the date of the client's last finished appointment (or the last
+4 weeks), lists talking points from plain rules and shows weight, measurements, adherence by month, signals, out-of-range labs,
+phase, plan changes and clinical notes. No AI. G3–G8 remain proposals.
