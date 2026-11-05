@@ -5,6 +5,7 @@ import { clientFromRow, clientToRow, checkinFromRow, weightFromRow } from '../li
 import { summarizeWeight } from '../lib/clientListSummary'
 import { calcAdherence, calcStreak } from '../lib/adherence'
 import { computeClientAlerts, ClientAlert } from '../lib/clientAlerts'
+import { labHintsForAlerts, LabHint } from '../lib/alertLabHints'
 import { computeClientHealth, hasUnreviewedActivity, ClientHealthStatus, ClientHealthReason } from '../lib/clientHealth'
 import { hasAnyMarkerOutOfRange } from '../lib/bloodMarkers'
 import { toast } from '../components/shared/Toast'
@@ -28,6 +29,8 @@ export interface ClientWithStats extends ClientData {
   hasUnreviewedActivity?: boolean
   /** Avisos del Centro de control (peso estancado, hambre alta...) — ver clientAlerts.ts. */
   alerts?: ClientAlert[]
+  /** Pistas de analítica para esos avisos (energía baja → hierro…), ver alertLabHints.ts. */
+  labHints?: LabHint[]
   /** Último check-in o pesaje (YYYY-MM-DD): base de la retención por actividad (retention.ts). */
   lastActivity?: string
   /** Adherencia de la semana anterior a las últimas 7 días, para detectar caídas. */
@@ -79,6 +82,9 @@ export function withStats(
     const firstWeigh = weights[0]
     const lastWeigh = weights[weights.length - 1]?.date
     const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7)
+    const alerts = computeClientAlerts({
+      checkins, weights, goal: c.goal, goalWeightKg: c.goalWeightKg, createdAt: c.createdAt,
+    }, today)
     return {
       ...c,
       lastActivity: latestDate(lastCheckin, lastWeigh),
@@ -94,9 +100,8 @@ export function withStats(
       healthLabel: health.label,
       healthReason: health.reason,
       hasUnreviewedActivity: unreviewed,
-      alerts: computeClientAlerts({
-        checkins, weights, goal: c.goal, goalWeightKg: c.goalWeightKg, createdAt: c.createdAt,
-      }, today),
+      alerts,
+      labHints: labHintsForAlerts(alerts, bloodMarkersMap[c.id] || [], todayStr),
     }
   })
 }

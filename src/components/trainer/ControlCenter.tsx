@@ -173,6 +173,9 @@ export function ControlCenter({ displayName, clients, loading, phaseReviews = []
                             {pendingIds.has(c.id) && ' · Revisión semanal pendiente'}
                           </span>
                           {suggestion && <span className="block text-xs text-ink/80 mt-1">→ {suggestion}</span>}
+                          {(c.labHints ?? []).filter(h => h.tone !== 'ok').slice(0, 1).map(h => (
+                            <span key={h.kind} className="block text-xs text-muted mt-0.5">🔬 {h.text}</span>
+                          ))}
                         </span>
                         <span className="flex items-center gap-0.5 text-xs font-semibold text-accent flex-shrink-0">
                           {TAB_ACTION[first.tab]} <ChevronRight className="w-4 h-4" />

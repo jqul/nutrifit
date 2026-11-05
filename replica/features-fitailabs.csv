@@ -5,7 +5,7 @@ Rules/method applied to every plan (allergens diet types),plans,should,yes,parti
 Substitutions by preference budget or season,plans,could,yes,partial,same-group substitutions yes; preferences/budget/season no (G3)
 Pre-consultation summary,tracking,should,yes,yes,built (consultationBrief.ts + Preparar la consulta)
 Adherence month by month,tracking,should,yes,yes,built (adherenceHistory.ts)
-Alert linked to a lab marker suggestion,tracking,could,yes,no,proposal G5
+Alert linked to a lab marker suggestion,tracking,could,yes,yes,built (alertLabHints.ts)
 Automated client-facing AI agent,client app,could,yes,no,vague on their side; not planned
 White-label app with logo and colours,client app,should,yes,yes,already covered
 White-label own domain app name and icon,client app,could,yes,no,proposal G6

@@ -143,6 +143,20 @@ describe('talking points', () => {
     expect(text).not.toContain('Objetivo alcanzado')
     expect(text).toContain('Analítica nueva')
   })
+  it('adds a lab hint to an alert: out-of-range iron with low energy, or no recent lab at all', () => {
+    const alerts = [{ kind: 'low_energy' as const, priority: 'week' as const, label: 'Energía baja (2,2/5)' }]
+    const withIron = buildConsultationBrief(input({ alerts, checkins: days('2026-10-14', TODAY), bloodMarkers: [{ id: '1', client_id: 'c1', date: '2026-09-05', marker_key: 'hierro', value: 40, created_at: '' }] }))
+    expect(withIron.labHints[0].tone).toBe('related')
+    expect(withIron.talkingPoints.join(' | ')).toContain('Con la energía baja: hierro bajo')
+    const none = buildConsultationBrief(input({ alerts, checkins: days('2026-10-14', TODAY) }))
+    expect(none.talkingPoints.join(' | ')).toContain('no hay analítica reciente de hierro, vitamina D y TSH')
+  })
+
+  it('does not mention labs for an alert with nothing to do with them', () => {
+    const b = buildConsultationBrief(input({ alerts: [{ kind: 'low_adherence', priority: 'week', label: 'Adherencia 50% esta semana' }], checkins: days('2026-10-14', TODAY) }))
+    expect(b.labHints).toEqual([])
+  })
+
   it('celebrates a smaller waist with a steady weight', () => {
     const b = buildConsultationBrief(input({
       weights: [{ date: '2026-10-10', weightKg: 80 }, { date: '2026-11-03', weightKg: 80.2 }], checkins: days('2026-10-14', TODAY),

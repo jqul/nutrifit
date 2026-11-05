@@ -375,6 +375,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] **Otra propuesta** cambia la semana. **Añadir la semana** crea las comidas de lunes a domingo en el cuadrante (pestañas «Lunes (4)»…) y selecciona el lunes; **Sustituir todo** quita las que había. No se guarda hasta **Guardar plan**.
 - [ ] Guarda el plan y mira la app del cliente: en **Dieta** puede elegir el día y ve las comidas de ese día.
 
+## 35. Pista de analítica en los avisos
+
+- [ ] Un cliente con aviso de **Energía baja** y **sin analítica** (o con más de un año): en **Inicio → Requieren atención** su fila lleva «🔬 Con la energía baja no hay analítica reciente de hierro, vitamina D y TSH: puede merecer la pena pedirla».
+- [ ] Añade una analítica con **hierro bajo** de hace unos meses: la pista pasa a «Con la energía baja: hierro bajo (hace N meses). Puede estar relacionado.» (y dice qué falta, si falta algo).
+- [ ] Con hierro, vitamina D y TSH **en rango** y recientes no sale nada en Inicio (no te distrae), pero en **Preparar la consulta** no aparece como punto a hablar tampoco; solo se ve la pista cuando hay algo que decir.
+- [ ] Mismo comportamiento con **Peso estancado** (TSH, glucosa) y **Hambre alta** (glucosa). Un aviso de **Adherencia baja** o **Sin registrar peso** no lleva pista de analítica.
+- [ ] La pista aparece también en **Preparar la consulta → Para hablar**. Está redactada como pista («puede estar relacionado», «puede merecer la pena»), nunca como diagnóstico.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

@@ -7,7 +7,7 @@ La primera pestaña responde a «¿qué necesita mi atención ahora?»:
 - Una frase con tu día: «Hoy: 1 cita, 1 cliente para actuar hoy y 3 revisiones semanales pendientes».
 - **Tres contadores:** **Actuar hoy** (sin check-in desde hace días), **Revisar esta semana** (analítica en alerta, actividad sin revisar, peso estancado, adherencia baja…) y **Todo correcto**. Pulsa uno para ir a la lista con el filtro puesto.
 - **Para hoy:** tus citas del día.
-- **Requieren atención:** cada cliente con **todos sus motivos** y una línea **«→ Sugerido: …»** con por dónde empezar (por ejemplo, «Escríbele antes de tocar el plan»). El botón de la derecha abre su ficha directamente en la pestaña adecuada.
+- **Requieren atención:** cada cliente con **todos sus motivos**, una línea **«🔬 …»** cuando el aviso (energía baja, peso parado, hambre alta) tiene que ver con una analítica —que **hay algo fuera de rango** (por ejemplo «hierro bajo, hace 2 meses») o que **no hay analítica reciente** (más de un año) del marcador relacionado: hierro, vitamina D y TSH para la energía; TSH y glucosa para el peso parado; glucosa para el hambre—, y una línea **«→ Sugerido: …»** con por dónde empezar (por ejemplo, «Escríbele antes de tocar el plan»). El botón de la derecha abre su ficha directamente en la pestaña adecuada.
 - **Revisión semanal:** los clientes con la revisión de la semana pendiente.
 - **Objetivos alcanzados:** los clientes que han llegado a su peso objetivo.
 - **Negocio:** un resumen de ingresos estimados.

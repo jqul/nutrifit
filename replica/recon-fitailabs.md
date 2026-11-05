@@ -99,3 +99,11 @@ accents («pan» matches «pan integral», not «campana»; plural and singular 
 «Proponer menú» now has «Toda la semana» (`proposeWeek` in `menuProposal.ts`): seven days built with the same rules as one day,
 plus a cap of two uses per recipe per week, no same recipe in the same slot on consecutive days, and a fallback that repeats rather
 than leaving a slot empty. It reports how many distinct recipes the week uses and which one repeats most.
+
+## Update 2026-11-05 (fourth): G5 built
+
+`alertLabHints.ts`: for low energy (iron, vitamin D, TSH), stalled weight (TSH, glucose) and high hunger (glucose), looks at the
+latest reading of each marker (under a year old) and says whether something is out of range, a recent lab is missing, or all is in
+range. Shown under the suggestion in «Requieren atención» (only when there is something to say) and in «Preparar la consulta».
+It is app-side only: the daily push digest does not carry it. NutriFit does not carry vitamin B12, so the Fitai example (B12 and
+iron) is covered with iron, vitamin D and TSH.
