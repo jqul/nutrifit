@@ -3,7 +3,7 @@
 // Es una propuesta: el nutricionista la ve, pide otra o la aplica, y después la ajusta como cualquier plan.
 import { RecipeRow } from './supabase-types'
 import { EditableItem, scaleRecipeToKcal, sumItemMacros } from '../components/trainer/client-panel/plan-dieta/planModel'
-import { detectAllergenConflict } from './allergens'
+import { allergenTagConflicts, detectAllergenConflict } from './allergens'
 import { MealType } from './recipeMeta'
 
 export interface MenuSlot { name: string; time: string; share: number; type: MealType }
@@ -75,6 +75,7 @@ export function proposeMenu(opts: {
       const items = recipeItems(recipe)
       const totals = sumItemMacros(items)
       if (!(totals.kcal > 0) || !(kcalTarget > 0)) continue
+      if (allergenTagConflicts(allergies, recipe.allergens).length > 0) continue
       if ([recipe.name, ...items.map(i => i.foodName)].some(n => detectAllergenConflict(allergies, n))) continue
       const factor = kcalTarget / totals.kcal
       if (factor < MIN_FACTOR || factor > MAX_FACTOR) continue

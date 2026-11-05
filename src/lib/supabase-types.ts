@@ -300,6 +300,9 @@ export interface RecipeRow {
   diet_types?: string[]
   prep_minutes?: number | null
   video_url?: string | null
+  /** 0067: alérgenos que lleva (ids de allergens.ts) y para cuántas raciones es. */
+  allergens?: string[]
+  servings?: number | null
 }
 
 export interface MealLogRow {

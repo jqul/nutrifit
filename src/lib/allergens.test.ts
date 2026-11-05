@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { detectAllergenConflict } from './allergens'
+import { allergenTagConflicts, detectAllergenConflict } from './allergens'
 
 describe('detectAllergenConflict', () => {
   it('returns null when the client has no allergies', () => {
@@ -50,5 +50,18 @@ describe('detectAllergenConflict', () => {
 
   it('does not flag a food explicitly labeled free of the allergen', () => {
     expect(detectAllergenConflict('Intolerancia a la lactosa', 'Yogur natural sin lactosa')).toBeNull()
+  })
+})
+
+describe('allergenTagConflicts', () => {
+  it('returns the tagged allergens that match what the client cannot tolerate', () => {
+    expect(allergenTagConflicts('Intolerancia a la lactosa', ['lactosa', 'gluten'])).toEqual(['lactosa'])
+    expect(allergenTagConflicts('celíaco, alergia a los frutos secos', ['gluten', 'frutos_secos', 'huevo'])).toEqual(['gluten', 'frutos_secos'])
+  })
+  it('returns nothing when the client has no allergies, the recipe has no tags, or an id is unknown', () => {
+    expect(allergenTagConflicts('', ['lactosa'])).toEqual([])
+    expect(allergenTagConflicts('lactosa', [])).toEqual([])
+    expect(allergenTagConflicts('lactosa', undefined)).toEqual([])
+    expect(allergenTagConflicts('lactosa', ['inventado'])).toEqual([])
   })
 })

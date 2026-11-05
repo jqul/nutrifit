@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { RecipeRow } from '../../lib/supabase-types'
 import { MEAL_TYPES, MealType, filterRecipes, mealTypeLabel, safeVideoUrl } from '../../lib/recipeMeta'
 import { sumItemMacros, EditableItem } from '../trainer/client-panel/plan-dieta/planModel'
+import { ALLERGEN_LABELS, allergenTagConflicts } from '../../lib/allergens'
 import { BottomSheet } from '../shared/BottomSheet'
 import { ChefHat, Clock, PlayCircle, Search } from 'lucide-react'
 
@@ -9,8 +10,10 @@ import { ChefHat, Clock, PlayCircle, Search } from 'lucide-react'
  * El libro de recetas del cliente: las que su nutricionista ha marcado como visibles (aunque no estén en su plan), con
  * buscador y filtro por tipo de comida. Las cifras (kcal) solo salen si el nutricionista no se las oculta.
  */
-export function RecipeBookSheet({ open, onClose, recipes, hideNumbers }: {
+export function RecipeBookSheet({ open, onClose, recipes, hideNumbers, allergies = '' }: {
   open: boolean; onClose: () => void; recipes: RecipeRow[]; hideNumbers?: boolean
+  /** Lo que el cliente dice que no tolera: se avisa en las recetas que lo llevan. */
+  allergies?: string
 }) {
   const [query, setQuery] = useState('')
   const [mealType, setMealType] = useState<MealType | null>(null)
@@ -28,6 +31,17 @@ export function RecipeBookSheet({ open, onClose, recipes, hideNumbers }: {
         <div className="space-y-3">
           <button onClick={() => setViewing(null)} className="text-xs font-bold text-accent">← Todas las recetas</button>
           {viewing.photo_url && <img src={viewing.photo_url} alt={viewing.name} className="w-full aspect-video object-cover rounded-xl" />}
+          {allergenTagConflicts(allergies, viewing.allergens).length > 0 && (
+            <p className="rounded-xl bg-warn/10 text-warn px-3 py-2 text-xs font-semibold" role="alert">
+              ⚠ Lleva {allergenTagConflicts(allergies, viewing.allergens).map(a => (ALLERGEN_LABELS[a] ?? a).toLowerCase()).join(' y ')}, que has indicado que no toleras. Pregúntale a tu nutricionista antes de hacerla.
+            </p>
+          )}
+          {((viewing.allergens ?? []).length > 0 || viewing.servings) && (
+            <p className="text-xs text-muted">
+              {viewing.servings ? <>Para {viewing.servings} {viewing.servings === 1 ? 'ración' : 'raciones'}. </> : null}
+              {(viewing.allergens ?? []).length > 0 ? <>Contiene: {(viewing.allergens ?? []).map(a => (ALLERGEN_LABELS[a] ?? a).toLowerCase()).join(', ')}.</> : null}
+            </p>
+          )}
           {(viewing.prep_minutes || (viewing.diet_types ?? []).length > 0) && (
             <p className="flex flex-wrap items-center gap-1.5 text-xs">
               {viewing.prep_minutes ? <span className="inline-flex items-center gap-1 text-muted"><Clock className="w-3 h-3" /> {viewing.prep_minutes} min</span> : null}
@@ -93,6 +107,9 @@ export function RecipeBookSheet({ open, onClose, recipes, hideNumbers }: {
                   <span className="block text-xs text-muted truncate">
                     {[mealTypeLabel(r.meal_type), r.prep_minutes ? `${r.prep_minutes} min` : '', ...(r.diet_types ?? []), ...(r.tags ?? []).map(t => `#${t}`)].filter(Boolean).join(' · ') || 'Receta'}
                   </span>
+                  {allergenTagConflicts(allergies, r.allergens).length > 0 && (
+                    <span className="block text-xs font-semibold text-warn">⚠ Lleva {allergenTagConflicts(allergies, r.allergens).map(a => (ALLERGEN_LABELS[a] ?? a).toLowerCase()).join(' y ')}</span>
+                  )}
                 </span>
               </button>
             ))}

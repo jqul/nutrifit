@@ -52,6 +52,15 @@ describe('proposeMenu', () => {
     expect(p.meals[0].recipe?.id).toBe('l2')
   })
 
+  it('skips a recipe whose allergen tag clashes with the client, even if no ingredient gives it away', () => {
+    const tagged = recipe('a1', 'Bowl cremoso', 500, 25, { meal_type: 'desayuno', allergens: ['lactosa'] })
+    const safe = recipe('a2', 'Tostada con aguacate', 500, 15, { meal_type: 'desayuno', allergens: ['gluten'] })
+    const lactose = proposeMenu({ recipes: [tagged, safe], targetKcal: 2000, allergies: 'Intolerancia a la lactosa', slots: [DEFAULT_SLOTS[0]] })
+    expect(lactose.meals[0].recipe?.id).toBe('a2')
+    const none = proposeMenu({ recipes: [tagged], targetKcal: 2000, allergies: 'celíaco', slots: [DEFAULT_SLOTS[0]] })
+    expect(none.meals[0].recipe?.id).toBe('a1')
+  })
+
   it('never repeats a recipe in two slots of the same day', () => {
     const untyped = recipe('u1', 'Plato único', 500, 30)
     const p = proposeMenu({ recipes: [untyped], targetKcal: 2000, slots: [DEFAULT_SLOTS[0], DEFAULT_SLOTS[3]] })
