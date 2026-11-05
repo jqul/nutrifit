@@ -1,0 +1,19 @@
+feature,area,priority,original,clone,notes
+Plan drafted by AI from a chat,plans,could,yes,no,proposal G8 - needs an explicit product decision; NutriFit has the non-AI menu proposal
+AI output is a draft the nutritionist reviews,plans,must,yes,yes,same philosophy: menu proposal and weekly review are proposals
+Rules/method applied to every plan (allergens diet types),plans,should,yes,partial,allergens and diet types on recipes; no per-nutritionist rules
+Substitutions by preference budget or season,plans,could,yes,partial,same-group substitutions yes; preferences/budget/season no (G3)
+Pre-consultation summary,tracking,should,yes,no,proposal G1 - recommended first
+Adherence month by month,tracking,should,yes,no,proposal G2
+Alert linked to a lab marker suggestion,tracking,could,yes,no,proposal G5
+Automated client-facing AI agent,client app,could,yes,no,vague on their side; not planned
+White-label app with logo and colours,client app,should,yes,yes,already covered
+White-label own domain app name and icon,client app,could,yes,no,proposal G6
+Client app with diet recipes shopping list,client app,must,yes,yes,already covered
+CSV/Excel patient import,onboarding,should,yes,yes,already covered (and history import)
+GDPR access traceability log,compliance,could,yes,no,proposal G7
+Food preferences/dislikes per client,plans,should,partial,no,proposal G3 (not a Fitai claim; the gap the research exposed)
+Weekly menu proposal from own recipes,plans,should,no,no,proposal G4
+Payments subscriptions invoices store,billing,could,yes,no,out of scope (product decision: no payments)
+Bookings classes memberships,scheduling,could,yes,no,not applicable to nutrition
+Lead CRM campaigns public web courses,marketing,could,yes,no,out of scope
