@@ -93,3 +93,9 @@ phase, plan changes and clinical notes. No AI. G3–G8 remain proposals.
 «Proponer menú» skips recipes with a disliked food (by name or ingredient), the substitutions hide disliked foods and say how
 many, and the plan editor shows a 👎 on a disliked item. Plain text separated by commas, matched by word start without
 accents («pan» matches «pan integral», not «campana»; plural and singular both match).
+
+## Update 2026-11-05 (third): G4 built
+
+«Proponer menú» now has «Toda la semana» (`proposeWeek` in `menuProposal.ts`): seven days built with the same rules as one day,
+plus a cap of two uses per recipe per week, no same recipe in the same slot on consecutive days, and a fallback that repeats rather
+than leaving a slot empty. It reports how many distinct recipes the week uses and which one repeats most.

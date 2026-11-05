@@ -367,6 +367,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] App del **cliente** → **Más → Tus gustos**: escribe «setas», guarda y recarga: se queda. Vuelve a **Dieta** y sustituye un alimento: ya no se sugieren las setas, sin recargar. Mira que el nutricionista lo ve en el Perfil de ese cliente.
 - [ ] El cliente **no** puede cambiar sus alergias ni nada más de su ficha (solo este campo).
 
+## 34. Menú semanal propuesto
+
+- [ ] Plan de dieta de un cliente con **al menos 8-10 recetas** de tipos variados (desayuno, comida, merienda, cena) y kcal en el objetivo → **Proponer menú → Toda la semana**: salen los 7 días con una receta por hueco, y abajo «N recetas distintas».
+- [ ] Ninguna receta sale más de 2 veces en la semana, ni en el mismo hueco dos días seguidos, ni dos veces el mismo día. Con **muy pocas recetas** repite y te lo dice («la que más se repite…»); un hueco sin receta que encaje sale en rojo.
+- [ ] Un cliente con alergia o algo que no le gusta: ningún día lleva esas recetas.
+- [ ] **Otra propuesta** cambia la semana. **Añadir la semana** crea las comidas de lunes a domingo en el cuadrante (pestañas «Lunes (4)»…) y selecciona el lunes; **Sustituir todo** quita las que había. No se guarda hasta **Guardar plan**.
+- [ ] Guarda el plan y mira la app del cliente: en **Dieta** puede elegir el día y ve las comidas de ese día.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

@@ -13,7 +13,7 @@ Client app with diet recipes shopping list,client app,must,yes,yes,already cover
 CSV/Excel patient import,onboarding,should,yes,yes,already covered (and history import)
 GDPR access traceability log,compliance,could,yes,no,proposal G7
 Food preferences/dislikes per client,plans,should,partial,yes,built (migration 0069)
-Weekly menu proposal from own recipes,plans,should,no,no,proposal G4
+Weekly menu proposal from own recipes,plans,should,no,yes,built (proposeWeek)
 Payments subscriptions invoices store,billing,could,yes,no,out of scope (product decision: no payments)
 Bookings classes memberships,scheduling,could,yes,no,not applicable to nutrition
 Lead CRM campaigns public web courses,marketing,could,yes,no,out of scope

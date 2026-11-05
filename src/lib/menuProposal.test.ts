@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { proposeMenu, DEFAULT_SLOTS, MIN_FACTOR, MAX_FACTOR } from './menuProposal'
+import { proposeMenu, proposeWeek, DEFAULT_SLOTS, MIN_FACTOR, MAX_FACTOR } from './menuProposal'
 import { RecipeRow } from './supabase-types'
 
 function recipe(id: string, name: string, kcal: number, proteinG: number, extra: Partial<RecipeRow> = {}, foodName = name): RecipeRow {
@@ -108,5 +108,79 @@ describe('proposeMenu', () => {
   it('returns empty slots, not a crash, with no recipes or no target', () => {
     expect(proposeMenu({ recipes: [], targetKcal: 2000 }).meals.every(m => m.recipe === null)).toBe(true)
     expect(proposeMenu({ recipes: library, targetKcal: 0 }).totalKcal).toBe(0)
+  })
+})
+
+describe('proposeWeek', () => {
+  const many = (type: 'desayuno' | 'comida' | 'merienda' | 'cena', kcal: number, n: number) =>
+    Array.from({ length: n }, (_, i) => recipe(`${type.slice(0, 3)}${i}`, `${type} ${i}`, kcal + i * 5, 30, { meal_type: type }))
+  const rich = [...many('desayuno', 500, 6), ...many('comida', 700, 6), ...many('merienda', 200, 6), ...many('cena', 600, 6)]
+  const idsOf = (w: ReturnType<typeof proposeWeek>, slot: string) => w.days.map(d => d.meals.find(m => m.slot.name === slot)?.recipe?.id)
+
+  it('fills seven days with every slot, and keeps the day total on target', () => {
+    const w = proposeWeek({ recipes: rich, targetKcal: 2000, targetProteinG: 140 })
+    expect(w.days).toHaveLength(7)
+    expect(w.emptySlots).toBe(0)
+    expect(w.days.every(d => d.totalKcal === 2000)).toBe(true)
+  })
+
+  it('does not repeat a recipe more than twice in the week, nor in the same slot two days in a row', () => {
+    const w = proposeWeek({ recipes: rich, targetKcal: 2000, targetProteinG: 140 })
+    const counts = new Map<string, number>()
+    for (const d of w.days) for (const m of d.meals) if (m.recipe) counts.set(m.recipe.id, (counts.get(m.recipe.id) ?? 0) + 1)
+    expect(Math.max(...counts.values())).toBeLessThanOrEqual(2)
+    for (const slot of ['Desayuno', 'Comida', 'Merienda', 'Cena']) {
+      const ids = idsOf(w, slot)
+      ids.slice(1).forEach((id, i) => expect(id).not.toBe(ids[i]))
+    }
+    expect(w.distinctRecipes).toBeGreaterThanOrEqual(14)
+  })
+
+  it('never repeats a recipe inside the same day', () => {
+    const untyped = Array.from({ length: 5 }, (_, i) => recipe(`u${i}`, `Plato ${i}`, 500, 25))
+    const w = proposeWeek({ recipes: untyped, targetKcal: 2000 })
+    for (const d of w.days) {
+      const ids = d.meals.flatMap(m => (m.recipe ? [m.recipe.id] : []))
+      expect(new Set(ids).size).toBe(ids.length)
+    }
+  })
+
+  it('repeats recipes rather than leaving a slot empty when there are few', () => {
+    const w = proposeWeek({ recipes: [recipe('c1', 'Pollo con arroz', 700, 55, { meal_type: 'comida' })], targetKcal: 2000, slots: [DEFAULT_SLOTS[1]] })
+    expect(w.emptySlots).toBe(0)
+    expect(w.distinctRecipes).toBe(1)
+    expect(w.mostRepeated).toEqual({ name: 'Pollo con arroz', count: 7 })
+  })
+
+  it('respects allergies and dislikes every day of the week', () => {
+    const recipes = [
+      recipe('l1', 'Bowl cremoso', 500, 25, { meal_type: 'desayuno', allergens: ['lactosa'] }),
+      recipe('p1', 'Salmón al horno', 700, 40, { meal_type: 'comida' }),
+      ...many('desayuno', 500, 3), ...many('comida', 700, 3),
+    ]
+    const w = proposeWeek({ recipes, targetKcal: 2000, allergies: 'intolerancia a la lactosa', dislikes: 'salmón', slots: [DEFAULT_SLOTS[0], DEFAULT_SLOTS[1]] })
+    const used = new Set(w.days.flatMap(d => d.meals.map(m => m.recipe?.id)))
+    expect(used.has('l1')).toBe(false)
+    expect(used.has('p1')).toBe(false)
+  })
+
+  it('is stable for the same options and different for another variant', () => {
+    const a = proposeWeek({ recipes: rich, targetKcal: 2000 })
+    const b = proposeWeek({ recipes: rich, targetKcal: 2000 })
+    const c = proposeWeek({ recipes: rich, targetKcal: 2000, variant: 3 })
+    const sig = (w: typeof a) => w.days.map(d => d.meals.map(m => m.recipe?.id).join(',')).join('|')
+    expect(sig(a)).toBe(sig(b))
+    expect(sig(c)).not.toBe(sig(a))
+  })
+
+  it('reports empty slots when nothing fits', () => {
+    const w = proposeWeek({ recipes: [], targetKcal: 2000 })
+    expect(w.emptySlots).toBe(28)
+    expect(w.distinctRecipes).toBe(0)
+    expect(w.mostRepeated).toBeNull()
+  })
+
+  it('supports a shorter span', () => {
+    expect(proposeWeek({ recipes: rich, targetKcal: 2000, days: 3 }).days).toHaveLength(3)
   })
 })
