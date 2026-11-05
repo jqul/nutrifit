@@ -4,7 +4,7 @@ import { ClienteRow, ClientProfileRow } from '../../lib/supabase-types'
 import { clientFromRow, clienteRowFromProfile } from '../../lib/mappers'
 import { logError } from '../../lib/errors'
 import { NotFound } from '../shared/NotFound'
-import { forgetClientToken, installClientManifest } from '../../lib/clientApp'
+import { applyAppIdentity, forgetClientToken, installClientManifest } from '../../lib/clientApp'
 import { ClientRegister } from './ClientRegister'
 import { ClientConsent } from './ClientConsent'
 import { ClientAppShell } from './ClientAppShell'
@@ -26,9 +26,6 @@ export function ClientView({ token, fromStorage = false }: {
   /** true si se ha llegado aquí sin enlace, por el token recordado en el dispositivo (app instalada). */
   fromStorage?: boolean
 }) {
-  // El icono que se cree desde esta página tiene que abrir ESTE enlace (ver clientApp.ts).
-  useEffect(() => installClientManifest(token), [token])
-
   const demoClient = token.startsWith(DEMO_TOKEN_PREFIX) ? DEMO_CLIENTS.find(c => c.token === token) : undefined
 
   const [authState, setAuthState] = useState<AuthState>(demoClient ? 'authenticated' : 'loading')
@@ -45,6 +42,10 @@ export function ClientView({ token, fromStorage = false }: {
   const [accentColor, setAccentColor] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.accentColor : null)
   const [contactPhone, setContactPhone] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.contactPhone : null)
   const [consentDocumentUrl, setConsentDocumentUrl] = useState<string | null>(null)
+  const [appName, setAppName] = useState<string | null>(demoClient ? DEMO_NUTRICIONISTA_PROFILE.appName : null)
+  // El icono que se cree desde esta página tiene que abrir ESTE enlace y llevar el nombre que el nutricionista le ha puesto a su app (ver clientApp.ts).
+  useEffect(() => installClientManifest(token, appName), [token, appName])
+  useEffect(() => applyAppIdentity({ appName, logoUrl, accentColor }), [appName, logoUrl, accentColor])
   const loggingOutRef = useRef(false)
   const authStateRef = useRef(authState)
   authStateRef.current = authState
@@ -79,6 +80,7 @@ export function ClientView({ token, fromStorage = false }: {
     setAccentColor(branding?.accent_color || null)
     setContactPhone(branding?.contact_phone || null)
     setConsentDocumentUrl(branding?.consent_document_url || null)
+    setAppName(branding?.app_name || null)
 
     if (!status.auth_user_id) { setAuthState('needs_register'); return }
 

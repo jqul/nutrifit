@@ -16,6 +16,7 @@ export interface NutricionistaRow {
   custom_domain: string | null
   contact_phone: string | null
   consent_document_url: string | null
+  app_name?: string | null
 }
 
 export interface ClienteRow {

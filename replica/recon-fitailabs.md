@@ -107,3 +107,10 @@ latest reading of each marker (under a year old) and says whether something is o
 range. Shown under the suggestion in «Requieren atención» (only when there is something to say) and in «Preparar la consulta».
 It is app-side only: the daily push digest does not carry it. NutriFit does not carry vitamin B12, so the Fitai example (B12 and
 iron) is covered with iron, vitamin D and TSH.
+
+## Update 2026-11-05 (fifth): G6 built (name; icon on iOS only)
+
+`nutricionistas.app_name` (migration 0070), returned with the rest of the branding to the client's page. It sets the tab title,
+the iOS home-screen title, and the client's own manifest name/short_name. The logo becomes the iOS touch icon (a square canvas
+with the accent colour behind it; falls back to the NutriFit icon if the image cannot be read). **Not done:** the Android icon
+stays NutriFit's: a manifest icon that fails to load can make the app non-installable, and install cannot be tested from here.

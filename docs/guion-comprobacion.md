@@ -383,6 +383,15 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Mismo comportamiento con **Peso estancado** (TSH, glucosa) y **Hambre alta** (glucosa). Un aviso de **Adherencia baja** o **Sin registrar peso** no lleva pista de analítica.
 - [ ] La pista aparece también en **Preparar la consulta → Para hablar**. Está redactada como pista («puede estar relacionado», «puede merecer la pena»), nunca como diagnóstico.
 
+## 36. Nombre propio de la app del cliente
+
+- [ ] **Ajustes → Marca**: campo **Nombre de la app de tus clientes** (máximo 24 letras). Pon «Consulta Marta» y guarda.
+- [ ] Abre el enlace de un cliente tuyo (en el móvil): la **pestaña** se llama «Consulta Marta» (no «NutriFit»).
+- [ ] **iPhone:** Compartir → Añadir a pantalla de inicio: el nombre propuesto es «Consulta Marta» y el icono lleva **tu logo** sobre tu color (si el logo no carga o no se deja leer, sale el de NutriFit).
+- [ ] **Android:** Instalar aplicación: el nombre es «Consulta Marta» (corto: «Consulta») y el icono es el de NutriFit (es lo esperado).
+- [ ] Borra el nombre y guarda: vuelve a «NutriFit». Un nombre con comillas o símbolos raros no rompe nada.
+- [ ] El icono instalado sigue abriendo **su** enlace (no la pantalla de acceso de nutricionistas).
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

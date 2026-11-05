@@ -23,6 +23,7 @@ export const DEMO_NUTRICIONISTA_PROFILE: UserProfile = {
   accentColor: null,
   customDomain: null,
   contactPhone: '+34 600 987 654',
+  appName: 'Alex Nutrición',
   consentDocumentUrl: null,
   accountMode: 'professional',
 }

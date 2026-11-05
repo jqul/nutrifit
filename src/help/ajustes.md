@@ -31,6 +31,7 @@ Lo que ven y responden tus clientes:
 
 Cómo ven tu consulta tus clientes:
 
+- **Nombre de la app de tus clientes** (hasta 24 letras): es el nombre que ve tu cliente bajo el icono cuando instala su app y en la pestaña del navegador (por ejemplo «Consulta Marta»); vacío = «NutriFit». **iPhone:** al añadirla a la pantalla de inicio, el icono lleva **tu logo** (en un cuadrado con tu color de acento) y ese nombre. **Android:** cambia el nombre, pero el icono sigue siendo el de NutriFit. Quien ya la tenía instalada ve el cambio al reinstalarla.
 - **URL del logo:** pega la dirección pública de una imagen (de tu web, por ejemplo).
 - **Color de acento:** el color de su panel y de los PDF que les mandas.
 - **Dominio propio** y **teléfono de WhatsApp:** con el teléfono, tus clientes tienen un botón **Escribir por WhatsApp** en su panel.
