@@ -11,7 +11,7 @@ White-label app with logo and colours,client app,should,yes,yes,already covered
 White-label own domain app name and icon,client app,could,yes,partial,built: app name + iOS icon (migration 0070); Android icon stays NutriFit; own domain already existed
 Client app with diet recipes shopping list,client app,must,yes,yes,already covered
 CSV/Excel patient import,onboarding,should,yes,yes,already covered (and history import)
-GDPR access traceability log,compliance,could,yes,no,proposal G7
+GDPR access traceability log,compliance,could,yes,partial,built (migration 0071): in-app accesses only; direct DB access is not logged
 Food preferences/dislikes per client,plans,should,partial,yes,built (migration 0069)
 Weekly menu proposal from own recipes,plans,should,no,yes,built (proposeWeek)
 Payments subscriptions invoices store,billing,could,yes,no,out of scope (product decision: no payments)

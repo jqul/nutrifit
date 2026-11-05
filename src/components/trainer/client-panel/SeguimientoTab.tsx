@@ -28,6 +28,7 @@ import { summarizeSignals, isConcerningCheckin, SignalTone } from '../../../lib/
 import { summarizeWeight, weightDeltaTone, formatWeightDelta } from '../../../lib/clientListSummary'
 import { TONE_CLASS } from '../healthStyles'
 import { toast } from '../../shared/Toast'
+import { logClientAccess } from '../../../lib/accessLog'
 import { Flame, UtensilsCrossed, AlertTriangle, FileDown, Plus, ClipboardList } from 'lucide-react'
 
 const INTENSITY_LABELS = ['Ninguna', 'Leve', 'Moderada', 'Intensa']
@@ -113,6 +114,7 @@ export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl,
       }
       printProgressReport({ ...client, reportNotes }, { weights, checkins, bloodMarkers, planChanges, reviews },
         { logoUrl: nutricionistaLogoUrl, accentColor: nutricionistaAccentColor }, options, win)
+      if (!demoMode) logClientAccess(client.id, 'informe')
       setReportOpen(false)
     } catch {
       win.close()

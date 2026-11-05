@@ -10,6 +10,7 @@ import { ConsentDocumentUpload } from '../shared/ConsentDocumentUpload'
 import { AvisosPanel } from './AvisosPanel'
 import { DEMO_CUSTOM_SURVEYS } from '../../lib/demo-data'
 import { MAX_APP_NAME_LENGTH, cleanAppName } from '../../lib/clientApp'
+import { AccessLogList } from './AccessLogList'
 import { Globe, MessageCircle } from 'lucide-react'
 
 type Section = 'cuenta' | 'avisos' | 'experiencia' | 'marca' | 'legal'
@@ -189,6 +190,16 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
           </p>
           <ConsentDocumentUpload nutricionistaId={userProfile.uid} currentUrl={consentDocumentUrl} demoMode={demoMode}
             onUploaded={url => saveConsentDocument(url)} onRemoved={() => saveConsentDocument(null)} />
+        </div>
+
+        <div className="card p-5 space-y-3">
+          <p className="font-semibold text-sm flex items-center gap-1.5">Registro de accesos</p>
+          <p className="text-xs text-muted">
+            Quién abrió la ficha de un cliente, exportó sus datos o sacó su informe, y cuándo (los 30 más recientes; el de cada cliente está
+            en su Perfil). Cuenta lo que se hace <strong className="text-ink">dentro de la aplicación</strong>: el acceso directo a la base de
+            datos por otra vía no queda reflejado aquí. Tu cliente ve en su app un resumen de cuántas veces se ha abierto su ficha.
+          </p>
+          <AccessLogList nutricionistaId={userProfile.uid} limit={30} demoMode={demoMode} />
         </div>
       </div>
     </div>

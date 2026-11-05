@@ -40,3 +40,5 @@ Cómo ven tu consulta tus clientes:
 ## Legal
 
 **Consentimiento informado:** sube el documento de consentimiento (protección de datos, condiciones del servicio…) que te haya preparado tu propio abogado. Si lo subes, cada cliente nuevo tendrá que leerlo y firmarlo electrónicamente antes de usar su panel.
+
+**Registro de accesos:** quién abrió la ficha de un cliente, exportó sus datos o sacó su informe, y cuándo (los 30 más recientes). La ficha abierta varias veces seguidas se apunta **una vez cada 30 minutos**; exportar y sacar el informe se apuntan siempre. El registro de **un cliente concreto** está en su **Perfil → Accesos a esta ficha**. **Ojo:** cuenta lo que se hace **dentro de la aplicación**; si alguien con acceso directo a la base de datos mira los datos por otra vía, eso no queda reflejado. Nadie puede añadir, cambiar ni borrar líneas a mano, y el registro se borra con el cliente.
