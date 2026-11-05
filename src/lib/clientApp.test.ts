@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CLIENT_TOKEN_KEY, buildClientManifest, decideForNonTrainerSession, fetchMyClientToken, forgetClientToken, isValidClientToken, readRememberedClientToken, rememberClientToken } from './clientApp'
+import { CLIENT_TOKEN_KEY, buildClientManifest, cleanAppName, containRect, shortAppName, decideForNonTrainerSession, fetchMyClientToken, forgetClientToken, isValidClientToken, readRememberedClientToken, rememberClientToken } from './clientApp'
 
 const memory = () => {
   const m = new Map<string, string>()
@@ -102,5 +102,53 @@ describe('buildClientManifest', () => {
     expect(m.display).toBe('standalone')
     expect(m.name).toBeTruthy()
     expect(m.icons.some(i => i.sizes === '512x512')).toBe(true)
+  })
+})
+
+describe('app name', () => {
+  it('cleans what the nutritionist types: spaces, length and empty', () => {
+    expect(cleanAppName('  Consulta   Marta ')).toBe('Consulta Marta')
+    expect(cleanAppName('x'.repeat(40))).toHaveLength(24)
+    expect(cleanAppName('   ')).toBeNull()
+    expect(cleanAppName(null)).toBeNull()
+    expect(cleanAppName(undefined)).toBeNull()
+  })
+  it('shortens the name for under the icon, at a word when it can', () => {
+    expect(shortAppName('Nutri Lucía')).toBe('Nutri Lucía')
+    expect(shortAppName('Consulta Marta López')).toBe('Consulta')
+    expect(shortAppName('Supercalifragilístico')).toBe('Supercalifra')
+  })
+  it('goes into the client manifest, and NutriFit stays the default', () => {
+    const named = buildClientManifest('https://nutrifit.app', TOKEN, 'Consulta Marta')
+    expect(named.name).toBe('Consulta Marta')
+    expect(named.short_name).toBe('Consulta')
+    expect(named.start_url).toBe(`https://nutrifit.app/?c=${TOKEN}`)
+    const plain = buildClientManifest('https://nutrifit.app', TOKEN)
+    expect(plain.name).toBe('NutriFit')
+    expect(plain.short_name).toBe('NutriFit')
+    expect(buildClientManifest('https://nutrifit.app', TOKEN, '  ').name).toBe('NutriFit')
+  })
+  it('keeps the manifest a valid JSON whatever is typed', () => {
+    const m = buildClientManifest('https://nutrifit.app', TOKEN, '"}</script><b>')
+    expect(JSON.parse(JSON.stringify(m)).name).toBe('"}</script><b>')
+  })
+})
+
+describe('containRect', () => {
+  it('fits a wide logo inside the square, centred, with a margin', () => {
+    const r = containRect(400, 100, 100)
+    expect(r.width).toBeCloseTo(72)
+    expect(r.height).toBeCloseTo(18)
+    expect(r.x).toBeCloseTo(14)
+    expect(r.y).toBeCloseTo(41)
+  })
+  it('fits a tall one and a square one', () => {
+    expect(containRect(100, 400, 100).height).toBeCloseTo(72)
+    const sq = containRect(50, 50, 100)
+    expect(sq).toMatchObject({ x: 14, y: 14 })
+    expect(sq.width).toBeCloseTo(72)
+  })
+  it('falls back to the whole square when the image has no size', () => {
+    expect(containRect(0, 0, 180)).toEqual({ x: 0, y: 0, width: 180, height: 180 })
   })
 })

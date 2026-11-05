@@ -27,6 +27,8 @@ export interface UserProfile {
   accentColor: string | null
   customDomain: string | null
   contactPhone: string | null
+  /** Nombre de la app que ven sus clientes (icono, pestaña); null = «NutriFit». */
+  appName: string | null
   consentDocumentUrl: string | null
   accountMode: 'professional' | 'personal'
 }

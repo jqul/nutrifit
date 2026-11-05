@@ -8,7 +8,7 @@ Adherence month by month,tracking,should,yes,yes,built (adherenceHistory.ts)
 Alert linked to a lab marker suggestion,tracking,could,yes,yes,built (alertLabHints.ts)
 Automated client-facing AI agent,client app,could,yes,no,vague on their side; not planned
 White-label app with logo and colours,client app,should,yes,yes,already covered
-White-label own domain app name and icon,client app,could,yes,no,proposal G6
+White-label own domain app name and icon,client app,could,yes,partial,built: app name + iOS icon (migration 0070); Android icon stays NutriFit; own domain already existed
 Client app with diet recipes shopping list,client app,must,yes,yes,already covered
 CSV/Excel patient import,onboarding,should,yes,yes,already covered (and history import)
 GDPR access traceability log,compliance,could,yes,no,proposal G7

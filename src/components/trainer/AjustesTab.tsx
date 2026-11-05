@@ -9,6 +9,7 @@ import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { ConsentDocumentUpload } from '../shared/ConsentDocumentUpload'
 import { AvisosPanel } from './AvisosPanel'
 import { DEMO_CUSTOM_SURVEYS } from '../../lib/demo-data'
+import { MAX_APP_NAME_LENGTH, cleanAppName } from '../../lib/clientApp'
 import { Globe, MessageCircle } from 'lucide-react'
 
 type Section = 'cuenta' | 'avisos' | 'experiencia' | 'marca' | 'legal'
@@ -43,6 +44,7 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
   const [accentColor, setAccentColor] = useState(userProfile.accentColor || '#3f7d4f')
   const [customDomain, setCustomDomain] = useState(userProfile.customDomain || '')
   const [contactPhone, setContactPhone] = useState(userProfile.contactPhone || '')
+  const [appName, setAppName] = useState(userProfile.appName || '')
   const [savingBranding, setSavingBranding] = useState(false)
 
   const saveQuestions = async () => {
@@ -63,10 +65,11 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
       accent_color: accentColor.trim() || null,
       custom_domain: customDomain.trim() || null,
       contact_phone: contactPhone.trim() || null,
+      app_name: cleanAppName(appName),
     }).eq('uid', userProfile.uid)
     setSavingBranding(false)
     if (error) { toast('Error: ' + (error.message.includes('duplicate') ? 'Ese dominio ya está en uso' : error.message), 'warn'); return }
-    onUpdateProfile({ logoUrl: logoUrl.trim() || null, accentColor: accentColor.trim() || null, customDomain: customDomain.trim() || null, contactPhone: contactPhone.trim() || null })
+    onUpdateProfile({ logoUrl: logoUrl.trim() || null, accentColor: accentColor.trim() || null, customDomain: customDomain.trim() || null, contactPhone: contactPhone.trim() || null, appName: cleanAppName(appName) })
     toast('Marca guardada ✓', 'ok')
   }
 
@@ -125,6 +128,15 @@ export function AjustesTab({ userProfile, demoMode, onUpdateProfile }: {
           <p className="text-xs text-muted">
             Personaliza el logo y el color que ven tus clientes en su panel, y el tuyo propio en el panel de nutricionista.
           </p>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Nombre de la app de tus clientes</label>
+            <input value={appName} onChange={e => setAppName(e.target.value.slice(0, MAX_APP_NAME_LENGTH))} placeholder="NutriFit" maxLength={MAX_APP_NAME_LENGTH}
+              className="w-full px-3 py-2.5 bg-bg border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent" />
+            <p className="text-xs text-muted mt-1">
+              Es el nombre que ve tu cliente bajo el icono cuando instala su app, y en la pestaña del navegador (por ejemplo «Consulta Marta»).
+              Vacío = «NutriFit». En iPhone el icono lleva tu logo; en Android el icono sigue siendo el de NutriFit y cambia el nombre.
+            </p>
+          </div>
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">URL del logo</label>
             <div className="flex items-center gap-3">
