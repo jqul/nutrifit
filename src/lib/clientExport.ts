@@ -22,6 +22,7 @@ export interface ExportTable {
  * una tabla nueva no se quede fuera sin que nadie lo decida.
  */
 export const EXPORT_TABLES: ExportTable[] = [
+  { table: 'access_log', order: 'created_at' },
   { table: 'anamnesis', order: 'completed_at' },
   { table: 'appointments', order: 'start_at' },
   { table: 'blood_markers', order: 'date' },

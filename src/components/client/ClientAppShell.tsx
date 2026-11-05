@@ -14,6 +14,7 @@ import { DietaClienteTab } from './DietaClienteTab'
 import { ProgresoClienteTab } from './ProgresoClienteTab'
 import { GuidesLibrary } from './GuidesLibrary'
 import { FoodDislikesCard } from './FoodDislikesCard'
+import { AccessSummaryCard } from './AccessSummaryCard'
 import { AnamnesisForm } from './AnamnesisForm'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { useAccentOverride } from '../../lib/useAccentOverride'
@@ -146,6 +147,12 @@ export function ClientAppShell({
             <MoreSection title="Tus gustos">
               <FoodDislikesCard clientId={clientData.id} value={dislikes} onSaved={setDislikes} demoMode={demoMode} readOnly={previewMode} />
             </MoreSection>
+
+            {!previewMode && (
+              <MoreSection title="Privacidad">
+                <AccessSummaryCard clientId={clientData.id} nutricionistaName={nutricionistaName} demoMode={demoMode} />
+              </MoreSection>
+            )}
 
             <MoreSection title="Recursos">
               <GuidesLibrary nutricionistaId={clientData.nutricionistaId} demoMode={demoMode} />

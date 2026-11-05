@@ -114,3 +114,10 @@ iron) is covered with iron, vitamin D and TSH.
 the iOS home-screen title, and the client's own manifest name/short_name. The logo becomes the iOS touch icon (a square canvas
 with the accent colour behind it; falls back to the NutriFit icon if the image cannot be read). **Not done:** the Android icon
 stays NutriFit's: a manifest icon that fails to load can make the app non-installable, and install cannot be tested from here.
+
+## Update 2026-11-05 (sixth): G7 built, with its limit stated
+
+`access_log` (migration 0071): who opened a client's file, exported the data or printed the report, and when. Written only through
+`log_client_access` (checks the caller is the client's nutritionist; the open is recorded once per 30 minutes per person); read by the
+nutritionist (Ajustes → Legal, and each client's Perfil); the client sees a count summary only (`get_my_access_summary`). It covers what
+happens **inside the app**: direct database access (for example the platform owner querying Supabase) is not logged, and the UI says so.

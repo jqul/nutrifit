@@ -14,6 +14,8 @@ import { GoalSelect } from '../../shared/GoalSelect'
 import { toast } from '../../shared/Toast'
 import { QuestionAnswerDisplay } from '../../shared/QuestionAnswerDisplay'
 import { exportClientData } from '../../../lib/gdprExport'
+import { logClientAccess } from '../../../lib/accessLog'
+import { AccessLogList } from '../AccessLogList'
 import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
 import { DarDeBajaCard } from './BajaCard'
 import { BajaReason } from '../../../lib/clientBaja'
@@ -112,6 +114,7 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDis
     setExporting(true)
     try {
       await exportClientData(client)
+      logClientAccess(client.id, 'exportacion')
       toast('Datos exportados ✓', 'ok')
     } catch (e) {
       // Si falta una tabla se dice cuál: es mejor no entregar nada que entregar un archivo incompleto.
@@ -325,6 +328,13 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDis
       )}
 
       {!personalMode && onDismiss && <DarDeBajaCard client={client} onDismiss={onDismiss} />}
+
+      {!personalMode && (
+        <div className="card p-5 space-y-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Accesos a esta ficha</p>
+          <AccessLogList nutricionistaId={client.nutricionistaId} clientId={client.id} limit={8} demoMode={demoMode} />
+        </div>
+      )}
 
       <div className="card p-5 space-y-3">
         <p className="text-xs font-bold uppercase tracking-wider text-muted">{personalMode ? 'Tus datos (RGPD)' : 'Datos del cliente (RGPD)'}</p>

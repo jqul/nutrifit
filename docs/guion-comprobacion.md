@@ -392,6 +392,16 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Borra el nombre y guarda: vuelve a «NutriFit». Un nombre con comillas o símbolos raros no rompe nada.
 - [ ] El icono instalado sigue abriendo **su** enlace (no la pantalla de acceso de nutricionistas).
 
+## 37. Registro de accesos
+
+- [ ] Abre la ficha de un cliente. **Ajustes → Legal → Registro de accesos** y su **Perfil → Accesos a esta ficha** muestran «Tu nombre · Abrió la ficha» con la hora de ahora.
+- [ ] Sal y vuelve a abrir la misma ficha en menos de 30 minutos: **no** se añade otra línea. Pasados 30 minutos, sí.
+- [ ] **Exportar datos** y **Informe de progreso** (PDF) añaden «Exportó los datos» / «Sacó el informe» **cada vez**.
+- [ ] La exportación de datos del cliente incluye el registro (tabla de accesos).
+- [ ] En la app del **cliente** (Más → **Privacidad → Quién ha visto tus datos**): «En el último año, … ha abierto tu ficha N veces y ha exportado tus datos…» con la fecha de la última. No ve detalle ni nombres de cada acceso.
+- [ ] La **vista previa del cliente** (la tuya) no apunta accesos extra ni enseña esa tarjeta.
+- [ ] Un cliente nuevo sin accesos: la tarjeta dice «no hay ningún acceso registrado».
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

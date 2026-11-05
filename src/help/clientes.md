@@ -46,7 +46,8 @@ Para un solo pesaje: en **Seguimiento** del cliente, bajo la gráfica de peso, *
 - **Enlace de acceso:** **Copiar enlace** para enviárselo. **Regenerar enlace** crea uno nuevo y anula el anterior (útil si lo ha compartido por error).
 - **Cuestionario de salud:** lo que respondió el cliente al registrarse.
 - **Facturación:** pon un precio mensual y pulsa **Generar factura de este mes**; después marca si está pendiente o pagada y descarga el PDF. Mientras no haya factura del mes, el cliente aparece con el aviso «Falta la factura de este mes».
-- **Exportar datos:** descarga todo lo del cliente en un archivo.
+- **Exportar datos:** descarga todo lo del cliente en un archivo (incluye el registro de accesos a su ficha). Cada exportación queda apuntada.
+- **Accesos a esta ficha:** las últimas veces que alguien la abrió, exportó o sacó su informe (ver Ajustes → Legal → Registro de accesos).
 
 ## Dar de baja a un cliente
 

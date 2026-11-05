@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { UserProfile, ClientData } from '../../types'
 import { useNutricionistaClients, ClientWithStats } from '../../hooks/useNutricionistaClients'
 import { supabase } from '../../lib/supabase'
+import { logClientAccess } from '../../lib/accessLog'
 import { PerfilTab } from './client-panel/PerfilTab'
 import { NotasTab } from './client-panel/NotasTab'
 import { PlanDietaTab } from './client-panel/PlanDietaTab'
@@ -41,6 +42,8 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
   const [tab, setTab] = useState<Tab>(initialTab ?? 'perfil')
   const [current, setCurrent] = useState(client)
   const [previewing, setPreviewing] = useState(false)
+  // Abrir la ficha queda apuntado en el registro de accesos (una vez cada 30 minutos por persona; ver 0071_access_log.sql).
+  useEffect(() => { if (!demoMode) logClientAccess(client.id, 'ficha') }, [client.id, demoMode])
   const { updateClient, regenerateToken, deleteClient, dismissClient, reactivateClient, markClientReviewed } = useNutricionistaClients({
     nutricionistaId: userProfile.uid, demoClients: demoMode ? [current] : undefined,
   })
