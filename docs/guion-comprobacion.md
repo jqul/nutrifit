@@ -333,6 +333,15 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] **Exportar datos** del cliente incluye las medidas y sus nombres (apartado «metricas»).
 - [ ] Un cliente de **otro** nutricionista, o tú desde otro cliente, no ve estas medidas.
 
+## 30. El cliente apunta sus medidas, y alérgenos en las recetas
+
+- [ ] App del **cliente** → Progreso → **Tus medidas** → **Apuntar una medida**: elige una métrica (solo salen las visibles; la que ocultaste **no**), escribe 82,5 y guarda. Una fecha futura o un 0 no se guardan.
+- [ ] En la ficha del cliente → Seguimiento, esa medida aparece como las demás (mismo historial, se puede borrar).
+- [ ] Un cliente **no** puede tocar las medidas de otro ni las métricas ocultas (lo impide la base de datos).
+- [ ] Editar una receta: **Contiene (alérgenos)** y **Raciones**. En la lista salen «Contiene: lactosa…» y «2 raciones».
+- [ ] Un cliente con «intolerancia a la lactosa» en su ficha: en su **libro de recetas**, la receta marcada con lactosa muestra **⚠ Lleva lactosa**, y al abrirla un aviso rojo. Las demás, no.
+- [ ] **Proponer menú** para ese cliente no usa la receta con lactosa aunque sus ingredientes no la delaten.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

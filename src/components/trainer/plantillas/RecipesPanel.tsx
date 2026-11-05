@@ -6,6 +6,7 @@ import { DEMO_RECIPES } from '../../../lib/demo-data'
 import { toast } from '../../shared/Toast'
 import { RecipeEditorPanel } from '../../shared/RecipeEditorPanel'
 import { DIET_TYPES, MEAL_TYPES, MealType, allTags, filterRecipes, mealTypeLabel } from '../../../lib/recipeMeta'
+import { ALLERGEN_LABELS } from '../../../lib/allergens'
 import { Trash2, Plus, Copy, BookOpen, Search } from 'lucide-react'
 
 /** Recetario: recetas propias (editables) y las del sistema (solo copiar). */
@@ -41,7 +42,7 @@ export function RecipesPanel({ nutricionistaId, demoMode, foods }: { nutricionis
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
     const { error } = await supabase.from('recipes').insert({
       nutricionista_id: nutricionistaId, name: `${r.name} (copia)`, items: r.items, steps: r.steps, photo_url: r.photo_url,
-      meal_type: r.meal_type ?? null, tags: r.tags ?? [], diet_types: r.diet_types ?? [], prep_minutes: r.prep_minutes ?? null, video_url: r.video_url ?? null,
+      meal_type: r.meal_type ?? null, tags: r.tags ?? [], diet_types: r.diet_types ?? [], prep_minutes: r.prep_minutes ?? null, video_url: r.video_url ?? null, allergens: r.allergens ?? [], servings: r.servings ?? null,
     })
     if (error) { toast('Error: ' + error.message, 'warn'); return }
     toast(`"${r.name}" copiada a tus recetas ✓`, 'ok')
@@ -157,10 +158,12 @@ function RecipeListCard({ recipe: r, onClick, onDelete, onCopy }: {
             {items.length} alimento{items.length === 1 ? '' : 's'}
             {items.length > 0 && ` (${items.map(i => i.foodName).filter(Boolean).join(', ')})`}
           </p>
-          {(r.meal_type || (r.tags && r.tags.length > 0) || (r.diet_types && r.diet_types.length > 0) || r.prep_minutes || r.in_recipe_book) && (
+          {(r.meal_type || (r.tags && r.tags.length > 0) || (r.diet_types && r.diet_types.length > 0) || r.prep_minutes || (r.allergens && r.allergens.length > 0) || r.in_recipe_book) && (
             <p className="text-xs mt-1 flex flex-wrap items-center gap-1">
               {r.meal_type && <span className="px-1.5 py-0.5 rounded-full bg-bg-alt text-muted font-medium">{mealTypeLabel(r.meal_type)}</span>}
               {r.prep_minutes ? <span className="text-muted">{r.prep_minutes} min</span> : null}
+              {r.servings ? <span className="text-muted">{r.servings} {r.servings === 1 ? 'ración' : 'raciones'}</span> : null}
+              {(r.allergens ?? []).length > 0 && <span className="px-1.5 py-0.5 rounded-full bg-warn/10 text-warn font-medium">Contiene: {(r.allergens ?? []).map(a => (ALLERGEN_LABELS[a] ?? a).toLowerCase()).join(', ')}</span>}
               {(r.diet_types ?? []).map(d => <span key={d} className="px-1.5 py-0.5 rounded-full bg-ok/10 text-ok">{d}</span>)}
               {(r.tags ?? []).map(tag => <span key={tag} className="px-1.5 py-0.5 rounded-full bg-accent/10 text-accent">#{tag}</span>)}
               {r.in_recipe_book && <span className="inline-flex items-center gap-1 text-ok font-medium"><BookOpen className="w-3 h-3" /> {(r.book_tags ?? []).length > 0 ? `En el libro de: ${(r.book_tags ?? []).map(x => '#' + x).join(' ')}` : 'En el libro del cliente'}</span>}

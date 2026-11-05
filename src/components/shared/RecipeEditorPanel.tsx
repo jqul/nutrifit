@@ -7,6 +7,7 @@ import { Button } from './Button'
 import { RecipePhotoUpload } from './RecipePhotoUpload'
 import { DIET_TYPES, MEAL_TYPES, MealType, parsePrepMinutes, parseTags, safeVideoUrl } from '../../lib/recipeMeta'
 import { TagVisibilityPicker, useClientTags } from './TagVisibilityPicker'
+import { ALLERGEN_IDS, ALLERGEN_LABELS } from '../../lib/allergens'
 import { Plus, Trash2, X } from 'lucide-react'
 
 export interface EditableRecipeItem {
@@ -56,6 +57,8 @@ export function RecipeEditorPanel({ nutricionistaId, demoMode, foods, initial, o
   const [dietTypes, setDietTypes] = useState<string[]>(initial?.diet_types ?? [])
   const [prepText, setPrepText] = useState(initial?.prep_minutes ? String(initial.prep_minutes) : '')
   const [videoText, setVideoText] = useState(initial?.video_url ?? '')
+  const [allergens, setAllergens] = useState<string[]>(initial?.allergens ?? [])
+  const [servingsText, setServingsText] = useState(initial?.servings ? String(initial.servings) : '')
   const clientTags = useClientTags(nutricionistaId, demoMode)
   const [items, setItems] = useState<EditableRecipeItem[]>(() => {
     const initialItems = ((initial?.items as EditableRecipeItem[] | null) || []).map(i => ({ ...i, id: i.id || newId() }))
@@ -78,6 +81,7 @@ export function RecipeEditorPanel({ nutricionistaId, demoMode, foods, initial, o
     const meta = {
       meal_type: mealType || null, tags: parseTags(tagsText), in_recipe_book: inRecipeBook, book_tags: inRecipeBook ? bookTags : [],
       diet_types: dietTypes, prep_minutes: parsePrepMinutes(prepText), video_url: safeVideoUrl(videoText),
+      allergens, servings: (() => { const n = parseInt(servingsText, 10); return n >= 1 && n <= 50 ? n : null })(),
     }
     const { error } = initial
       ? await supabase.from('recipes').update({ name: name.trim(), steps: stepsValue, photo_url: photoUrl, items: cleanItems, ...meta }).eq('id', initial.id)
@@ -122,6 +126,24 @@ export function RecipeEditorPanel({ nutricionistaId, demoMode, foods, initial, o
           <input value={videoText} onChange={e => setVideoText(e.target.value)} placeholder="https://youtu.be/…"
             className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
         </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Raciones (para cuántas personas)</label>
+          <input value={servingsText} onChange={e => setServingsText(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" placeholder="2"
+            className="w-full px-2.5 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Contiene (alérgenos)</label>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Alérgenos">
+          {ALLERGEN_IDS.map(a => (
+            <button key={a} type="button" aria-pressed={allergens.includes(a)}
+              onClick={() => setAllergens(allergens.includes(a) ? allergens.filter(x => x !== a) : [...allergens, a])}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${allergens.includes(a) ? 'bg-warn text-white' : 'bg-bg-alt text-muted hover:text-ink'}`}>{ALLERGEN_LABELS[a]}</button>
+          ))}
+        </div>
+        <p className="text-xs text-muted mt-1">Marca lo que lleva: «Proponer menú» se salta la receta si choca con las alergias del cliente, y él ve el aviso en su libro.</p>
       </div>
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Tipo de dieta</label>

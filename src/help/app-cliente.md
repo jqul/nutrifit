@@ -43,7 +43,7 @@ Abre el icono y entra directamente en **su** app. Para recibir notificaciones, t
 
 - Su **peso**: titular desde que empezó, gráfica y la caja para apuntar el peso de hoy.
 - **¿Cómo vas?:** una lectura en una frase de su evolución.
-- **Tus medidas:** las que el nutricionista ha apuntado (cintura, % de grasa…) y le deja ver, con su cambio desde la primera y una mini gráfica.
+- **Tus medidas:** las que el nutricionista ha apuntado (cintura, % de grasa…) y le deja ver, con su cambio desde la primera y una mini gráfica. Con **Apuntar una medida** puede añadir las suyas cuando se mida.
 - Racha y adherencia a 7 y 30 días, **fotos de progreso** con comparador antes/después, logros y diario de comidas.
 - **Descargar informe** en PDF.
 

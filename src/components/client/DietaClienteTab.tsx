@@ -295,7 +295,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
       {bookRecipes.length > 0 && (
         <ToolButton icon={<BookOpen className="w-4 h-4" />} label={`Libro de recetas (${bookRecipes.length})`} onClick={() => setBookOpen(true)} />
       )}
-      <RecipeBookSheet open={bookOpen} onClose={() => setBookOpen(false)} recipes={bookRecipes} hideNumbers={hideNumbers} />
+      <RecipeBookSheet open={bookOpen} onClose={() => setBookOpen(false)} recipes={bookRecipes} hideNumbers={hideNumbers} allergies={client.allergies} />
 
       {!hideNumbers && <ExtrasHoyCard logs={logsToday} clientId={clientId} demoMode={demoMode} kcalTarget={plan.kcalTarget} personalMode={personalMode} />}
 

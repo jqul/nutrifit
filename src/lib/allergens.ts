@@ -54,3 +54,19 @@ export function detectAllergenConflict(clientAllergies: string, foodName: string
   }
   return null
 }
+
+/** Los alérgenos que se pueden marcar en una receta (mismos identificadores que las categorías de arriba). */
+export const ALLERGEN_LABELS: Record<string, string> = {
+  gluten: 'Gluten', lactosa: 'Lactosa', huevo: 'Huevo', frutos_secos: 'Frutos secos', pescado: 'Pescado', marisco: 'Marisco', soja: 'Soja',
+}
+export const ALLERGEN_IDS = Object.keys(ALLERGEN_LABELS)
+
+/**
+ * De los alérgenos que lleva una receta (marcados por el nutricionista), los que chocan con lo que el cliente dice que no
+ * tolera. Usa las mismas palabras que detectAllergenConflict («lactosa», «celíaco», «frutos secos»…).
+ */
+export function allergenTagConflicts(clientAllergies: string, recipeAllergens: string[] | null | undefined): string[] {
+  const allergyText = clientAllergies.toLowerCase()
+  if (!allergyText.trim() || !recipeAllergens?.length) return []
+  return recipeAllergens.filter(id => ALLERGEN_KEYWORDS[id]?.clientHints.some(h => allergyText.includes(h)))
+}

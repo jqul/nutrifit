@@ -483,7 +483,7 @@ export const DEMO_EATING_OUT_GUIDES: EatingOutGuideRow[] = [
 
 export const DEMO_RECIPES: RecipeRow[] = [
   {
-    id: 'demo-recipe-system-001', nutricionista_id: null, name: 'Bowl de avena con plátano y almendras', created_at: '', meal_type: 'desayuno', tags: ['rápida'],
+    id: 'demo-recipe-system-001', nutricionista_id: null, name: 'Bowl de avena con plátano y almendras', created_at: '', allergens: ['lactosa', 'frutos_secos'], servings: 1, meal_type: 'desayuno', tags: ['rápida'],
     photo_url: placeholderPhoto('Bowl avena', '#c98a2b'), steps: null,
     items: [
       { id: 'pr1-1', foodName: 'Avena', quantity: '50', unit: 'g', kcal: '195', proteinG: '8.5', carbsG: '33', fatG: '3.5', fiberG: '5.1', sugarG: '0.5', sodiumMg: '1', saturatedFatG: '0.7', calciumMg: '27', ironMg: '2.2', zincMg: '2' },
@@ -503,7 +503,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-system-003', nutricionista_id: null, name: 'Boloñesa de pasta integral con carne', created_at: '', meal_type: 'comida', tags: ['batch cooking'],
+    id: 'demo-recipe-system-003', nutricionista_id: null, name: 'Boloñesa de pasta integral con carne', created_at: '', allergens: ['gluten'], servings: 4, meal_type: 'comida', tags: ['batch cooking'],
     photo_url: placeholderPhoto('Boloñesa', '#b5573d'),
     steps: '1. Pica la cebolla y sofríela en el aceite de oliva a fuego medio hasta que esté transparente.\n2. Añade la ternera picada y dora bien, deshaciendo los grumos.\n3. Incorpora el tomate triturado, sazona y cuece 15-20 min a fuego bajo.\n4. Mientras, cuece la pasta integral según el envase.\n5. Mezcla la pasta con la salsa y sirve.',
     items: [
@@ -537,7 +537,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '', meal_type: 'desayuno', tags: ['rápida'], in_recipe_book: true, photo_url: null,
+    id: 'demo-recipe-001', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Bowl de avena con fruta', created_at: '', allergens: ['lactosa'], servings: 1, meal_type: 'desayuno', tags: ['rápida'], in_recipe_book: true, photo_url: null,
     steps: '1. Pon la avena en un bol con el yogur natural.\n2. Añade los arándanos por encima.\n3. Termina con un chorrito de miel.',
     items: [
       { id: 'dr1i1', foodName: 'Avena', quantity: '40', unit: 'g', kcal: '150', proteinG: '5', carbsG: '27', fatG: '3' },
@@ -547,7 +547,7 @@ export const DEMO_RECIPES: RecipeRow[] = [
     ],
   },
   {
-    id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '', meal_type: 'comida', tags: ['batch cooking'], in_recipe_book: true,
+    id: 'demo-recipe-002', nutricionista_id: DEMO_NUTRICIONISTA_ID, name: 'Pollo con arroz y verduras', created_at: '', allergens: [], servings: 2, meal_type: 'comida', tags: ['batch cooking'], in_recipe_book: true,
     photo_url: placeholderPhoto('Pollo arroz', '#3f6d8f'),
     steps: '1. Cuece el arroz integral según las instrucciones del paquete.\n2. Salpimienta la pechuga de pollo y hazla a la plancha 4-5 minutos por cada lado.\n3. Cuece la verdura al vapor 8-10 minutos, hasta que esté tierna pero crujiente.\n4. Sirve el pollo troceado sobre el arroz, con la verdura al lado.',
     items: [

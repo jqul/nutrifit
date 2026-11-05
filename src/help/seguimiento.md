@@ -41,7 +41,7 @@ Debajo de la gráfica de peso, la tarjeta **Medidas corporales** guarda lo que m
 - **Añadir medidas:** elige la fecha (no puede ser futura) y rellena **solo lo que hayas medido**; admite coma o punto (82,5). Si ya había una medida ese día, se sustituye. En cada casilla ves la última medida como pista.
 - **La evolución:** por cada métrica, la última medida con su fecha, el cambio **desde la anterior** y **desde la primera**, y una mini gráfica. Pulsa una métrica para ver su historial y **borrar** una medida mal puesta.
 - **Métricas** (arriba a la derecha): crea una **métrica propia** (nombre y unidad) y decide, métrica a métrica, si **la ve el cliente en su app o queda oculta**. Lo que ocultas no llega al cliente ni consultando la base de datos. Las métricas valen para todos tus clientes; eliminar una métrica propia borra también sus medidas de **todos** (te lo pregunta antes).
-- El cliente ve las que le dejas visibles en **Progreso → Tus medidas**, con su cambio desde la primera. Por ahora las apuntas tú; el cliente no las escribe.
+- El cliente ve las que le dejas visibles en **Progreso → Tus medidas**, con su cambio desde la primera, y puede **apuntar las suyas** con «Apuntar una medida» (solo de las métricas visibles, y no con fecha futura). Lo que apunta aparece en tu tarjeta como cualquier otra medida; si se equivoca, puedes borrarla desde su historial.
 - Las medidas también salen en **Exportar datos** del cliente.
 
 ## Adherencia y check-ins

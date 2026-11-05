@@ -127,3 +127,10 @@ send-nutricionista-alerts).
 visible ones in Progreso → «Tus medidas». The client cannot write them yet (Harbiz lets clients add their own records: possible
 follow-up). **Correction to the table above:** NutriFit already had client **achievements** (`AchievementBadges` in Progreso: first
 weigh-in, streaks, hydration goal, meal photos), so F3 is not a gap.
+
+### Last bits (feat/medidas-cliente-alergenos, migration 0067)
+
+The client can now record their own body measurements (only visible metrics, no future dates, enforced by RLS). Recipes carry
+**allergens** and **servings**: the menu proposal skips a recipe whose allergen tag clashes with the client's allergies, and the
+client's recipe book warns about it. What remains from the Harbiz list: nothing worth doing now (programs with automatic plan
+switching and push alerts for phase endings stay as proposals).
