@@ -142,3 +142,9 @@ template of each phase that has started (Madrid date), is still running and was 
 client's nutritionist inside one transaction (so it creates a plan version and a «Cambio de fase» history entry, and the previous plan
 can be restored). Any failure leaves the plan untouched and stores the reason. The daily push digest got a «Fases» line (phase ends
 in 3 days, last phase ended yesterday, plan changed today, template failed), switchable in Ajustes → Avisos.
+
+## Update 2026-11-05: bulk recipe import (the free way to grow the recipe base)
+
+Recetario -> Importar: .csv/.xlsx or a pasted table, one row per ingredient (`src/lib/recipeImport.ts`). Recipe fields are read from the first
+row that has them, macros come from the file or are computed from the nutritionist catalogue, unknown foods import without macros with a
+warning, existing names are not duplicated, imported recipes are private. No migration, no recurring cost.

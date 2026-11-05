@@ -402,6 +402,15 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] La **vista previa del cliente** (la tuya) no apunta accesos extra ni enseña esa tarjeta.
 - [ ] Un cliente nuevo sin accesos: la tarjeta dice «no hay ningún acceso registrado».
 
+## 38. Importar recetas de golpe
+
+- [ ] **Planes y recursos → Recetas → Importar → Descargar plantilla de ejemplo**: el archivo se abre en Excel con las tildes bien.
+- [ ] Sube esa plantilla sin tocarla: «2 recetas listas para importar»; **Importar** las crea en tu recetario (privadas) con su tipo, tiempo, alérgenos y pasos, y los ingredientes de la primera con kcal y macros calculados con tu catálogo.
+- [ ] Vuelve a subirla: dice que ya las tienes y no las duplica.
+- [ ] Pega una tabla copiada de Excel o Google Sheets (con cabeceras): funciona igual que subir el archivo.
+- [ ] Un alimento que no está en tu catálogo se importa sin macros y sale en el aviso amarillo; una cantidad que no es un número se salta ese ingrediente y lo cuenta en «avisos sobre filas» con su número de fila.
+- [ ] Un archivo sin columnas «Receta» y «Alimento» da un error claro y no deja importar.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.
