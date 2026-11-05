@@ -494,6 +494,17 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     setMenuProposalOpen(false)
     toast(`Menú añadido: ${created.length} comidas — recuerda guardar el plan ✓`, 'ok')
   }
+  /** Añade (o sustituye) una semana entera propuesta: cada día pasa a ser un día del cuadrante semanal. */
+  const applyWeekProposal = (days: ProposedMeal[][], mode: 'add' | 'replace') => {
+    const created: EditableMeal[] = days.flatMap((day, d) => day.map(p => ({
+      id: newId(), name: p.slot.name, time: p.slot.time, kcalTarget: String(p.kcalTarget), dayOfWeek: d,
+      optionGroup: null, optionLabel: null, dayType: null, items: p.items,
+    })))
+    setMeals(prev => [...(mode === 'replace' ? [] : prev), ...created])
+    setSelectedDay(0)
+    setMenuProposalOpen(false)
+    toast(`Semana añadida: ${created.length} comidas — recuerda guardar el plan ✓`, 'ok')
+  }
   const addMeal = () => setMeals([...meals, {
     id: newId(), name: 'Comida', time: '', kcalTarget: '', dayOfWeek: selectedDay === 'all' ? null : selectedDay,
     optionGroup: null, optionLabel: null, dayType: null, items: [],
@@ -1297,7 +1308,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         scopeLabel={fitScopeLabel} sharedNote={fitSharedNote} onApply={applyFit} />
       <MenuProposalModal open={menuProposalOpen} onClose={() => setMenuProposalOpen(false)} recipes={recipes}
         targetKcal={parseFloat(kcalTarget) || 0} targetProteinG={parseFloat(proteinG) || 0} allergies={client.allergies} dislikes={client.foodDislikes ?? ''}
-        hasMeals={meals.some(m => m.dayOfWeek === (selectedDay === 'all' ? null : selectedDay))} onApply={applyMenuProposal} />
+        hasMeals={meals.some(m => m.dayOfWeek === (selectedDay === 'all' ? null : selectedDay))} hasAnyMeals={meals.length > 0}
+        onApply={applyMenuProposal} onApplyWeek={applyWeekProposal} />
       <ImportDietPlanModal open={importOpen} onClose={() => setImportOpen(false)} foods={foods}
         onImport={imported => setMeals(prev => [...prev, ...imported])} />
     </div>
