@@ -10,6 +10,7 @@ import { MetricDefinition, MetricValue, formatMetricDelta, formatMetricValue } f
 import { MonthAdherence, adherenceBetween, adherenceTrend, monthlyAdherence } from './adherenceHistory'
 import { PlanPhase, addDays, daysBetween, phaseReview, summarizePhases } from './planPhases'
 import { formatPlanChange } from './planChanges'
+import { LabHint, labHintsForAlerts } from './alertLabHints'
 
 /** Sin una consulta anterior registrada, se mira este tramo. */
 export const DEFAULT_WINDOW_DAYS = 28
@@ -46,6 +47,8 @@ export interface ConsultationBrief {
   checkinsSince: number
   alerts: ClientAlert[]
   labs: BriefLab[]
+  /** Pistas que unen un aviso con una analítica (o con su falta). */
+  labHints: LabHint[]
   planChanges: { date: string; text: string }[]
   phase: { name: string; position: number; total: number; daysLeft: number } | null
   phaseReviewText: string | null
@@ -131,7 +134,7 @@ export function buildConsultationBrief(input: BriefInput): ConsultationBrief {
   const brief: ConsultationBrief = {
     since, fromLastConsultation: fromLast, daysSince, weight, measurements,
     adherence: { last7, sincePct: sinceAdh?.pct ?? null, months, trend: adherenceTrend(months) },
-    signals, checkinsSince, alerts: input.alerts, labs, planChanges, phase, phaseReviewText, notes, talkingPoints: [],
+    signals, checkinsSince, alerts: input.alerts, labs, labHints: labHintsForAlerts(input.alerts, input.bloodMarkers, todayISO), planChanges, phase, phaseReviewText, notes, talkingPoints: [],
   }
   brief.talkingPoints = talkingPoints(brief, input.client.goal)
   return brief
@@ -159,6 +162,8 @@ export function talkingPoints(b: ConsultationBrief, goal: string | null): string
   if (b.adherence.trend === 'down') points.push('La adherencia ha bajado respecto al mes anterior.')
 
   for (const a of b.alerts.filter(a => a.priority === 'week')) points.push(`Aviso: ${a.label}.`)
+
+  for (const hint of b.labHints.filter(h => h.tone !== 'ok')) points.push(hint.text)
 
   const newLabs = b.labs.filter(l => l.isNew)
   if (newLabs.length > 0) points.push(`Analítica nueva con valores fuera de rango: ${newLabs.map(l => `${l.label} (${l.status})`).join(', ')}.`)
