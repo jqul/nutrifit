@@ -42,7 +42,7 @@ Abre el icono y entra directamente en **su** app. Para recibir notificaciones, t
 ### Progreso
 
 - Su **peso**: titular desde que empezó, gráfica con botones de periodo (1M, 3M, 6M, 1A, Todo), línea de tendencia y la media y el cambio del periodo elegido, y la caja para apuntar el peso de hoy.
-- **¿Cómo vas?:** una lectura en una frase de su evolución.
+- **¿Cómo vas?:** una lectura en una frase de su evolución y, si el peso avanza hacia su objetivo, una **fecha estimada** para llegar («A este ritmo llegarías a tu objetivo hacia el 3 de diciembre»); si no avanza, esa frase simplemente no aparece.
 - **Tus medidas:** las que el nutricionista ha apuntado (cintura, % de grasa…) y le deja ver, con su cambio desde la primera y una mini gráfica. Con **Apuntar una medida** puede añadir las suyas cuando se mida.
 - Racha y adherencia a 7 y 30 días, **fotos de progreso** con comparador antes/después, logros y diario de comidas.
 - **Descargar informe** en PDF.

@@ -420,6 +420,13 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] En la **app del cliente** (Progreso) pasa lo mismo y las cifras no llevan color de bien o mal.
 - [ ] Con un cliente con un solo pesaje sigue saliendo «Sin historial de peso suficiente todavía».
 
+## 40. Fecha estimada para llegar al objetivo
+
+- [ ] Cliente con peso objetivo y al menos 3 pesajes en las últimas 4 semanas (abarcando 14 días) con el último de las dos últimas semanas, bajando hacia el objetivo: en **Seguimiento → Evolución del peso** sale «A este ritmo (−x,x kg/semana) llegaría a su objetivo hacia el …». El ritmo coincide con el del **Reajuste del plan**.
+- [ ] En su app (**Progreso → ¿Cómo vas?**) sale la misma frase en segunda persona.
+- [ ] Un cliente cuyo peso va en dirección contraria, o está parado, o ya está en su objetivo, o sin objetivo, o con pocos pesajes: **no sale ninguna frase** (ni aviso de «vas mal»).
+- [ ] Un objetivo muy lejano (más de un año al ritmo actual): tampoco sale.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

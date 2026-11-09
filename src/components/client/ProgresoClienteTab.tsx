@@ -14,6 +14,7 @@ import { HealthTimeline } from '../shared/HealthTimeline'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { printProgressReport } from '../../lib/printProgressReport'
 import { progressReading, ProgressReading } from '../../lib/progressReading'
+import { goalEta, etaSentence } from '../../lib/goalEta'
 import { Camera, Flame, UtensilsCrossed, Plus, FileDown, Moon } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
@@ -162,11 +163,12 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
   const adherence7d = calcAdherence(checkins, 7, today)
   const adherence30d = calcAdherence(checkins, 30, today)
   const streak = calcStreak(checkins, today)
+  const etaLine = etaSentence(goalEta(weights, client.goalWeightKg ?? null, todayStr), todayStr, 'client')
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-xl mx-auto pb-24">
       <WeightImpactCard weights={weights} goalKg={client.goalWeightKg} />
-      <ReadingCard reading={progressReading({ weights, goal: client.goal, goalWeightKg: client.goalWeightKg, adherence7d, streak })} personalMode={personalMode} />
+      <ReadingCard reading={progressReading({ weights, goal: client.goal, goalWeightKg: client.goalWeightKg, adherence7d, streak })} personalMode={personalMode} etaLine={etaLine} />
 
       <div className={`grid gap-2 ${personalMode ? 'grid-cols-1 max-w-[160px]' : 'grid-cols-3'}`}>
         <StatCard label="Racha" value={`${streak}d`} icon={<Flame className="w-4 h-4 text-accent" />} />
@@ -303,7 +305,7 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
  * datos que ya existen (peso, racha, hidratación, fotos de comida), sin
  * tabla nueva: son hitos, no algo que haya que auditar ni deshacer. */
 /** "¿Cómo vas?": la lectura del progreso en una frase, con el porqué (peso, adherencia y racha). */
-function ReadingCard({ reading, personalMode }: { reading: ProgressReading; personalMode?: boolean }) {
+function ReadingCard({ reading, personalMode, etaLine }: { reading: ProgressReading; personalMode?: boolean; etaLine?: string | null }) {
   const dot = reading.tone === 'good' ? 'bg-ok' : reading.tone === 'attention' ? 'bg-warn' : 'bg-notice'
   return (
     <div className="card p-5" aria-live="polite">
@@ -313,6 +315,7 @@ function ReadingCard({ reading, personalMode }: { reading: ProgressReading; pers
       </p>
       <p className="text-sm text-muted mt-1.5">{reading.detail}</p>
       {reading.goalPercent != null && <p className="text-xs text-muted mt-2">{reading.goalPercent}% del camino hacia tu objetivo{personalMode ? '' : ' de peso'}.</p>}
+      {etaLine && <p className="text-xs text-muted mt-1">{etaLine}</p>}
     </div>
   )
 }
