@@ -4,7 +4,7 @@ import { planPhaseFromRow } from '../../../../lib/mappers'
 import { DEMO_DIET_TEMPLATES, demoPlanPhases } from '../../../../lib/demo-data'
 import { toLocalISODate } from '../../../../lib/date'
 import {
-  PlanPhase, formatRange, madridDay, nextPhaseDefaults, phaseReview, phaseStatus, sortPhases, summarizePhases, validatePhase,
+  PlanPhase, formatRange, madridDay, nextPhaseDefaults, PHASE_PRESETS, applyPhasePreset, phaseReview, phaseStatus, sortPhases, summarizePhases, validatePhase,
 } from '../../../../lib/planPhases'
 import { toast } from '../../../shared/Toast'
 import { Button } from '../../../shared/Button'
@@ -132,6 +132,15 @@ export function PlanPhasesCard({ clientId, nutricionistaId, demoMode }: { client
             <p className="text-xs font-bold uppercase tracking-wider text-muted">{draft.id ? 'Editar fase' : 'Nueva fase'}</p>
             <button onClick={() => setDraft(null)} className="p-1 text-muted hover:text-warn" aria-label="Cerrar"><X className="w-4 h-4" /></button>
           </div>
+          {!draft.id && (
+            <div role="group" aria-label="Empezar desde una plantilla" className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs text-muted">Plantilla:</span>
+              {PHASE_PRESETS.map(p => (
+                <button key={p.id} type="button" onClick={() => setDraft({ ...draft, ...applyPhasePreset(p, draft.startDate) })}
+                  className="px-2.5 py-1 rounded-full bg-bg-alt text-xs font-semibold text-muted hover:text-ink transition-colors">{p.name}</button>
+              ))}
+            </div>
+          )}
           <input value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} placeholder="Nombre (Definición, Mantenimiento…)" maxLength={80} autoFocus className={input} />
           <div className="grid grid-cols-2 gap-2">
             <label className="text-xs text-muted">Empieza

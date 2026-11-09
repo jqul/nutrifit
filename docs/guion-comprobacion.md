@@ -427,6 +427,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Un cliente cuyo peso va en dirección contraria, o está parado, o ya está en su objetivo, o sin objetivo, o con pocos pesajes: **no sale ninguna frase** (ni aviso de «vas mal»).
 - [ ] Un objetivo muy lejano (más de un año al ritmo actual): tampoco sale.
 
+## 41. Plantillas de fase y mantenimiento con peso de referencia
+
+- [ ] **Plan de dieta → Fases del plan → Añadir fase**: salen los botones **Definición · Mantenimiento · Pausa de dieta · Volumen**. Al pulsar uno se rellenan el nombre, el texto para el cliente y la fecha de fin (8, 4, 2 y 8 semanas desde el inicio, el último día incluido); se pueden seguir editando. Al editar una fase que ya existe **no** salen.
+- [ ] Una fase creada con **Pausa de dieta** aparece en **Hoy** del cliente («Tu fase») con su texto.
+- [ ] Cliente con objetivo **mantenimiento** y peso objetivo puesto, a más de 0,7 kg de él y con peso parado (y adherencia ≥ 70 %, plan de hace más de 14 días): **Reajuste del plan** propone subir o bajar kcal para «volver poco a poco a su peso de mantenimiento». A menos de 0,7 kg: «Va al ritmo que pide su objetivo».
+- [ ] Un cliente que ya vuelve despacio hacia ese peso (≈0,15 % por semana) no recibe propuesta.
+- [ ] Los objetivos de perder peso o ganar masa se comportan como antes.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

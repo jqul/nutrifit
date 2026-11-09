@@ -192,3 +192,35 @@ describe('suggestDietAdjustment — límites de seguridad', () => {
     if (r.kind === 'adjust') expect(Math.abs(r.deltaKcal)).toBeGreaterThanOrEqual(50)
   })
 })
+
+describe('suggestDietAdjustment — mantenimiento dinámico', () => {
+  const hold = (over: Partial<Parameters<typeof suggestDietAdjustment>[0]> = {}) =>
+    suggest({ goal: 'mantenimiento', ...over })
+
+  it('holds when the weight is within 0,7 kg of the maintenance weight and stable', () => {
+    const r = hold({ goalWeightKg: 75, weights: weekly(75.5, 0) })
+    expect(r.kind).toBe('on_track')
+  })
+  it('proposes going back down slowly when it is well above the maintenance weight and not moving', () => {
+    const r = hold({ goalWeightKg: 75, weights: weekly(77, 0) })
+    expect(r.kind).toBe('adjust')
+    expect(r.deltaKcal).toBeLessThan(0)
+    expect(r.reasons.join(' ')).toContain('peso de mantenimiento (75,0 kg)')
+  })
+  it('proposes going back up slowly when it is well below the maintenance weight and not moving', () => {
+    const r = hold({ goalWeightKg: 75, weights: weekly(73, 0) })
+    expect(r.kind).toBe('adjust')
+    expect(r.deltaKcal).toBeGreaterThan(0)
+  })
+  it('leaves it alone when it is already heading back at the gentle pace', () => {
+    const r = hold({ goalWeightKg: 75, weights: weekly(77, -0.115) })
+    expect(r.kind).toBe('on_track')
+  })
+  it('without a maintenance weight, the stable pace applies as before', () => {
+    expect(hold({ goalWeightKg: null, weights: weekly(77, 0) }).kind).toBe('on_track')
+  })
+  it('does not change what losing or gaining goals do near their goal weight', () => {
+    const r = suggest({ goal: 'perder_peso', goalWeightKg: 70, weights: weekly(80, -0.1) })
+    expect(r.kind).toBe('adjust')
+  })
+})
