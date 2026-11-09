@@ -20,6 +20,10 @@ Los avisos automáticos que recibes **tú** sobre tus clientes. Cada día, por l
 
 Para recibirlos como notificación activa la **campana** de la cabecera en tu dispositivo.
 
+## Modo claro u oscuro
+
+El **icono de la luna o el sol** (arriba, en tu panel, y en **Más → Modo oscuro** de la app del cliente) cambia entre claro y oscuro. Si nunca lo has tocado, NutriFit **sigue el modo de tu móvil u ordenador** (y cambia solo cuando el sistema cambia, por ejemplo de noche); en cuanto eliges uno a mano, se queda como lo dejaste en ese dispositivo.
+
 ## Experiencia
 
 Lo que ven y responden tus clientes:

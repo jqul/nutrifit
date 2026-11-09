@@ -30,7 +30,7 @@ Abre el icono y entra directamente en **su** app. Para recibir notificaciones, t
 
 ### Dieta
 
-- Su objetivo diario y, si ha marcado comidas o añadido extras, **«Hoy llevas X kcal de Y»** con cuánto le falta o se pasa.
+- Su objetivo diario y, si ha marcado comidas o añadido extras, **«Hoy llevas X kcal de Y»** con cuánto le falta o lleva de más (dicho sin reproche: «Hoy llevas 250 kcal por encima del objetivo», en un color neutro). Con el botoncito **«Me quedan» / «Llevo»** elige si quiere ver lo consumido o lo que resta, y la app se acuerda de su elección en ese dispositivo.
 - Su plan: cada comida con sus alimentos y cantidades (y, si hay **opciones**, elige cuál toma), las **recetas** y el botón ⟲ para **sustituir un alimento** por otro equivalente (nunca uno que choque con sus alergias).
 - **Libro de recetas:** si has marcado recetas como visibles, aparece un botón con ellas (buscador y filtro por tipo de comida, con ingredientes y pasos), aunque no estén en su plan.
 - **Lista de la compra** generada del plan.

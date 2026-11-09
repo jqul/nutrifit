@@ -97,7 +97,7 @@ export interface BalanceStatus { tone: 'ok' | 'low' | 'high'; text: string }
 export function balanceStatus(totalKcal: number, targetKcal: number): BalanceStatus {
   const ratio = totalKcal / targetKcal
   const diff = Math.abs(Math.round(targetKcal - totalKcal))
-  if (ratio > 1.05) return { tone: 'high', text: `Te pasas ${diff} kcal del objetivo` }
+  if (ratio > 1.05) return { tone: 'high', text: `Hoy llevas ${diff} kcal por encima del objetivo` }
   if (ratio < 0.9) return { tone: 'low', text: `Te faltan ${diff} kcal para el objetivo` }
   return { tone: 'ok', text: 'Dentro del objetivo' }
 }
