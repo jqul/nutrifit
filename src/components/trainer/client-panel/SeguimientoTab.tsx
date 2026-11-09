@@ -24,6 +24,7 @@ import { ReportOptionsModal } from './ReportOptionsModal'
 import { getDemoReviews } from '../../../hooks/useClientReviews'
 import { DEMO_PLAN_CHANGES } from '../../../lib/demo-data'
 import { toLocalISODate } from '../../../lib/date'
+import { goalEta, etaSentence } from '../../../lib/goalEta'
 import { summarizeSignals, isConcerningCheckin, SignalTone } from '../../../lib/checkinSignals'
 import { summarizeWeight, weightDeltaTone, formatWeightDelta } from '../../../lib/clientListSummary'
 import { TONE_CLASS } from '../healthStyles'
@@ -170,6 +171,7 @@ export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl,
   const signals = summarizeSignals(checkins, today)
   const adherenceMonths = monthlyAdherence(checkins, toLocalISODate(today), { months: 6, startDate: new Date(client.createdAt).toISOString().slice(0, 10) })
   const trend = adherenceTrend(adherenceMonths)
+  const etaLine = etaSentence(goalEta(weights, client.goalWeightKg ?? null, toLocalISODate(today)), toLocalISODate(today), 'pro')
   const delta7 = summarizeWeight(weights, today, 7)?.deltaKg ?? null
   const delta28 = summarizeWeight(weights, today, 28)?.deltaKg ?? null
 
@@ -196,6 +198,7 @@ export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl,
             ))}
           </p>
         )}
+        {etaLine && <p className="text-xs text-muted">{etaLine}</p>}
         <WeightChart entries={weights} goalKg={client.goalWeightKg} cycleEntries={cycles} />
         <AddPastWeight clientId={client.id} demoMode={demoMode} onAdded={load} />
       </div>
