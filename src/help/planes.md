@@ -41,6 +41,7 @@ Pulsa el icono ⟲ junto a un alimento. Por defecto sugiere **Mismo grupo** (otr
 
 Para llevar a un cliente por etapas (por ejemplo **Definición** 4 semanas y luego **Mantenimiento** 2), usa la tarjeta **Fases del plan**, encima del objetivo, en la pestaña **Plan de dieta**:
 
+- **Plantillas de fase:** al añadir una fase, los botones **Definición, Mantenimiento, Pausa de dieta y Volumen** rellenan el nombre, el texto para el cliente y la duración (8, 4, 2 y 8 semanas) a partir de la fecha de inicio; después lo editas como quieras. La **pausa de dieta** son una o dos semanas comiendo cerca del mantenimiento para descansar de un déficit largo: va bien antes de seguir con otra definición.
 - **Añadir fase:** nombre, **fecha de inicio y de fin** (ambas incluidas), un texto de **qué se hace en esa fase** (**lo ve el cliente**, no es para notas internas) y, si quieres, la **plantilla de plan** que le corresponde. La fase nueva se propone justo a continuación de la última y con 4 semanas de duración. Dos fases del mismo cliente no pueden solaparse.
 - **Qué ve el cliente:** en **Hoy**, la tarjeta **Tu fase · 2 de 3** con los días que quedan, su barra de avance, lo que se hace en ella y cuál viene después. Si la siguiente empieza en menos de dos semanas, también la avisa.
 - **Aviso para ti:** en **Inicio** sale **Fases por revisar** cuando una fase termina en 3 días o menos (te dice cuál es la siguiente, o que no hay otra), o cuando la última terminó hace menos de dos semanas y no hay nada después. Al pulsar abres su plan. La propia tarjeta también lo avisa.

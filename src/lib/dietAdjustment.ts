@@ -76,6 +76,24 @@ function paceFor(goal: string | null): Pace | null {
   }
 }
 
+/** Hasta cuánto del peso de mantenimiento se considera «en el sitio»: dentro de esta banda se mantiene; fuera, se vuelve poco a poco. */
+export const MAINTENANCE_BAND_KG = 0.7
+const MAINTENANCE_RECOVERY_PCT = 0.15
+
+/**
+ * Mantenimiento dinámico: si el objetivo es mantener y hay un peso de mantenimiento, estar a más de 0,7 kg de él pide volver
+ * poco a poco (≈0,15 % del peso por semana) en lugar de «mantener» lo que ya se ha desviado. Dentro de la banda, o sin peso de
+ * mantenimiento, sigue valiendo el ritmo estable. Devuelve el ritmo a usar para ese caso, o null si no cambia.
+ */
+function maintenanceRecoveryPace(goal: string | null, currentKg: number, goalWeightKg: number | null): Pace | null {
+  if (goalWeightKg == null || (goal !== 'mantenimiento' && goal !== 'salud' && goal !== 'rendimiento')) return null
+  const diff = goalWeightKg - currentKg
+  if (Math.abs(diff) <= MAINTENANCE_BAND_KG) return null
+  return diff > 0
+    ? { target: MAINTENANCE_RECOVERY_PCT, min: 0.05, max: 0.3, label: `volver poco a poco a su peso de mantenimiento (${fmt1(goalWeightKg)} kg): subir ≈0,15 % del peso por semana` }
+    : { target: -MAINTENANCE_RECOVERY_PCT, min: -0.3, max: -0.05, label: `volver poco a poco a su peso de mantenimiento (${fmt1(goalWeightKg)} kg): bajar ≈0,15 % del peso por semana` }
+}
+
 const fmt1 = (n: number) => n.toFixed(1).replace('.', ',')
 const fmt2 = (n: number) => n.toFixed(2).replace('.', ',')
 const signed = (n: number, f: (v: number) => string = fmt1) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${f(Math.abs(n))}`
@@ -108,7 +126,7 @@ export function suggestDietAdjustment(input: AdjustmentInput, today = new Date()
   const { plan, goal, goalWeightKg } = input
   if (!plan || !plan.kcal_target) return none('no_plan', 'Define primero los objetivos del plan para poder reajustarlos.')
 
-  const pace = paceFor(goal)
+  let pace = paceFor(goal)
   if (!pace) return none('wait', 'Indica el objetivo del cliente (perder peso, ganar masa, mantenimiento…) para valorar su ritmo.')
 
   const todayDay = dayNumber(toLocalISODate(startOfDay(today)))
@@ -134,6 +152,7 @@ export function suggestDietAdjustment(input: AdjustmentInput, today = new Date()
   }
 
   const currentKg = points[points.length - 1].kg
+  pace = maintenanceRecoveryPace(goal, currentKg, goalWeightKg) ?? pace
   const meanKg = points.reduce((s, p) => s + p.kg, 0) / points.length
   const kgPerWeek = slopeKgPerDay(points) * 7
   const pctPerWeek = (kgPerWeek / meanKg) * 100

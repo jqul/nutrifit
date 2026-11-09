@@ -193,3 +193,22 @@ export function phaseDigestNotes(entries: { clientName: string; phases: PlanPhas
   }
   return notes
 }
+
+/** Plantillas de fase: rellenan el nombre, lo que se explica al cliente y la duración. El nutricionista las edita después. */
+export interface PhasePreset { id: string; name: string; description: string; weeks: number }
+
+export const PHASE_PRESETS: PhasePreset[] = [
+  { id: 'definicion', name: 'Definición', weeks: 8,
+    description: 'Déficit moderado y mucha proteína: aquí se baja grasa sin perder músculo.' },
+  { id: 'mantenimiento', name: 'Mantenimiento', weeks: 4,
+    description: 'Comemos para mantener el peso estable: mismas pautas, sin déficit ni superávit.' },
+  { id: 'pausa', name: 'Pausa de dieta', weeks: 2,
+    description: 'Una o dos semanas comiendo cerca de tu mantenimiento para descansar de la dieta y volver con más energía. Sigue apuntando todo como siempre.' },
+  { id: 'volumen', name: 'Volumen', weeks: 8,
+    description: 'Superávit controlado y mucha proteína para ganar masa muscular con poca grasa.' },
+]
+
+/** Lo que cambia al elegir una plantilla estando ya puesto el inicio: nombre, descripción y el último día (incluido). */
+export function applyPhasePreset(preset: PhasePreset, startDate: string): { name: string; description: string; endDate: string } {
+  return { name: preset.name, description: preset.description, endDate: addDays(startDate, preset.weeks * 7 - 1) }
+}

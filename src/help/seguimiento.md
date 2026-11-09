@@ -37,6 +37,8 @@ Debajo está **Reajuste del plan**: compara el ritmo real de peso con el que pid
 - Si el ritmo encaja, dice que no hace falta reajustar.
 - Si se desvía, propone subir o bajar las kcal (entre 50 y 250). **Se mantienen la proteína y la grasa; los carbohidratos acompañan.** Puedes corregir la cifra antes de **Aplicar al plan**. Nunca propone bajar de 1.200 kcal.
 
+**Mantenimiento con peso de referencia:** si el objetivo del cliente es mantener (mantenimiento, salud o rendimiento) y le has puesto un **peso de mantenimiento**, estar a **menos de 0,7 kg** de él cuenta como «en su sitio» y no propone nada. Si se ha desviado más, no se queda en «mantener lo desviado»: propone volver poco a poco (alrededor del 0,15 % del peso por semana) subiendo o bajando algo las kcal. Si ya va volviendo a ese ritmo suave, dice que no hace falta reajustar. Sin peso de mantenimiento, sigue valiendo el ritmo estable de siempre.
+
 Aplicar el reajuste cambia las kcal y los carbohidratos del plan, **no toca las comidas**, y queda en el historial con su motivo.
 
 ## Peso y objetivo

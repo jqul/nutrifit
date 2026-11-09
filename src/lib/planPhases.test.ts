@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  PlanPhase, addDays, daysBetween, formatRange, isISODate, madridDay, nextPhaseDefaults, phaseDigestNotes, phaseReview, phaseStatus, summarizePhases, validatePhase,
+  PlanPhase, addDays, daysBetween, formatRange, isISODate, madridDay, nextPhaseDefaults, PHASE_PRESETS, applyPhasePreset, phaseDigestNotes, phaseReview, phaseStatus, summarizePhases, validatePhase,
 } from './planPhases'
 
 const phase = (id: string, name: string, startDate: string, endDate: string): PlanPhase =>
@@ -135,5 +135,27 @@ describe('phaseDigestNotes', () => {
     expect(phaseDigestNotes(entry([P1, failed]), '2026-11-30')).toEqual(['Ana: no se pudo aplicar la plantilla de «Mantenimiento»'])
     expect(phaseDigestNotes(entry([P1, failed]), '2026-12-02')).toHaveLength(1)
     expect(phaseDigestNotes(entry([P1, failed]), '2026-12-03')).toEqual([])
+  })
+})
+
+describe('phase presets', () => {
+  it('has the four presets with a name, a description for the client and a duration', () => {
+    expect(PHASE_PRESETS.map(p => p.name)).toEqual(['Definición', 'Mantenimiento', 'Pausa de dieta', 'Volumen'])
+    for (const p of PHASE_PRESETS) { expect(p.description.length).toBeGreaterThan(20); expect(p.weeks).toBeGreaterThan(0) }
+  })
+  it('a diet break is short (one or two weeks)', () => {
+    expect(PHASE_PRESETS.find(p => p.id === 'pausa')!.weeks).toBeLessThanOrEqual(2)
+  })
+  it('fills name, description and the last day (inclusive) from the start date', () => {
+    const preset = PHASE_PRESETS.find(p => p.id === 'definicion')!
+    expect(applyPhasePreset(preset, '2026-11-09')).toEqual({ name: 'Definición', description: preset.description, endDate: '2027-01-03' })
+    const pausa = PHASE_PRESETS.find(p => p.id === 'pausa')!
+    expect(applyPhasePreset(pausa, '2026-11-09').endDate).toBe('2026-11-22')
+  })
+  it('every preset passes the same validation as a hand-made phase', () => {
+    for (const p of PHASE_PRESETS) {
+      const filled = applyPhasePreset(p, '2026-11-09')
+      expect(validatePhase({ name: filled.name, startDate: '2026-11-09', endDate: filled.endDate }, [])).toEqual([])
+    }
   })
 })
