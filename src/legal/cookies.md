@@ -8,7 +8,7 @@ NutriFit **no usa cookies de publicidad, de analítica ni de seguimiento**, y no
 
 - **Sesión de usuario** (clave de la forma «sb-…-auth-token»): mantiene tu sesión iniciada. Es necesaria para entrar en tu cuenta. Se borra al cerrar sesión.
 - **Enlace del cliente** («nutrifit.clientToken»): recuerda el enlace personal de un cliente para que el icono de la pantalla de inicio abra su aplicación.
-- **Preferencias de la aplicación:** modo claro u oscuro («nf_dark_mode»), el periodo que eliges en la gráfica de peso («nf_weight_range»), tu elección de opciones o de tipo de día en el plan («diet-option-choice…», «diet-day-type…»), avisos que has descartado («nutrifit.dietAdjustment.dismissed…», «nutrifit_install_banner_seen», «nutrifit-onboarding-skipped…»).
+- **Preferencias de la aplicación:** modo claro u oscuro («nf_dark_mode»), el periodo que eliges en la gráfica de peso («nf_weight_range»), si ves el día como «llevo» o «me quedan» («nf_day_view»), tu elección de opciones o de tipo de día en el plan («diet-option-choice…», «diet-day-type…»), avisos que has descartado («nutrifit.dietAdjustment.dismissed…», «nutrifit_install_banner_seen», «nutrifit-onboarding-skipped…»).
 - **Funcionamiento sin conexión (service worker y caché):** guarda en tu dispositivo ficheros de la propia aplicación para que cargue más rápido y para poder instalarla en la pantalla de inicio. No contiene datos de otras personas.
 
 ## Contenido de terceros

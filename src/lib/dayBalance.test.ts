@@ -94,6 +94,6 @@ describe('balanceStatus', () => {
   })
   it('says how many kcal are missing or over', () => {
     expect(balanceStatus(1620, 2000)).toEqual({ tone: 'low', text: 'Te faltan 380 kcal para el objetivo' })
-    expect(balanceStatus(2250, 2000)).toEqual({ tone: 'high', text: 'Te pasas 250 kcal del objetivo' })
+    expect(balanceStatus(2250, 2000)).toEqual({ tone: 'high', text: 'Hoy llevas 250 kcal por encima del objetivo' })
   })
 })

@@ -22,6 +22,7 @@ import { ExtrasQuickLogSheet } from './ExtrasQuickLogSheet'
 import { BottomSheet } from '../shared/BottomSheet'
 import { RecipeBookSheet } from './RecipeBookSheet'
 import { dislikeMatch } from '../../lib/foodDislikes'
+import { DayView, readDayView, remainingHeadline, saveDayView } from '../../lib/dayView'
 import { BarcodeScanner } from '../shared/BarcodeScanner'
 import { ScannedFood } from '../../lib/openFoodFacts'
 import { DEFAULT_EATING_OUT_GUIDES, DefaultEatingOutGuide } from '../../lib/eatingOutGuides'
@@ -77,6 +78,7 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
   const mealLogsSnap = useSyncExternalStore(subscribeMealLogs, getMealLogsSnapshot)
   const logsToday = mealLogsOf(mealLogsSnap, clientId)
   const [scannerOpen, setScannerOpen] = useState(false)
+  const [dayView, setDayView] = useState<DayView>(readDayView)
   const [scannedFood, setScannedFood] = useState<ScannedFood | null>(null)
   const [addingFoods, setAddingFoods] = useState(false)
   const [viewingRecipe, setViewingRecipe] = useState<RecipeRow | null>(null)
@@ -257,13 +259,23 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         {!hideNumbers && balance.total.kcal > 0 && (
           <div className="mt-4 pt-4 border-t border-border space-y-2" aria-live="polite">
             <div className="flex items-baseline justify-between gap-3">
-              <p className="text-sm"><span className="font-semibold">Hoy llevas {balance.total.kcal} kcal</span>
-                <span className="text-muted"> de {plan.kcalTarget}{balance.pctOfTarget != null ? ` (${balance.pctOfTarget}%)` : ''}</span></p>
+              {dayView === 'remaining' && plan.kcalTarget > 0
+                ? <p className="text-sm"><span className="font-semibold">{remainingHeadline(balance.total.kcal, plan.kcalTarget)}</span>
+                    <span className="text-muted"> de {plan.kcalTarget}</span></p>
+                : <p className="text-sm"><span className="font-semibold">Hoy llevas {balance.total.kcal} kcal</span>
+                    <span className="text-muted"> de {plan.kcalTarget}{balance.pctOfTarget != null ? ` (${balance.pctOfTarget}%)` : ''}</span></p>}
+              {plan.kcalTarget > 0 && (
+                <button type="button" onClick={() => { const next: DayView = dayView === 'remaining' ? 'consumed' : 'remaining'; setDayView(next); saveDayView(next) }}
+                  className="flex-shrink-0 px-2.5 py-1 rounded-full bg-bg-alt text-xs font-semibold text-muted hover:text-ink transition-colors"
+                  aria-label={dayView === 'remaining' ? 'Ver lo que llevo' : 'Ver lo que me queda'}>
+                  {dayView === 'remaining' ? 'Llevo' : 'Me quedan'}
+                </button>
+              )}
             </div>
             <DayBalanceBar planKcal={balance.plan.kcal} extrasKcal={balance.extras.kcal} targetKcal={plan.kcalTarget} />
             {plan.kcalTarget > 0 && (() => {
               const status = balanceStatus(balance.total.kcal, plan.kcalTarget)
-              return <p className={`text-xs font-semibold ${status.tone === 'ok' ? 'text-ok' : status.tone === 'high' ? 'text-warn' : 'text-muted'}`}>{status.text}</p>
+              return <p className={`text-xs font-semibold ${status.tone === 'ok' ? 'text-ok' : status.tone === 'high' ? 'text-notice' : 'text-muted'}`}>{status.text}</p>
             })()}
             <p className="text-xs text-muted">
               <span className="inline-block w-2 h-2 rounded-full bg-ok mr-1" />Plan {balance.plan.kcal}

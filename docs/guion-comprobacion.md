@@ -435,6 +435,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Un cliente que ya vuelve despacio hacia ese peso (≈0,15 % por semana) no recibe propuesta.
 - [ ] Los objetivos de perder peso o ganar masa se comportan como antes.
 
+## 42. Retoques de diseño: modo oscuro por sistema y «Llevo / Me quedan»
+
+- [ ] Con el modo del sistema (móvil u ordenador) en **oscuro** y sin haber tocado nunca el icono de la luna, NutriFit abre en oscuro; con el sistema en claro, abre en claro. Si cambias el modo del sistema con la app abierta, la app lo sigue.
+- [ ] Pulsa el icono de la luna/sol: se queda con tu elección aunque el sistema cambie.
+- [ ] App del cliente → **Dieta**, con comidas marcadas o extras: junto a «Hoy llevas X kcal de Y» hay un botón **«Me quedan»**. Al pulsarlo dice «Te quedan N kcal de Y» y el botón pasa a **«Llevo»**. Cierra y abre la app: se acuerda.
+- [ ] Si el cliente se pasa del objetivo, la frase es «Hoy llevas N kcal por encima del objetivo» en un color neutro (ámbar), no en rojo, y en la vista «Me quedan» dice «Hoy llevas N kcal por encima».
+- [ ] Un cliente con **Ocultar calorías y macros** no ve nada de esto.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.
