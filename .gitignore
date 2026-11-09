@@ -4,3 +4,6 @@ dist
 .env.*
 !.env.local.example
 *.local
+
+# Caché de tsc del hook de Claude Code
+*.tsbuildinfo
