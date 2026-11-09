@@ -1,0 +1,40 @@
+feature,area,priority,original,clone,notes
+Adaptive expenditure from intake and weight trend,tracking,could,yes,skip,needs every meal logged; NutriFit clients tick a plan and some must not see numbers
+Weight trend line weighted to recent points next to raw weigh-ins,tracking,should,yes,partial,centred 3-point moving average only (trendLine.ts) - M1
+Weight chart range chips with averages and change per range,tracking,should,yes,no,M1
+Tap tooltip and remembered chart choice,client app,could,yes,no,M1/M7
+Weekly check-in as skippable guided modules,client app,should,yes,no,nutritionist-side weekly review exists; client-side guided mini check-in is M5
+Goal with a chosen rate,plans,could,yes,no,
+Goal ETA (projected date to reach goal weight),tracking,should,yes,no,M3
+Adherence-neutral: unlogged day is not a failed day,tracking,should,yes,no,calcAdherence counts a day without check-in as not adherent - M2 needs a decision
+Weekly calorie budget (shift calories between days),plans,could,yes,no,M9
+Dynamic maintenance near the goal weight,plans,should,yes,no,M4 - reajuste only handles losing/gaining
+Diet break and refeed guidance,plans,could,yes,partial,phases can model it by hand; presets are M4
+Food logger with a plate and one Log button,client app,could,yes,no,M6
+Multi-add plus on each result,client app,could,yes,no,M6
+History first and hourly go-to suggestions,client app,could,yes,no,M6
+Favourites in food logging,client app,could,yes,no,M6
+Quick add of calories and macros,client app,could,yes,partial,extras quick log exists (ExtrasQuickLogSheet)
+Barcode and label scanning,client app,should,yes,yes,barcode scan with Open Food Facts built; label scanning no
+AI describe photo and voice logging,client app,could,yes,skip,paid service; no recurring costs by decision
+Recipes with steps prep time and viewer,plans,should,yes,yes,already covered
+Recipes nested inside recipes,plans,could,yes,no,
+Recipe import from a URL,plans,could,yes,no,M10 - needs a server function
+Bulk recipe import from a table,plans,could,no,yes,built (recipeImport.ts); not a MacroFactor feature
+Dashboard tap-a-day column chart,client app,could,yes,no,
+Remaining vs consumed day view toggle remembered,client app,could,yes,no,M7
+Energy balance card over 30 days,client app,could,yes,partial,intake balance exists on the nutritionist side only
+Insight cards under charts with change over preset spans,client app,should,yes,partial,last week and 4 week change exist for weight - M1
+Habits calendar with yearly streak view,client app,could,yes,no,streak and 7/30 day adherence exist
+Period tracking,client app,could,yes,yes,built; marks the weight chart
+Shortcuts toolbar and home-screen widgets,client app,could,yes,skip,native only
+PWA app shortcuts in the manifest,client app,could,yes,no,M8 - closest web equivalent of long-press shortcuts
+Watch app,client app,could,yes,skip,native only
+Apple Health and Health Connect sync,client app,could,yes,skip,native only
+Weight history import,client app,could,yes,yes,weight CSV import built
+Compact one-line macros on food rows,design,should,yes,no,M7
+Colour used as meaning not decoration with no red for gaps,design,should,yes,partial,audit with M2
+Dark theme that follows the system,design,should,yes,partial,dark mode exists as a manual toggle (useDarkMode.ts)
+One design system across all screens,design,should,yes,partial,
+Bottom-reach primary actions,design,could,yes,partial,
+Premium-only pricing,business,could,yes,skip,no payments by decision
