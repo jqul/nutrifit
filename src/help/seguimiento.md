@@ -41,7 +41,7 @@ Aplicar el reajuste cambia las kcal y los carbohidratos del plan, **no toca las 
 
 ## Peso y objetivo
 
-- **Evolución del peso:** gráfica con su objetivo, y el cambio de la última semana y las últimas 4 semanas (en verde si va en la dirección que busca).
+- **Evolución del peso:** gráfica con su objetivo, y el cambio de la última semana y las últimas 4 semanas (en verde si va en la dirección que busca). Con los botones **1M, 3M, 6M, 1A y Todo** eliges el periodo (se abre con «Todo» si el historial es corto y con 3M si es largo, y se acuerda de tu última elección en ese dispositivo). La **línea de tendencia** (discontinua) quita el ruido de un día —agua, la hora del pesaje— y da más peso a lo reciente. Debajo, tres cifras del periodo: **Media**, **Cambio** (último menos primer pesaje) y **Tendencia** (cuánto se ha movido la línea). Son cifras neutras, sin colores de bien o mal: con pocos pesajes la tendencia es orientativa.
 - **Añadir un pesaje con fecha:** apunta uno anterior (p. ej. el de la primera consulta).
 - Si la clienta registra el inicio de su periodo desde su app, la gráfica marca la semana previa para no confundir la retención de líquidos con grasa.
 

@@ -91,7 +91,7 @@ describe('los textos dicen lo que hace la app', () => {
   })
 
   it('every storage key the cookies text lists exists in the code', () => {
-    for (const key of ['sb-', 'nutrifit.clientToken', 'nf_dark_mode', 'diet-option-choice', 'diet-day-type', 'nutrifit.dietAdjustment.dismissed', 'nutrifit_install_banner_seen', 'nutrifit-onboarding-skipped']) {
+    for (const key of ['sb-', 'nutrifit.clientToken', 'nf_dark_mode', 'nf_weight_range', 'diet-option-choice', 'diet-day-type', 'nutrifit.dietAdjustment.dismissed', 'nutrifit_install_banner_seen', 'nutrifit-onboarding-skipped']) {
       expect(filled('cookies'), key).toContain(key)
       if (key !== 'sb-') expect(codeContaining(key).length, key).toBeGreaterThan(0)
     }
@@ -107,6 +107,7 @@ describe('los textos dicen lo que hace la app', () => {
       'lib/clientApp.ts',
       'lib/planMeals.ts',
       'lib/useDarkMode.ts',
+      'lib/weightRange.ts',
     ])
   })
 

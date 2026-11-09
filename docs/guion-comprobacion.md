@@ -411,6 +411,15 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Un alimento que no está en tu catálogo se importa sin macros y sale en el aviso amarillo; una cantidad que no es un número se salta ese ingrediente y lo cuenta en «avisos sobre filas» con su número de fila.
 - [ ] Un archivo sin columnas «Receta» y «Alimento» da un error claro y no deja importar.
 
+## 39. Gráfica de peso con periodos y tendencia
+
+- [ ] En la ficha de un cliente con varios pesajes → **Seguimiento → Evolución del peso**: aparecen los botones **1M · 3M · 6M · 1A · Todo**. Los periodos con menos de 2 pesajes salen apagados (menos «Todo»).
+- [ ] Al cambiar de periodo, la gráfica y las tres cifras de debajo (**Media, Cambio, Tendencia**) cambian; «Peso inicial / actual / meta» de arriba no.
+- [ ] Sal y vuelve a entrar: se abre con el periodo que dejaste (en ese dispositivo). Con otro cliente que no tenga datos en ese periodo, se abre con el de por defecto.
+- [ ] La línea discontinua (**Tendencia**) va suave y se mueve más con los pesajes recientes; un pesaje suelto muy distinto no la tira.
+- [ ] En la **app del cliente** (Progreso) pasa lo mismo y las cifras no llevan color de bien o mal.
+- [ ] Con un cliente con un solo pesaje sigue saliendo «Sin historial de peso suficiente todavía».
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.
