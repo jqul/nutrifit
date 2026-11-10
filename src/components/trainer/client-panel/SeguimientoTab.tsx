@@ -25,6 +25,7 @@ import { getDemoReviews } from '../../../hooks/useClientReviews'
 import { DEMO_PLAN_CHANGES } from '../../../lib/demo-data'
 import { toLocalISODate } from '../../../lib/date'
 import { goalEta, etaSentence } from '../../../lib/goalEta'
+import { StepsCard } from '../../shared/StepsCard'
 import { summarizeSignals, isConcerningCheckin, SignalTone } from '../../../lib/checkinSignals'
 import { summarizeWeight, weightDeltaTone, formatWeightDelta } from '../../../lib/clientListSummary'
 import { TONE_CLASS } from '../healthStyles'
@@ -204,6 +205,8 @@ export function SeguimientoTab({ client, review, demoData, nutricionistaLogoUrl,
       </div>
 
       <BodyMetricsCard clientId={client.id} nutricionistaId={client.nutricionistaId} demoMode={demoMode} />
+
+      <StepsCard checkins={checkins} title="Pasos (los apunta el cliente)" />
 
       <div className="card p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">

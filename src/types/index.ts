@@ -250,6 +250,8 @@ export interface DailyCheckin {
   mood: number
   waterL: number | null
   notes: string
+  /** Pasos del día, apuntados a mano por el cliente (null/ausente si no los apuntó). */
+  steps?: number | null
   bristolScale?: number | null
   bloating?: number | null
   abdominalPain?: number | null

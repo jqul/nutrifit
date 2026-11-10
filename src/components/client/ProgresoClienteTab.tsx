@@ -15,6 +15,7 @@ import { StoragePhoto } from '../shared/StoragePhoto'
 import { printProgressReport } from '../../lib/printProgressReport'
 import { progressReading, ProgressReading } from '../../lib/progressReading'
 import { goalEta, etaSentence } from '../../lib/goalEta'
+import { StepsCard } from '../shared/StepsCard'
 import { Camera, Flame, UtensilsCrossed, Plus, FileDown, Moon } from 'lucide-react'
 import { toast } from '../shared/Toast'
 
@@ -202,6 +203,8 @@ export function ProgresoClienteTab({ client, demoMode, demoData, nutricionistaLo
       </div>
 
       {!personalMode && <ClientMetricsCard clientId={clientId} demoMode={demoMode} />}
+
+      <StepsCard checkins={checkins} title="Tus pasos" />
 
       <AchievementBadges weights={weights} streak={streak} checkins={checkins} mealLogs={mealLogs} />
 

@@ -209,6 +209,7 @@ export function checkinFromRow(row: DailyCheckinRow): DailyCheckin {
   return {
     id: row.id, clientId: row.client_id, date: row.date, followedPlan: row.followed_plan,
     hunger: row.hunger, energy: row.energy, mood: row.mood, waterL: row.water_l, notes: row.notes || '',
+    steps: row.steps ?? null,
     bristolScale: row.bristol_scale, bloating: row.bloating, abdominalPain: row.abdominal_pain,
   }
 }
