@@ -62,6 +62,7 @@ Debajo de la gráfica de peso, la tarjeta **Medidas corporales** guarda lo que m
 
 - **Adherencia** a 7 y 30 días y la **racha** de días seguidos.
 - **Check-ins recientes:** si siguió el plan, hambre, energía, ánimo, agua, digestión y sus notas.
+- **Pasos:** el cliente los **apunta a mano** en su check-in (una app web no puede leerlos del móvil ni del reloj; los copia de su app de Salud). Cuando hay datos, en **Seguimiento** sale la tarjeta **Pasos**: media de 7 y 30 días (con cuántos días tienen dato), el cambio frente a la semana anterior (solo si cada semana tiene al menos 3 días apuntados) y una barrita por día de las dos últimas semanas. **Un día sin apuntar queda en blanco: no cuenta como día malo**, no hay objetivo de pasos y no influye en la adherencia. Sin ningún dato, la tarjeta no aparece. Los pasos van también en la exportación de datos del cliente.
 - **Encuestas:** las respuestas a las encuestas que le mandaste.
 
 ## Balance de lo que come

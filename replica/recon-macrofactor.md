@@ -142,3 +142,7 @@ Studying the whole product: M. Taking the ideas below: each is S unless marked.
 | M10 | **Import a recipe from a URL** (schema.org recipe data) | Fast way to grow the recipe book | M (needs a server function) |
 
 Suggested order if the user says go: M1 → M3 → M4 → M7 → M8, then decide M2 and M5 explicitly.
+
+## Update 2026-11-10: steps (the «reloj o móvil» question)
+
+A web app cannot read steps from the phone or a watch (no browser access to Apple Health / Health Connect), and a native app or an aggregator would add recurring costs the user rejects. Built the free option: an optional «Pasos de hoy» field in the client check-in (`daily_checkins.steps`, migration 0072), shown as a neutral card (7/30-day averages, change vs the previous week, 14 daily bars) to the nutritionist and the client. No steps goal and no effect on adherence. An iPhone Shortcuts automation that posts the steps automatically stays as a possible later step.

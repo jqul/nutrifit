@@ -269,6 +269,7 @@ export interface DailyCheckinRow {
   mood: number
   water_l: number | null
   notes: string | null
+  steps: number | null
   bristol_scale: number | null
   bloating: number | null
   abdominal_pain: number | null

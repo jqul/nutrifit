@@ -451,6 +451,15 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] En el **navegador de escritorio**, el enlace del cliente con `&t=progreso` al final abre Progreso; con `&t=otracosa` abre Hoy.
 - [ ] En **iPhone** no salen atajos y todo lo demás sigue igual.
 
+## 44. Pasos del día en el check-in
+
+- [ ] App del cliente → **Hoy**: debajo del agua hay una tarjeta **Pasos de hoy (opcional)** con una casilla. Escribe «8432» (o «8.432») y **Guardar**: sale «Pasos guardados ✓» y la casilla queda como «8.432». Cierra y vuelve a abrir la app: sigue ahí.
+- [ ] Escribe «ocho mil» o «8,5» o «150000»: avisa «Escribe solo el número de pasos (hasta 100.000)» y no guarda. Vacía la casilla y **Guardar**: «Pasos quitados».
+- [ ] Guardar los pasos **no** cambia lo que ya había marcado en el check-in (¿seguiste el plan?, ánimo, agua…).
+- [ ] Tras varios días con pasos: en **Progreso** del cliente aparece **Tus pasos** (media 7 y 30 días y barritas); en la ficha del nutricionista, **Seguimiento → Pasos (los apunta el cliente)** con los mismos datos y, con al menos 3 días en cada semana, el cambio frente a la semana anterior.
+- [ ] Un cliente sin ningún paso apuntado: no sale ninguna de las dos tarjetas. Los días sin apuntar salen en blanco, no como cero.
+- [ ] **Exportar datos** del cliente incluye los pasos de sus check-ins. Los pasos **no** cambian el porcentaje de adherencia.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

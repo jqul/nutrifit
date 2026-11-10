@@ -347,12 +347,15 @@ export const DEMO_CHECKINS: Record<string, DailyCheckin[]> = {
   // María: constante, buena racha, adherencia alta. Diario digestivo sin nada reseñable.
   'demo-client-001': buildCheckins('demo-client-001',
     ['si', 'si', 'si', 'parcial', 'si', 'si', 'si', 'si', 'parcial', 'si', 'si', 'si'], 11)
+    // Pasos que apunta ella misma: van subiendo poco a poco (la tarjeta «Pasos» enseña la media y el cambio).
+    .map((c, i) => ({ ...c, steps: 6500 + i * 220 + (i % 3) * 300 }))
     .map((c, i, arr) => i === arr.length - 1 ? { ...c, bristolScale: 4, bloating: 0, abdominalPain: 0 } : c),
   // Carlos: adherencia media, algún día suelto. Diario digestivo con hinchazón/molestias
   // moderadas los últimos días — el tipo de patrón que el nutricionista quiere ver a tiempo.
   // Además, hambre alta y energía baja toda la última semana (alertas del Centro de control).
   'demo-client-002': buildCheckins('demo-client-002',
     ['si', 'parcial', 'si', 'no', 'si', 'parcial', 'si', 'si', 'no', 'parcial', 'si', 'si', 'si', 'parcial'], 13)
+    .map((c, i) => ({ ...c, steps: i === 3 || i === 8 ? null : 5200 + (i % 4) * 600 }))
     .map((c, i, arr) => i === arr.length - 1 ? { ...c, bristolScale: 6, bloating: 2, abdominalPain: 1 } : c)
     .map((c, i, arr) => i >= arr.length - 7 ? { ...c, hunger: [4, 5, 4, 5, 4, 5, 5][i - (arr.length - 7)], energy: 2 } : c),
   // Laura: sin check-ins recientes — cliente en riesgo.

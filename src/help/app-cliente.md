@@ -24,6 +24,7 @@ Abre el icono y entra directamente en **su** app. **En Android**, si mantiene pu
 
 - **Comidas del día:** marca cada comida cuando la haya hecho. Puede añadir una foto. (Si el plan tiene opciones alternativas, elige cuál toma cada día en **Dieta**.)
 - **Check-in:** «¿Seguiste el plan hoy?», hambre, energía, ánimo, agua y digestión, en unos segundos.
+- **Pasos de hoy (opcional):** una casilla donde apunta los pasos que ve en su app de Salud (vale «8432» o «8.432»; vacía y **Guardar** los quita). Solo los ve su nutricionista; no hay objetivo de pasos.
 - **Pauta de suplementos** y **próximas citas** (puede pedir una).
 - Su **objetivo del día** y su progreso.
 - **Tu fase:** si tienes fases en su plan, en cuál está («2 de 3»), cuántos días le quedan y qué se hace en ella.
@@ -44,6 +45,7 @@ Abre el icono y entra directamente en **su** app. **En Android**, si mantiene pu
 - Su **peso**: titular desde que empezó, gráfica con botones de periodo (1M, 3M, 6M, 1A, Todo), línea de tendencia y la media y el cambio del periodo elegido, y la caja para apuntar el peso de hoy.
 - **¿Cómo vas?:** una lectura en una frase de su evolución y, si el peso avanza hacia su objetivo, una **fecha estimada** para llegar («A este ritmo llegarías a tu objetivo hacia el 3 de diciembre»); si no avanza, esa frase simplemente no aparece.
 - **Tus medidas:** las que el nutricionista ha apuntado (cintura, % de grasa…) y le deja ver, con su cambio desde la primera y una mini gráfica. Con **Apuntar una medida** puede añadir las suyas cuando se mida.
+- **Tus pasos** (si ha apuntado alguno): su media de 7 y 30 días y una barrita por día de las dos últimas semanas; los días sin apuntar quedan en blanco.
 - Racha y adherencia a 7 y 30 días, **fotos de progreso** con comparador antes/después, logros y diario de comidas.
 - **Descargar informe** en PDF.
 

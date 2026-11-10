@@ -17,7 +17,8 @@ import { useRealtimeRefresh } from '../../hooks/useRealtimeRefresh'
 import { StoragePhoto } from '../shared/StoragePhoto'
 import { DEMO_APPOINTMENTS, DEMO_DIET_PLANS, DEMO_MEAL_LOGS, DEMO_CHECKINS } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
-import { CheckCircle2, CheckSquare, Square, Plus, Video, Flame, Camera } from 'lucide-react'
+import { formatSteps, parseSteps } from '../../lib/steps'
+import { CheckCircle2, CheckSquare, Square, Plus, Video, Flame, Camera, Footprints } from 'lucide-react'
 
 const SCALE = [1, 2, 3, 4, 5]
 const WATER_GOAL_L = 2.0
@@ -75,6 +76,8 @@ export function HoyTab({ client, demoMode, personalMode }: {
   const [mood, setMood] = useState(demoTodayCheckin?.mood ?? 3)
   const [waterL, setWaterL] = useState(demoTodayCheckin?.waterL ?? 0)
   const [notes, setNotes] = useState(demoTodayCheckin?.notes ?? '')
+  const [steps, setSteps] = useState<number | null>(demoTodayCheckin?.steps ?? null)
+  const [stepsText, setStepsText] = useState(demoTodayCheckin?.steps != null ? formatSteps(demoTodayCheckin.steps) : '')
   const [bristolScale, setBristolScale] = useState<number | null>(demoTodayCheckin?.bristolScale ?? null)
   const [bloating, setBloating] = useState<number | null>(demoTodayCheckin?.bloating ?? null)
   const [abdominalPain, setAbdominalPain] = useState<number | null>(demoTodayCheckin?.abdominalPain ?? null)
@@ -115,6 +118,8 @@ export function HoyTab({ client, demoMode, personalMode }: {
       setMood(todayRow.mood)
       setWaterL(todayRow.water_l ?? 0)
       setNotes(todayRow.notes || '')
+      setSteps(todayRow.steps ?? null)
+      setStepsText(todayRow.steps != null ? formatSteps(todayRow.steps) : '')
       setBristolScale(todayRow.bristol_scale)
       setBloating(todayRow.bloating)
       setAbdominalPain(todayRow.abdominal_pain)
@@ -179,7 +184,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
   const digestionValue = digestionFromFields(bloating, abdominalPain)
 
   const saveCheckin = async (overrides: Partial<{
-    followedPlan: FollowedPlan; hunger: number; energy: number; mood: number; waterL: number; notes: string
+    followedPlan: FollowedPlan; hunger: number; energy: number; mood: number; waterL: number; notes: string; steps: number | null
     bristolScale: number | null; bloating: number | null; abdominalPain: number | null
   }> = {}) => {
     if (demoMode) {
@@ -196,6 +201,7 @@ export function HoyTab({ client, demoMode, personalMode }: {
       followed_plan: overrides.followedPlan ?? followedPlan,
       hunger: overrides.hunger ?? hunger, energy: overrides.energy ?? energy, mood: overrides.mood ?? mood,
       water_l: overrides.waterL ?? waterL, notes: overrides.notes ?? notes,
+      steps: overrides.steps !== undefined ? overrides.steps : steps,
       bristol_scale: overrides.bristolScale !== undefined ? overrides.bristolScale : bristolScale,
       bloating: overrides.bloating !== undefined ? overrides.bloating : bloating,
       abdominal_pain: overrides.abdominalPain !== undefined ? overrides.abdominalPain : abdominalPain,
@@ -226,6 +232,16 @@ export function HoyTab({ client, demoMode, personalMode }: {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate(deltaL > 0 && nextWaterL >= WATER_GOAL_L && waterL < WATER_GOAL_L ? [15, 60, 15] : 15)
     }
+  }
+
+  // Los pasos se apuntan a mano (una app web no puede leerlos del móvil). Vacío = quitar el dato de hoy.
+  const saveSteps = async () => {
+    const parsed = parseSteps(stepsText)
+    if (stepsText.trim() !== '' && parsed == null) { toast('Escribe solo el número de pasos (hasta 100.000)', 'warn'); return }
+    setSteps(parsed)
+    setStepsText(parsed != null ? formatSteps(parsed) : '')
+    await saveCheckin({ steps: parsed })
+    if (!demoMode) toast(parsed != null ? 'Pasos guardados ✓' : 'Pasos quitados', 'ok')
   }
 
   const setDigestion = (opt: DigestionOption) => {
@@ -405,6 +421,22 @@ export function HoyTab({ client, demoMode, personalMode }: {
             −250 ml
           </button>
         </div>
+      </div>
+
+      {/* ── Pasos: se apuntan a mano, sin objetivo ── */}
+      <div className="card p-4 space-y-2.5">
+        <div className="flex items-center gap-2">
+          <Footprints className="w-4 h-4 text-muted" aria-hidden />
+          <p className="font-semibold text-sm">Pasos de hoy</p>
+          <span className="text-xs text-muted">(opcional)</span>
+        </div>
+        <form className="flex items-center gap-2" onSubmit={e => { e.preventDefault(); saveSteps() }}>
+          <input value={stepsText} onChange={e => setStepsText(e.target.value)} inputMode="numeric" autoComplete="off"
+            aria-label="Pasos de hoy" placeholder="Cópialos de tu app de Salud"
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-bg text-sm outline-none focus:border-accent/50" />
+          <button type="submit" className="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold">Guardar</button>
+        </form>
+        <p className="text-xs text-muted">Solo lo ve tu nutricionista, como un dato más de tu semana. No hay objetivo de pasos.</p>
       </div>
 
       {/* ── Pauta de suplementos ── */}
