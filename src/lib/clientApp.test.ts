@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CLIENT_TOKEN_KEY, buildClientManifest, cleanAppName, containRect, shortAppName, decideForNonTrainerSession, fetchMyClientToken, forgetClientToken, isValidClientToken, readRememberedClientToken, rememberClientToken } from './clientApp'
+import { CLIENT_TOKEN_KEY, buildClientManifest, cleanAppName, containRect, shortAppName, decideForNonTrainerSession, fetchMyClientToken, forgetClientToken, isValidClientToken, readRememberedClientToken, rememberClientToken, tabFromSearch } from './clientApp'
 
 const memory = () => {
   const m = new Map<string, string>()
@@ -150,5 +150,36 @@ describe('containRect', () => {
   })
   it('falls back to the whole square when the image has no size', () => {
     expect(containRect(0, 0, 180)).toEqual({ x: 0, y: 0, width: 180, height: 180 })
+  })
+})
+
+describe('app shortcuts', () => {
+  const m = buildClientManifest('https://nutrifit.app', TOKEN, 'Alex Nutrición')
+  it('has at most four, each opening the client link on its own tab and inside the scope', () => {
+    expect(m.shortcuts.length).toBeGreaterThan(0)
+    expect(m.shortcuts.length).toBeLessThanOrEqual(4)
+    for (const s of m.shortcuts) {
+      expect(s.url.startsWith(m.scope)).toBe(true)
+      expect(s.url).toContain(`?c=${TOKEN}&t=`)
+      expect(tabFromSearch(new URL(s.url).search)).not.toBeNull()
+      expect(s.short_name.length).toBeLessThanOrEqual(12)
+      expect(s.icons[0].src.startsWith('https://nutrifit.app/')).toBe(true)
+    }
+  })
+  it('offers the plan, the weight and the check-in', () => {
+    expect(m.shortcuts.map(s => new URL(s.url).searchParams.get('t'))).toEqual(['dieta', 'progreso', 'hoy'])
+  })
+})
+
+describe('tabFromSearch', () => {
+  it('reads one of the four tabs from the link', () => {
+    expect(tabFromSearch(`?c=${TOKEN}&t=progreso`)).toBe('progreso')
+    expect(tabFromSearch('?t=mas')).toBe('mas')
+  })
+  it('ignores a missing or unknown tab', () => {
+    expect(tabFromSearch('')).toBeNull()
+    expect(tabFromSearch(`?c=${TOKEN}`)).toBeNull()
+    expect(tabFromSearch('?t=admin')).toBeNull()
+    expect(tabFromSearch('?t=')).toBeNull()
   })
 })

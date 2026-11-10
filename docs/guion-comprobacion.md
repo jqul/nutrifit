@@ -443,6 +443,14 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Si el cliente se pasa del objetivo, la frase es «Hoy llevas N kcal por encima del objetivo» en un color neutro (ámbar), no en rojo, y en la vista «Me quedan» dice «Hoy llevas N kcal por encima».
 - [ ] Un cliente con **Ocultar calorías y macros** no ve nada de esto.
 
+## 43. Atajos del icono de la app (Android)
+
+- [ ] En un **Android con Chrome**, con la app del cliente instalada desde su enlace (si ya estaba instalada, quita el icono y vuelve a instalarla para que coja los atajos): al **mantener pulsado el icono** salen **Mi plan**, **Mi peso** y **Check-in**.
+- [ ] **Mi plan** abre la app directamente en la pestaña **Dieta**; **Mi peso**, en **Progreso**; **Check-in**, en **Hoy**.
+- [ ] Abrir el icono normalmente sigue abriendo en **Hoy**.
+- [ ] En el **navegador de escritorio**, el enlace del cliente con `&t=progreso` al final abre Progreso; con `&t=otracosa` abre Hoy.
+- [ ] En **iPhone** no salen atajos y todo lo demás sigue igual.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

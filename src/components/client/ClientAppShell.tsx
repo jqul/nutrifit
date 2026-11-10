@@ -18,9 +18,10 @@ import { AccessSummaryCard } from './AccessSummaryCard'
 import { AnamnesisForm } from './AnamnesisForm'
 import { ChangePasswordCard } from '../shared/ChangePasswordCard'
 import { useAccentOverride } from '../../lib/useAccentOverride'
+import { ClientTab, tabFromSearch } from '../../lib/clientApp'
 import { supabase } from '../../lib/supabase'
 
-type Tab = 'hoy' | 'dieta' | 'progreso' | 'mas'
+type Tab = ClientTab
 
 interface DemoProgresoData {
   weights: WeightEntry[]; checkins: DailyCheckin[]; photos: ProgressPhotoSession[]; mealLogs: MealLog[]
@@ -61,7 +62,8 @@ export function ClientAppShell({
   // TrainerClientPreview no tiene ninguno de los dos.
   onSignOut?: () => void
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>('hoy')
+  // Con un atajo del icono (?t=progreso) la app se abre ya en esa pestaña.
+  const [activeTab, setActiveTab] = useState<Tab>(() => (typeof window !== 'undefined' ? tabFromSearch(window.location.search) : null) ?? 'hoy')
   useAccentOverride(accentColor)
 
   const clientName = `${clientData.name} ${clientData.surname}`.trim()

@@ -16,7 +16,7 @@ Para que tenga un icono como cualquier app:
 - **iPhone (Safari):** abrir el enlace → botón **Compartir** → **Añadir a pantalla de inicio**.
 - **Android (Chrome):** abrir el enlace → menú ⋮ → **Instalar aplicación** o **Añadir a la pantalla de inicio**.
 
-Abre el icono y entra directamente en **su** app. Para recibir notificaciones, tiene que instalarla y activarlas desde la propia app.
+Abre el icono y entra directamente en **su** app. **En Android**, si mantiene pulsado el icono, salen tres atajos: **Mi plan** (abre la pestaña Dieta), **Mi peso** (Progreso, donde apunta el peso de hoy) y **Check-in** (Hoy). En iPhone esos atajos no existen: el icono abre la app como siempre. Para recibir notificaciones, tiene que instalarla y activarlas desde la propia app.
 
 ## Las cuatro pestañas
 
