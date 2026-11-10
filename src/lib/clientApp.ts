@@ -85,6 +85,26 @@ export function shortAppName(name: string): string {
   return out.length >= 3 && out.length <= 12 ? out : name.slice(0, 12).trim()
 }
 
+/** Las pestañas de la app del cliente. */
+export type ClientTab = 'hoy' | 'dieta' | 'progreso' | 'mas'
+const CLIENT_TABS: readonly ClientTab[] = ['hoy', 'dieta', 'progreso', 'mas']
+
+/** La pestaña pedida en el enlace (`?t=dieta`), o null si no hay o no es una de las cuatro. */
+export function tabFromSearch(search: string): ClientTab | null {
+  const t = new URLSearchParams(search).get('t')
+  return CLIENT_TABS.find(x => x === t) ?? null
+}
+
+/**
+ * Atajos al mantener pulsado el icono de la app instalada (Android/Chrome; iOS los ignora): cada uno abre la app del cliente
+ * directamente en su pestaña. Máximo 4: es lo que muestran los móviles.
+ */
+export const CLIENT_SHORTCUTS: readonly { name: string; short_name: string; tab: ClientTab }[] = [
+  { name: 'Mi plan de hoy', short_name: 'Mi plan', tab: 'dieta' },
+  { name: 'Registrar mi peso', short_name: 'Mi peso', tab: 'progreso' },
+  { name: 'Mi check-in de hoy', short_name: 'Check-in', tab: 'hoy' },
+]
+
 /** Manifiesto de la app para UN cliente: igual que el general, pero se abre en su enlace y lleva el nombre de la app del nutricionista. */
 export function buildClientManifest(origin: string, token: string, appName?: string | null) {
   const start = `${origin}/?c=${token}`
@@ -98,6 +118,10 @@ export function buildClientManifest(origin: string, token: string, appName?: str
       { src: `${origin}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: `${origin}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
     ],
+    shortcuts: CLIENT_SHORTCUTS.map(s => ({
+      name: s.name, short_name: s.short_name, url: `${start}&t=${s.tab}`,
+      icons: [{ src: `${origin}/icon-192.png`, sizes: '192x192', type: 'image/png' }],
+    })),
   }
 }
 
