@@ -69,7 +69,8 @@ Leyenda: **[V]** verificado en esta formación · **[M]** de memoria, sin verifi
 
 ## Qué hace NutriFit hoy [C]
 - Notas clínicas visibles al cliente, analíticas con rangos y avisos de «pista» (`alertLabHints.ts`), anamnesis y ficha del cliente con alergias y notas, y objetivos y planes por cliente.
-- **No tiene:** clasificación de patologías, validaciones por enfermedad, cribado nutricional, registro estructurado de medicación o de interacciones, ni límites de uso por situación clínica.
+- **Avisos fármaco-nutriente (`drugNutrientInteractions.ts`) [C]:** cruzan el **texto libre de medicación de la anamnesis** con el nombre de los alimentos del plan, por palabras clave (mismo patrón que los alérgenos), y muestran un icono al profesional; el texto lleva el matiz («mantener constante», no «prohibido»). Heredan las limitaciones de la búsqueda por nombre y del texto libre (Módulo 11).
+- **No tiene:** clasificación de patologías, validaciones por enfermedad, cribado nutricional, registro **estructurado** de medicación (solo el texto libre de la anamnesis), ni límites de uso por situación clínica.
 
 ## Casos prácticos
 Los del examen (secciones B y C).
@@ -127,7 +128,7 @@ Los del examen (secciones B y C).
 - **Nota:** teórico 40 %, aplicado 30 %, razonamiento 30 %. **La corrige el usuario.**
 
 ## Aplicaciones a NutriFit
-- **Registro estructurado de condiciones y medicación** con avisos de revisión por el profesional (no de decisión automática).
+- **Registro estructurado de condiciones y medicación** (hoy es texto libre en la anamnesis, con avisos por palabras clave) con avisos de revisión por el profesional (no de decisión automática).
 - **Cribado de riesgo nutricional** y alerta de pérdida de peso no intencionada.
 - **Banderas de derivación** configurables (síntomas de alarma en el check-in).
 - **Bloqueos y avisos** en la calculadora para situaciones fuera de alcance (embarazo, menores, patología renal o hepática, trastornos de la conducta alimentaria).

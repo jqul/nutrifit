@@ -129,6 +129,6 @@ Los del examen (secciones B y C).
 
 ## Aplicaciones a NutriFit
 - **Ampliar el análisis de micronutrientes** solo con datos verificables y marcando faltantes; comparar el plan con una referencia por sexo y edad (PRI/AI) y avisar si se supera un UL en suplementos.
-- **Registro de suplementos y medicación del cliente** y avisos de interacciones frecuentes (siempre «consultar con el médico»).
+- **Registro de suplementos y medicación del cliente**. Ya existen avisos fármaco-nutriente por palabras clave sobre el texto libre de medicación de la anamnesis (`drugNutrientInteractions.ts`); lo que falta es un registro **estructurado** de medicación y suplementos y comparar con los UL (siempre «consultar con el médico»).
 - **Avisos en grupos de riesgo** (dietas veganas: B12; embarazo: folato y yodo).
 - **Límites de uso:** la herramienta no sustituye el criterio clínico ni sugiere dosis de suplementos.
