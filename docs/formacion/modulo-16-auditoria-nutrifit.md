@@ -8,6 +8,8 @@ Leyenda: **[V]** verificado en esta formación · **[M]** de memoria, sin verifi
 3. Definir criterios de aceptación verificables y un plan de pruebas.
 4. Evitar duplicar lo que ya existe y no tocar lo que no se entiende.
 
+> **Actualización (2026-11-14):** tras la corrección del usuario, las respuestas B2 y C2 de este módulo se rehicieron en [la recuperación del Módulo 16](recuperacion-modulo-16.md) (1.200 kcal ya no se presenta como umbral universal; protocolo completo de incidentes; exposición real medida: 0 hoy, riesgo latente).
+
 ## Método de auditoría
 1. **Inventario** de lo que existe (funciones, pantallas, tablas) antes de proponer nada.
 2. **Comprobación** ejecutando el código con casos reales y consultando los datos (solo lectura).

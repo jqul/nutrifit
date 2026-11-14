@@ -36,6 +36,7 @@ Programa de 16 módulos más un examen integrador, pedido el 2026-11-14. El obje
 | 15 | [Ingeniería de software aplicada a la nutrición](modulo-15-ingenieria-software.md) |
 | 16 | [Auditoría y desarrollo integral de NutriFit](modulo-16-auditoria-nutrifit.md) |
 | — | [Examen integrador](examen-integrador.md) |
+| — | [Recuperación del Módulo 16](recuperacion-modulo-16.md): corrección recibida, rediseño del control de objetivos energéticos y protocolo de incidentes por alérgenos |
 
 ## Estado
 
