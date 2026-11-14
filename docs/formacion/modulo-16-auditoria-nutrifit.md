@@ -18,7 +18,7 @@ Leyenda: **[V]** verificado en esta formación · **[M]** de memoria, sin verifi
 5. **Orden de ejecución** por riesgo y dependencia, con **decisiones del usuario** señaladas.
 
 ## Inventario de lo que ya existe (para no duplicar)
-- **Planes y alimentación:** plan por cliente con comidas, opciones y días; historial y versiones; plantillas; fases con cambio automático; reajuste del plan; propuesta de menú diario y semanal; sustituciones y grupos de intercambio; recetario con tipo, etiquetas, alérgenos, raciones y libro del cliente; importación de recetas y de planes; lista de la compra; catálogo de 119 alimentos con 11 nutrientes; calculadora metabólica con tres ecuaciones.
+- **Planes y alimentación:** plan por cliente con comidas, opciones y días; historial y versiones; plantillas; fases con cambio automático; reajuste del plan; propuesta de menú diario y semanal; sustituciones y grupos de intercambio; recetario con tipo, etiquetas, alérgenos, raciones y libro del cliente; importación de recetas y de planes; lista de la compra; catálogo de 119 alimentos con 11 nutrientes; calculadora metabólica con tres ecuaciones; avisos fármaco-nutriente por palabras clave sobre la medicación de la anamnesis; consejos para comer fuera.
 - **Seguimiento:** peso con gráfica por periodos y tendencia, fecha estimada al objetivo, medidas corporales, fotos, check-ins diarios, pasos opcionales, adherencia y racha, revisión semanal, preparar la consulta, informe de progreso, analíticas con rangos y pistas.
 - **App del cliente:** hoy, dieta, progreso, más; escáner de productos; extras; opción de ocultar cifras; lo que no le gusta; privacidad y accesos.
 - **Gestión:** clientes, bajas, agenda, mensajes, difusión, encuestas, facturación estimada, marca propia, registro de accesos, exportación y eliminación de datos, textos legales.
@@ -44,7 +44,7 @@ Leyenda: **[V]** verificado en esta formación · **[M]** de memoria, sin verifi
 ### Gravedad baja
 | # | Hallazgo | Módulo |
 |---|---|---|
-| H8 | No hay ficha de evaluación inicial estructurada, ni cribado de riesgo nutricional, ni medicación y suplementos estructurados, ni banderas de derivación (TCA, pérdida de peso no intencionada, RED-S). | 3, 8, 9, 12 |
+| H8 | No hay ficha de evaluación inicial estructurada, ni cribado de riesgo nutricional, ni medicación y suplementos **estructurados** (existe la medicación en texto libre en la anamnesis y avisos fármaco-nutriente por palabras clave), ni banderas de derivación (TCA, pérdida de peso no intencionada, RED-S). | 3, 8, 9, 12 |
 | H9 | Fibra por defecto de 14 g por 1.000 kcal frente a otra referencia habitual de ≈25 g; el catálogo solo tiene tres micronutrientes. | 4, 7 |
 | H10 | Los textos no citan fuente ni fecha por afirmación nutricional; no hay política de revisión de contenidos. | 13 |
 | H11 | Cierre de proceso (alta) no distinguido de la baja comercial; informe para otros profesionales con consentimiento. | 14 |
