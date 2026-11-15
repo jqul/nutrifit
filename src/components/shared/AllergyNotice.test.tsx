@@ -37,7 +37,7 @@ describe('AllergyNotice: cuándo sale y qué dice', () => {
   it('compacto: añade las líneas de las alergias que el detector NO comprueba (así las sugerencias no parecen excluirlas)', () => {
     const celiac = html('Celiaquía', 'client', true)
     expect(celiac).toContain('<ul')
-    expect(celiac).toContain('el detector actual no marca los alimentos con gluten')
+    expect(celiac).toContain('no identifica todos los alimentos con gluten')
     expect(html('alergia al sésamo', 'client', true)).toContain('categoría no reconocida')
     expect(html('me sienta mal la comida', 'client', true)).toContain('información ambigua')
     // Una alergia comprobada y otra no: en compacto solo sale la que no se comprueba.
@@ -57,11 +57,12 @@ describe('AllergyNotice: cuándo sale y qué dice', () => {
     for (const t of ['Celiaquía', 'celíaca', 'enfermedad celíaca']) {
       const out = html(t)
       expect(out, t).toContain('categoría reconocida, detección limitada')
-      expect(out, t).toContain('el detector actual no marca los alimentos con gluten')
+      expect(out, t).toContain('no identifica todos los alimentos con gluten')
+      expect(out, t).toContain('no marca ninguno')
     }
   })
   it('celíaco y gluten: el detector sí se activa, y no lleva ese aviso', () => {
-    for (const t of ['celíaco', 'gluten']) expect(html(t), t).not.toContain('el detector actual no marca')
+    for (const t of ['celíaco', 'gluten']) expect(html(t), t).not.toContain('no marca ninguno')
   })
   it('la pista de cómo escribirlo es solo para el profesional', () => {
     expect(html('celiaquía', 'pro')).toContain('«celíaco» o «gluten»')

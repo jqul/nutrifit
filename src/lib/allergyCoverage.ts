@@ -55,7 +55,7 @@ const KNOWN_UNRECOGNIZED: { re: RegExp; label: string; hint?: string }[] = [
  * «celiaco», «gluten» y «trigo»): celiaquía, celíaca, enfermedad celíaca… Se miden sobre el texto sin tildes ni mayúsculas.
  */
 const CELIAC_VARIANTS = /celiaqu|celiaca\b|enfermedad celiaca/
-const CELIAC_HINT = 'Para que el detector lo use, escríbelo en el Perfil como «celíaco» o «gluten».'
+const CELIAC_HINT = 'Escríbelo como «celíaco» o «gluten» para que lo use.'
 
 /** Palabras que indican un texto vago: no dice qué alimento o alérgeno es. */
 const VAGUE = /\b(mal|sienta|molest|malestar|raro|reaccion|reacciona|varias|varios|algunas|algunos|cosas|no se|ni idea|comida|alimentos|general|todo|cualquier|digestion|digestiva|estomago|hinch)/
@@ -147,12 +147,14 @@ export type CoverageAudience = 'pro' | 'client'
 /** Una línea por alergia: qué se comprueba y qué no. Sin palabras de garantía. */
 export function coverageLine(item: CoverageItem, audience: CoverageAudience): string {
   if (item.status === 'reconocida') {
+    if (!item.detectorActivo) {
+      // La categoría se reconoce, pero el detector no se activa con estas palabras: en vez del párrafo largo de las reconocidas
+      // (que describiría una comprobación que aquí no ocurre), una frase corta con las dos advertencias que importan.
+      const short = `${item.label}: categoría reconocida, detección limitada. El detector actual no identifica todos los alimentos con gluten y, con esta forma de escribirlo, no marca ninguno: revisa a mano todos los alimentos.`
+      return audience === 'pro' && item.hint ? `${short} ${item.hint}` : short
+    }
     const as = item.categories.map(c => (ALLERGEN_LABELS[c] ?? c).toLowerCase()).join(' y ')
-    const base = `${item.label}: categoría reconocida, detección limitada (se comprueba como: ${as}). ${ALLERGY_LIMITATION} Que se reconozca no significa que los alimentos estén verificados.`
-    if (item.detectorActivo) return base
-    // La categoría se reconoce, pero el detector no se activa con estas palabras: se dice claro, para que no parezca que comprueba algo.
-    const inactive = `${base} Con esta forma de escribirlo, el detector actual no marca los alimentos con gluten (solo reconoce «celíaco», «celiaco», «gluten» o «trigo»): revisa a mano todos los alimentos.`
-    return audience === 'pro' && item.hint ? `${inactive} ${item.hint}` : inactive
+    return `${item.label}: categoría reconocida, detección limitada (se comprueba como: ${as}). ${ALLERGY_LIMITATION} Que se reconozca no significa que los alimentos estén verificados.`
   }
   if (item.status === 'no_reconocida') {
     const base = `${item.label}: categoría no reconocida. El sistema no tiene reglas de detección para esta alergia: revisa a mano todos los alimentos.`

@@ -83,7 +83,7 @@ describe('allergyCoverage: celiaquía y sus variantes pertenecen a la categoría
     expect(i.categories).toEqual(['gluten'])
     expect(i.detectorActivo).toBe(true)
     expect(coverageLine(i, 'client')).toContain('categoría reconocida, detección limitada')
-    expect(coverageLine(i, 'client')).not.toContain('el detector actual no marca')
+    expect(coverageLine(i, 'client')).not.toContain('no marca ninguno')
   })
   // Con estas otras el DETECTOR no se activa, aunque se reconozca la categoría: el mensaje lo dice.
   it.each([
@@ -96,8 +96,11 @@ describe('allergyCoverage: celiaquía y sus variantes pertenecen a la categoría
     expect(i.detectorActivo).toBe(false)
     const line = coverageLine(i, 'client')
     expect(line).toContain('categoría reconocida, detección limitada')
-    expect(line).toContain('el detector actual no marca los alimentos con gluten')
+    expect(line).toContain('no identifica todos los alimentos con gluten')
+    expect(line).toContain('no marca ninguno')
     expect(line).toContain('revisa a mano todos los alimentos')
+    // Compacto: una frase corta, no un párrafo (el texto anterior pasaba de 450 caracteres).
+    expect(line.length).toBeLessThanOrEqual(230)
   })
   it('el profesional recibe además la pista de cómo escribirlo; el cliente no', () => {
     const i = only('celiaquía')
