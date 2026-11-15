@@ -460,6 +460,15 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] Un cliente sin ningún paso apuntado: no sale ninguna de las dos tarjetas. Los días sin apuntar salen en blanco, no como cero.
 - [ ] **Exportar datos** del cliente incluye los pasos de sus check-ins. Los pasos **no** cambian el porcentaje de adherencia.
 
+## 45. Aviso de alérgenos y cobertura de las alergias
+
+- [ ] Cliente **con alergias escritas** → **Plan de dieta**: encima del plan sale un aviso («orientativa, limitada y puede estar incompleta… no significa que sea seguro») y, debajo, una línea por cada alergia. Un cliente **sin alergias** (o con «ninguna») no ve ningún aviso.
+- [ ] Prueba con textos distintos en el Perfil: «gluten» y «pescado» → **categoría reconocida, detección limitada**; «sésamo» o «apio» → **categoría no reconocida**; «me sienta mal la comida» → **información ambigua**; «celiaquía» → no reconocida, con la pista de escribir «celíaco» o «gluten».
+- [ ] Ninguna línea dice «cubierta», «segura» ni «apta»; las reconocidas dicen que no se comprueban todos los ingredientes ni los alérgenos ocultos en productos compuestos.
+- [ ] App del cliente (con alergias): aviso al principio de **Dieta**, en la hoja de **sustituciones** y en el **libro de recetas** (que conserva además el «Lleva X» propio de cada receta).
+- [ ] En sustituciones, si se ocultan alimentos por alergias, sale «Se han ocultado algunos alimentos… La detección es limitada…», **sin** la frase antigua «por tus alergias o intolerancias».
+- [ ] Los iconos de alérgeno de cada comida y todo lo demás funcionan **igual que antes**: no ha cambiado qué alimentos avisan.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.
