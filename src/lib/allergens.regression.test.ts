@@ -5,6 +5,13 @@
 // CORREGIR con el modelo estructurado de alérgenos (Fase 2): que aquí estén fijados no significa que el resultado sea correcto,
 // y el sistema no debe tratarlos como alimentos seguros. Cada caso lleva el resultado que se DEBERÍA dar.
 //
+// QUÉ ES CADA COSA en este fichero:
+//  · Pruebas que SE EJECUTAN y fijan el comportamiento actual (grupos 1-6). Las de «LIMITACIÓN CONOCIDA» fijan un fallo: si pasan,
+//    es que el fallo sigue ahí. No son «casos que el sistema considere seguros».
+//  · `it.todo` («OBJETIVO DE LA FASE 2»): el comportamiento CORRECTO que todavía no se puede ejecutar porque el detector no lo
+//    hace. Son los objetivos del modelo estructurado, no limitaciones nuevas: cada uno se corresponde con una prueba ejecutada
+//    de «limitación conocida». Cuando se corrija el detector, el `todo` pasa a ser una prueba real.
+//
 // Si una prueba de limitaciones falla porque se ha mejorado el detector: es una buena noticia; hay que moverla de grupo a
 // propósito (de «limitación» a «comportamiento correcto»), no borrarla.
 import { describe, it, expect } from 'vitest'
@@ -112,7 +119,7 @@ describe('3. LIMITACIÓN CONOCIDA: falsos negativos (NO avisa aunque lleve el al
     expect(fixed).toEqual([])
   })
   // Registro visible de lo pendiente: aparece como «todo» en el informe de pruebas hasta que se corrija.
-  for (const c of cases) it.todo(`PENDIENTE: «${c.allergy}» + «${c.food}» debería dar ${c.ideal}`)
+  for (const c of cases) it.todo(`OBJETIVO DE LA FASE 2 (no ejecutable aún): «${c.allergy}» + «${c.food}» debería dar ${c.ideal}`)
 })
 
 // ── 4. Categorías de alergia no reconocidas ──────────────────────────────────────────────────────
@@ -130,10 +137,25 @@ describe('4. LIMITACIÓN CONOCIDA: categorías de alergia que el detector no tie
   it.each(cases)('«%s» + «%s» → sin aviso (la categoría no existe)', (allergy, food) => {
     expect(detect(allergy, food)).toBeNull()
   })
-  it('«celiaquía» y «celiaquia» no se reconocen (solo «celíaco», «celiaco», «gluten» y «trigo»)', () => {
-    expect(detect('celiaquía', 'Pan de centeno')).toBeNull()
-    expect(detect('celiaquia', 'Pan de centeno')).toBeNull()
-    expect(detect('celíaco', 'Pan de centeno')).toBe('gluten')
+  // El detector solo se activa con «celíaco», «celiaco», «gluten» o «trigo» en el texto del cliente. Con el resto de formas de
+  // escribir la celiaquía (incluido el FEMENINO «celíaca»), no marca ningún alimento con gluten.
+  const celiac: Known[] = [
+    { allergy: 'celiaquía', food: 'Pan de centeno', current: null, ideal: 'gluten', why: 'el texto no contiene «celíaco», «gluten» ni «trigo»' },
+    { allergy: 'celiaquia', food: 'Pan de centeno', current: null, ideal: 'gluten', why: 'ídem, sin tilde' },
+    { allergy: 'Celiaquía', food: 'Pasta (cocida)', current: null, ideal: 'gluten', why: 'ídem' },
+    { allergy: 'celíaca', food: 'Pan de centeno', current: null, ideal: 'gluten', why: 'el femenino no contiene «celíaco»' },
+    { allergy: 'celiaca', food: 'Pasta (cocida)', current: null, ideal: 'gluten', why: 'ídem, sin tilde' },
+    { allergy: 'enfermedad celíaca', food: 'Pan de centeno', current: null, ideal: 'gluten', why: 'el femenino no contiene «celíaco»' },
+    { allergy: 'soy celíaca', food: 'Cuscús (cocido)', current: null, ideal: 'gluten', why: 'el femenino no contiene «celíaco»' },
+  ]
+  it.each(celiac)('(limitación) «$allergy» + «$food»: hoy $current; debería ser $ideal ($why)', ({ allergy, food, current }) => {
+    expect(detect(allergy, food)).toBe(current)
+  })
+  for (const c of celiac) it.todo(`OBJETIVO DE LA FASE 2 (no ejecutable aún): «${c.allergy}» + «${c.food}» debería dar ${c.ideal}`)
+  it('las formas que SÍ activa el detector para la celiaquía', () => {
+    for (const a of ['celíaco', 'Celiaco', 'CELÍACO', 'gluten', 'alergia al gluten', 'trigo', 'celiaco/a']) {
+      expect(detect(a, 'Pan de centeno'), a).toBe('gluten')
+    }
   })
   it('el cacahuete se comprueba como «frutos secos» (es una legumbre; pendiente de separar)', () => {
     expect(detect('alergia al cacahuete', 'Crema de cacahuete')).toBe('frutos_secos')

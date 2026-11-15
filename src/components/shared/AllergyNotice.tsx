@@ -10,15 +10,19 @@ import { ALLERGY_NOTICE_CLIENT, ALLERGY_NOTICE_PRO, CoverageAudience, allergyCov
 export function AllergyNotice({ allergies, audience, compact = false }: { allergies: string | null | undefined; audience: CoverageAudience; compact?: boolean }) {
   const coverage = useMemo(() => allergyCoverage(allergies), [allergies])
   if (coverage.items.length === 0) return null
+  // Completo: una línea por cada alergia. Compacto: solo las que el detector NO está comprobando (no reconocidas, ambiguas o
+  // reconocidas pero con un texto con el que el detector no se activa), para que en sustituciones y recetas quede claro que
+  // lo que se sugiere ahí no las excluye.
+  const shown = compact ? coverage.items.filter(i => i.status !== 'reconocida' || !i.detectorActivo) : coverage.items
   return (
     <div role="note" aria-label="Aviso sobre la comprobación de alérgenos" className="rounded-xl border border-notice/30 bg-notice/10 px-3 py-2.5 text-xs text-ink space-y-1.5">
       <p className="flex items-start gap-2">
         <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-notice" aria-hidden />
         <span>{audience === 'pro' ? ALLERGY_NOTICE_PRO : ALLERGY_NOTICE_CLIENT}</span>
       </p>
-      {!compact && (
+      {shown.length > 0 && (
         <ul className="space-y-1 pl-6 list-disc text-muted">
-          {coverage.items.map((item, i) => <li key={i}>{coverageLine(item, audience)}</li>)}
+          {shown.map((item, i) => <li key={i}>{coverageLine(item, audience)}</li>)}
         </ul>
       )}
     </div>

@@ -73,11 +73,45 @@ describe('allergyCoverage: lo que no reconoce el detector, aunque sea un alérge
   it.each(['sésamo', 'apio', 'mostaza', 'sulfitos', 'dióxido de azufre', 'altramuces', 'moluscos', 'mejillones', 'calamar'])('«%s»', text => {
     expect(only(`alergia a ${text}`).status).toBe('no_reconocida')
   })
-  it('«celiaquía» no se reconoce y el profesional recibe una pista; el cliente no', () => {
+})
+
+describe('allergyCoverage: celiaquía y sus variantes pertenecen a la categoría gluten', () => {
+  // Con estas formas de escribirlo el DETECTOR (allergens.ts) sí tiene reglas: coincide con sus palabras («celíaco», «gluten»…).
+  it.each(['celíaco', 'Celíaco', 'celiaco', 'CELIACO', 'gluten', 'Gluten', 'alergia al gluten', 'celiaco/a', 'celíaco/a'])('«%s»: reconocida y el detector la comprueba', text => {
+    const i = only(text)
+    expect(i.status).toBe('reconocida')
+    expect(i.categories).toEqual(['gluten'])
+    expect(i.detectorActivo).toBe(true)
+    expect(coverageLine(i, 'client')).toContain('categoría reconocida, detección limitada')
+    expect(coverageLine(i, 'client')).not.toContain('el detector actual no marca')
+  })
+  // Con estas otras el DETECTOR no se activa, aunque se reconozca la categoría: el mensaje lo dice.
+  it.each([
+    'celiaquía', 'celiaquia', 'Celiaquía', 'CELIAQUÍA', 'celíaca', 'celiaca', 'Celíaca', 'enfermedad celíaca', 'enfermedad celiaca',
+    'tengo enfermedad celíaca', 'soy celíaca', 'intolerancia celíaca',
+  ])('«%s»: categoría reconocida (gluten), pero el detector actual no la activa', text => {
+    const i = only(text)
+    expect(i.status).toBe('reconocida')
+    expect(i.categories).toEqual(['gluten'])
+    expect(i.detectorActivo).toBe(false)
+    const line = coverageLine(i, 'client')
+    expect(line).toContain('categoría reconocida, detección limitada')
+    expect(line).toContain('el detector actual no marca los alimentos con gluten')
+    expect(line).toContain('revisa a mano todos los alimentos')
+  })
+  it('el profesional recibe además la pista de cómo escribirlo; el cliente no', () => {
     const i = only('celiaquía')
-    expect(i.status).toBe('no_reconocida')
-    expect(coverageLine(i, 'pro')).toContain('«celíaco», «gluten» o «trigo»')
-    expect(coverageLine(i, 'client')).not.toContain('«celíaco»')
+    expect(coverageLine(i, 'pro')).toContain('«celíaco» o «gluten»')
+    expect(coverageLine(i, 'client')).not.toContain('Perfil')
+  })
+  it('sigue sin afirmar cobertura ni seguridad', () => {
+    for (const t of ['celiaquía', 'celíaca', 'enfermedad celíaca', 'celíaco']) {
+      expect(coverageLine(only(t), 'pro'), t).not.toMatch(/cubiert|garantiz|certific|libre de|es segur|son segur|apto|sin riesgo/i)
+    }
+  })
+  it('combinada con otra alergia, cada una tiene su estado', () => {
+    const c = allergyCoverage('celiaquía y alergia al sésamo')
+    expect(c.items.map(i => [i.status, i.label])).toEqual([['reconocida', 'Celiaquía'], ['no_reconocida', 'Sésamo']])
   })
 })
 
