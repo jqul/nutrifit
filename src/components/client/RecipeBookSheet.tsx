@@ -4,6 +4,7 @@ import { MEAL_TYPES, MealType, filterRecipes, mealTypeLabel, safeVideoUrl } from
 import { sumItemMacros, EditableItem } from '../trainer/client-panel/plan-dieta/planModel'
 import { ALLERGEN_LABELS, allergenTagConflicts } from '../../lib/allergens'
 import { BottomSheet } from '../shared/BottomSheet'
+import { AllergyNotice } from '../shared/AllergyNotice'
 import { ChefHat, Clock, PlayCircle, Search } from 'lucide-react'
 
 /**
@@ -31,6 +32,7 @@ export function RecipeBookSheet({ open, onClose, recipes, hideNumbers, allergies
         <div className="space-y-3">
           <button onClick={() => setViewing(null)} className="text-xs font-bold text-accent">← Todas las recetas</button>
           {viewing.photo_url && <img src={viewing.photo_url} alt={viewing.name} className="w-full aspect-video object-cover rounded-xl" />}
+          <AllergyNotice allergies={allergies} audience="client" compact />
           {allergenTagConflicts(allergies, viewing.allergens).length > 0 && (
             <p className="rounded-xl bg-warn/10 text-warn px-3 py-2 text-xs font-semibold" role="alert">
               ⚠ Lleva {allergenTagConflicts(allergies, viewing.allergens).map(a => (ALLERGEN_LABELS[a] ?? a).toLowerCase()).join(' y ')}, que has indicado que no toleras. Pregúntale a tu nutricionista antes de hacerla.
@@ -80,6 +82,7 @@ export function RecipeBookSheet({ open, onClose, recipes, hideNumbers, allergies
   return (
     <BottomSheet open={open} onClose={close} title="Libro de recetas">
       <div className="space-y-3">
+        <AllergyNotice allergies={allergies} audience="client" compact />
         {recipes.length > 4 && (
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-muted absolute left-3 top-1/2 -translate-y-1/2" aria-hidden />

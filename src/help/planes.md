@@ -37,6 +37,14 @@ El editor empieza con lo básico: **objetivo, comidas y alimentos**. Lo demás e
 
 Pulsa el icono ⟲ junto a un alimento. Por defecto sugiere **Mismo grupo** (otra carne, otro pescado…) con los gramos que dan las **mismas raciones**; **Todos** permite cualquier alimento igualando el macro que elijas. Si el cliente tiene alergias o intolerancias, **nunca** te sugiere nada que choque con ellas. El cliente también puede sustituir desde su app.
 
+## Aviso de alérgenos (la comprobación es orientativa)
+
+Si el cliente tiene alergias escritas en su Perfil, encima del plan sale un **aviso**: la comprobación de alérgenos de NutriFit es **orientativa y limitada**. Solo compara **palabras del nombre** de cada alimento con unas pocas categorías (lactosa, frutos secos, gluten, huevo, marisco, pescado y soja): **no revisa los ingredientes ni los alérgenos ocultos en productos compuestos**, y que un alimento no tenga icono de aviso **no significa que sea seguro**. Debajo, una línea por cada alergia escrita te dice en qué estado está:
+- **Categoría reconocida, detección limitada:** el detector tiene reglas para ella, pero con esa comprobación limitada. Reconocerla **no** significa que los alimentos estén verificados.
+- **Categoría no reconocida:** el detector no tiene reglas para esa alergia (por ejemplo sésamo, apio, mostaza, sulfitos, altramuces o moluscos): revisa a mano todos los alimentos.
+- **Información ambigua:** el texto no permite saber de qué alergia se trata (por ejemplo «me sienta mal la comida»): conviene concretarla.
+Lo mejor es escribir cada alergia con claridad en el Perfil (una por línea o separadas por comas). Las etiquetas de alérgenos de las **recetas** las marcas tú y siguen avisando de forma específica.
+
 ## Fases del plan
 
 Para llevar a un cliente por etapas (por ejemplo **Definición** 4 semanas y luego **Mantenimiento** 2), usa la tarjeta **Fases del plan**, encima del objetivo, en la pestaña **Plan de dieta**:

@@ -8,6 +8,8 @@ import { buildShoppingList, groupShoppingItemsByAisle } from '../../lib/shopping
 import { convertQuantity, MacroKey } from '../../lib/foodConversion'
 import { SubstituteItem, suggestSubstitutes, substituteGrams } from '../../lib/exchangeGroups'
 import { detectAllergenConflict } from '../../lib/allergens'
+import { ALLERGY_HIDDEN_NOTICE } from '../../lib/allergyCoverage'
+import { AllergyNotice } from '../shared/AllergyNotice'
 import { todayDayOfWeek, toLocalISODate } from '../../lib/date'
 import { groupMealsByOption, loadOptionChoices, saveOptionChoice, loadDayType, saveDayType, resolveTodaysMeals } from '../../lib/planMeals'
 import { subscribeMealLogs, getMealLogsSnapshot, mealLogsOf, isMealDone, countMealsDone, macroEnergySplit } from '../../lib/mealProgress'
@@ -231,6 +233,8 @@ export function DietaClienteTab({ client, demoMode, demoPlan, demoRecipes, perso
         <ExtrasQuickLogSheet clientId={clientId} foods={foods} demoMode={demoMode} dayKcal={balance.total.kcal} kcalTarget={plan.kcalTarget}
           onClose={() => setAddingFoods(false)} />
       )}
+      {/* Al principio de la dieta: la comprobación de alérgenos es orientativa y no sustituye leer la etiqueta. */}
+      <AllergyNotice allergies={client.allergies} audience="client" />
       <div className="card p-5">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
@@ -597,9 +601,10 @@ function SubstituteSheet({ open, onClose, item, foods, allergies, dislikes, demo
         {view.hiddenByDislike > 0 && q === '' && (
           <p className="text-xs text-muted">Se han ocultado {view.hiddenByDislike} {view.hiddenByDislike === 1 ? 'alimento' : 'alimentos'} que has dicho que no te gustan.</p>
         )}
-        {view.hiddenByAllergy > 0 && q === '' && (
-          <p className="text-xs text-muted">Se han ocultado {view.hiddenByAllergy} {view.hiddenByAllergy === 1 ? 'alimento' : 'alimentos'} por tus alergias o intolerancias.</p>
-        )}
+        {/* El filtrado por alergias no es una garantía: lo que sigue apareciendo no está verificado como seguro. */}
+        {view.hiddenByAllergy > 0 && q === ''
+          ? <p className="text-xs text-muted" role="note">{ALLERGY_HIDDEN_NOTICE}</p>
+          : <AllergyNotice allergies={allergies} audience="client" compact />}
         <p className="text-xs text-muted pt-1">
           Solo orientativo — {personalMode ? 'piénsalo bien antes de cambiarlo' : 'coméntaselo a tu nutricionista antes de cambiarlo'}{demoMode ? ' (modo demo)' : ''}.
         </p>

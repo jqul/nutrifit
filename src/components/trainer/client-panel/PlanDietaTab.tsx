@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow, RecipeRow } from '../../../lib/supabase-types'
 import { foodFromRow } from '../../../lib/mappers'
 import { detectAllergenConflict } from '../../../lib/allergens'
+import { AllergyNotice } from '../../shared/AllergyNotice'
 import { dislikeMatch } from '../../../lib/foodDislikes'
 import { detectDrugInteraction } from '../../../lib/drugNutrientInteractions'
 import { DietaryTag, foodMatchesTags } from '../../../lib/dietaryTags'
@@ -671,6 +672,9 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
       )}
 
       {!personalMode && <PlanPhasesCard clientId={client.id} nutricionistaId={nutricionistaId} demoMode={!!demoPlan} />}
+
+      {/* Los iconos de alérgeno de cada comida son orientativos: este aviso, encima del plan (resumen y edición), lo dice a la vista. */}
+      <AllergyNotice allergies={client.allergies} audience={personalMode ? 'client' : 'pro'} />
 
       <div className="card p-5 space-y-4">
         <div className="flex items-center justify-between gap-2">
