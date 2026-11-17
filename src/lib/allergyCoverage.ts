@@ -18,6 +18,12 @@ export interface CoverageItem {
   label: string
   /** Solo en «reconocida»: las categorías del detector con las que se comprueba. */
   categories: string[]
+  /**
+   * ¿El detector se activa de verdad con este texto? Es `false` cuando la categoría se reconoce (p. ej. «celíaca» es gluten) pero
+   * el texto no contiene las palabras con las que el detector busca (solo «celíaco», «gluten» o «trigo»): en ese caso no marca
+   * ningún alimento y el aviso lo dice.
+   */
+  detectorActivo: boolean
   /** Una pista solo para el profesional (p. ej. cómo escribir la alergia para que el detector la reconozca). */
   hint?: string
 }
@@ -42,8 +48,14 @@ const KNOWN_UNRECOGNIZED: { re: RegExp; label: string; hint?: string }[] = [
   { re: /sulfito|azufre/, label: 'Sulfitos' },
   { re: /altramuz|lupino/, label: 'Altramuces' },
   { re: /molusco|mejillon|almeja|calamar|pulpo|sepia|ostra|berberecho|vieira/, label: 'Moluscos' },
-  { re: /celiaqu/, label: 'Celiaquía', hint: 'El detector reconoce «celíaco», «gluten» o «trigo», pero no esta forma de escribirlo.' },
 ]
+
+/**
+ * Formas de escribir la celiaquía que pertenecen a la categoría gluten pero que el detector NO activa (solo reconoce «celíaco»,
+ * «celiaco», «gluten» y «trigo»): celiaquía, celíaca, enfermedad celíaca… Se miden sobre el texto sin tildes ni mayúsculas.
+ */
+const CELIAC_VARIANTS = /celiaqu|celiaca\b|enfermedad celiaca/
+const CELIAC_HINT = 'Escríbelo como «celíaco» o «gluten» para que lo use.'
 
 /** Palabras que indican un texto vago: no dice qué alimento o alérgeno es. */
 const VAGUE = /\b(mal|sienta|molest|malestar|raro|reaccion|reacciona|varias|varios|algunas|algunos|cosas|no se|ni idea|comida|alimentos|general|todo|cualquier|digestion|digestiva|estomago|hinch)/
@@ -59,7 +71,9 @@ function stripPrefix(segment: string): string {
 
 function split(text: string): string[] {
   return text
-    .split(/[,;\n/+()]|\s+y\s+|\s+e\s+|\s+o\s+|\.\s+/i)
+    // «pescado/marisco» son dos alergias, pero «celíaco/a» o «alérgico/a» no: la barra solo separa si hay dos letras a cada lado.
+    .replace(/(\p{L}{2,})\/(\p{L}{2,})/gu, '$1,$2')
+    .split(/[,;\n+()]|\s+\/\s+|\s+y\s+|\s+e\s+|\s+o\s+|\.\s+/i)
     .map(s => s.trim())
     .filter(Boolean)
 }
@@ -78,24 +92,29 @@ export function allergyCoverage(text: string | null | undefined): AllergyCoverag
     // 1. ¿Tiene reglas el detector? Se le pregunta con su propia API (las mismas palabras que usa para el texto del cliente).
     const categories = allergenTagConflicts(raw, ALLERGEN_IDS)
     if (categories.length > 0) {
-      items.push({ text: raw, status: 'reconocida', label: capitalize(label || raw), categories })
+      items.push({ text: raw, status: 'reconocida', label: capitalize(label || raw), categories, detectorActivo: true })
+      continue
+    }
+    // 1b. Celiaquía y variantes: categoría gluten, pero el detector no se activa con esas palabras.
+    if (CELIAC_VARIANTS.test(folded)) {
+      items.push({ text: raw, status: 'reconocida', label: capitalize(label || raw), categories: ['gluten'], detectorActivo: false, hint: CELIAC_HINT })
       continue
     }
     // 2. Alérgenos conocidos que el detector no tiene.
     const known = KNOWN_UNRECOGNIZED.find(k => k.re.test(folded))
     if (known) {
-      items.push({ text: raw, status: 'no_reconocida', label: known.label, categories: [], hint: known.hint })
+      items.push({ text: raw, status: 'no_reconocida', label: known.label, categories: [], detectorActivo: false, hint: known.hint })
       continue
     }
     // 3. Sin objeto («alergia» a secas), vago o largo: no se sabe qué alergia es.
     const object = fold(label)
     const words = object.split(/\s+/).filter(Boolean)
     if (!object || VAGUE.test(folded) || words.length > 4) {
-      items.push({ text: raw, status: 'ambigua', label: raw, categories: [] })
+      items.push({ text: raw, status: 'ambigua', label: raw, categories: [], detectorActivo: false })
       continue
     }
     // 4. Un alimento o sustancia concreta que el detector no conoce.
-    items.push({ text: raw, status: 'no_reconocida', label: capitalize(label), categories: [] })
+    items.push({ text: raw, status: 'no_reconocida', label: capitalize(label), categories: [], detectorActivo: false })
   }
   return {
     items,
@@ -128,6 +147,12 @@ export type CoverageAudience = 'pro' | 'client'
 /** Una línea por alergia: qué se comprueba y qué no. Sin palabras de garantía. */
 export function coverageLine(item: CoverageItem, audience: CoverageAudience): string {
   if (item.status === 'reconocida') {
+    if (!item.detectorActivo) {
+      // La categoría se reconoce, pero el detector no se activa con estas palabras: en vez del párrafo largo de las reconocidas
+      // (que describiría una comprobación que aquí no ocurre), una frase corta con las dos advertencias que importan.
+      const short = `${item.label}: categoría reconocida, detección limitada. El detector actual no identifica todos los alimentos con gluten y, con esta forma de escribirlo, no marca ninguno: revisa a mano todos los alimentos.`
+      return audience === 'pro' && item.hint ? `${short} ${item.hint}` : short
+    }
     const as = item.categories.map(c => (ALLERGEN_LABELS[c] ?? c).toLowerCase()).join(' y ')
     return `${item.label}: categoría reconocida, detección limitada (se comprueba como: ${as}). ${ALLERGY_LIMITATION} Que se reconozca no significa que los alimentos estén verificados.`
   }
