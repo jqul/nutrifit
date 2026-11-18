@@ -472,6 +472,16 @@ Esto **solo se puede probar en un móvil de verdad**, con el enlace de un client
 - [ ] En sustituciones, si se ocultan alimentos por alergias, sale «Se han ocultado algunos alimentos… La detección es limitada…», **sin** la frase antigua «por tus alergias o intolerancias».
 - [ ] Los iconos de alérgeno de cada comida y todo lo demás funcionan **igual que antes**: no ha cambiado qué alimentos avisan.
 
+## 46. Medidas corporales estándar (migración 0073)
+
+Solo tiene sentido **después** de aplicar la migración 0073; antes, las medidas estándar no se crean y la consola del navegador muestra un 400 en `metric_definitions`.
+
+- [ ] Abre la ficha de un cliente → **Seguimiento** → **Medidas corporales** → **Métricas**: aparecen las seis estándar (% grasa corporal, Cintura, Cadera, Pecho, Brazo, Muslo), cada una una sola vez.
+- [ ] **Recarga** la página y vuelve a abrir la ficha (y la de otro cliente): siguen siendo seis, sin duplicados, y la consola no muestra ningún error 400.
+- [ ] **Añadir medidas** → escribe cintura y cadera → guardar: salen en la evolución. Crea una métrica propia («Pliegue tricipital») y otra con el mismo nombre en otra fila: la app avisa de que ya existe, y la propia convive con las estándar.
+- [ ] Si algo falla al preparar las estándar, ahora sale un aviso «No se han podido preparar las medidas estándar…» (antes el fallo era silencioso).
+- [ ] En la app de un cliente suyo, en **Progreso**, solo ve las métricas que tengan medidas y no estén ocultas.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.

@@ -32,10 +32,17 @@ export function BodyMetricsCard({ clientId, nutricionistaId, demoMode }: { clien
     const missing = missingStandardMetrics((defRows || []).map(r => ({ key: r.key as string | null })))
     if (missing.length > 0) {
       const base = (defRows || []).reduce((max, r) => Math.max(max, Number(r.sort_order) || 0), -1) + 1
-      await supabase.from('metric_definitions').upsert(
+      const { error: seedError } = await supabase.from('metric_definitions').upsert(
         missing.map((m, i) => ({ nutricionista_id: nutricionistaId, key: m.key, name: m.name, unit: m.unit, sort_order: base + i })),
         { onConflict: 'nutricionista_id,key', ignoreDuplicates: true })
-      defRows = (await supabase.from('metric_definitions').select('*').eq('nutricionista_id', nutricionistaId).order('sort_order').order('created_at')).data
+      if (seedError) {
+        // Antes este error se ignoraba: con un índice parcial que el ON CONFLICT no podía usar (arreglado en la migración 0073)
+        // las estándar no se crearon nunca y nadie lo vio. Ahora se avisa y queda en la consola.
+        console.error('metric_definitions: no se pudieron crear las medidas estándar', seedError)
+        toast('No se han podido preparar las medidas estándar: ' + seedError.message, 'warn')
+      } else {
+        defRows = (await supabase.from('metric_definitions').select('*').eq('nutricionista_id', nutricionistaId).order('sort_order').order('created_at')).data
+      }
     }
     const { data: valueRows } = await supabase.from('body_metrics').select('*').eq('client_id', clientId).order('date')
     setDefs((defRows || []).map(metricDefinitionFromRow))
