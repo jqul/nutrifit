@@ -114,10 +114,16 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   // medicación de la anamnesis, igual que las alergias se cruzan contra
   // client.allergies — ver detectDrugInteraction.
   const [medicacion, setMedicacion] = useState('')
+  // Embarazo/lactancia (pregunta cerrada del cuestionario): la calculadora metabólica parte de ella y no genera déficit automático.
+  const [embarazoLactancia, setEmbarazoLactancia] = useState('')
   useEffect(() => {
-    if (demoPlan) { setMedicacion(DEMO_ANAMNESIS[client.id]?.medicacion || ''); return }
+    if (demoPlan) { setMedicacion(DEMO_ANAMNESIS[client.id]?.medicacion || ''); setEmbarazoLactancia(DEMO_ANAMNESIS[client.id]?.embarazo_lactancia || ''); return }
     supabase.from('anamnesis').select('answers').eq('client_id', client.id).maybeSingle()
-      .then(({ data }) => setMedicacion((data?.answers as Record<string, string> | null)?.medicacion || ''))
+      .then(({ data }) => {
+        const answers = data?.answers as Record<string, string> | null
+        setMedicacion(answers?.medicacion || '')
+        setEmbarazoLactancia(answers?.embarazo_lactancia || '')
+      })
   }, [client.id, demoPlan])
 
   const loadRecipes = useCallback(async () => {
@@ -711,7 +717,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         {targetsEditable ? (
           <>
         {showCalculator && (
-          <MetabolicCalculatorPanel client={client} onClose={() => setShowCalculator(false)}
+          <MetabolicCalculatorPanel client={client} reproductiveAnswer={embarazoLactancia} onClose={() => setShowCalculator(false)}
             onApply={(result) => {
               setKcalTarget(String(result.kcalTarget)); setProteinG(String(result.proteinG))
               setCarbsG(String(result.carbsG)); setFatG(String(result.fatG)); setFiberG(String(result.fiberG))

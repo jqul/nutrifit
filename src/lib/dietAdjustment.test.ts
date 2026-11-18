@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { DailyCheckin, WeightEntry } from '../types'
-import { AdjustmentPlan, suggestDietAdjustment, MIN_KCAL, MIN_CARBS_G } from './dietAdjustment'
+import { AdjustmentPlan, AdjustmentProfile, suggestDietAdjustment, evaluateAdjustmentTarget, MIN_KCAL, MIN_CARBS_G } from './dietAdjustment'
 
 const TODAY = new Date(2026, 9, 5, 15, 30)   // 5 oct 2026, por la tarde (a propósito: no medianoche)
 const iso = (daysAgo: number) => {
@@ -170,7 +170,10 @@ describe('suggestDietAdjustment — límites de seguridad', () => {
     const r = suggest({ weights: weekly(80, 0.4), plan: plan({ kcal_target: MIN_KCAL, carbs_g: 150 }) })
     expect(r.kind).toBe('wait')
     expect(r.proposal).toBeNull()
-    expect(r.headline).toContain('límite seguro')
+    // Es un umbral de REVISIÓN, no una garantía: así se dice (y ya no «límite seguro»).
+    expect(r.headline).toContain('umbral de revisión')
+    expect(r.headline).toContain('no garantiza seguridad')
+    expect(r.headline).not.toMatch(/l[ií]mite seguro/)
   })
 
   it('never leaves fewer than the minimum carbs', () => {
@@ -222,5 +225,115 @@ describe('suggestDietAdjustment — mantenimiento dinámico', () => {
   it('does not change what losing or gaining goals do near their goal weight', () => {
     const r = suggest({ goal: 'perder_peso', goalWeightKg: 70, weights: weekly(80, -0.1) })
     expect(r.kind).toBe('adjust')
+  })
+})
+
+// ── Motor de evaluación en el reajuste (planSafety.ts) ─────────────────────────────────────────────────────────────────────────────
+const adultaCompleta: AdjustmentProfile = { sex: 'mujer', ageYears: 35, birthDate: '1991-03-01', heightCm: 165, reproductiveStatus: 'ninguno' }
+const stalled = () => weekly(80, 0)            // peso estancado en 80 kg (meta 70): con objetivo de perder, pide bajar kcal
+const codesOf = (r: ReturnType<typeof suggestDietAdjustment>) => r.signals.map(s => s.code)
+
+describe('suggestDietAdjustment — planes por debajo de los umbrales de revisión', () => {
+  const casos: [number, number][] = [[1500, 55], [1250, 120], [1200, 120], [1142, 73], [1100, 90], [1045, 60], [900, 30], [700, 20]]
+  it.each(casos)('plan de %i kcal con %i g de hidratos y la pérdida estancada: no baja más por su cuenta y no lo llama «seguro»', (kcal, carbs) => {
+    const r = suggest({ weights: stalled(), plan: plan({ kcal_target: kcal, carbs_g: carbs, protein_g: 100, fat_g: 50 }) })
+    if (r.kind === 'adjust') {
+      expect(r.proposal!.kcal_target).toBeGreaterThanOrEqual(MIN_KCAL)
+      expect(r.proposal!.carbs_g).toBeGreaterThanOrEqual(MIN_CARBS_G)
+    } else {
+      expect(r.kind).toBe('wait')
+      expect(r.headline).toContain('umbral de revisión')
+      expect(r.headline).toContain('no garantiza seguridad')
+    }
+    expect(r.headline).not.toMatch(/l[ií]mite seguro|es seguro|m[ií]nimo seguro/i)
+  })
+  it('los planes bajo el umbral lo dicen: «por debajo del umbral» (no «en el umbral») y llevan la señal de revisión', () => {
+    for (const kcal of [1142, 1045, 900]) {
+      const r = suggest({ weights: stalled(), plan: plan({ kcal_target: kcal, carbs_g: 60, protein_g: 100, fat_g: 50 }) })
+      expect(r.headline, String(kcal)).toContain('por debajo del umbral de revisión')
+      expect(codesOf(r), String(kcal)).toContain('OBJETIVO_BAJO_UMBRAL')
+    }
+    expect(suggest({ weights: stalled(), plan: plan({ kcal_target: 1200, carbs_g: 150 }) }).headline).toContain('está en el umbral de revisión')
+  })
+  it('también señala el plan bajo el umbral cuando NO propone nada (va según lo previsto); si propone subir, las señales son las de la propuesta', () => {
+    const bajo = plan({ kcal_target: 1045, carbs_g: 60, protein_g: 100, fat_g: 50 })
+    const onTrack = suggest({ weights: weekly(80, -0.48), plan: bajo })
+    expect(onTrack.kind).toBe('on_track')
+    expect(codesOf(onTrack)).toContain('OBJETIVO_BAJO_UMBRAL')
+    const sube = suggest({ weights: weekly(80, -1.2), goalWeightKg: 60, plan: bajo })
+    expect(sube.kind).toBe('adjust')
+    expect(sube.deltaKcal).toBeGreaterThan(0)
+    expect(sube.proposal!.kcal_target).toBe(1295)
+    expect(codesOf(sube)).not.toContain('OBJETIVO_BAJO_UMBRAL') // las señales son las de la propuesta, que ya supera el umbral
+  })
+  it('un plan normal no lleva señales', () => {
+    expect(suggest({ weights: weekly(80, -0.48), plan: plan() }).signals).toEqual([])
+  })
+  it('los umbrales son configurables: con 1.000 kcal un plan de 1.045 no se marca', () => {
+    const r = suggest({ weights: stalled(), plan: plan({ kcal_target: 1045, carbs_g: 100, protein_g: 100, fat_g: 50 }), thresholds: { minKcalReview: 1000 } })
+    expect(codesOf(r)).not.toContain('OBJETIVO_BAJO_UMBRAL')
+    expect(r.headline).toContain('1000 kcal')
+  })
+  it('no cambia ningún comportamiento numérico para planes normales respecto a antes', () => {
+    const r = suggest({ weights: stalled(), plan: plan() })
+    expect(r.kind).toBe('adjust')
+    expect(r.deltaKcal).toBe(-250) // (−0,48 kg/sem esperados × 7700 / 7) × 0,5 = −264, acotado a −250
+    expect(r.proposal!.kcal_target).toBe(1750)
+  })
+})
+
+describe('suggestDietAdjustment — población y perfil', () => {
+  it('menores de 18 años: no se proponen reajustes automáticos, se explica y se señala', () => {
+    for (const ageYears of [17, 15, 12, 9, 0]) {
+      const r = suggest({ weights: stalled(), profile: { ...adultaCompleta, ageYears } })
+      expect(r.kind, String(ageYears)).toBe('wait')
+      expect(r.proposal).toBeNull()
+      expect(r.headline).toContain('menores de 18 años')
+      expect(r.headline).toContain('valoración profesional')
+      expect(codesOf(r)).toContain('MENOR_DE_EDAD')
+    }
+  })
+  it('a los 18 ya funciona como un adulto', () => {
+    expect(suggest({ weights: stalled(), profile: { ...adultaCompleta, ageYears: 18 } }).kind).toBe('adjust')
+  })
+  it('embarazo o lactancia declarados: no se proponen reajustes automáticos con ningún objetivo', () => {
+    for (const reproductiveStatus of ['embarazo', 'lactancia'] as const) for (const goal of ['perder_peso', 'ganar_masa', 'mantenimiento']) {
+      const r = suggest({ goal, weights: weekly(80, 0.5), profile: { ...adultaCompleta, reproductiveStatus } })
+      expect(r.kind, reproductiveStatus + ' ' + goal).toBe('wait')
+      expect(r.proposal).toBeNull()
+      expect(r.headline).toMatch(/embarazo|lactancia/)
+      expect(r.headline).toContain('valoración profesional')
+      expect(codesOf(r)).toContain(goal === 'perder_peso' ? 'EMBARAZO_LACTANCIA_PERDIDA_DE_PESO' : 'EMBARAZO_LACTANCIA_REVISION')
+    }
+  })
+  it('sin perfil, o con «no» o «no consta», el reajuste funciona exactamente como antes', () => {
+    const sin = suggest({ weights: stalled() })
+    for (const reproductiveStatus of ['ninguno', 'no_consta'] as const) {
+      const con = suggest({ weights: stalled(), profile: { ...adultaCompleta, reproductiveStatus } })
+      expect(con.kind).toBe(sin.kind)
+      expect(con.deltaKcal).toBe(sin.deltaKcal)
+      expect(con.proposal).toEqual(sin.proposal)
+    }
+  })
+  it('con sexo, edad y altura conocidos compara el plan con la TMB estimada (Mifflin) y lo señala', () => {
+    // mujer 35 a, 165 cm, 60 kg → TMB 1.320: un plan de 1.250 está por encima del umbral (1.200) pero por debajo de la TMB
+    const r = suggest({ weights: weekly(60, -0.36), goalWeightKg: 50, plan: plan({ kcal_target: 1250, carbs_g: 130, protein_g: 100, fat_g: 50 }), profile: adultaCompleta })
+    expect(codesOf(r)).toContain('OBJETIVO_BAJO_TMB')
+    expect(codesOf(r)).not.toContain('OBJETIVO_BAJO_UMBRAL')
+    // sin altura o sin sexo no hay con qué comparar: no se inventa una TMB
+    expect(codesOf(suggest({ weights: weekly(60, -0.36), goalWeightKg: 50, plan: plan({ kcal_target: 1250, carbs_g: 130 }), profile: { ...adultaCompleta, heightCm: null } }))).not.toContain('OBJETIVO_BAJO_TMB')
+    expect(codesOf(suggest({ weights: weekly(60, -0.36), goalWeightKg: 50, plan: plan({ kcal_target: 1250, carbs_g: 130 }), profile: { ...adultaCompleta, sex: null } }))).not.toContain('OBJETIVO_BAJO_TMB')
+  })
+  it('con IMC bajo y objetivo de perder peso lo señala como revisión', () => {
+    const r = suggest({ weights: weekly(45, -0.27), goalWeightKg: 40, profile: { ...adultaCompleta, heightCm: 160 } })
+    const s = r.signals.find(x => x.code === 'IMC_BAJO')
+    expect(s).toBeDefined()
+    expect(s!.severity).toBe('revision')
+  })
+  it('evaluateAdjustmentTarget evalúa la cifra que edite el profesional, no solo la propuesta', () => {
+    const e = evaluateAdjustmentTarget(adultaCompleta, 'perder_peso', 1000, 80, 60)
+    expect(e.signals.map(s => s.code)).toEqual(expect.arrayContaining(['OBJETIVO_BAJO_UMBRAL', 'OBJETIVO_BAJO_TMB']))
+    expect(e.needsProfessionalReview).toBe(true)
+    expect(evaluateAdjustmentTarget(adultaCompleta, 'perder_peso', 1800, 200, 60).signals).toEqual([])
   })
 })

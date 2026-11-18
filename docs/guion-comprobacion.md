@@ -482,6 +482,21 @@ Solo tiene sentido **después** de aplicar la migración 0073; antes, las medida
 - [ ] Si algo falla al preparar las estándar, ahora sale un aviso «No se han podido preparar las medidas estándar…» (antes el fallo era silencioso).
 - [ ] En la app de un cliente suyo, en **Progreso**, solo ve las métricas que tengan medidas y no estén ocultas.
 
+## 47. Calculadora metabólica y reajuste (evaluación de seguridad)
+
+Usa un **cliente de prueba** (no apliques nada a un plan real sin querer): la calculadora solo rellena los campos y no guarda hasta que pulsas guardar.
+
+- [ ] **Plan de dieta** → «Calculadora metabólica». Con un cliente **adulto con la fecha de nacimiento y la altura** en el perfil, la edad y la altura salen rellenas. Si el perfil no dice «mujer/femenino» u «hombre/masculino» con claridad, el sexo sale en **«Sin indicar»** y aparece «Falta el sexo»: no se calcula hasta elegirlo (con Katch-McArdle no hace falta).
+- [ ] Mujer de 50 kg, 155 cm, 44 años, actividad **sedentaria** y objetivo **déficit**: sale un objetivo de unas **1.044 kcal** *con señales*: «Objetivo por debajo de la TMB estimada» y «Por debajo del umbral de revisión (1200 kcal)», marcadas como «Pide revisión profesional», y **«Aplicar al plan» está desactivado** hasta marcar «He revisado las señales… valido este objetivo». Cambia cualquier dato: la casilla se desmarca.
+- [ ] Con el mismo caso y actividad **moderada**: sin señales de revisión y se puede aplicar directamente. Ninguna frase dice «seguro»: el umbral se describe como provisional y NO como mínimo de seguridad.
+- [ ] **Menor de edad**: pon una fecha de nacimiento de hace 14 años (o escribe 17 en la edad): aparece «Menor de 18 años: no se calcula» y no sale ningún resultado ni botón de aplicar. Con 18 sí se calcula (con un aviso si usas Mifflin: la ecuación se obtuvo en personas de 19 a 78 años).
+- [ ] **Embarazo/lactancia**: elige «Embarazo» con el objetivo «Déficit»: «En embarazo no se calcula un objetivo de pérdida de peso», sin resultado. Con «Mantenimiento» sí se calcula, pide revisión y exige la casilla. Responde «Embarazo» en el cuestionario de salud del cliente (nueva pregunta «¿Estás embarazada o en periodo de lactancia?») y comprueba que la calculadora parte de esa respuesta.
+- [ ] **Proteína y grasa altas**: con proteína 3 g/kg y grasa 2 g/kg para 50 kg, sale «Proteína y grasa superan el objetivo energético», se muestra el objetivo, **no** se muestra el reparto de macros y no se puede aplicar (antes salía con 0 g de hidratos).
+- [ ] **Datos imposibles**: altura «1,65» (en vez de 165), edad 200 o peso 20 kg dan «no es verosímil» y no calculan. Un peso de 400 kg o un 3 % de grasa se calculan con un aviso de «poco habitual».
+- [ ] **Reajuste** (Seguimiento): con un plan de menos de 1.200 kcal y el peso estancado no propone bajar más y dice «por debajo del umbral de revisión interno… no garantiza seguridad» (ya no «límite seguro»). Con un cliente menor de 18 años o con embarazo/lactancia declarados, dice que no propone reajustes automáticos y por qué.
+- [ ] Si editas la cifra de kcal de la propuesta hasta quedar por debajo del umbral, aparece la señal y hay que marcar la casilla antes de aplicar.
+- [ ] Los planes que ya tenías guardados **no cambian** por haber instalado esta versión.
+
 ## Qué contarme
 
 Para cada cosa rara, dime **dónde**, **qué hiciste**, **qué esperabas** y **qué pasó**.
