@@ -109,10 +109,12 @@ no exista una justificación suficiente, ninguno es un mínimo universal ni una 
 | Entrada manual de kcal y macros + guardar (`PlanDietaTab`) | Sí | Se evalúa el formulario; `decideSave` bloquea lo incompatible o incalculable y exige confirmar las señales de revisión **solo si los objetivos cambian** respecto a los guardados. La confirmación vale para la huella exacta del objetivo: si se cambia algo después, hay que confirmar de nuevo. |
 | Aplicar una plantilla (interfaz) | Sí, **antes** de aplicarla | Se evalúa con los datos de hoy del cliente; se rechaza si queda bloqueada (menor, embarazo con déficit, macros incompatibles…). Con señales de revisión se aplica y se exige confirmar al guardar. |
 | Restaurar una versión (interfaz) | Sí, **antes** de restaurar | Se evalúa en el diálogo de restauración; se bloquea o exige confirmar. Restaurar guarda en el servidor de inmediato, por eso la comprobación es previa. |
-| **Fases con aplicación automática** (cron en el servidor, migración 0068: `apply_phase_template` → `save_diet_plan`) | **No** | **No pasan por el motor ni por ninguna comprobación de la app.** El cron no se ha modificado y **no se afirma que esté protegido**: aplica la plantilla de la fase cada mañana sin evaluar los datos actuales del cliente. Se ha añadido un aviso en la pantalla de fases. Protegerlo exige un cambio de servidor (función o esquema): fuera de este alcance. |
-| `save_diet_plan` / `restore_plan_version` llamados directamente al servidor | No | El servidor **no valida rangos** (`save_diet_plan` acepta cualquier `numeric`): la protección es de la interfaz, no del servidor. |
+| **Fases con aplicación automática** (cron en el servidor, migración 0068: `apply_phase_template` → `save_diet_plan`) | **No** | **No pasan por el motor ni por ninguna comprobación de la app.** El cron no se ha modificado y **no se afirma que esté protegido**: aplica la plantilla de la fase cada mañana sin evaluar los datos actuales del cliente. **Hay un aviso visible en la pantalla de fases (en el formulario y en cada fase pendiente de aplicarse): es un aviso, no una protección; no impide ni corrige nada.** Protegerlo exige un cambio de servidor (función o esquema): ver «Pendiente prioritario». |
+| `save_diet_plan` / `restore_plan_version` / UPDATE directo de `diet_plans` llamados directamente a la API | No | El servidor **no valida rangos** (`save_diet_plan` acepta cualquier `numeric`) y la política `nutricionista_manages_diet_plans` (ALL) permite actualizar `diet_plans` sin pasar por la interfaz: **la guarda de la interfaz se puede saltar llamando a la API con una sesión válida**. |
 
-No se ha revisado de forma exhaustiva ningún otro camino de escritura de objetivos distinto de los de la tabla.
+**Auditoría de caminos de escritura (2026-11-19, código de la rama).** Desde la aplicación, los objetivos de un plan solo se escriben por: (1) `save_diet_plan` en `PlanDietaTab` (tras `decideSave`), (2) `restore_plan_version` en `PlanVersions` (tras `decideApply`, con la evaluación obligatoria), (3) el UPDATE del reajuste en `DietAdjustmentCard` (evaluando la cifra que se aplica) y (4) el INSERT de un plan vacío (todos los objetivos a 0). No hay UPSERT ni DELETE de `diet_plans` desde la app, las funciones de borde no escriben planes y la calculadora no escribe nada. Una prueba automática (`flujosEscrituraPlanes.test.ts`) fija esta lista cerrada y el orden «evaluar y luego escribir»: si alguien añade otro camino o quita una evaluación, falla. **Dentro de la aplicación no se han encontrado bypasses** de entrada manual, plantillas ni restauraciones; fuera de ella, ver las dos últimas filas de la tabla.
+
+Limitación conocida: el objetivo de pérdida de peso se deduce de `client.goal`; si la ficha no lo tiene, un déficit con embarazo declarado no se detecta como pérdida de peso y queda como «pide revisión» (no como bloqueo).
 
 ## Macros: dos tolerancias
 
@@ -124,6 +126,21 @@ exactas (con ellas, ningún reparto presentado supera el objetivo). **Cuantifica
 Mifflin; `MetabolicInput` en las pruebas): 2.872 (9,6 %) quedan bloqueadas por macros incompatibles y de las 27.128 presentadas, **12.857
 (47,4 %) muestran gramos enteros que suman más que el objetivo mostrado**: 10.577 por 1-5 kcal y 2.280 por 6-8 kcal, máximo 8. **Todas
 llevan ahora la nota `MACROS_REDONDEO`** (antes ninguna llevaba señal alguna).
+
+### Cota del redondeo: demostrada, no solo observada
+
+**8 kcal es lo observado, no un límite universal.** Lo demostrado es la cota de **9 kcal**: la calculadora fija proteína y grasa exactas y
+deja a los hidratos lo que sobra, así que la suma EXACTA de macros es igual al objetivo exacto. Al redondear cada término (error ≤ 0,5 g
+en proteína, hidratos y grasa, y ≤ 0,5 kcal en el objetivo), lo que se ve difiere del objetivo mostrado como máximo
+0,5·4 + 0,5·4 + 0,5·9 + 0,5 = 9 kcal, para cualquier entrada que no se bloquee. Comprobado además fuera de la rejilla
+(`planSafety.extremos.test.ts`): 60.000 entradas pseudoaleatorias (semilla fija) con peso 30-400 kg, altura 100-250 cm, edad 18-110, proteína 0-6 g/kg,
+grasa 0-4 g/kg, las tres fórmulas, todas las actividades y objetivos, más las esquinas de cada rango: **máximo observado 8 kcal** (9.195 de 20.491
+presentadas con algún exceso, 39.509 bloqueadas por macros incompatibles), ningún valor no finito, y **todo exceso lleva `MACROS_REDONDEO`**.
+La cota de 9 no se alcanzó en ninguna muestra: es la garantía aritmética, y 8 el máximo visto.
+
+**Redondeo frente a incompatibilidad energética.** Una diferencia por redondeo (hasta 9 kcal por encima, `MACROS_REDONDEO`, nota) no es una
+incompatibilidad. Con cuentas exactas **no hay tolerancia**: si proteína y grasa superan el objetivo, aunque sea por 1 kcal, no queda nada para
+hidratos y el reparto se bloquea (`MACROS_INCOMPATIBLES`).
 
 ## Confirmación visual no auditada
 
@@ -145,6 +162,25 @@ revisión, escrito dentro de `save_diet_plan`) queda para una fase posterior y n
 - `privacidad.md` (§3) y `clientes.md` citan «datos de salud» y «cuestionarios» de forma genérica, y `encargado.md` enumera categorías de salud, pero **ninguno menciona expresamente el embarazo o la lactancia** como dato tratado. Conviene valorar con asesoría jurídica si hace falta nombrarlo.
 - Ningún texto dice que **un super administrador puede leer las respuestas** por las políticas RLS (`private.is_super_admin()`), mientras `privacidad.md` (§ de seguridad) afirma la separación de datos por profesional.
 - No se han tocado `privacy`/`legal`: son borradores pendientes de revisión legal (`LEGAL_REVIEWED`).
+
+## Pendiente prioritario de la siguiente fase: protección de servidor
+
+**Decisión del usuario (2026-11-19):** se acepta **temporalmente** que las fases automáticas sigan sin protección de servidor, con estas
+condiciones: (1) mantener un aviso visible de que no pasan por `planSafety`; (2) **no presentar ese aviso como una protección efectiva**;
+(3) registrar este riesgo como **pendiente prioritario**; (4) la siguiente fase debe **diseñar** la protección de servidor.
+
+**Riesgo registrado.** Ninguna de estas vías pasa por el motor y todas pueden dejar un objetivo que la interfaz habría bloqueado o señalado:
+- `save_diet_plan` (migración 0056): acepta cualquier objetivo numérico; sin validación de rangos ni de población.
+- **Cron de la migración 0068** (`apply_phase_template` → `private.template_to_save_payload` → `save_diet_plan`): aplica cada mañana la plantilla
+  de las fases con `auto_apply` sin evaluar los datos actuales del cliente (edad, embarazo declarado, objetivo bajo, macros).
+- `restore_plan_version` (migración 0049): restaura una versión en el servidor sin evaluarla.
+- UPDATE directo de `diet_plans` por la política `nutricionista_manages_diet_plans` (ALL): cualquier sesión válida puede saltarse la guarda de la interfaz.
+- Cualquier otra vía de escritura que no pase por la interfaz (el super administrador puede escribir `diet_plans` de cualquier cliente).
+
+**Qué tendrá que decidir la siguiente fase** (no se diseña aquí): dónde vive la evaluación (portar las reglas a SQL, función de borde, o ambas);
+de qué datos dispone el servidor (edad, sexo, embarazo confirmado: hoy no hay dato estructurado); qué hace el cron cuando el objetivo queda bloqueado
+o pide revisión (hoy ya puede dejar un `apply_error` visible en la fase); cómo se registra una validación profesional de forma auditada
+(`plan_reviews`); y cómo se evita que los cambios de servidor reabran los flujos de interfaz.
 
 ## Cómo se integra
 
@@ -186,8 +222,11 @@ Solo si se quiere ir más allá del cuestionario:
 
 ## Pruebas
 
-`planSafety.test.ts`, `planSafety.redondeo.test.ts` (tolerancias, gramos enteros, estado del cuestionario), `planGuard.test.ts` (entrada manual,
-huella, confirmación, plantillas y restauraciones), `metabolicCalculator.regresion.test.ts` (casos de la auditoría y rejilla de 30.000
-combinaciones), `dietAdjustment.test.ts` y `dietAdjustment.anamnesis.test.ts`, `MetabolicCalculatorPanel*.test.tsx`, `ProfessionalConfirmation.test.tsx`
-(la confirmación no se persiste) y `anamnesis.test.ts`. Sin navegador (no hay jsdom): el flujo con cifras (aplicar, guardar, confirmar) se
-comprueba en la demo.
+`planSafety.test.ts`, `planSafety.redondeo.test.ts` (tolerancias, gramos enteros, estado del cuestionario), `planSafety.extremos.test.ts` (60.000
+entradas fuera de la rejilla y esquinas), `planGuard.test.ts` (entrada manual, huella, confirmación, plantillas y restauraciones),
+`flujosEscrituraPlanes.test.ts` (lista cerrada de caminos de escritura y orden «evaluar y luego escribir»), `metabolicCalculator.regresion.test.ts`
+(casos de la auditoría y rejilla de 30.000 combinaciones), `dietAdjustment.test.ts` y `dietAdjustment.anamnesis.test.ts`, `MetabolicCalculatorPanel*.test.tsx`,
+`ProfessionalConfirmation.test.tsx` (la confirmación no se persiste) y `anamnesis.test.ts`. Sin navegador (no hay jsdom): el flujo con cifras
+(aplicar, guardar, confirmar, restaurar) se comprueba en la demo (guion, sección 47).
+
+Informe de privacidad (no modifica ningún texto legal): [`informe-privacidad-anamnesis.md`](informe-privacidad-anamnesis.md).

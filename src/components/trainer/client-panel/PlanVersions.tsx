@@ -22,7 +22,7 @@ const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('es-ES', { day
 export function PlanVersions({ planId, demoMode, refreshKey, onRestored, evaluateSnapshot }: {
   planId: string; demoMode?: boolean
   /** Evalúa los objetivos de una versión con los datos ACTUALES del cliente (una versión que fue válida no se da por buena). */
-  evaluateSnapshot?: (snapshot: PlanSnapshot) => PlanEvaluation
+  evaluateSnapshot: (snapshot: PlanSnapshot) => PlanEvaluation
   /** Cambia cuando se guarda el plan, para volver a leer las versiones. */
   refreshKey: number
   /** Se llama tras restaurar de verdad, para recargar el plan en el editor. */
@@ -66,7 +66,7 @@ export function PlanVersions({ planId, demoMode, refreshKey, onRestored, evaluat
   }
 
   const changes = restoring ? describeRestore(current.snapshot, restoring.snapshot) : []
-  const restoreEvaluation = restoring && evaluateSnapshot ? evaluateSnapshot(restoring.snapshot) : null
+  const restoreEvaluation = restoring ? evaluateSnapshot(restoring.snapshot) : null
 
   return (
     <div className="card">
