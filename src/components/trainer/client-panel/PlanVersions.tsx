@@ -4,9 +4,10 @@ import { supabase } from '../../../lib/supabase'
 import { DEMO_PLAN_VERSIONS } from '../../../lib/demo-data'
 import { PlanVersionRow, PlanSnapshot, describeRestore, mealLabel, summarizeSnapshot } from '../../../lib/planVersions'
 import { PlanEvaluation } from '../../../lib/planSafety'
-import { decideApply } from '../../../lib/planGuard'
+import { decideApply, decideSave } from '../../../lib/planGuard'
 import { PlanSignalList } from '../../shared/PlanSignalList'
 import { ProfessionalConfirmation } from '../../shared/ProfessionalConfirmation'
+import { ProfessionalEvaluation } from '../../shared/ProfessionalEvaluation'
 import { Modal } from '../../shared/Modal'
 import { Button } from '../../shared/Button'
 import { toast } from '../../shared/Toast'
@@ -34,6 +35,8 @@ export function PlanVersions({ planId, demoMode, refreshKey, onRestored, evaluat
   const [restoring, setRestoring] = useState<PlanVersionRow | null>(null)
   const [busy, setBusy] = useState(false)
   const [restoreConfirmed, setRestoreConfirmed] = useState(false)
+  const [restoreEvaluated, setRestoreEvaluated] = useState(false)
+  const [restoreReason, setRestoreReason] = useState('')
 
   useEffect(() => {
     if (demoMode) { setVersions(Object.values(DEMO_PLAN_VERSIONS)[0] ?? []); return }
@@ -53,7 +56,7 @@ export function PlanVersions({ planId, demoMode, refreshKey, onRestored, evaluat
     if (restoreEvaluation) {
       const check = decideApply(restoreEvaluation, 'versión')
       if (!check.allowed) { toast(check.message!, 'warn'); return }
-      if (restoreEvaluation.needsProfessionalReview && !restoreConfirmed) { toast('Esta versión pide revisión profesional: marca la confirmación antes de restaurarla.', 'warn'); return }
+      if (restoreDecision && !restoreDecision.allowed) { toast(restoreDecision.message!, 'warn'); return }
     }
     setBusy(true)
     const { error } = await supabase.rpc('restore_plan_version', { p_version_id: restoring.id })
@@ -61,12 +64,17 @@ export function PlanVersions({ planId, demoMode, refreshKey, onRestored, evaluat
     if (error) { toast('No se pudo restaurar la versión', 'warn'); return }
     toast(`Versión ${restoring.version_number} restaurada ✓`, 'ok')
     setRestoring(null)
-    setRestoreConfirmed(false)
+    resetRestore()
     await onRestored()
   }
 
   const changes = restoring ? describeRestore(current.snapshot, restoring.snapshot) : []
   const restoreEvaluation = restoring ? evaluateSnapshot(restoring.snapshot) : null
+  // La misma decisión que al guardar: lo bloqueado no se restaura, la revisión exige la casilla y lo que la app no puede determinar exige la evaluación específica.
+  const restoreDecision = restoring && restoreEvaluation
+    ? decideSave({ evaluation: restoreEvaluation, fingerprint: restoring.id, confirmedFingerprint: restoreConfirmed ? restoring.id : null, changed: true, attestation: restoreEvaluated ? { fingerprint: restoring.id, reason: restoreReason } : null })
+    : null
+  const resetRestore = () => { setRestoreConfirmed(false); setRestoreEvaluated(false); setRestoreReason('') }
 
   return (
     <div className="card">
@@ -143,15 +151,16 @@ export function PlanVersions({ planId, demoMode, refreshKey, onRestored, evaluat
                 <p className="text-sm font-semibold">Señales con los datos actuales del cliente</p>
                 <PlanSignalList signals={restoreEvaluation.signals} showInfo />
                 {restoreEvaluation.blocked && <p className="text-xs font-semibold text-warn" role="alert">Esta versión no se puede restaurar con los datos actuales del cliente.</p>}
-                {!restoreEvaluation.blocked && restoreEvaluation.needsProfessionalReview && <ProfessionalConfirmation checked={restoreConfirmed} onChange={setRestoreConfirmed} />}
+                {!restoreEvaluation.blocked && restoreEvaluation.needsSpecificProfessionalEvaluation && <ProfessionalEvaluation checked={restoreEvaluated} onChange={setRestoreEvaluated} reason={restoreReason} onReasonChange={setRestoreReason} />}
+                {!restoreEvaluation.blocked && !restoreEvaluation.needsSpecificProfessionalEvaluation && restoreEvaluation.needsProfessionalReview && <ProfessionalConfirmation checked={restoreConfirmed} onChange={setRestoreConfirmed} />}
               </div>
             )}
             <p className="text-xs text-muted">
               El cliente verá el plan restaurado desde que confirmes, pero no se le avisa automáticamente. Los cambios sin guardar que tengas ahora en el editor se perderán.
             </p>
             <div className="flex items-center gap-2 pt-1">
-              <Button onClick={restore} loading={busy} disabled={!!restoreEvaluation?.blocked || (!!restoreEvaluation?.needsProfessionalReview && !restoreConfirmed)}>Restaurar versión {restoring.version_number}</Button>
-              <Button variant="ghost" onClick={() => { setRestoring(null); setRestoreConfirmed(false) }} disabled={busy}>Cancelar</Button>
+              <Button onClick={restore} loading={busy} disabled={!!restoreDecision && !restoreDecision.allowed}>Restaurar versión {restoring.version_number}</Button>
+              <Button variant="ghost" onClick={() => { setRestoring(null); resetRestore() }} disabled={busy}>Cancelar</Button>
             </div>
           </div>
         )}

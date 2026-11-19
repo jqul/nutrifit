@@ -79,7 +79,7 @@ export function DietAdjustmentCard({ client, weights, checkins, demoMode }: {
     ? evaluateAdjustmentTarget(profile, client.goal, draftKcal, draftCarbs, lastKg) : null
   const draftSignature = draftEvaluation ? `${draftKcal}|${draftEvaluation.signals.map(s => s.code).join(',')}` : null
   const needsConfirmation = !!draftEvaluation && draftEvaluation.needsProfessionalReview
-  const blocked = !!draftEvaluation && draftEvaluation.blocked
+  const blocked = !!draftEvaluation && (draftEvaluation.blocked || draftEvaluation.needsSpecificProfessionalEvaluation) // lo pendiente de evaluación profesional específica no se aplica desde el reajuste
   const confirmed = confirmedFor != null && confirmedFor === draftSignature
 
   const apply = async () => {

@@ -114,7 +114,7 @@ no exista una justificación suficiente, ninguno es un mínimo universal ni una 
 
 **Auditoría de caminos de escritura (2026-11-19, código de la rama).** Desde la aplicación, los objetivos de un plan solo se escriben por: (1) `save_diet_plan` en `PlanDietaTab` (tras `decideSave`), (2) `restore_plan_version` en `PlanVersions` (tras `decideApply`, con la evaluación obligatoria), (3) el UPDATE del reajuste en `DietAdjustmentCard` (evaluando la cifra que se aplica) y (4) el INSERT de un plan vacío (todos los objetivos a 0). No hay UPSERT ni DELETE de `diet_plans` desde la app, las funciones de borde no escriben planes y la calculadora no escribe nada. Una prueba automática (`flujosEscrituraPlanes.test.ts`) fija esta lista cerrada y el orden «evaluar y luego escribir»: si alguien añade otro camino o quita una evaluación, falla. **Dentro de la aplicación no se han encontrado bypasses** de entrada manual, plantillas ni restauraciones; fuera de ella, ver las dos últimas filas de la tabla.
 
-**Embarazo o lactancia y objetivo efectivo.** La calculadora usa el objetivo que se elige EN la calculadora (no lee `client.goal`) y el reajuste no propone nada con embarazo o lactancia declarados, sea cual sea el objetivo de la ficha. En la entrada manual, las plantillas y las restauraciones, una pérdida de peso se considera **posible** (y se bloquea) si la ficha no dice expresamente que no se quiere perder peso (vacío, texto libre o «perder peso») **o** si las kcal quedan por debajo de TMB × 1,2 (el mantenimiento mínimo estimable): así dejar vacío o cambiar el objetivo de la ficha no permite eludir la comprobación. **Límite que queda:** si la ficha dice «mantenimiento», «ganar masa», «salud» o «rendimiento» y las kcal están por encima de TMB × 1,2 —o no hay TMB porque faltan sexo, edad, altura o peso—, no se puede saber si es un déficit y solo se pide revisión profesional.
+**Embarazo o lactancia y objetivo efectivo:** ver la sección «Qué se bloquea y qué queda pendiente de evaluación profesional».
 
 ## Macros: dos tolerancias
 
@@ -142,7 +142,46 @@ La cota de 9 no se alcanzó en ninguna muestra: es la garantía aritmética, y 8
 incompatibilidad. Con cuentas exactas **no hay tolerancia**: si proteína y grasa superan el objetivo, aunque sea por 1 kcal, no queda nada para
 hidratos y el reparto se bloquea (`MACROS_INCOMPATIBLES`).
 
+## Qué se bloquea y qué queda pendiente de evaluación profesional
+
+Tres niveles distintos. **Ninguno es una validación de seguridad de la app**, y ninguna señal certifica que un objetivo sea adecuado.
+
+| Nivel | Qué ocurre | Cómo se supera |
+|---|---|---|
+| **Bloqueo** | No se calcula, no se guarda y no se aplica (plantilla, restauración). El reajuste no propone. | No se supera: hay que corregir el dato o el objetivo. |
+| **Pendiente de evaluación profesional específica** | Se calcula o se puede aplicar, pero **no se guarda ni se restaura** sin una declaración concreta. | Declaración específica («declaro que he valorado… que este objetivo NO supone una pérdida de peso…») **más** una justificación escrita de al menos 30 caracteres, ligada al objetivo exacto. **La casilla genérica de revisión NO basta.** Es una declaración en pantalla: no se guarda ni queda auditada. |
+| **Revisión profesional** | Se muestra y se puede aplicar. | Casilla genérica («confirmación visual en pantalla, no auditada»), ligada al objetivo exacto. |
+
+### Situaciones
+
+| Situación | Nivel |
+|---|---|
+| Menor de 18 años | Bloqueo |
+| Datos ausentes o inverosímiles; fecha de nacimiento futura; sexo sin informar (Mifflin y Harris) | Bloqueo |
+| Proteína y grasa por encima del objetivo (cuentas exactas) | Bloqueo |
+| Lectura del cuestionario de salud **en curso** | Bloqueo (la calculadora y el guardado esperan; el reajuste no propone) |
+| **Embarazo o lactancia** + déficit elegido (calculadora) | Bloqueo |
+| **Embarazo o lactancia** + la ficha no descarta una pérdida de peso (objetivo vacío, texto libre o «perder peso») | Bloqueo, también si las kcal son altas |
+| **Embarazo o lactancia** + objetivo expreso no perdedor (mantenimiento, ganar masa, salud, rendimiento) + kcal **por debajo de TMB × 1,2** | Bloqueo (alerta conservadora) |
+| **Embarazo o lactancia** + objetivo expreso no perdedor + kcal **por encima de TMB × 1,2** | **Pendiente de evaluación profesional específica** |
+| **Embarazo o lactancia** + faltan datos para estimar la TMB (peso, altura, sexo o edad) + objetivo expreso no perdedor | **Pendiente de evaluación profesional específica** |
+| **Embarazo o lactancia** + mantenimiento o superávit elegido en la calculadora | **Pendiente de evaluación profesional específica** |
+| Lectura del cuestionario **fallida** (sin embarazo conocido) | Revisión profesional (el reajuste no propone) |
+| Objetivo bajo el umbral de revisión (1.200 kcal) o por debajo de la TMB; IMC bajo con déficit | Revisión profesional |
+| Hidratos bajos, macros que no cuadran, edad fuera de la muestra de Mifflin, datos poco habituales | Aviso |
+
+**TMB × 1,2 es solo una alerta conservadora y NO certifica mantenimiento.** Es el factor de actividad más bajo (sedentario): por debajo, el objetivo
+es casi con seguridad un déficit y se bloquea; **por encima, no demuestra que no haya déficit**, porque una persona con más actividad que la
+sedentaria puede estar en déficit con esas kcal. Por eso por encima no se «permite»: queda pendiente de evaluación profesional. Cuando no se puede
+determinar si un objetivo implica pérdida de peso, **siempre queda explícitamente pendiente de evaluación profesional**, nunca se da por bueno.
+
+**Coherencia entre flujos** (comprobada por pruebas): la entrada manual, las plantillas, las restauraciones y la calculadora aplican la misma decisión
+(`decideSave`/`decideApply`); en las plantillas y versiones, lo bloqueado no se aplica y lo pendiente se aplica pero **no se puede guardar ni
+restaurar** sin la declaración específica. El reajuste, con embarazo o lactancia declarados, **no propone nada** en ningún caso (ni déficit ni subida).
+
 ## Confirmación visual no auditada
+
+(Esta sección describe la casilla **genérica** de revisión. Para lo que la app no puede determinar —embarazo o lactancia con un objetivo sin determinar— hay una declaración **específica** con justificación escrita, descrita arriba; tampoco queda registrada ni es una validación de seguridad.)
 
 La casilla «Confirmación visual en pantalla, no auditada» **no genera ningún registro**: vive en el estado de la pantalla y no se guarda en
 ningún sitio. **No es una validación profesional auditada ni promete trazabilidad.** `diet_plan_changes` registra el objetivo aprobado, quién y
@@ -224,7 +263,7 @@ Solo si se quiere ir más allá del cuestionario:
 
 `planSafety.test.ts`, `planSafety.redondeo.test.ts` (tolerancias, gramos enteros, estado del cuestionario), `planSafety.extremos.test.ts` (60.000
 entradas fuera de la rejilla y esquinas), `planGuard.test.ts` (entrada manual, huella, confirmación, plantillas y restauraciones),
-`flujosEscrituraPlanes.test.ts` (lista cerrada de caminos de escritura y orden «evaluar y luego escribir»), `metabolicCalculator.regresion.test.ts`
+`flujosEscrituraPlanes.test.ts` (lista cerrada de caminos de escritura y orden «evaluar y luego escribir»), `embarazoObjetivoEfectivo.test.tsx` (embarazo y objetivo de la ficha vacío o cambiado), `evaluacionProfesionalEspecifica.test.tsx` (lo no determinable queda pendiente de evaluación específica; la casilla genérica no basta; coherencia entre flujos), `metabolicCalculator.regresion.test.ts`
 (casos de la auditoría y rejilla de 30.000 combinaciones), `dietAdjustment.test.ts` y `dietAdjustment.anamnesis.test.ts`, `MetabolicCalculatorPanel*.test.tsx`,
 `ProfessionalConfirmation.test.tsx` (la confirmación no se persiste) y `anamnesis.test.ts`. Sin navegador (no hay jsdom): el flujo con cifras
 (aplicar, guardar, confirmar, restaurar) se comprueba en la demo (guion, sección 47).

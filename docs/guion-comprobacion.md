@@ -500,6 +500,7 @@ Usa un **cliente de prueba** (no apliques nada a un plan real sin querer): la ca
 - [ ] **Plantilla** de déficit en un cliente con embarazo declarado (o menor): «No se aplica la plantilla…». En «Versiones del plan» → Restaurar: el diálogo muestra las señales con los datos de hoy y bloquea o pide confirmar.
 - [ ] **Cuestionario**: la pregunta nueva es «¿Estás ahora mismo en embarazo o en periodo de lactancia? (solo si te aplica)» (sin lenguaje de género). Sin respuesta sale la nota «No consta… (solo si te aplica)» también en un cliente hombre.
 - [ ] **Fases**: al activar «Aplicar la plantilla sola», un aviso rojo dice que esa aplicación **no pasa por la evaluación de seguridad**.
+- [ ] **Embarazo o lactancia pendiente de evaluación:** con embarazo declarado y la ficha en «mantenimiento», escribe a mano un objetivo con las kcal **por encima** de TMB × 1,2: aparece «Pendiente de evaluación profesional: hay embarazo» y, al guardar, **la casilla genérica no basta**: hace falta la declaración específica y una justificación de al menos 30 caracteres. Con las kcal **por debajo** de TMB × 1,2 el objetivo se **bloquea**. Con la ficha sin objetivo, bloqueado siempre.
 - [ ] Los planes que ya tenías guardados **no cambian** por haber instalado esta versión.
 
 ## Qué contarme

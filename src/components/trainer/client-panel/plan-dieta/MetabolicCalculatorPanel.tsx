@@ -5,6 +5,8 @@ import {
 } from '../../../../lib/metabolicCalculator'
 import { ReproductiveCheck, ReproductiveStatus, SignalCode, reproductiveStatusFromAnswer } from '../../../../lib/planSafety'
 import { ProfessionalConfirmation } from '../../../shared/ProfessionalConfirmation'
+import { ProfessionalEvaluation } from '../../../shared/ProfessionalEvaluation'
+import { MIN_EVALUATION_REASON_CHARS } from '../../../../lib/planGuard'
 import { Button } from '../../../shared/Button'
 import { PlanSignalList } from '../../../shared/PlanSignalList'
 import { CalcNumInput, MacroPreview } from './PlanInputs'
@@ -37,6 +39,8 @@ export function MetabolicCalculatorPanel({ client, onClose, onApply, reproductiv
   const [reproductive, setReproductive] = useState<ReproductiveStatus>(reproductiveStatusFromAnswer(reproductiveAnswer))
   // La confirmación del profesional vale para el resultado que tenía delante: si cambian los datos, hay que volver a confirmarla.
   const [confirmedFor, setConfirmedFor] = useState<string | null>(null)
+  const [evaluatedFor, setEvaluatedFor] = useState<string | null>(null)
+  const [evaluationReason, setEvaluationReason] = useState('')
 
   const outcome = calculateMetabolicPlan({
     formula, sex: sex || null, weightKg: parseFloat(weightKg), heightCm: parseFloat(heightCm), age: parseFloat(age), birthDate: client.birthDate,
@@ -53,7 +57,10 @@ export function MetabolicCalculatorPanel({ client, onClose, onApply, reproductiv
   const signature = plan ? `${plan.kcalTarget}|${plan.proteinG}|${plan.carbsG}|${plan.fatG}|${evaluation.signals.map(s => s.code).join(',')}` : null
   const needsConfirmation = !!plan && evaluation.needsProfessionalReview
   const confirmed = confirmedFor != null && confirmedFor === signature
-  const canApply = !!plan && (!needsConfirmation || confirmed)
+  // Embarazo/lactancia con un objetivo sin determinar: no basta la casilla genérica; hace falta la evaluación específica con su justificación.
+  const needsSpecific = !!plan && evaluation.needsSpecificProfessionalEvaluation
+  const evaluated = evaluatedFor != null && evaluatedFor === signature && evaluationReason.trim().length >= MIN_EVALUATION_REASON_CHARS
+  const canApply = !!plan && (needsSpecific ? evaluated : (!needsConfirmation || confirmed))
 
   const select = 'w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20'
   const label = 'block text-xs font-semibold uppercase tracking-wider text-muted mb-1'
@@ -143,7 +150,8 @@ export function MetabolicCalculatorPanel({ client, onClose, onApply, reproductiv
             <MacroPreview label="Fibra" value={`${plan.fiberG}g`} />
           </div>
           <p className="text-xs text-muted">Son estimaciones con un margen de error en cada persona: un punto de partida que validas tú, no una medición.</p>
-          {needsConfirmation && <ProfessionalConfirmation checked={confirmed} onChange={c => setConfirmedFor(c ? signature : null)} />}
+          {needsSpecific && <ProfessionalEvaluation checked={evaluatedFor === signature} onChange={c => setEvaluatedFor(c ? signature : null)} reason={evaluationReason} onReasonChange={setEvaluationReason} />}
+          {!needsSpecific && needsConfirmation && <ProfessionalConfirmation checked={confirmed} onChange={c => setConfirmedFor(c ? signature : null)} />}
           <Button size="sm" disabled={!canApply} onClick={() => onApply(plan)}>Aplicar al plan</Button>
         </div>
       )}

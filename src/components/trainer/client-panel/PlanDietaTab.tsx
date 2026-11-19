@@ -51,6 +51,7 @@ import { reproductiveStatusFromAnswer } from '../../../lib/planSafety'
 import { useReproductiveCheck } from '../../../hooks/useReproductiveCheck'
 import { PlanSignalList } from '../../shared/PlanSignalList'
 import { ProfessionalConfirmation } from '../../shared/ProfessionalConfirmation'
+import { ProfessionalEvaluation } from '../../shared/ProfessionalEvaluation'
 import {
   ThumbsDown, Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
   ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, Send, Layers, FileSpreadsheet, Pill, Pencil, Check,
@@ -147,6 +148,9 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
   const targetsEval = evaluateTargets(guardProfile, client.goal, lastWeightKg, currentTargets)
   const targetsPrint = targetsFingerprint(currentTargets, targetsEval)
   const [confirmedPrint, setConfirmedPrint] = useState<string | null>(null)
+  // Evaluación profesional ESPECÍFICA (embarazo/lactancia con objetivo sin determinar): declaración + justificación, ligada al objetivo exacto.
+  const [evaluatedPrint, setEvaluatedPrint] = useState<string | null>(null)
+  const [evaluationReason, setEvaluationReason] = useState('')
   const targetsAreNew = targetsChanged(savedTargets ? { kcal: savedTargets.kcal_target, proteinG: savedTargets.protein_g, carbsG: savedTargets.carbs_g, fatG: savedTargets.fat_g } : null, currentTargets)
 
   const loadRecipes = useCallback(async () => {
@@ -290,7 +294,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     if (!planId) return
     // Guarda de los objetivos: se vuelve a evaluar JUSTO ahora y se compara con lo que el profesional confirmó. Si el objetivo que se va
     // a guardar no es el que se evaluó y confirmó, no se guarda sin una nueva evaluación. (También en la demo, para que se vea igual.)
-    const decision = decideSave({ evaluation: targetsEval, fingerprint: targetsPrint, confirmedFingerprint: confirmedPrint, changed: targetsAreNew })
+    const decision = decideSave({ evaluation: targetsEval, fingerprint: targetsPrint, confirmedFingerprint: confirmedPrint, changed: targetsAreNew, attestation: evaluatedPrint ? { fingerprint: evaluatedPrint, reason: evaluationReason } : null })
     if (!decision.allowed) { toast(decision.message!, 'warn'); return }
     if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
     setSaving(true)
@@ -308,6 +312,8 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     setSaving(false)
     setChangeReason('')
     setConfirmedPrint(null)
+    setEvaluatedPrint(null)
+    setEvaluationReason('')
     setSavedTick(t => t + 1)
     toast('Plan de dieta guardado ✓', 'ok')
     sendPush({ clientId: client.id }, 'Tu plan de dieta se ha actualizado 🥗', 'Tu nutricionista ha actualizado tu plan — échale un vistazo.')
@@ -1324,7 +1330,10 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
           </div>
           <PlanSignalList signals={targetsEval.signals} showInfo />
           {targetsEval.blocked && targetsAreNew && <p className="text-xs font-semibold text-warn" role="alert">Este objetivo no se puede guardar hasta corregirlo.</p>}
-          {!targetsEval.blocked && targetsEval.needsProfessionalReview && targetsAreNew && (
+          {!targetsEval.blocked && targetsEval.needsSpecificProfessionalEvaluation && targetsAreNew && (
+            <ProfessionalEvaluation checked={evaluatedPrint === targetsPrint} onChange={c => setEvaluatedPrint(c ? targetsPrint : null)} reason={evaluationReason} onReasonChange={setEvaluationReason} />
+          )}
+          {!targetsEval.blocked && !targetsEval.needsSpecificProfessionalEvaluation && targetsEval.needsProfessionalReview && targetsAreNew && (
             <ProfessionalConfirmation checked={confirmedPrint === targetsPrint} onChange={c => setConfirmedPrint(c ? targetsPrint : null)} />
           )}
         </div>

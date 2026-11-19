@@ -69,6 +69,11 @@ export interface PlanEvaluation {
   blocked: boolean
   /** Hay señales de revisión: el profesional debe confirmar de forma explícita antes de aplicar. */
   needsProfessionalReview: boolean
+  /**
+   * Hay algo que la app NO puede determinar y que exige una evaluación profesional ESPECÍFICA (no basta la casilla genérica de revisión):
+   * hoy, embarazo o lactancia con un objetivo del que no se sabe si implica pérdida de peso.
+   */
+  needsSpecificProfessionalEvaluation: boolean
 }
 
 /**
@@ -352,9 +357,11 @@ export function evaluatePlanSafety(profile: SafetyProfile, plan: SafetyPlan | nu
         `Con ${que} declarado no se genera automáticamente un objetivo de déficit. Las necesidades energéticas cambian en esas etapas (EFSA 2013 les suma energía) y la pauta requiere valoración profesional.`,
         { estado: reproductive, objetivoPerdida: !!profile.losingWeight, perdidaProbable: !!profile.weightLossLikely }))
     } else {
-      out.push(signal('EMBARAZO_LACTANCIA_REVISION', 'revision', 'evidencia_limitada', `Hay ${que}: el cálculo necesita revisión profesional`,
-        `Las ecuaciones de esta calculadora son para adultos sin ${que} y no incluyen su coste energético adicional (EFSA 2013 lo cifra aparte por trimestre y en lactancia). Trata el resultado solo como punto de partida y valídalo.`,
-        { estado: reproductive }))
+      // NO se puede determinar si el objetivo implica pérdida de peso: queda PENDIENTE de evaluación profesional. Que las kcal superen TMB × 1,2
+      // no lo descarta (con más actividad que la sedentaria se puede estar en déficit) y sin TMB (faltan datos) tampoco se puede comparar.
+      out.push(signal('EMBARAZO_LACTANCIA_REVISION', 'revision', 'evidencia_limitada', `Pendiente de evaluación profesional: hay ${que}`,
+        `Con ${que} declarado, la app no puede determinar si este objetivo implica una pérdida de peso: depende de la actividad real de la persona y, si faltan datos (sexo, edad, altura o peso), ni siquiera se puede estimar la TMB. Que las kcal superen TMB × 1,2 no demuestra que no haya déficit. Las ecuaciones de la app son para adultos sin ${que} y no incluyen su coste energético adicional (EFSA 2013 lo cifra aparte). Queda pendiente de una evaluación profesional específica; no es una validación de seguridad.`,
+        { estado: reproductive, objetivoPerdida: false, perdidaProbable: false }))
     }
   } else if (profile.reproductiveCheck === 'loading' || profile.reproductiveCheck === 'error') {
     out.push(reproductiveUnverifiedSignal(profile.reproductiveCheck))
@@ -458,7 +465,7 @@ export function evaluatePlanSafety(profile: SafetyProfile, plan: SafetyPlan | nu
 function finish(signals: PlanSignal[]): PlanEvaluation {
   const sorted = [...signals].sort((a, b) => SEVERITY_ORDER[b.severity] - SEVERITY_ORDER[a.severity])
   const level = levelOf(sorted)
-  return { level, signals: sorted, blocked: level === 'bloqueo', needsProfessionalReview: sorted.some(s => s.severity === 'revision') }
+  return { level, signals: sorted, blocked: level === 'bloqueo', needsProfessionalReview: sorted.some(s => s.severity === 'revision'), needsSpecificProfessionalEvaluation: sorted.some(s => s.code === 'EMBARAZO_LACTANCIA_REVISION') }
 }
 
 /** Las señales que merece la pena enseñar (todas menos las meramente informativas, que van aparte). */

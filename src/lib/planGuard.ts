@@ -51,7 +51,7 @@ export function weightLossLikely(goal: string | null | undefined, kcal: number |
   return kcal != null && bmr != null && bmr > 0 && kcal < bmr * ACTIVITY_FACTORS.sedentario
 }
 
-const EMPTY: PlanEvaluation = { level: 'ok', signals: [], blocked: false, needsProfessionalReview: false }
+const EMPTY: PlanEvaluation = { level: 'ok', signals: [], blocked: false, needsProfessionalReview: false, needsSpecificProfessionalEvaluation: false }
 
 /**
  * Evalúa unos objetivos (a mano, de una plantilla o de una versión a restaurar) con lo que se sabe AHORA del cliente. Una plantilla que era
@@ -91,7 +91,16 @@ export function targetsChanged(saved: TargetsInput | null, current: TargetsInput
   return (['kcal', 'proteinG', 'carbsG', 'fatG'] as const).some(k => norm(c[k]) !== norm(s[k]))
 }
 
-export type SaveReason = 'ok' | 'sin_cambios' | 'bloqueado' | 'falta_confirmacion'
+export type SaveReason = 'ok' | 'sin_cambios' | 'bloqueado' | 'falta_confirmacion' | 'falta_evaluacion_profesional'
+
+/** Mínimo de caracteres de la justificación de una evaluación profesional específica (fricción deliberada; no se guarda en ningún registro). */
+export const MIN_EVALUATION_REASON_CHARS = 30
+
+/** Declaración específica de evaluación profesional: vale solo para la huella exacta evaluada y exige justificación escrita. */
+export interface EvaluationAttestation { fingerprint: string; reason: string }
+
+export const EVALUATION_REQUIRED_MESSAGE =
+  'Este objetivo queda PENDIENTE de evaluación profesional: la app no puede determinar si implica pérdida de peso durante el embarazo o la lactancia. La casilla genérica no basta: hace falta la declaración de evaluación específica y su justificación escrita (mínimo ' + MIN_EVALUATION_REASON_CHARS + ' caracteres). No es una validación de seguridad de la app.'
 export interface SaveDecision { allowed: boolean; reason: SaveReason; message: string | null }
 
 export const CONFIRMATION_REQUIRED_MESSAGE =
@@ -102,12 +111,18 @@ export const CONFIRMATION_REQUIRED_MESSAGE =
  * no obliga a reconfirmar un objetivo que ya estaba). Se bloquea lo matemáticamente incompatible o no calculable, y las señales de
  * revisión exigen la confirmación del MISMO objetivo evaluado (misma huella): si se cambia algo después, hay que volver a confirmar.
  */
-export function decideSave(args: { evaluation: PlanEvaluation; fingerprint: string; confirmedFingerprint: string | null; changed: boolean }): SaveDecision {
-  const { evaluation, fingerprint, confirmedFingerprint, changed } = args
+export function decideSave(args: { evaluation: PlanEvaluation; fingerprint: string; confirmedFingerprint: string | null; changed: boolean; attestation?: EvaluationAttestation | null }): SaveDecision {
+  const { evaluation, fingerprint, confirmedFingerprint, changed, attestation } = args
   if (!changed) return { allowed: true, reason: 'sin_cambios', message: null }
   if (evaluation.blocked) {
     const first = evaluation.signals.find(s => s.severity === 'bloqueo')
     return { allowed: false, reason: 'bloqueado', message: `No se puede guardar este objetivo: ${first?.title ?? 'hay una señal de bloqueo'}.` }
+  }
+  // Lo que la app no puede determinar (embarazo o lactancia con objetivo sin determinar) exige una evaluación ESPECÍFICA: la casilla genérica de
+  // revisión, aunque esté marcada para este mismo objetivo, NO basta. Y no es una validación de seguridad: es una declaración del profesional.
+  if (evaluation.needsSpecificProfessionalEvaluation) {
+    const ok = !!attestation && attestation.fingerprint === fingerprint && attestation.reason.trim().length >= MIN_EVALUATION_REASON_CHARS
+    return ok ? { allowed: true, reason: 'ok', message: null } : { allowed: false, reason: 'falta_evaluacion_profesional', message: EVALUATION_REQUIRED_MESSAGE }
   }
   if (evaluation.needsProfessionalReview && confirmedFingerprint !== fingerprint) {
     return { allowed: false, reason: 'falta_confirmacion', message: CONFIRMATION_REQUIRED_MESSAGE }
