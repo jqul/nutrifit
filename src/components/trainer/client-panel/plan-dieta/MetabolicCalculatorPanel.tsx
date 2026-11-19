@@ -3,7 +3,8 @@ import { ClientData } from '../../../../types'
 import {
   Sex, Formula, ActivityLevel, Goal, ACTIVITY_LABELS, GOAL_LABELS, calculateMetabolicPlan, ageFromBirthDate, sexFromGender,
 } from '../../../../lib/metabolicCalculator'
-import { ReproductiveStatus, SignalCode, reproductiveStatusFromAnswer } from '../../../../lib/planSafety'
+import { ReproductiveCheck, ReproductiveStatus, SignalCode, reproductiveStatusFromAnswer } from '../../../../lib/planSafety'
+import { ProfessionalConfirmation } from '../../../shared/ProfessionalConfirmation'
 import { Button } from '../../../shared/Button'
 import { PlanSignalList } from '../../../shared/PlanSignalList'
 import { CalcNumInput, MacroPreview } from './PlanInputs'
@@ -12,12 +13,14 @@ import { X } from 'lucide-react'
 // Mientras faltan datos numéricos no se pintan como errores: se enseña el aviso de siempre («rellena peso, altura y edad…»).
 const MISSING_DATA: SignalCode[] = ['PESO_AUSENTE', 'ALTURA_AUSENTE', 'EDAD_AUSENTE', 'GRASA_AUSENTE']
 
-export function MetabolicCalculatorPanel({ client, onClose, onApply, reproductiveAnswer }: {
+export function MetabolicCalculatorPanel({ client, onClose, onApply, reproductiveAnswer, reproductiveCheck }: {
   client: ClientData
   onClose: () => void
   onApply: (result: { kcalTarget: number; proteinG: number; carbsG: number; fatG: number; fiberG: number }) => void
   /** Respuesta del cuestionario de salud sobre embarazo/lactancia (si la hay): la selección de abajo parte de ella. */
   reproductiveAnswer?: string
+  /** Estado de la lectura del cuestionario (cargando / leído / error). Si no se pudo leer y no eliges el estado a mano, se señala. */
+  reproductiveCheck?: ReproductiveCheck
 }) {
   // El sexo NO se asume: solo se rellena si la ficha lo dice con claridad; si no, hay que elegirlo.
   const [formula, setFormula] = useState<Formula>('mifflin')
@@ -40,6 +43,8 @@ export function MetabolicCalculatorPanel({ client, onClose, onApply, reproductiv
     bodyFatPct: bodyFatPct ? parseFloat(bodyFatPct) : undefined,
     activity, goal, proteinGPerKg: parseFloat(proteinGPerKg) || 0, fatGPerKg: parseFloat(fatGPerKg) || 0,
     reproductiveStatus: reproductive,
+    // Solo se señala la falta de comprobación si el profesional no ha indicado el estado a mano.
+    reproductiveCheck: reproductive === 'no_consta' ? reproductiveCheck : undefined,
   })
   const { energy, plan, evaluation } = outcome
 
@@ -138,12 +143,7 @@ export function MetabolicCalculatorPanel({ client, onClose, onApply, reproductiv
             <MacroPreview label="Fibra" value={`${plan.fiberG}g`} />
           </div>
           <p className="text-xs text-muted">Son estimaciones con un margen de error en cada persona: un punto de partida que validas tú, no una medición.</p>
-          {needsConfirmation && (
-            <label className="flex items-start gap-2 text-xs cursor-pointer">
-              <input type="checkbox" className="accent-accent mt-0.5" checked={confirmed} onChange={e => setConfirmedFor(e.target.checked ? signature : null)} />
-              <span>He revisado las señales de arriba y valido este objetivo con mi criterio profesional.</span>
-            </label>
-          )}
+          {needsConfirmation && <ProfessionalConfirmation checked={confirmed} onChange={c => setConfirmedFor(c ? signature : null)} />}
           <Button size="sm" disabled={!canApply} onClick={() => onApply(plan)}>Aplicar al plan</Button>
         </div>
       )}

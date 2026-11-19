@@ -3,7 +3,8 @@ import { ClientData, DailyCheckin, WeightEntry } from '../../../types'
 import { supabase } from '../../../lib/supabase'
 import { DEMO_DIET_PLANS } from '../../../lib/demo-data'
 import { AdjustmentPlan, AdjustmentProfile, evaluateAdjustmentTarget, suggestDietAdjustment } from '../../../lib/dietAdjustment'
-import { DEMO_ANAMNESIS } from '../../../lib/demo-data'
+import { useReproductiveCheck } from '../../../hooks/useReproductiveCheck'
+import { ProfessionalConfirmation } from '../../shared/ProfessionalConfirmation'
 import { ageFromBirthDate, sexFromGender } from '../../../lib/metabolicCalculator'
 import { reproductiveStatusFromAnswer, visibleSignals } from '../../../lib/planSafety'
 import { PlanSignalList } from '../../shared/PlanSignalList'
@@ -31,13 +32,8 @@ export function DietAdjustmentCard({ client, weights, checkins, demoMode }: {
   const [applying, setApplying] = useState(false)
   const [dismissed, setDismissed] = useState<string | null>(() => readDismissed(client.id))
   // Embarazo/lactancia (pregunta cerrada del cuestionario de salud): con ellos declarados no se proponen reajustes automáticos.
-  const [reproductiveAnswer, setReproductiveAnswer] = useState('')
+  const { check: reproductiveCheck, answer: reproductiveAnswer } = useReproductiveCheck(client.id, demoMode)
   const [confirmedFor, setConfirmedFor] = useState<string | null>(null)
-  useEffect(() => {
-    if (demoMode) { setReproductiveAnswer(DEMO_ANAMNESIS[client.id]?.embarazo_lactancia || ''); return }
-    supabase.from('anamnesis').select('answers').eq('client_id', client.id).maybeSingle()
-      .then(({ data }) => setReproductiveAnswer((data?.answers as Record<string, string> | null)?.embarazo_lactancia || ''))
-  }, [client.id, demoMode])
 
   const loadPlan = useCallback(async () => {
     if (demoMode) {
@@ -59,8 +55,8 @@ export function DietAdjustmentCard({ client, weights, checkins, demoMode }: {
 
   const profile = useMemo<AdjustmentProfile>(() => ({
     sex: sexFromGender(client.gender), ageYears: ageFromBirthDate(client.birthDate), birthDate: client.birthDate, heightCm: client.heightCm,
-    reproductiveStatus: reproductiveStatusFromAnswer(reproductiveAnswer),
-  }), [client.gender, client.birthDate, client.heightCm, reproductiveAnswer])
+    reproductiveStatus: reproductiveStatusFromAnswer(reproductiveAnswer), reproductiveCheck,
+  }), [client.gender, client.birthDate, client.heightCm, reproductiveAnswer, reproductiveCheck])
   const result = useMemo(() => suggestDietAdjustment({
     weights, checkins, goal: client.goal, goalWeightKg: client.goalWeightKg, plan, profile,
   }), [weights, checkins, client.goal, client.goalWeightKg, plan, profile])
@@ -159,12 +155,7 @@ export function DietAdjustmentCard({ client, weights, checkins, demoMode }: {
           <p className="text-xs text-muted">
             Es una sugerencia orientativa, no un criterio clínico. Al aplicarla se actualizan los objetivos del plan (queda en el historial y como versión que puedes restaurar); las comidas no se modifican.
           </p>
-          {needsConfirmation && (
-            <label className="flex items-start gap-2 text-xs cursor-pointer">
-              <input type="checkbox" className="accent-accent mt-0.5" checked={confirmed} onChange={e => setConfirmedFor(e.target.checked ? draftSignature : null)} />
-              <span>He revisado las señales de arriba y valido este objetivo con mi criterio profesional.</span>
-            </label>
-          )}
+          {needsConfirmation && <ProfessionalConfirmation checked={confirmed} onChange={c => setConfirmedFor(c ? draftSignature : null)} />}
           <div className="flex flex-wrap gap-2">
             <button disabled={applying || !draftValid || blocked || (needsConfirmation && !confirmed)} onClick={apply}
               className="px-4 py-2 bg-ink text-white rounded-xl text-sm font-bold disabled:opacity-40">{applying ? 'Aplicando…' : 'Aplicar al plan'}</button>

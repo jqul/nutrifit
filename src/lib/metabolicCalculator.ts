@@ -17,7 +17,7 @@
 //  · Factores de actividad: convención de calculadoras (NO son los PAL de FAO/OMS/UNU 2004; ver el documento).
 //  · Déficit −20 % y superávit +15 %: decisiones de producto, sin fuente.
 import {
-  CalculatorFormula, PlanEvaluation, ReproductiveStatus, ReviewThresholds, SexValue, evaluatePlanSafety, invalidFieldSignal, PlanSignal,
+  CalculatorFormula, PlanEvaluation, ReproductiveCheck, ReproductiveStatus, ReviewThresholds, SexValue, evaluatePlanSafety, invalidFieldSignal, PlanSignal,
 } from './planSafety'
 
 export { ageFromBirthDate, sexFromGender } from './planSafety'
@@ -82,6 +82,8 @@ export interface MetabolicInput {
   fatGPerKg: number // g/kg de peso
   /** Embarazo/lactancia declarados (cuestionario o selección en la calculadora). */
   reproductiveStatus?: ReproductiveStatus | null
+  /** Si la lectura del cuestionario está cargando o ha fallado (y el profesional no ha indicado el estado a mano): se señala, no se supone «no». */
+  reproductiveCheck?: ReproductiveCheck
   thresholds?: Partial<ReviewThresholds>
   /** Fecha de referencia (pruebas). */
   today?: Date
@@ -127,7 +129,7 @@ export function calculateMetabolicPlan(input: MetabolicInput): MetabolicOutcome 
     sex, ageYears: isFiniteNumber(age) ? age : null, birthDate: input.birthDate ?? null,
     weightKg: isFiniteNumber(weightKg) ? weightKg : null, heightCm: isFiniteNumber(heightCm) ? heightCm : null,
     bodyFatPct: isFiniteNumber(bodyFatPct) ? bodyFatPct : null, formula, losingWeight: goal === 'deficit',
-    reproductiveStatus: input.reproductiveStatus ?? null,
+    reproductiveStatus: input.reproductiveStatus ?? null, reproductiveCheck: input.reproductiveCheck,
   }
   const options = { thresholds: input.thresholds, strict: true, today: input.today }
 
@@ -159,11 +161,11 @@ export function calculateMetabolicPlan(input: MetabolicInput): MetabolicOutcome 
   const macros: MacroBalance = { proteinKcal: proteinG * 4, fatKcal: fatG * 9, remainingKcalForCarbs }
 
   // 3. Evaluación del resultado (TMB, umbral de revisión, hidratos, macros incompatibles).
-  const evaluation = evaluatePlanSafety(profile, { kcal: kcalTarget, proteinG, carbsG, fatG, bmr, remainingKcalForCarbs }, options)
-  const plan: MetabolicResult | null = evaluation.blocked ? null : {
-    ...energy,
-    proteinG: Math.round(proteinG), fatG: Math.round(fatG), carbsG: Math.round(carbsG), fiberG: Math.round(fiberG),
-  }
+  // Se evalúan los GRAMOS ENTEROS que el profesional va a ver (no los internos): así el redondeo se cuantifica y se dice. La comparación
+  // de «proteína + grasa por encima del objetivo» sigue usando las cuentas exactas (remainingKcalForCarbs).
+  const shown = { proteinG: Math.round(proteinG), carbsG: Math.round(carbsG), fatG: Math.round(fatG), fiberG: Math.round(fiberG) }
+  const evaluation = evaluatePlanSafety(profile, { kcal: energy.kcalTarget, proteinG: shown.proteinG, carbsG: shown.carbsG, fatG: shown.fatG, bmr, remainingKcalForCarbs }, options)
+  const plan: MetabolicResult | null = evaluation.blocked ? null : { ...energy, ...shown }
   return { energy, plan, macros, evaluation }
 }
 

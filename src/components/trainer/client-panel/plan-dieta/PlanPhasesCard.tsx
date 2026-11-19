@@ -168,6 +168,7 @@ export function PlanPhasesCard({ clientId, nutricionistaId, demoMode }: { client
               <span className="text-xs">
                 <span className="font-semibold">Aplicar la plantilla sola cuando empiece la fase</span>
                 <span className="block text-muted">Sustituye el plan actual del cliente por el de la plantilla (a las 6-7 de la mañana del día de inicio). El plan anterior queda en «Versiones del plan» y puedes restaurarlo; el cambio sale en el historial como «Cambio de fase».</span>
+                <span className="block text-warn mt-1">Esta aplicación automática se ejecuta en el servidor y NO pasa por la evaluación de seguridad del plan (menores de edad, embarazo o lactancia, objetivos bajos, macros incompatibles). Revisa la plantilla con los datos actuales del cliente antes de activarla.</span>
               </span>
             </label>
           )}

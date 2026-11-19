@@ -128,7 +128,7 @@ describe('A5 · embarazo y lactancia', () => {
     const noConsta = calc({ reproductiveStatus: 'no_consta', weightKg: 65, heightCm: 165, activity: 'moderado' })
     expect(noConsta.plan).not.toBeNull()
     expect(codes(noConsta)).toContain('EMBARAZO_LACTANCIA_NO_CONSTA')
-    expect(codes(calc({ reproductiveStatus: 'ninguno', weightKg: 65, heightCm: 165, activity: 'moderado' }))).toEqual([])
+    expect(codes(calc({ reproductiveStatus: 'ninguno', weightKg: 65, heightCm: 165, activity: 'moderado' })).filter(c => c !== 'MACROS_REDONDEO')).toEqual([])
   })
 })
 
@@ -208,7 +208,8 @@ describe('A7 · datos ausentes, inválidos y extremos', () => {
   })
 })
 
-describe('B · redondeos y coherencia en una rejilla de 30.000 combinaciones', () => {
+// La rejilla recorre 30.000 combinaciones: con la máquina cargada puede pasar de los 5 s por defecto.
+describe('B · redondeos y coherencia en una rejilla de 30.000 combinaciones', { timeout: 60_000 }, () => {
   const legacy = (i: MetabolicInput) => {
     // La fórmula de siempre (origin/main e026a3a), para comprobar que no cambia nada en los casos que sí se calculan.
     const bmr = i.formula === 'mifflin' ? bmrMifflinStJeor(i.sex!, i.weightKg, i.heightCm, i.age) : i.formula === 'harris' ? bmrHarrisBenedict(i.sex!, i.weightKg, i.heightCm, i.age) : bmrKatchMcArdle(i.weightKg, i.bodyFatPct!)

@@ -495,6 +495,11 @@ Usa un **cliente de prueba** (no apliques nada a un plan real sin querer): la ca
 - [ ] **Datos imposibles**: altura «1,65» (en vez de 165), edad 200 o peso 20 kg dan «no es verosímil» y no calculan. Un peso de 400 kg o un 3 % de grasa se calculan con un aviso de «poco habitual».
 - [ ] **Reajuste** (Seguimiento): con un plan de menos de 1.200 kcal y el peso estancado no propone bajar más y dice «por debajo del umbral de revisión interno… no garantiza seguridad» (ya no «límite seguro»). Con un cliente menor de 18 años o con embarazo/lactancia declarados, dice que no propone reajustes automáticos y por qué.
 - [ ] Si editas la cifra de kcal de la propuesta hasta quedar por debajo del umbral, aparece la señal y hay que marcar la casilla antes de aplicar.
+- [ ] **Plan manual:** en Plan de dieta escribe a mano 1100 kcal, proteína 90, hidratos 95, grasas 40: aparece «Revisión del objetivo del plan» con las señales y la casilla «Confirmación visual en pantalla, **no auditada**…». Pulsa **Guardar plan** sin marcarla: avisa y no guarda. Márcala y guarda. Cambia la proteína a 91 tras marcarla: la casilla se desmarca sola.
+- [ ] Proteína 200, hidratos 0, grasas 100 con 1500 kcal: «Proteína y grasa superan el objetivo energético» y **no se puede guardar**. Con kcal 2000, proteína 150, hidratos 300, grasas 100: aviso «Las kcal no cuadran con los macros».
+- [ ] **Plantilla** de déficit en un cliente con embarazo declarado (o menor): «No se aplica la plantilla…». En «Versiones del plan» → Restaurar: el diálogo muestra las señales con los datos de hoy y bloquea o pide confirmar.
+- [ ] **Cuestionario**: la pregunta nueva es «¿Estás ahora mismo en embarazo o en periodo de lactancia? (solo si te aplica)» (sin lenguaje de género). Sin respuesta sale la nota «No consta… (solo si te aplica)» también en un cliente hombre.
+- [ ] **Fases**: al activar «Aplicar la plantilla sola», un aviso rojo dice que esa aplicación **no pasa por la evaluación de seguridad**.
 - [ ] Los planes que ya tenías guardados **no cambian** por haber instalado esta versión.
 
 ## Qué contarme

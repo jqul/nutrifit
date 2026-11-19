@@ -46,7 +46,9 @@ describe('MetabolicCalculatorPanel — lo que se ve según la ficha', () => {
     expect(sin).toContain('No consta si hay embarazo o lactancia')
     expect(sin).not.toContain('no se calcula un objetivo')
     expect(html(client(), 'No (o no aplica)')).not.toContain('No consta si hay embarazo o lactancia')
-    expect(html(client({ gender: 'Hombre' }))).not.toContain('No consta si hay embarazo o lactancia')
+    // sin depender del sexo de la ficha: el mismo aviso neutro para cualquier adulto
+    expect(html(client({ gender: 'Hombre' }))).toContain('No consta si hay embarazo o lactancia (solo si te aplica)')
+    expect(html(client({ gender: null as never }))).toContain('No consta si hay embarazo o lactancia (solo si te aplica)')
   })
   it('sin peso rellena el aviso de siempre y no pinta «falta el peso» como error', () => {
     const out = html(client())

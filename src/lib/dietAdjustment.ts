@@ -21,7 +21,7 @@ import { DailyCheckin, WeightEntry } from '../types'
 import { PlanTargets } from './planChanges'
 import { bmrMifflinStJeor } from './metabolicCalculator'
 import {
-  ADULT_AGE, DEFAULT_REVIEW_THRESHOLDS, PlanEvaluation, PlanSignal, ReproductiveStatus, ReviewThresholds, SexValue, evaluatePlanSafety, isReproductiveActive, visibleSignals,
+  ADULT_AGE, DEFAULT_REVIEW_THRESHOLDS, PlanEvaluation, PlanSignal, ReproductiveCheck, ReproductiveStatus, ReviewThresholds, SexValue, evaluatePlanSafety, isReproductiveActive, reproductiveUnverifiedSignal, visibleSignals,
 } from './planSafety'
 import { calcAdherence } from './adherence'
 import { toLocalISODate } from './date'
@@ -46,6 +46,8 @@ export interface AdjustmentProfile {
   birthDate?: string | null
   heightCm?: number | null
   reproductiveStatus?: ReproductiveStatus | null
+  /** Estado de la lectura del cuestionario: si no está `ready` no se proponen reajustes automáticos (no se supone «no hay embarazo»). */
+  reproductiveCheck?: ReproductiveCheck
 }
 
 /**
@@ -61,7 +63,7 @@ export function evaluateAdjustmentTarget(
     ? bmrMifflinStJeor(profile.sex, kg, profile.heightCm, age) : null
   return evaluatePlanSafety({
     sex: profile?.sex ?? null, ageYears: age, birthDate: profile?.birthDate ?? null, weightKg: kg, heightCm: profile?.heightCm ?? null,
-    losingWeight: goal === 'perder_peso', reproductiveStatus: profile?.reproductiveStatus ?? null,
+    losingWeight: goal === 'perder_peso', reproductiveStatus: profile?.reproductiveStatus ?? null, reproductiveCheck: profile?.reproductiveCheck,
   }, { kcal, carbsG: carbs, bmr }, { strict: false, thresholds, today })
 }
 
@@ -174,6 +176,15 @@ export function suggestDietAdjustment(input: AdjustmentInput, today = new Date()
     visibleSignals(evaluateAdjustmentTarget(profile, goal, kcal, carbs, kg, input.thresholds, today))
   const baseSignals = signalsFor(plan.kcal_target, plan.carbs_g, null)
 
+  // Mientras la información necesaria no se pueda comprobar (cargando o error de lectura), no se propone nada: un fallo de la consulta
+  // NO se interpreta como «no hay embarazo ni lactancia». Se dice claramente.
+  if (profile?.reproductiveCheck === 'loading') {
+    return none('wait', 'Comprobando el cuestionario de salud antes de valorar el reajuste…', [], [reproductiveUnverifiedSignal('loading')])
+  }
+  if (profile?.reproductiveCheck === 'error') {
+    return none('wait', 'No se ha podido comprobar si hay embarazo o lactancia (ha fallado la lectura del cuestionario de salud): no se proponen reajustes automáticos hasta poder comprobarlo. Recarga la ficha o confírmalo con el cliente.',
+      [], [reproductiveUnverifiedSignal('error', 'bloqueo')])
+  }
   // Población para la que el reajuste automático no es válido: se dice y no se propone nada.
   if (typeof age === 'number' && age >= 0 && age < ADULT_AGE) {
     return none('wait', `No se proponen reajustes automáticos para menores de ${ADULT_AGE} años: el ritmo de peso esperado y las ecuaciones de esta herramienta son para adultos. Requiere valoración profesional.`, [], baseSignals)

@@ -20,6 +20,8 @@ export type SignalSeverity = 'info' | 'advertencia' | 'revision' | 'bloqueo'
 export type EvidenceBasis = 'aritmetica' | 'evidencia_solida' | 'evidencia_limitada' | 'decision_de_producto'
 export type EvaluationLevel = 'ok' | 'advertencia' | 'revision' | 'bloqueo'
 export type CalculatorFormula = 'mifflin' | 'harris' | 'katch'
+/** Estado de la lectura del cuestionario de salud: cargando, leído (aunque no haya respuesta) o fallo de la consulta. */
+export type ReproductiveCheck = 'ready' | 'loading' | 'error'
 
 export type SignalCode =
   | 'SEXO_NO_INFORMADO'
@@ -44,6 +46,8 @@ export type SignalCode =
   | 'CARBOHIDRATOS_BAJOS'
   | 'MACROS_INCOMPATIBLES'
   | 'MACROS_NO_CUADRAN'
+  | 'MACROS_REDONDEO'
+  | 'ANAMNESIS_NO_COMPROBADA'
 
 export interface PlanSignal {
   code: SignalCode
@@ -80,16 +84,31 @@ export interface ReviewThresholds {
   bmrRatioReview: number
   /** IMC (kg/m²) por debajo del cual se avisa en adultos. Clasificación de bajo peso de la OMS; señal contextual, no diagnóstico. */
   bmiLow: number
-  /** Tolerancia (en %) entre las kcal del objetivo y las que suman los macros, para planes escritos a mano. */
+  /**
+   * Tolerancia de INCOHERENCIA ENERGÉTICA (en %): cuánto pueden quedarse POR DEBAJO las kcal que suman los macros respecto al objetivo antes
+   * de avisar. 3 % = el mismo criterio de la pantalla del plan («Reparto: x % de las kcal (no suma 100)»). Decisión de producto.
+   */
   macroTolerancePct: number
+  /**
+   * Tolerancia de REDONDEO (absoluta, en kcal): los gramos se enseñan enteros, así que la suma de lo que ves puede diferir del objetivo.
+   * Por encima del objetivo, hasta esta cifra es redondeo (nota informativa); más allá ya es una incoherencia (aviso).
+   */
+  macroRoundingKcal: number
 }
+
+/**
+ * Cota teórica del redondeo a gramos enteros: medio gramo de proteína (2 kcal) + medio de hidratos (2) + medio de grasa (4,5) + media kcal
+ * del objetivo redondeado = 9 kcal. Es aritmética, no una decisión clínica.
+ */
+export const MACRO_ROUNDING_TOLERANCE_KCAL = 9
 
 export const DEFAULT_REVIEW_THRESHOLDS: ReviewThresholds = {
   minKcalReview: 1200,
   minCarbsG: 50,
   bmrRatioReview: 1,
   bmiLow: 18.5,
-  macroTolerancePct: 5,
+  macroTolerancePct: 3,
+  macroRoundingKcal: MACRO_ROUNDING_TOLERANCE_KCAL,
 }
 
 /**
@@ -152,6 +171,24 @@ export function reproductiveStatusFromAnswer(answer: string | null | undefined):
   return 'no_consta'
 }
 
+/**
+ * Resultado de leer la fila de `anamnesis`: sin fila (el cliente no la ha rellenado) es `ready` con respuesta vacía; un error de consulta
+ * es `error` y NO se confunde con «no consta».
+ */
+export function reproductiveCheckFromQuery(data: { answers?: Record<string, string> | null } | null | undefined, error: unknown): { check: ReproductiveCheck; answer: string } {
+  if (error) return { check: 'error', answer: '' }
+  return { check: 'ready', answer: data?.answers?.embarazo_lactancia ?? '' }
+}
+
+/** La señal de que no se ha podido comprobar el embarazo o la lactancia (para el reajuste, que no puede continuar sin saberlo). */
+export function reproductiveUnverifiedSignal(check: 'loading' | 'error', severity: SignalSeverity = check === 'loading' ? 'bloqueo' : 'revision'): PlanSignal {
+  return check === 'loading'
+    ? signal('ANAMNESIS_NO_COMPROBADA', severity, 'aritmetica', 'Comprobando el cuestionario de salud…',
+      'Todavía no se ha leído si hay embarazo o lactancia. Espera un momento.', { estado: 'cargando' })
+    : signal('ANAMNESIS_NO_COMPROBADA', severity, 'decision_de_producto', 'No se ha podido comprobar el embarazo o la lactancia',
+      'Ha fallado la lectura del cuestionario de salud. Eso NO significa que no haya embarazo ni lactancia: confírmalo con el cliente y vuelve a intentarlo antes de aplicar nada.', { estado: 'error' })
+}
+
 export const isReproductiveActive = (s: ReproductiveStatus | null | undefined) => s === 'embarazo' || s === 'lactancia'
 
 // ── Entrada del motor ────────────────────────────────────────────────────────────────────────────────
@@ -169,6 +206,11 @@ export interface SafetyProfile {
   /** El objetivo es perder peso (déficit). */
   losingWeight?: boolean
   reproductiveStatus?: ReproductiveStatus | null
+  /**
+   * Si la información de embarazo/lactancia no se ha podido comprobar: `loading` bloquea y `error` pide revisión. Un error de lectura
+   * NUNCA se interpreta como «no hay embarazo ni lactancia». `undefined` = no aplica (la persona lo ha indicado a mano, o no se usa).
+   */
+  reproductiveCheck?: ReproductiveCheck
 }
 
 export interface SafetyPlan {
@@ -308,8 +350,11 @@ export function evaluatePlanSafety(profile: SafetyProfile, plan: SafetyPlan | nu
         `Las ecuaciones de esta calculadora son para adultos sin ${que} y no incluyen su coste energético adicional (EFSA 2013 lo cifra aparte por trimestre y en lactancia). Trata el resultado solo como punto de partida y valídalo.`,
         { estado: reproductive }))
     }
-  } else if (profile.sex === 'mujer' && typeof age === 'number' && age >= ADULT_AGE && (reproductive == null || reproductive === 'no_consta')) {
-    out.push(signal('EMBARAZO_LACTANCIA_NO_CONSTA', 'info', 'decision_de_producto', 'No consta si hay embarazo o lactancia',
+  } else if (profile.reproductiveCheck === 'loading' || profile.reproductiveCheck === 'error') {
+    out.push(reproductiveUnverifiedSignal(profile.reproductiveCheck))
+  } else if (typeof age === 'number' && age >= ADULT_AGE && (reproductive == null || reproductive === 'no_consta')) {
+    // Para cualquier persona adulta, sin depender del sexo ni de la identidad de género declarados en la ficha.
+    out.push(signal('EMBARAZO_LACTANCIA_NO_CONSTA', 'info', 'decision_de_producto', 'No consta si hay embarazo o lactancia (solo si te aplica)',
       'La calculadora no los contempla. Si pudieran darse, indícalo en el cuestionario de salud o en la propia calculadora.', { estado: reproductive ?? 'sin_dato' }))
   }
 
@@ -364,24 +409,40 @@ export function evaluatePlanSafety(profile: SafetyProfile, plan: SafetyPlan | nu
   }
 
   // ── Macros ──
-  const remaining = plan.remainingKcalForCarbs
-  if (isNum(remaining) && remaining < 0) {
+  // Dos tolerancias distintas, que no se mezclan:
+  //  · REDONDEO (absoluta, `macroRoundingKcal`, 9 kcal): los gramos se enseñan enteros. Hasta esa cifra POR ENCIMA del objetivo es redondeo
+  //    y se dice (nota informativa), no se calla.
+  //  · INCOHERENCIA ENERGÉTICA: por encima del objetivo, lo que pase del redondeo; por debajo, lo que pase del máx(redondeo, `macroTolerancePct` %).
+  // Con datos exactos (la calculadora pasa `remainingKcalForCarbs`) no hay tolerancia para «proteína + grasa superan el objetivo»; con gramos
+  // escritos o mostrados (planes a mano) el margen es el del redondeo.
+  const roundTol = th.macroRoundingKcal
+  const pG = plan.proteinG, cG = plan.carbsG, fG = plan.fatG
+  const havePF = isNum(pG) && isNum(fG) && isNum(kcal) && kcal > 0
+  const exact = isNum(plan.remainingKcalForCarbs)
+  const remaining = exact ? (plan.remainingKcalForCarbs as number) : havePF ? (kcal as number) - ((pG as number) * 4 + (fG as number) * 9) : null
+  if (isNum(remaining) && remaining < (exact ? 0 : -roundTol)) {
     out.push(signal('MACROS_INCOMPATIBLES', 'bloqueo', 'aritmetica', 'Proteína y grasa superan el objetivo energético',
       `Entre proteína y grasa ya suman ${fmtKcal((isNum(kcal) ? kcal : 0) - remaining)} kcal y el objetivo es ${fmtKcal(kcal ?? 0)}: no quedan calorías para hidratos (faltarían ${fmtKcal(-remaining)} kcal). Baja los g/kg de proteína o de grasa, o sube el objetivo; no se presenta este reparto como válido.`,
       { kcal: isNum(kcal) ? Math.round(kcal) : null, kcalProteinaMasGrasa: isNum(kcal) ? Math.round(kcal - remaining) : null, exceso: Math.round(-remaining) }))
-  } else if (isNum(plan.carbsG) && plan.carbsG < th.minCarbsG) {
-    out.push(signal('CARBOHIDRATOS_BAJOS', 'advertencia', 'decision_de_producto', `Hidratos por debajo de ${th.minCarbsG} g`,
-      `Quedan ${Math.round(plan.carbsG)} g de hidratos. ${th.minCarbsG} g es un umbral de aviso interno de la app, no un límite clínico: revisa si el reparto es el que quieres.`,
-      { carbohidratosG: Math.round(plan.carbsG), umbral: th.minCarbsG }))
-  }
-  const sumKnown = isNum(plan.proteinG) && isNum(plan.carbsG) && isNum(plan.fatG) && isNum(kcal) && kcal > 0
-  if ((options.checkMacroSum ?? sumKnown) && sumKnown && !(isNum(remaining) && remaining < 0)) {
-    const sum = (plan.proteinG as number) * 4 + (plan.carbsG as number) * 4 + (plan.fatG as number) * 9
-    const diff = sum - (kcal as number)
-    if (Math.abs(diff) > ((kcal as number) * th.macroTolerancePct) / 100) {
-      out.push(signal('MACROS_NO_CUADRAN', 'advertencia', 'aritmetica', 'Las kcal no cuadran con los macros',
-        `Los macros suman ${fmtKcal(sum)} kcal y el objetivo es ${fmtKcal(kcal as number)} (diferencia de ${diff > 0 ? '+' : '−'}${fmtKcal(Math.abs(diff))}, más del ${th.macroTolerancePct} %). Revisa cuál de los dos es el correcto.`,
-        { kcal: Math.round(kcal as number), kcalDeMacros: Math.round(sum), diferencia: Math.round(diff) }))
+  } else {
+    if (isNum(cG) && cG < th.minCarbsG) {
+      out.push(signal('CARBOHIDRATOS_BAJOS', 'advertencia', 'decision_de_producto', `Hidratos por debajo de ${th.minCarbsG} g`,
+        `Quedan ${Math.round(cG)} g de hidratos. ${th.minCarbsG} g es un umbral de aviso interno de la app, no un límite clínico ni un mínimo universal: revisa si el reparto es el que quieres.`,
+        { carbohidratosG: Math.round(cG), umbral: th.minCarbsG }))
+    }
+    if ((options.checkMacroSum ?? true) && isNum(pG) && isNum(cG) && isNum(fG) && isNum(kcal) && kcal > 0) {
+      const sum = pG * 4 + cG * 4 + fG * 9
+      const diff = sum - kcal
+      const incoherenceBelow = Math.max(roundTol, (kcal * th.macroTolerancePct) / 100)
+      const evidence = { kcal: Math.round(kcal), kcalDeMacros: Math.round(sum), diferencia: Math.round(diff), toleranciaRedondeo: roundTol, toleranciaIncoherenciaPorDebajo: Math.round(incoherenceBelow) }
+      if (diff > roundTol || diff < -incoherenceBelow) {
+        out.push(signal('MACROS_NO_CUADRAN', 'advertencia', 'aritmetica', 'Las kcal no cuadran con los macros',
+          `Los macros suman ${fmtKcal(sum)} kcal y el objetivo es ${fmtKcal(kcal)} (${diff > 0 ? '+' : '−'}${fmtKcal(Math.abs(diff))} kcal). ${diff > 0 ? `Por encima del objetivo, más de lo que explica el redondeo a gramos enteros (${roundTol} kcal)` : `Por debajo del objetivo, más del ${th.macroTolerancePct} % (y de ${roundTol} kcal)`}: revisa cuál de los dos es el correcto.`,
+          evidence))
+      } else if (diff > 0) {
+        out.push(signal('MACROS_REDONDEO', 'info', 'aritmetica', 'Los gramos enteros suman un poco más que el objetivo',
+          `Con los gramos enteros que ves, los macros suman ${fmtKcal(sum)} kcal: ${fmtKcal(diff)} más que el objetivo (${fmtKcal(kcal)}). Es redondeo (como mucho ${roundTol} kcal), no una incoherencia.`, evidence))
+      }
     }
   }
 

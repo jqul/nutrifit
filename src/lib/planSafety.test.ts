@@ -138,14 +138,17 @@ describe('embarazo y lactancia (solo con información estructurada)', () => {
       expect(e).toMatchObject({ level: 'revision', blocked: false, needsProfessionalReview: true })
     }
   })
-  it('«no»: sin señal; «no consta» en una mujer adulta: solo una nota informativa', () => {
+  it('«no»: sin señal; «no consta» en una persona adulta: solo una nota informativa', () => {
     expect(ev({ reproductiveStatus: 'ninguno' }).signals).toEqual([])
     for (const s of ['no_consta', null, undefined] as const) {
       const e = ev({ reproductiveStatus: s as never })
       expect(codes(e)).toEqual(['EMBARAZO_LACTANCIA_NO_CONSTA'])
       expect(e.level).toBe('ok') // una nota informativa no sube el nivel
     }
-    expect(codes(ev({ sex: 'hombre', reproductiveStatus: 'no_consta' }))).toEqual([])
+    // La nota no depende del sexo declarado en la ficha: sale para cualquier persona adulta cuando no consta (texto neutro).
+    expect(codes(ev({ sex: 'hombre', reproductiveStatus: 'no_consta' }))).toEqual(['EMBARAZO_LACTANCIA_NO_CONSTA'])
+    expect(codes(ev({ sex: null, reproductiveStatus: 'no_consta' }, null, { strict: false }))).toEqual(['EMBARAZO_LACTANCIA_NO_CONSTA'])
+    expect(find(ev({ sex: 'hombre', reproductiveStatus: 'no_consta' }), 'EMBARAZO_LACTANCIA_NO_CONSTA')!.title).toMatch(/solo si te aplica/)
   })
   it('reproductiveStatusFromAnswer interpreta las opciones del cuestionario', () => {
     expect(reproductiveStatusFromAnswer('Embarazo')).toBe('embarazo')

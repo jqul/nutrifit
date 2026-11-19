@@ -8,7 +8,12 @@ describe('cuestionario de salud: embarazo y lactancia', () => {
   it('existe como pregunta cerrada (opciones fijas), no como texto libre', () => {
     expect(q).toBeDefined()
     expect(q!.type).toBe('select')
-    expect(q!.options).toEqual(['No (o no aplica)', 'Embarazo', 'Lactancia', 'Prefiero comentarlo con mi profesional'])
+    expect(q!.options).toEqual(['No (o no me aplica)', 'Embarazo', 'Lactancia', 'Prefiero comentarlo con mi profesional'])
+  })
+  it('la pregunta es neutra: no presupone género ni se la dirige a un sexo concreto', () => {
+    expect(q!.label).not.toMatch(/embarazada|mujer|madre/i)
+    expect(q!.label).toMatch(/solo si te aplica/)
+    expect(q!.options!.join(' ')).not.toMatch(/embarazada|mujer/i)
   })
   it('cada opción se interpreta de forma inequívoca para la calculadora', () => {
     const esperado = ['ninguno', 'embarazo', 'lactancia', 'no_consta']
