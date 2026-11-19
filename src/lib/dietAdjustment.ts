@@ -20,6 +20,7 @@
 import { DailyCheckin, WeightEntry } from '../types'
 import { PlanTargets } from './planChanges'
 import { bmrMifflinStJeor } from './metabolicCalculator'
+import { weightLossLikely } from './planGuard'
 import {
   ADULT_AGE, DEFAULT_REVIEW_THRESHOLDS, PlanEvaluation, PlanSignal, ReproductiveCheck, ReproductiveStatus, ReviewThresholds, SexValue, evaluatePlanSafety, isReproductiveActive, reproductiveUnverifiedSignal, visibleSignals,
 } from './planSafety'
@@ -63,7 +64,8 @@ export function evaluateAdjustmentTarget(
     ? bmrMifflinStJeor(profile.sex, kg, profile.heightCm, age) : null
   return evaluatePlanSafety({
     sex: profile?.sex ?? null, ageYears: age, birthDate: profile?.birthDate ?? null, weightKg: kg, heightCm: profile?.heightCm ?? null,
-    losingWeight: goal === 'perder_peso', reproductiveStatus: profile?.reproductiveStatus ?? null, reproductiveCheck: profile?.reproductiveCheck,
+    losingWeight: goal === 'perder_peso', weightLossLikely: weightLossLikely(goal, kcal, bmr),
+    reproductiveStatus: profile?.reproductiveStatus ?? null, reproductiveCheck: profile?.reproductiveCheck,
   }, { kcal, carbsG: carbs, bmr }, { strict: false, thresholds, today })
 }
 

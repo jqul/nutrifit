@@ -205,6 +205,12 @@ export interface SafetyProfile {
   formula?: CalculatorFormula
   /** El objetivo es perder peso (déficit). */
   losingWeight?: boolean
+  /**
+   * Una pérdida de peso es POSIBLE aunque el objetivo de la ficha no lo diga: la ficha no tiene objetivo (o es texto libre), o el objetivo
+   * energético queda por debajo del mantenimiento estimado. Solo se usa en embarazo y lactancia: ahí la duda se resuelve en contra (bloqueo),
+   * para que dejar vacío o cambiar el objetivo de la ficha no permita eludir la comprobación.
+   */
+  weightLossLikely?: boolean
   reproductiveStatus?: ReproductiveStatus | null
   /**
    * Si la información de embarazo/lactancia no se ha podido comprobar: `loading` bloquea y `error` pide revisión. Un error de lectura
@@ -341,10 +347,10 @@ export function evaluatePlanSafety(profile: SafetyProfile, plan: SafetyPlan | nu
   const reproductive = profile.reproductiveStatus ?? null
   if (isReproductiveActive(reproductive)) {
     const que = reproductive === 'embarazo' ? 'embarazo' : 'lactancia'
-    if (profile.losingWeight) {
+    if (profile.losingWeight || profile.weightLossLikely) {
       out.push(signal('EMBARAZO_LACTANCIA_PERDIDA_DE_PESO', 'bloqueo', 'decision_de_producto', `En ${que} no se calcula un objetivo de pérdida de peso`,
         `Con ${que} declarado no se genera automáticamente un objetivo de déficit. Las necesidades energéticas cambian en esas etapas (EFSA 2013 les suma energía) y la pauta requiere valoración profesional.`,
-        { estado: reproductive }))
+        { estado: reproductive, objetivoPerdida: !!profile.losingWeight, perdidaProbable: !!profile.weightLossLikely }))
     } else {
       out.push(signal('EMBARAZO_LACTANCIA_REVISION', 'revision', 'evidencia_limitada', `Hay ${que}: el cálculo necesita revisión profesional`,
         `Las ecuaciones de esta calculadora son para adultos sin ${que} y no incluyen su coste energético adicional (EFSA 2013 lo cifra aparte por trimestre y en lactancia). Trata el resultado solo como punto de partida y valídalo.`,

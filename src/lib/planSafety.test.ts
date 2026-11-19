@@ -128,7 +128,7 @@ describe('embarazo y lactancia (solo con información estructurada)', () => {
       const e = ev({ reproductiveStatus: estado, losingWeight: true })
       expect(codes(e)).toContain('EMBARAZO_LACTANCIA_PERDIDA_DE_PESO')
       expect(e.blocked).toBe(true)
-      expect(find(e, 'EMBARAZO_LACTANCIA_PERDIDA_DE_PESO')!.evidence).toEqual({ estado })
+      expect(find(e, 'EMBARAZO_LACTANCIA_PERDIDA_DE_PESO')!.evidence).toEqual({ estado, objetivoPerdida: true, perdidaProbable: false })
     }
   })
   it('sin déficit: se puede calcular pero pide revisión profesional', () => {

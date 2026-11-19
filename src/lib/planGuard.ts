@@ -3,7 +3,7 @@
 //
 // Lo que NO es: no registra nada (la confirmación del profesional es visual y vive en el estado de la pantalla), no sustituye una
 // auditoría y no puede proteger lo que se ejecuta en el servidor (fases con aplicación automática, ver docs/calculadora-metabolica.md).
-import { bmrMifflinStJeor } from './metabolicCalculator'
+import { ACTIVITY_FACTORS, bmrMifflinStJeor } from './metabolicCalculator'
 import {
   ADULT_AGE, PlanEvaluation, ReproductiveCheck, ReproductiveStatus, ReviewThresholds, SexValue, evaluatePlanSafety,
 } from './planSafety'
@@ -37,6 +37,20 @@ export const parseTargets = (t: TargetsInput): ParsedTargets => ({
   kcal: parseTarget(t.kcal), proteinG: parseTarget(t.proteinG), carbsG: parseTarget(t.carbsG), fatG: parseTarget(t.fatG),
 })
 
+/** Objetivos de la ficha que dicen expresamente que NO se quiere perder peso. Todo lo demás (vacío, texto libre, «perder_peso») no lo descarta. */
+const NON_LOSS_GOALS = ['mantenimiento', 'ganar_masa', 'salud', 'rendimiento']
+
+/**
+ * ¿Es posible que este objetivo sea una pérdida de peso? Sí si la ficha no dice expresamente lo contrario (vacío o texto libre), o si las kcal
+ * quedan por debajo del mantenimiento MÍNIMO estimable (TMB × 1,2, el factor de actividad más bajo): un déficit efectivo aunque la ficha
+ * diga «mantenimiento». Sin TMB (faltan sexo, edad, altura o peso) no se puede comparar y manda el objetivo de la ficha.
+ * Solo se usa en embarazo y lactancia (ver `SafetyProfile.weightLossLikely`).
+ */
+export function weightLossLikely(goal: string | null | undefined, kcal: number | null, bmr: number | null): boolean {
+  if (!NON_LOSS_GOALS.includes(goal ?? '')) return true
+  return kcal != null && bmr != null && bmr > 0 && kcal < bmr * ACTIVITY_FACTORS.sedentario
+}
+
 const EMPTY: PlanEvaluation = { level: 'ok', signals: [], blocked: false, needsProfessionalReview: false }
 
 /**
@@ -55,7 +69,8 @@ export function evaluateTargets(
     ? bmrMifflinStJeor(profile.sex, weightKg, profile.heightCm, age) : null
   return evaluatePlanSafety({
     sex: profile.sex, ageYears: age, birthDate: profile.birthDate ?? null, weightKg, heightCm: profile.heightCm ?? null,
-    losingWeight: goal === 'perder_peso', reproductiveStatus: profile.reproductiveStatus ?? null, reproductiveCheck: profile.reproductiveCheck,
+    losingWeight: goal === 'perder_peso', weightLossLikely: weightLossLikely(goal, t.kcal, bmr),
+    reproductiveStatus: profile.reproductiveStatus ?? null, reproductiveCheck: profile.reproductiveCheck,
   }, { kcal: t.kcal, proteinG: t.proteinG, carbsG: t.carbsG, fatG: t.fatG, bmr }, { strict: false, thresholds: opts.thresholds, today: opts.today })
 }
 
