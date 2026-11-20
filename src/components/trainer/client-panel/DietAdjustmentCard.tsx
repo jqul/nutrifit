@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ClientData, DailyCheckin, WeightEntry } from '../../../types'
 import { supabase } from '../../../lib/supabase'
 import { DEMO_DIET_PLANS } from '../../../lib/demo-data'
-import { AdjustmentPlan, suggestDietAdjustment } from '../../../lib/dietAdjustment'
+import { AdjustmentPlan, AdjustmentProfile, evaluateAdjustmentTarget, suggestDietAdjustment } from '../../../lib/dietAdjustment'
+import { useReproductiveCheck } from '../../../hooks/useReproductiveCheck'
+import { ProfessionalConfirmation } from '../../shared/ProfessionalConfirmation'
+import { ageFromBirthDate, sexFromGender } from '../../../lib/metabolicCalculator'
+import { reproductiveStatusFromAnswer, visibleSignals } from '../../../lib/planSafety'
+import { PlanSignalList } from '../../shared/PlanSignalList'
 import { toast } from '../../shared/Toast'
 
 const dismissKey = (clientId: string) => `nutrifit.dietAdjustment.dismissed.${clientId}`
@@ -26,6 +31,9 @@ export function DietAdjustmentCard({ client, weights, checkins, demoMode }: {
   const [kcalDraft, setKcalDraft] = useState('')
   const [applying, setApplying] = useState(false)
   const [dismissed, setDismissed] = useState<string | null>(() => readDismissed(client.id))
+  // Embarazo/lactancia (pregunta cerrada del cuestionario de salud): con ellos declarados no se proponen reajustes automáticos.
+  const { check: reproductiveCheck, answer: reproductiveAnswer } = useReproductiveCheck(client.id, demoMode)
+  const [confirmedFor, setConfirmedFor] = useState<string | null>(null)
 
   const loadPlan = useCallback(async () => {
     if (demoMode) {
@@ -45,9 +53,13 @@ export function DietAdjustmentCard({ client, weights, checkins, demoMode }: {
 
   useEffect(() => { loadPlan() }, [loadPlan])
 
+  const profile = useMemo<AdjustmentProfile>(() => ({
+    sex: sexFromGender(client.gender), ageYears: ageFromBirthDate(client.birthDate), birthDate: client.birthDate, heightCm: client.heightCm,
+    reproductiveStatus: reproductiveStatusFromAnswer(reproductiveAnswer), reproductiveCheck,
+  }), [client.gender, client.birthDate, client.heightCm, reproductiveAnswer, reproductiveCheck])
   const result = useMemo(() => suggestDietAdjustment({
-    weights, checkins, goal: client.goal, goalWeightKg: client.goalWeightKg, plan,
-  }), [weights, checkins, client.goal, client.goalWeightKg, plan])
+    weights, checkins, goal: client.goal, goalWeightKg: client.goalWeightKg, plan, profile,
+  }), [weights, checkins, client.goal, client.goalWeightKg, plan, profile])
 
   // El borrador editable parte de la propuesta; el nutricionista puede corregir la cifra de kcal.
   useEffect(() => { setKcalDraft(result.proposal ? String(result.proposal.kcal_target) : '') }, [result.proposal])
@@ -61,9 +73,18 @@ export function DietAdjustmentCard({ client, weights, checkins, demoMode }: {
   const draftValid = result.proposal != null && Number.isFinite(draftKcal) && draftKcal >= 800 && draftKcal <= 6000
   // Los carbohidratos acompañan a la cifra de kcal que se aplique (la proteína y la grasa no cambian).
   const draftCarbs = result.proposal && draftValid ? Math.max(0, Math.round(plan.carbs_g + (draftKcal - plan.kcal_target) / 4)) : null
+  // El profesional puede corregir la cifra: lo que se evalúa (y lo que debe confirmar) es la que va a aplicar, no solo la propuesta.
+  const lastKg = [...weights].sort((a, b) => a.date.localeCompare(b.date)).pop()?.weightKg ?? null
+  const draftEvaluation = result.proposal && draftValid && draftCarbs != null
+    ? evaluateAdjustmentTarget(profile, client.goal, draftKcal, draftCarbs, lastKg) : null
+  const draftSignature = draftEvaluation ? `${draftKcal}|${draftEvaluation.signals.map(s => s.code).join(',')}` : null
+  const needsConfirmation = !!draftEvaluation && draftEvaluation.needsProfessionalReview
+  const blocked = !!draftEvaluation && (draftEvaluation.blocked || draftEvaluation.needsSpecificProfessionalEvaluation) // lo pendiente de evaluación profesional específica no se aplica desde el reajuste
+  const confirmed = confirmedFor != null && confirmedFor === draftSignature
 
   const apply = async () => {
     if (!result.proposal || !draftValid || draftCarbs == null) return
+    if (blocked || (needsConfirmation && !confirmed)) return
     if (demoMode) { toast('Modo demo: el plan no se modifica de verdad', 'ok'); return }
     setApplying(true)
     const { error } = await supabase.from('diet_plans').update({
@@ -97,6 +118,8 @@ export function DietAdjustmentCard({ client, weights, checkins, demoMode }: {
       <div className={`rounded-xl px-4 py-3 ${accent ? 'bg-accent/10' : 'bg-bg-alt/60'}`}>
         <p className={`text-sm leading-relaxed ${accent ? 'font-semibold' : 'text-muted'}`}>{result.headline}</p>
       </div>
+
+      <PlanSignalList signals={draftEvaluation ? visibleSignals(draftEvaluation) : result.signals} />
 
       {result.reasons.length > 0 && (
         <ul className="text-xs text-muted space-y-1 list-disc pl-4">
@@ -132,8 +155,9 @@ export function DietAdjustmentCard({ client, weights, checkins, demoMode }: {
           <p className="text-xs text-muted">
             Es una sugerencia orientativa, no un criterio clínico. Al aplicarla se actualizan los objetivos del plan (queda en el historial y como versión que puedes restaurar); las comidas no se modifican.
           </p>
+          {needsConfirmation && <ProfessionalConfirmation checked={confirmed} onChange={c => setConfirmedFor(c ? draftSignature : null)} />}
           <div className="flex flex-wrap gap-2">
-            <button disabled={applying || !draftValid} onClick={apply}
+            <button disabled={applying || !draftValid || blocked || (needsConfirmation && !confirmed)} onClick={apply}
               className="px-4 py-2 bg-ink text-white rounded-xl text-sm font-bold disabled:opacity-40">{applying ? 'Aplicando…' : 'Aplicar al plan'}</button>
             <button disabled={applying} onClick={dismiss}
               className="px-4 py-2 text-sm font-semibold text-muted hover:text-ink">Ahora no</button>

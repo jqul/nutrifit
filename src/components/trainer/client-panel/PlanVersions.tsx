@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '../../../lib/supabase'
 import { DEMO_PLAN_VERSIONS } from '../../../lib/demo-data'
-import { PlanVersionRow, describeRestore, mealLabel, summarizeSnapshot } from '../../../lib/planVersions'
+import { PlanVersionRow, PlanSnapshot, describeRestore, mealLabel, summarizeSnapshot } from '../../../lib/planVersions'
+import { PlanEvaluation } from '../../../lib/planSafety'
+import { decideApply, decideSave } from '../../../lib/planGuard'
+import { PlanSignalList } from '../../shared/PlanSignalList'
+import { ProfessionalConfirmation } from '../../shared/ProfessionalConfirmation'
+import { ProfessionalEvaluation } from '../../shared/ProfessionalEvaluation'
 import { Modal } from '../../shared/Modal'
 import { Button } from '../../shared/Button'
 import { toast } from '../../shared/Toast'
@@ -15,8 +20,10 @@ const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('es-ES', { day
  * como versión y deja la restauración como versión nueva. Es interno del
  * nutricionista; el cliente solo ve el plan vigente.
  */
-export function PlanVersions({ planId, demoMode, refreshKey, onRestored }: {
+export function PlanVersions({ planId, demoMode, refreshKey, onRestored, evaluateSnapshot }: {
   planId: string; demoMode?: boolean
+  /** Evalúa los objetivos de una versión con los datos ACTUALES del cliente (una versión que fue válida no se da por buena). */
+  evaluateSnapshot: (snapshot: PlanSnapshot) => PlanEvaluation
   /** Cambia cuando se guarda el plan, para volver a leer las versiones. */
   refreshKey: number
   /** Se llama tras restaurar de verdad, para recargar el plan en el editor. */
@@ -27,6 +34,9 @@ export function PlanVersions({ planId, demoMode, refreshKey, onRestored }: {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [restoring, setRestoring] = useState<PlanVersionRow | null>(null)
   const [busy, setBusy] = useState(false)
+  const [restoreConfirmed, setRestoreConfirmed] = useState(false)
+  const [restoreEvaluated, setRestoreEvaluated] = useState(false)
+  const [restoreReason, setRestoreReason] = useState('')
 
   useEffect(() => {
     if (demoMode) { setVersions(Object.values(DEMO_PLAN_VERSIONS)[0] ?? []); return }
@@ -42,16 +52,29 @@ export function PlanVersions({ planId, demoMode, refreshKey, onRestored }: {
   const restore = async () => {
     if (!restoring) return
     if (demoMode) { toast('Modo demo: no se restaura de verdad', 'ok'); setRestoring(null); return }
+    // Restaurar guarda el plan en el servidor de inmediato: se evalúa ANTES, con los datos de hoy del cliente.
+    if (restoreEvaluation) {
+      const check = decideApply(restoreEvaluation, 'versión')
+      if (!check.allowed) { toast(check.message!, 'warn'); return }
+      if (restoreDecision && !restoreDecision.allowed) { toast(restoreDecision.message!, 'warn'); return }
+    }
     setBusy(true)
     const { error } = await supabase.rpc('restore_plan_version', { p_version_id: restoring.id })
     setBusy(false)
     if (error) { toast('No se pudo restaurar la versión', 'warn'); return }
     toast(`Versión ${restoring.version_number} restaurada ✓`, 'ok')
     setRestoring(null)
+    resetRestore()
     await onRestored()
   }
 
   const changes = restoring ? describeRestore(current.snapshot, restoring.snapshot) : []
+  const restoreEvaluation = restoring ? evaluateSnapshot(restoring.snapshot) : null
+  // La misma decisión que al guardar: lo bloqueado no se restaura, la revisión exige la casilla y lo que la app no puede determinar exige la evaluación específica.
+  const restoreDecision = restoring && restoreEvaluation
+    ? decideSave({ evaluation: restoreEvaluation, fingerprint: restoring.id, confirmedFingerprint: restoreConfirmed ? restoring.id : null, changed: true, attestation: restoreEvaluated ? { fingerprint: restoring.id, reason: restoreReason } : null })
+    : null
+  const resetRestore = () => { setRestoreConfirmed(false); setRestoreEvaluated(false); setRestoreReason('') }
 
   return (
     <div className="card">
@@ -123,12 +146,21 @@ export function PlanVersions({ planId, demoMode, refreshKey, onRestored }: {
                 ? <p className="text-sm text-muted">Nada: es idéntica al plan actual.</p>
                 : <ul className="text-sm space-y-1 list-disc pl-5">{changes.map((c, i) => <li key={i}>{c}</li>)}</ul>}
             </div>
+            {restoreEvaluation && restoreEvaluation.signals.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">Señales con los datos actuales del cliente</p>
+                <PlanSignalList signals={restoreEvaluation.signals} showInfo />
+                {restoreEvaluation.blocked && <p className="text-xs font-semibold text-warn" role="alert">Esta versión no se puede restaurar con los datos actuales del cliente.</p>}
+                {!restoreEvaluation.blocked && restoreEvaluation.needsSpecificProfessionalEvaluation && <ProfessionalEvaluation checked={restoreEvaluated} onChange={setRestoreEvaluated} reason={restoreReason} onReasonChange={setRestoreReason} />}
+                {!restoreEvaluation.blocked && !restoreEvaluation.needsSpecificProfessionalEvaluation && restoreEvaluation.needsProfessionalReview && <ProfessionalConfirmation checked={restoreConfirmed} onChange={setRestoreConfirmed} />}
+              </div>
+            )}
             <p className="text-xs text-muted">
               El cliente verá el plan restaurado desde que confirmes, pero no se le avisa automáticamente. Los cambios sin guardar que tengas ahora en el editor se perderán.
             </p>
             <div className="flex items-center gap-2 pt-1">
-              <Button onClick={restore} loading={busy}>Restaurar versión {restoring.version_number}</Button>
-              <Button variant="ghost" onClick={() => setRestoring(null)} disabled={busy}>Cancelar</Button>
+              <Button onClick={restore} loading={busy} disabled={!!restoreDecision && !restoreDecision.allowed}>Restaurar versión {restoring.version_number}</Button>
+              <Button variant="ghost" onClick={() => { setRestoring(null); resetRestore() }} disabled={busy}>Cancelar</Button>
             </div>
           </div>
         )}

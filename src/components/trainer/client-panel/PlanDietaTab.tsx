@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ClientData, DietPlan, Food } from '../../../types'
 import { supabase } from '../../../lib/supabase'
 import { DietMealRow, DietMealItemRow, DietSupplementRow, DietTemplateRow, RecipeRow } from '../../../lib/supabase-types'
@@ -45,6 +45,13 @@ import { PlanHistory } from './PlanHistory'
 import { PlanVersions } from './PlanVersions'
 import { gramsToPercent, percentToGrams, percentTotal } from '../../../lib/macroUnits'
 import { diffPlanTargets, formatPlanChange, targetsFromForm, PlanTargets } from '../../../lib/planChanges'
+import { decideApply, decideSave, evaluateTargets, targetsChanged, targetsFingerprint } from '../../../lib/planGuard'
+import { ageFromBirthDate, sexFromGender } from '../../../lib/metabolicCalculator'
+import { reproductiveStatusFromAnswer } from '../../../lib/planSafety'
+import { useReproductiveCheck } from '../../../hooks/useReproductiveCheck'
+import { PlanSignalList } from '../../shared/PlanSignalList'
+import { ProfessionalConfirmation } from '../../shared/ProfessionalConfirmation'
+import { ProfessionalEvaluation } from '../../shared/ProfessionalEvaluation'
 import {
   ThumbsDown, Plus, Trash2, Eye, EyeOff, BookmarkPlus, AlertTriangle, ChefHat, Download, Barcode, FlaskConical,
   ChevronDown, ChevronUp, Copy, Repeat, BookOpen, Calculator, X, Send, Layers, FileSpreadsheet, Pill, Pencil, Check,
@@ -119,6 +126,32 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     supabase.from('anamnesis').select('answers').eq('client_id', client.id).maybeSingle()
       .then(({ data }) => setMedicacion((data?.answers as Record<string, string> | null)?.medicacion || ''))
   }, [client.id, demoPlan])
+
+  // Embarazo/lactancia (pregunta cerrada del cuestionario) con TRES estados: cargando, leído y error. Un error NO es «no hay embarazo».
+  const { check: reproductiveCheck, answer: embarazoLactancia } = useReproductiveCheck(client.id, !!demoPlan)
+  // Último peso conocido: para el IMC y la TMB del motor de evaluación (sin él esas señales simplemente no se calculan).
+  const [lastWeightKg, setLastWeightKg] = useState<number | null>(null)
+  useEffect(() => {
+    if (demoPlan) return
+    let cancelled = false
+    Promise.resolve(supabase.from('weight_logs').select('weight_kg').eq('client_id', client.id).order('date', { ascending: false }).limit(1))
+      .then(({ data }) => { if (!cancelled) setLastWeightKg(data?.[0]?.weight_kg != null ? Number(data[0].weight_kg) : null) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [client.id, demoPlan])
+  // Evaluación de los objetivos que hay AHORA en el formulario (a mano, de una plantilla o de la calculadora), con los datos del cliente.
+  // La confirmación del profesional vale solo para ese objetivo exacto y esas señales (huella): si cambia algo, deja de valer.
+  const guardProfile = useMemo(() => ({
+    sex: sexFromGender(client.gender), ageYears: ageFromBirthDate(client.birthDate), birthDate: client.birthDate, heightCm: client.heightCm,
+    reproductiveStatus: reproductiveStatusFromAnswer(embarazoLactancia), reproductiveCheck,
+  }), [client.gender, client.birthDate, client.heightCm, embarazoLactancia, reproductiveCheck])
+  const currentTargets = { kcal: kcalTarget, proteinG, carbsG, fatG }
+  const targetsEval = evaluateTargets(guardProfile, client.goal, lastWeightKg, currentTargets)
+  const targetsPrint = targetsFingerprint(currentTargets, targetsEval)
+  const [confirmedPrint, setConfirmedPrint] = useState<string | null>(null)
+  // Evaluación profesional ESPECÍFICA (embarazo/lactancia con objetivo sin determinar): declaración + justificación, ligada al objetivo exacto.
+  const [evaluatedPrint, setEvaluatedPrint] = useState<string | null>(null)
+  const [evaluationReason, setEvaluationReason] = useState('')
+  const targetsAreNew = targetsChanged(savedTargets ? { kcal: savedTargets.kcal_target, proteinG: savedTargets.protein_g, carbsG: savedTargets.carbs_g, fatG: savedTargets.fat_g } : null, currentTargets)
 
   const loadRecipes = useCallback(async () => {
     if (demoPlan) { setRecipes(DEMO_RECIPES); return }
@@ -259,6 +292,10 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
   const handleSave = async () => {
     if (!planId) return
+    // Guarda de los objetivos: se vuelve a evaluar JUSTO ahora y se compara con lo que el profesional confirmó. Si el objetivo que se va
+    // a guardar no es el que se evaluó y confirmó, no se guarda sin una nueva evaluación. (También en la demo, para que se vea igual.)
+    const decision = decideSave({ evaluation: targetsEval, fingerprint: targetsPrint, confirmedFingerprint: confirmedPrint, changed: targetsAreNew, attestation: evaluatedPrint ? { fingerprint: evaluatedPrint, reason: evaluationReason } : null })
+    if (!decision.allowed) { toast(decision.message!, 'warn'); return }
     if (demoPlan) { toast('Modo demo: los cambios no se guardan', 'ok'); return }
     setSaving(true)
     // Todo el guardado en una sola operación del servidor: o queda el plan entero guardado, o no cambia nada
@@ -274,6 +311,9 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
     }
     setSaving(false)
     setChangeReason('')
+    setConfirmedPrint(null)
+    setEvaluatedPrint(null)
+    setEvaluationReason('')
     setSavedTick(t => t + 1)
     toast('Plan de dieta guardado ✓', 'ok')
     sendPush({ clientId: client.id }, 'Tu plan de dieta se ha actualizado 🥗', 'Tu nutricionista ha actualizado tu plan — échale un vistazo.')
@@ -351,6 +391,9 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
   const applyTemplate = (tpl: DietTemplateRow) => {
     const p = tpl.plan as any
+    // Una plantilla que fue válida antes (o para otro cliente) no se da por buena: se evalúa con los datos de HOY de este cliente.
+    const check = decideApply(evaluateTargets(guardProfile, client.goal, lastWeightKg, { kcal: p.kcalTarget, proteinG: p.proteinG, carbsG: p.carbsG, fatG: p.fatG }), 'plantilla')
+    if (!check.allowed) { toast(check.message!, 'warn'); return }
     setKcalTarget(String(p.kcalTarget ?? '')); setProteinG(String(p.proteinG ?? ''))
     setCarbsG(String(p.carbsG ?? '')); setFatG(String(p.fatG ?? '')); setFiberG(String(p.fiberG ?? ''))
     setAdvice(p.advice || '')
@@ -711,7 +754,7 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
         {targetsEditable ? (
           <>
         {showCalculator && (
-          <MetabolicCalculatorPanel client={client} onClose={() => setShowCalculator(false)}
+          <MetabolicCalculatorPanel client={client} reproductiveAnswer={embarazoLactancia} reproductiveCheck={reproductiveCheck} onClose={() => setShowCalculator(false)}
             onApply={(result) => {
               setKcalTarget(String(result.kcalTarget)); setProteinG(String(result.proteinG))
               setCarbsG(String(result.carbsG)); setFatG(String(result.fatG)); setFiberG(String(result.fiberG))
@@ -1270,12 +1313,30 @@ export function PlanDietaTab({ client, nutricionistaId, nutricionistaName, nutri
 
       {planId && (
         <PlanVersions planId={planId} demoMode={!!demoPlan} refreshKey={savedTick}
+          evaluateSnapshot={s => evaluateTargets(guardProfile, client.goal, lastWeightKg, { kcal: s.kcal_target, proteinG: s.protein_g, carbsG: s.carbs_g, fatG: s.fat_g })}
           onRestored={async () => { await loadPlan(); setSavedTick(t => t + 1) }} />
       )}
 
       {planId && (
         <PlanHistory clientId={client.id} nutricionistaId={nutricionistaId} nutricionistaName={nutricionistaName}
           personalMode={personalMode} demoMode={!!demoPlan} refreshKey={savedTick} />
+      )}
+
+      {parseFloat(kcalTarget) > 0 && targetsEval.signals.length > 0 && (
+        <div className="card p-5 space-y-3">
+          <div>
+            <p className="font-semibold text-sm">Revisión del objetivo del plan</p>
+            <p className="text-xs text-muted">Señales sobre las kcal y los macros que hay ahora en el formulario, con los datos actuales del cliente.</p>
+          </div>
+          <PlanSignalList signals={targetsEval.signals} showInfo />
+          {targetsEval.blocked && targetsAreNew && <p className="text-xs font-semibold text-warn" role="alert">Este objetivo no se puede guardar hasta corregirlo.</p>}
+          {!targetsEval.blocked && targetsEval.needsSpecificProfessionalEvaluation && targetsAreNew && (
+            <ProfessionalEvaluation checked={evaluatedPrint === targetsPrint} onChange={c => setEvaluatedPrint(c ? targetsPrint : null)} reason={evaluationReason} onReasonChange={setEvaluationReason} />
+          )}
+          {!targetsEval.blocked && !targetsEval.needsSpecificProfessionalEvaluation && targetsEval.needsProfessionalReview && targetsAreNew && (
+            <ProfessionalConfirmation checked={confirmedPrint === targetsPrint} onChange={c => setConfirmedPrint(c ? targetsPrint : null)} />
+          )}
+        </div>
       )}
 
       <div className="sticky bottom-0 z-10 py-3 bg-bg/90 backdrop-blur-sm border-t border-border/60 flex items-center gap-2 flex-wrap">

@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 export function NumInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
@@ -32,10 +34,11 @@ export function MacroProgressBar({ label, actual, target, unit }: { label: strin
 }
 
 export function CalcNumInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const id = useId() // la etiqueta y el campo van asociados: así tiene nombre accesible
   return (
     <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
-      <input type="number" value={value} onChange={e => onChange(e.target.value)}
+      <label htmlFor={id} className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">{label}</label>
+      <input id={id} type="number" value={value} onChange={e => onChange(e.target.value)}
         className="w-full px-2 py-1.5 bg-bg border border-border rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20" />
     </div>
   )

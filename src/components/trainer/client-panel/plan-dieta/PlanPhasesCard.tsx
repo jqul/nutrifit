@@ -112,7 +112,7 @@ export function PlanPhasesCard({ clientId, nutricionistaId, demoMode }: { client
                   </p>
                   <p className="text-xs text-muted">{formatRange(p)}{templateName(p.templateId) ? ` · Plantilla: ${templateName(p.templateId)}` : ''}</p>
                   {p.autoApply && p.appliedAt && <p className="text-xs text-ok font-medium">Plantilla aplicada al plan el {madridDay(p.appliedAt).split('-').reverse().join('/')}</p>}
-                  {p.autoApply && !p.appliedAt && !p.applyError && status !== 'ended' && <p className="text-xs text-muted">Se aplicará sola al plan el {p.startDate.split('-').reverse().join('/')}.</p>}
+                  {p.autoApply && !p.appliedAt && !p.applyError && status !== 'ended' && <p className="text-xs text-muted">Se aplicará sola al plan el {p.startDate.split('-').reverse().join('/')}. <span className="text-warn">Sin evaluación de seguridad del plan: es un aviso, no una protección.</span></p>}
                   {p.applyError && !p.appliedAt && <p className="text-xs text-warn font-medium">No se pudo aplicar la plantilla: {p.applyError}</p>}
                   {p.description && <p className="text-xs text-muted mt-0.5 italic">“{p.description}”</p>}
                 </div>
@@ -168,6 +168,7 @@ export function PlanPhasesCard({ clientId, nutricionistaId, demoMode }: { client
               <span className="text-xs">
                 <span className="font-semibold">Aplicar la plantilla sola cuando empiece la fase</span>
                 <span className="block text-muted">Sustituye el plan actual del cliente por el de la plantilla (a las 6-7 de la mañana del día de inicio). El plan anterior queda en «Versiones del plan» y puedes restaurarlo; el cambio sale en el historial como «Cambio de fase».</span>
+                <span className="block text-warn mt-1">AVISO (no es una protección): esta aplicación automática se ejecuta en el servidor y NO pasa por la evaluación de seguridad del plan (menores de edad, embarazo o lactancia, objetivos bajos, macros incompatibles). Este aviso no impide ni corrige nada: revisa tú la plantilla con los datos actuales del cliente antes de activarla y mientras la fase siga en curso.</span>
               </span>
             </label>
           )}
