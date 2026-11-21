@@ -1,3 +1,4 @@
+import type { CustomAnamnesisQuestion } from '../types'
 export interface AnamnesisQuestion {
   key: string
   label: string
@@ -21,3 +22,13 @@ export const ANAMNESIS_QUESTIONS: AnamnesisQuestion[] = [
   { key: 'dietas_previas', label: '¿Has hecho dietas antes? ¿Cuáles y cómo te fue?', type: 'textarea' },
   { key: 'habitos', label: 'Alcohol, tabaco u otros hábitos a tener en cuenta', type: 'textarea' },
 ]
+
+/**
+ * Interpreta la respuesta de la RPC `get_custom_anamnesis_questions`. Un error NUNCA se convierte en «sin preguntas»: la pantalla
+ * debe saber que no pudo leerlas (si no, la clienta rellenaría un cuestionario al que le faltan las preguntas de su profesional
+ * sin enterarse). Una respuesta que no es una lista también cuenta como fallo.
+ */
+export function leerPreguntasPersonalizadas(data: unknown, error: unknown): { ok: true; preguntas: CustomAnamnesisQuestion[] } | { ok: false } {
+  if (error || !Array.isArray(data)) return { ok: false }
+  return { ok: true, preguntas: data as CustomAnamnesisQuestion[] }
+}
