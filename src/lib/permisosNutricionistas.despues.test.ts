@@ -12,16 +12,16 @@ import { P, Q, UC, UD, UN, ADM, PER, FICHA_C, FICHA_D, PLAN_C, PLAN_D, ESQUEMA, 
 // QUÉ NO DEMUESTRA (queda para Supabase real): PostgREST ni los JWT reales (aquí `sub` se fija a mano: la autenticidad del JWT es
 // responsabilidad de Supabase Auth y de PostgREST), el registro
 // público, ni que producción siga igual que la réplica leída el 2026-11-20.
-const sql = import.meta.glob('../../supabase/migrations/0074_*.sql', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+const sql = import.meta.glob('../../supabase/migrations/00{74,76}_*.sql', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 const migracion = (n: string) => {
   const clave = Object.keys(sql).find(k => k.includes(`/${n}_`))
   if (!clave) throw new Error(`falta la migración ${n}`)
   return sql[clave]
 }
 
-let db1: PGlite // réplica + 0074
+let db1: PGlite // réplica + 0074 + 0076 (corrección del caso NULL de la RPC; mismo orden que en producción)
 beforeAll(async () => {
-  db1 = new PGlite(); await db1.exec(ESQUEMA); await db1.exec(migracion('0074'))
+  db1 = new PGlite(); await db1.exec(ESQUEMA); await db1.exec(migracion('0074')); await db1.exec(migracion('0076'))
 }, 90_000)
 afterAll(async () => { await db1.close() })
 const { aislada, como, intentar, filas, cuenta } = entorno(() => db1)
