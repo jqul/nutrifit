@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
-import { ANAMNESIS_QUESTIONS } from '../../lib/anamnesis'
+import { ANAMNESIS_QUESTIONS, leerPreguntasPersonalizadas } from '../../lib/anamnesis'
 import { CustomAnamnesisQuestion } from '../../types'
 import { DEMO_ANAMNESIS, DEMO_NUTRICIONISTA_PROFILE } from '../../lib/demo-data'
 import { toast } from '../shared/Toast'
@@ -21,17 +21,26 @@ export function AnamnesisForm({ clientId, nutricionistaId, demoMode, personalMod
   const [open, setOpen] = useState(!!openByDefault)
   const [loading, setLoading] = useState(!demoMode)
   const [saving, setSaving] = useState(false)
+  // Si no se pueden leer las preguntas del profesional NO se muestra un cuestionario sin ellas: se avisa y se deja reintentar.
+  const [preguntasError, setPreguntasError] = useState(false)
+
+  // Solo la columna de preguntas, por RPC: la clienta no necesita (ni debe poder leer) el resto de la fila del profesional.
+  const cargarPreguntas = useCallback(async () => {
+    const { data, error } = await supabase.rpc('get_custom_anamnesis_questions', { p_nutricionista_id: nutricionistaId })
+    const lectura = leerPreguntasPersonalizadas(data, error)
+    if (lectura.ok) { setCustomQuestions(lectura.preguntas); setPreguntasError(false) }
+    else { console.error(error); setPreguntasError(true) }
+  }, [nutricionistaId])
 
   const load = useCallback(async () => {
     if (demoMode) return
-    const [{ data }, { data: nutri }] = await Promise.all([
+    const [{ data }] = await Promise.all([
       supabase.from('anamnesis').select('*').eq('client_id', clientId).maybeSingle(),
-      supabase.from('nutricionistas').select('custom_anamnesis_questions').eq('uid', nutricionistaId).maybeSingle(),
+      cargarPreguntas(),
     ])
     if (data) { setAnswers(data.answers || {}); setCompletedAt(data.completed_at) }
-    setCustomQuestions(nutri?.custom_anamnesis_questions || [])
     setLoading(false)
-  }, [clientId, nutricionistaId, demoMode])
+  }, [clientId, demoMode, cargarPreguntas])
 
   useEffect(() => { load() }, [load])
 
@@ -39,6 +48,7 @@ export function AnamnesisForm({ clientId, nutricionistaId, demoMode, personalMod
     const missing = customQuestions.find(q => q.required && !answers[q.id]?.trim())
     if (missing) { toast(`Falta responder: "${missing.label}"`, 'warn'); return }
     if (demoMode) { toast('Modo demo: los cambios no se guardan', 'ok'); setOpen(false); return }
+    if (preguntasError) { toast('No se han podido cargar las preguntas de tu nutricionista. Reintenta.', 'warn'); return }
     setSaving(true)
     const { error } = await supabase.from('anamnesis').upsert({
       client_id: clientId, answers, completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
@@ -70,6 +80,12 @@ export function AnamnesisForm({ clientId, nutricionistaId, demoMode, personalMod
 
       {open && (
         <div className="space-y-3 pt-2 border-t border-border">
+          {preguntasError && (
+            <div role="alert" className="p-3 rounded-xl bg-warn/10 text-xs text-warn flex items-center justify-between gap-3">
+              <span>No se han podido cargar las preguntas de tu nutricionista.</span>
+              <button onClick={cargarPreguntas} className="font-bold underline flex-shrink-0">Reintentar</button>
+            </div>
+          )}
           {ANAMNESIS_QUESTIONS.map(q => (
             <div key={q.key}>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{q.label}</label>
@@ -101,7 +117,7 @@ export function AnamnesisForm({ clientId, nutricionistaId, demoMode, personalMod
               ))}
             </div>
           )}
-          <button onClick={handleSave} disabled={saving}
+          <button onClick={handleSave} disabled={saving || preguntasError}
             className="w-full py-3 bg-ink text-white rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5">
             <Check className="w-4 h-4" /> {saving ? 'Guardando...' : 'Guardar respuestas'}
           </button>
