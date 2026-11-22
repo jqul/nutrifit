@@ -3,16 +3,18 @@ import { Eye, EyeOff, CheckCircle2, ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 interface Props {
-  token: string
   clientName: string
   nutricionistaName: string
   initialStep?: 'register' | 'login'
+  /** false cuando se llega por el enlace de una ficha YA vinculada (solo se puede entrar, no crear cuenta: crear cuenta exige una invitación). */
+  allowRegister?: boolean
+  /** Se llama cuando hay una SESIÓN. Crear la cuenta y vincularla a la ficha son dos pasos separados: este componente solo hace el primero. */
   onComplete: () => void
 }
 
-type Step = 'register' | 'login' | 'forgot' | 'success'
+type Step = 'register' | 'login' | 'forgot' | 'check_email'
 
-export function ClientRegister({ token, clientName, nutricionistaName, initialStep = 'register', onComplete }: Props) {
+export function ClientRegister({ clientName, nutricionistaName, initialStep = 'register', allowRegister = true, onComplete }: Props) {
   const [step, setStep] = useState<Step>(initialStep)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -40,7 +42,8 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
-      options: { data: { clientName, token } },
+      // El token de la invitación NO se guarda en los metadatos de la cuenta. Tras confirmar el email, Auth devuelve a esta misma página.
+      options: { data: { clientName }, emailRedirectTo: window.location.href },
     })
 
     if (authError) {
@@ -54,19 +57,9 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
       return
     }
 
-    if (authData.user) {
-      const { error: claimError } = await supabase.rpc('claim_client_by_token', { p_token: token })
-      if (claimError) {
-        setError('Error al vincular cuenta. Contacta con tu nutricionista.')
-        setLoading(false)
-        return
-      }
-      setStep('success')
-      setLoading(false)
-      setTimeout(onComplete, 1200)
-      return
-    }
     setLoading(false)
+    if (authData.session) { onComplete(); return }   // hay sesión: ahora toca vincular (lo hace quien nos llama, y solo da por bueno el resultado de la base)
+    if (authData.user) setStep('check_email')        // Auth exige confirmar el email: sin sesión no se puede vincular todavía
   }
 
   const handleLogin = async () => {
@@ -91,14 +84,13 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
     setForgotSent(true)
   }
 
-  if (step === 'success') {
+  if (step === 'check_email') {
     return (
       <div className="min-h-[100dvh] bg-bg flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 bg-ok/10 rounded-full flex items-center justify-center mb-5">
-          <CheckCircle2 className="w-10 h-10 text-ok" />
-        </div>
-        <h2 className="text-2xl font-serif font-bold mb-2">¡Todo listo, {firstName}!</h2>
-        <p className="text-muted text-sm">Tu cuenta está creada. Estamos abriendo tu panel...</p>
+        <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-5"><CheckCircle2 className="w-8 h-8 text-accent" /></div>
+        <h2 className="text-2xl font-serif font-bold mb-2">Revisa tu email</h2>
+        <p className="text-muted text-sm max-w-xs leading-relaxed">Te hemos enviado un mensaje a <strong>{email.trim().toLowerCase()}</strong>. Pulsa el enlace para confirmar tu dirección; después volverás aquí y se vinculará tu cuenta.</p>
+        <p className="text-xs text-muted mt-4 max-w-xs">Tu cuenta todavía NO está vinculada a tu ficha: eso solo ocurre cuando el email está confirmado.</p>
       </div>
     )
   }
@@ -226,7 +218,7 @@ export function ClientRegister({ token, clientName, nutricionistaName, initialSt
                 Inicia sesión
               </button>
             </p>
-          ) : (
+          ) : allowRegister && (
             <p className="text-sm text-muted">
               ¿Primera vez?{' '}
               <button onClick={() => { setStep('register'); setError(''); setPassword('') }} className="font-semibold text-accent hover:underline">

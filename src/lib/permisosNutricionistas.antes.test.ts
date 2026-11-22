@@ -110,10 +110,12 @@ describe('H-B1: escalada de privilegios sobre nutricionistas.role / approved', (
     const ve = await como('authenticated', UN, () => intentar(`select id from public.clientes`))
     expect(ve.ok && ve.rows.length).toBe(3)
   }))
+  // REVISADO (2026-11-22): contra el estado final PASA. Contrapartida normal: permisosNutricionistas.despues.test.ts «DESEADO (pasa a normal): un profesional no puede cambiar su propio role ni approved». Se conserva como documento del defecto original.
   it.fails('DESEADO: un profesional no puede cambiar su propio role ni approved (hoy sí puede, por eso esta prueba falla a propósito)', aislada(async () => {
     await como('authenticated', P, () => intentar(`update public.nutricionistas set role = 'super_admin', approved = true where uid = '${P}'`))
     expect(await filas(`select role, approved from public.nutricionistas where uid = '${P}'`)).toEqual([{ role: 'trainer', approved: false }])
   }))
+  // REVISADO (2026-11-22): contra el estado final PASA. Contrapartida normal: permisosNutricionistas.despues.test.ts «DESEADO (pasa a normal): tras intentar ascender…».
   it.fails('DESEADO: ningún usuario sin privilegios de administración puede acceder a los datos de otro profesional tras intentar ascender (hoy sí)', aislada(async () => {
     await como('authenticated', P, () => intentar(`update public.nutricionistas set role = 'super_admin' where uid = '${P}'`))
     const r = await como('authenticated', P, () => intentar(`select id from public.clientes where nutricionista_id = '${Q}'`))
@@ -146,6 +148,7 @@ describe('H-B2: borrado en cascada de la cuenta del profesional por una clienta 
     const r = await como('authenticated', P, () => intentar(`delete from public.nutricionistas where uid = '${P}' returning uid`))
     expect(r.ok && r.rows.length).toBe(1)
   }))
+  // REVISADO (2026-11-22): contra el estado final PASA. Contrapartida normal: permisosNutricionistas.despues.test.ts «DESEADO (pasa a normal): una clienta vinculada no puede borrar la fila de su profesional…».
   it.fails('DESEADO: una clienta vinculada no puede borrar la fila de su profesional (hoy sí, por eso esta prueba falla a propósito)', aislada(async () => {
     const r = await como('authenticated', UC, () => intentar(`delete from public.nutricionistas where uid = '${P}' returning uid`))
     expect(r.ok ? r.rows.length : 0).toBe(0)
@@ -199,6 +202,7 @@ describe('Anamnesis y estado reproductivo: quién puede escribirlo y con qué ga
     const columnas = (await filas(`select column_name from information_schema.columns where table_schema = 'public' and table_name = 'anamnesis' order by 1`)).map(c => c.column_name)
     expect(columnas).toEqual(['answers', 'client_id', 'completed_at', 'id', 'updated_at'])
   }))
+  // REVISADO (2026-11-22): contra el estado final (0077+0078) PASA. Contrapartida normal: vinculacionClientas.test.ts «BYPASS 5 CERRADO (DESEADO del informe)». Antes de 0078 sigue fallando a propósito.
   it.fails('DESEADO (hallazgo aparte, NO lo cierra 0074): el profesional no puede cambiar el auth_user_id de la ficha de su clienta', aislada(async () => {
     await como('authenticated', P, () => intentar(`update public.clientes set auth_user_id = '${P}' where id = '${FICHA_C}'`))
     expect(await filas(`select auth_user_id from public.clientes where id = '${FICHA_C}'`)).toEqual([{ auth_user_id: UC }])

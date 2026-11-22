@@ -31,6 +31,7 @@ import { View, NAV_GROUPS, groupOfView, viewForGroup } from '../../lib/dashboard
 import { Plus, LogOut, Search, Upload, ShieldCheck, AlertTriangle, CheckCircle2, CalendarClock, Tag, ChevronDown, ChevronRight } from 'lucide-react'
 import { bajaReasonLabel } from '../../lib/clientBaja'
 import { toast } from '../shared/Toast'
+import { createInvitationUrl } from '../../lib/clientLinkApi'
 import { useClientsWithPlan } from '../../hooks/useClientsWithPlan'
 import { onboardingSteps, OnboardingStepId } from '../../lib/onboarding'
 
@@ -150,10 +151,13 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
     if (ok) { setModalOpen(false); setForm(EMPTY_FORM) }
   }
 
-  const copyLink = (token: string) => {
-    const url = `${window.location.origin}/?c=${token}`
-    navigator.clipboard.writeText(url)
-    toast('Enlace copiado ✓', 'ok')
+  // El enlace antiguo (?c=) ya no sirve para crear una cuenta: se genera uno de acceso (24 h, un solo uso) y se copia.
+  const copyLink = async (c: { id: string; authUserId: string | null }) => {
+    if (c.authUserId) { toast('Esta clienta ya tiene su cuenta vinculada. Para darle acceso de nuevo, desvincúlala desde su ficha.', 'warn'); return }
+    if (demoClients) { toast('Modo demo: no se genera ningún enlace', 'ok'); return }
+    const r = await createInvitationUrl(c.id)
+    if (!r.ok) { toast('No se ha podido generar el enlace: ' + r.message, 'warn'); return }
+    try { await navigator.clipboard.writeText(r.url); toast('Enlace copiado ✓ (vale 24 h y se usa una sola vez)', 'ok') } catch { toast('No se pudo copiar el enlace al portapapeles', 'warn') }
   }
 
   return (
@@ -319,7 +323,7 @@ export function NutricionistaDashboard({ userProfile, onLogout, onSelectClient, 
               <div className="card divide-y divide-border/60 overflow-hidden">
                 {sorted.map(c => (
                   <ClientListRow key={c.id} client={c} isTopStreak={topStreak > 0 && (c.streak || 0) === topStreak}
-                    onOpen={() => onSelectClient(c)} onCopyLink={() => copyLink(c.token)} />
+                    onOpen={() => onSelectClient(c)} onCopyLink={() => copyLink(c)} />
                 ))}
               </div>
             )}

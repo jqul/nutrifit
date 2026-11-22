@@ -41,7 +41,7 @@ export function ClientListRow({ client: c, isTopStreak, onOpen, onCopyLink }: {
           </span>
         </div>
         <button onClick={e => { e.stopPropagation(); onCopyLink() }}
-          className="md:hidden p-2 -mt-1 rounded-lg text-muted hover:text-ink flex-shrink-0" title="Copiar enlace del cliente" aria-label="Copiar enlace del cliente">
+          className="md:hidden p-2 -mt-1 rounded-lg text-muted hover:text-ink flex-shrink-0" title="Copiar enlace de acceso (24 h)" aria-label="Copiar enlace del cliente">
           <Copy className="w-4 h-4" />
         </button>
       </div>
@@ -77,7 +77,7 @@ export function ClientListRow({ client: c, isTopStreak, onOpen, onCopyLink }: {
 
       <div className="hidden md:flex items-center gap-1 flex-shrink-0">
         <button onClick={e => { e.stopPropagation(); onCopyLink() }}
-          className="p-2 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors" title="Copiar enlace del cliente" aria-label="Copiar enlace del cliente">
+          className="p-2 rounded-lg hover:bg-bg-alt text-muted hover:text-ink transition-colors" title="Copiar enlace de acceso (24 h)" aria-label="Copiar enlace del cliente">
           <Copy className="w-4 h-4" />
         </button>
         <span className="flex items-center gap-0.5 text-xs font-bold text-accent pl-1">Ver <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" /></span>

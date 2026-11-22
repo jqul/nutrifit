@@ -18,17 +18,20 @@ import { logClientAccess } from '../../../lib/accessLog'
 import { AccessLogList } from '../AccessLogList'
 import { DEMO_WEIGHTS, DEMO_ANAMNESIS, DEMO_INVOICES } from '../../../lib/demo-data'
 import { DarDeBajaCard } from './BajaCard'
+import { ClientLinkCard } from './ClientLinkCard'
+import { consentStatus } from '../../../lib/clientLink'
 import { BajaReason } from '../../../lib/clientBaja'
-import { Copy, RefreshCw, Download, Trash2, Tag, X, AlertTriangle, Ruler, ShieldCheck } from 'lucide-react'
+import { Download, Trash2, Tag, X, AlertTriangle, Ruler, ShieldCheck } from 'lucide-react'
 
 const BMI_CATEGORY_CLASS: Record<string, string> = {
   'bajo peso': 'text-notice', normal: 'text-ok', sobrepeso: 'text-notice', obesidad: 'text-warn',
 }
 
-export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDismiss, demoMode, nutricionistaName, customQuestions, hasConsentDocument, personalMode }: {
+export function PerfilTab({ client, onUpdate, onLinkChanged, onDelete, onDismiss, demoMode, nutricionistaName, customQuestions, hasConsentDocument, personalMode }: {
   client: ClientData
   onUpdate: (updates: Partial<ClientData>) => Promise<boolean>
-  onRegenerateToken: () => Promise<string | null>
+  /** La ficha cambió de estado de vinculación (se aprobó o desvinculó una cuenta). */
+  onLinkChanged: (patch: Partial<ClientData>) => void
   onDelete: () => Promise<void>
   /** Dar de baja al cliente (no en modo personal). */
   onDismiss?: (reason: BajaReason | null, note: string) => Promise<boolean>
@@ -152,11 +155,6 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDis
   }
   const removeTag = (t: string) => setForm({ ...form, tags: form.tags.filter(x => x !== t) })
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/?c=${client.token}`)
-    toast('Enlace copiado ✓', 'ok')
-  }
-
   if (!editing) return (
     <div className="space-y-6 max-w-lg">
       {client.foodDislikes && (
@@ -189,14 +187,20 @@ export function PerfilTab({ client, onUpdate, onRegenerateToken, onDelete, onDis
       </div>
       <div className="flex gap-2 flex-wrap">
         <Button variant="outline" onClick={() => { setForm(client); setEditing(true) }}>Editar</Button>
-        <Button variant="outline" onClick={copyLink}><Copy className="w-3.5 h-3.5" /> Copiar enlace</Button>
-        <Button variant="outline" onClick={onRegenerateToken}><RefreshCw className="w-3.5 h-3.5" /> Regenerar enlace</Button>
       </div>
+
+      {/* El acceso de la clienta (enlace de 24 h, aprobación, desvinculación) no aplica al modo personal: la cuenta ES la ficha. */}
+      {!personalMode && <ClientLinkCard client={client} demoMode={demoMode} onChanged={onLinkChanged} />}
 
       {/* Solo se muestra si has subido un documento de consentimiento en
           Ajustes — para los que no usan esta función, no añade ruido. */}
       {hasConsentDocument && (
-        client.consentAcceptedAt ? (
+        consentStatus(client) === 'cuestionado' ? (
+          <p role="alert" className="text-xs text-warn flex items-start gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+            <span>Consentimiento CUESTIONADO: lo firmó {client.consentSignedName || 'una cuenta'} el {new Date(client.consentAcceptedAt!).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })} mientras la cuenta de esta ficha estaba bajo sospecha de suplantación. Se conserva el registro, pero no cuenta como consentimiento de la clienta: pídele que lo firme de nuevo.</span>
+          </p>
+        ) : client.consentAcceptedAt ? (
           <p className="text-xs text-ok flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
             Consentimiento firmado el {new Date(client.consentAcceptedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}

@@ -53,6 +53,7 @@ export function clientFromRow(row: ClienteRow): ClientData {
     notesUpdatedAt: row.notes_updated_at ? new Date(row.notes_updated_at).getTime() : null,
     consentAcceptedAt: row.consent_accepted_at,
     consentSignedName: row.consent_signed_name,
+    consentInvalidatedAt: row.consent_invalidated_at ?? null,
     monthlyPrice: row.monthly_price,
     goalWeightKg: row.goal_weight_kg,
     customMessages: row.custom_messages || {},
