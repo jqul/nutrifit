@@ -24,7 +24,8 @@ export const ESQUEMA = `
   -- El usuario de conexión de PostgREST (authenticator) NO es superusuario: solo puede adoptar los roles de los que es miembro.
   create role authenticator noinherit nologin; grant anon, authenticated, service_role to authenticator;
   create schema auth; create schema private;
-  create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb);
+  create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb, email_confirmed_at timestamptz, confirmation_sent_at timestamptz,
+    is_anonymous boolean not null default false, created_at timestamptz not null default now());
   -- auth.uid() de Supabase: lee la reclamación «sub» del JWT.
   create function auth.uid() returns uuid language sql stable as $$
     select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''), (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'))::uuid $$;
@@ -133,6 +134,8 @@ export const ESQUEMA = `
   alter schema auth owner to supabase_auth_admin;
   alter table auth.users owner to supabase_auth_admin;
   alter default privileges for role postgres in schema public grant execute on functions to anon, authenticated, service_role;
+  -- Y las tablas NUEVAS de postgres en public nacen con todos los privilegios para anon, authenticated y service_role (ALTER DEFAULT PRIVILEGES de Supabase).
+  alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, service_role;
 `
 
 export const SEMILLA = `
@@ -185,3 +188,44 @@ export function entorno(getDb: () => PGlite) {
   const cuenta = async (tabla: string, donde = 'true') => Number((await filas(`select count(*)::int n from public.${tabla} where ${donde}`))[0].n)
   return { aislada, como, intentar, filas, cuenta }
 }
+
+/** Partes de producción que usan las pruebas de vinculación de clientas (leídas el 2026-11-21): columnas de consentimiento, pesos, access_log y las RPC antiguas por token. */
+export const EXTENSION_CLIENTE = `
+  alter table public.clientes add column consent_accepted_at timestamptz, add column consent_signed_name text, add column surname text not null default '';
+  create table public.weight_logs (id uuid primary key default gen_random_uuid(), client_id uuid not null references public.clientes(id) on delete cascade,
+    weight_kg numeric not null, logged_at timestamptz not null default now());
+  create table public.access_log (id bigint generated always as identity primary key, nutricionista_id uuid, actor_id uuid, actor_name text,
+    client_id uuid, action text, created_at timestamptz not null default now());
+  create table public.push_subscriptions (id uuid primary key default gen_random_uuid(), nutricionista_id uuid references public.nutricionistas(uid) on delete cascade,
+    client_id uuid references public.clientes(id) on delete cascade, endpoint text not null, p256dh text not null, auth text not null);
+  alter table public.weight_logs enable row level security;
+  alter table public.access_log enable row level security;
+  alter table public.push_subscriptions enable row level security;
+  create policy client_manages_weight_logs on public.weight_logs for all using (private.is_owner_client(client_id)) with check (private.is_owner_client(client_id));
+  create policy nutricionista_reads_weight_logs on public.weight_logs for select using (private.is_nutricionista_of_client(client_id) or private.is_super_admin());
+  create policy nutricionista_reads_access_log on public.access_log for select using ((nutricionista_id = (select auth.uid())) or private.is_super_admin());
+  create policy client_manages_own_push_subscriptions on public.push_subscriptions for all using (client_id is not null and private.is_owner_client(client_id)) with check (client_id is not null and private.is_owner_client(client_id));
+
+  create function public.get_client_auth_status_by_token(p_token text)
+    returns table(id uuid, name text, surname text, auth_user_id uuid, consent_accepted_at timestamptz) language sql stable security definer set search_path to 'public' as $$
+    select id, name, surname, auth_user_id, consent_accepted_at from clientes where token = p_token limit 1; $$;
+  create function public.accept_consent(p_token text, p_signed_name text) returns void language plpgsql security definer set search_path to 'public' as $$
+    begin update clientes set consent_accepted_at = now(), consent_signed_name = p_signed_name where token = p_token and auth_user_id = auth.uid(); end; $$;
+  create function public.get_my_client_token() returns text language sql stable security definer set search_path to 'public' as $$
+    select c.token from public.clientes c where c.auth_user_id = auth.uid() order by c.id desc limit 1; $$;
+  revoke all on function public.get_my_client_token() from public, anon;
+  create function public.log_client_access(p_client_id uuid, p_action text) returns void language plpgsql security definer set search_path to 'public' as $$
+    declare v_owner uuid; v_name text;
+    begin
+      if p_action not in ('ficha', 'exportacion', 'informe') then raise exception 'Acción no válida'; end if;
+      if auth.uid() is null then raise exception 'No autorizado'; end if;
+      select nutricionista_id into v_owner from public.clientes where id = p_client_id;
+      if v_owner is null or not (private.is_nutricionista_of_client(p_client_id) or private.is_super_admin()) then raise exception 'No autorizado'; end if;
+      select coalesce(display_name, '') into v_name from public.nutricionistas where uid = auth.uid();
+      insert into public.access_log (nutricionista_id, actor_id, actor_name, client_id, action) values (v_owner, auth.uid(), coalesce(v_name, ''), p_client_id, p_action);
+    end; $$;
+  create function public.get_nutricionista_branding_by_token(p_token text)
+    returns table(display_name text, logo_url text, accent_color text, contact_phone text, consent_document_url text, app_name text) language sql stable security definer set search_path to 'public' as $$
+    select n.display_name, n.logo_url, n.accent_color, n.contact_phone, n.consent_document_url, n.app_name from clientes c join nutricionistas n on n.uid = c.nutricionista_id where c.token = p_token limit 1; $$;
+  grant all on public.weight_logs, public.access_log, public.push_subscriptions to anon, authenticated, service_role;
+`

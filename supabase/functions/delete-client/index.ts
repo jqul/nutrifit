@@ -17,6 +17,7 @@
 // (si se borrase antes la ficha, ya no habría forma de saber qué ficheros eran).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "jsr:@supabase/supabase-js@2"
+import { decideAccountDeletion, linkAttested } from "./accountDeletion.ts"
 import { CLIENT_FILE_BUCKETS, chunk, isUuid, listFilesRecursive, onlyUnderFolder, storagePathFromValue, uniquePaths } from "./storagePaths.ts"
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? ""
@@ -79,6 +80,17 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Las fichas del modo personal no se eliminan desde aquí" }, 400)
     }
 
+    // Hechos para decidir más tarde si se borra la CUENTA. Se leen ahora: al borrar la ficha, el registro de vinculaciones anota «ficha eliminada».
+    let accountFacts = { authUserId: client.auth_user_id as string | null, isNutricionista: false, otherLinkedFichas: 0, linkAttestedByLog: false }
+    if (client.auth_user_id) {
+      const [{ data: isNutri }, { count: others }, { data: lastEvents }] = await Promise.all([
+        admin.from("nutricionistas").select("uid").eq("uid", client.auth_user_id).maybeSingle(),
+        admin.from("clientes").select("id", { count: "exact", head: true }).eq("auth_user_id", client.auth_user_id).neq("id", clientId),
+        admin.from("client_link_events").select("event, new_uid").eq("client_id", clientId).in("event", ["linked", "unlinked", "reassigned"]).order("id", { ascending: false }).limit(1),
+      ])
+      accountFacts = { authUserId: client.auth_user_id, isNutricionista: !!isNutri, otherLinkedFichas: others ?? 0, linkAttestedByLog: linkAttested(lastEvents?.[0], client.auth_user_id) }
+    }
+
     // ── 1) Ficheros: todo lo que cuelga de la carpeta del cliente + las rutas que guardan sus filas ──
     const [{ data: photoRows }, { data: mealRows }, { data: labRows }] = await Promise.all([
       admin.from("progress_photos").select("front_url, side_url, back_url").eq("client_id", clientId),
@@ -104,20 +116,19 @@ Deno.serve(async (req: Request) => {
     const { error: deleteErr } = await admin.from("clientes").delete().eq("id", clientId)
     if (deleteErr) throw new Error(`No se pudo borrar la ficha: ${deleteErr.message}`)
 
-    // ── 3) Su cuenta de acceso, salvo que sea también la de un nutricionista ──
+    // ── 3) Su cuenta de acceso, solo si es suya y de nadie más (ver decideAccountDeletion) ──
     // Si solo falla este último paso, lo ya borrado (ficheros y ficha) sigue borrado: se avisa en vez de dar error.
     let accountDeleted = false
     let accountError: string | undefined
-    if (client.auth_user_id) {
-      const { data: isNutri } = await admin.from("nutricionistas").select("uid").eq("uid", client.auth_user_id).maybeSingle()
-      if (!isNutri) {
-        const { error } = await admin.auth.admin.deleteUser(client.auth_user_id)
-        if (error) accountError = error.message
-        else accountDeleted = true
-      }
+    // La cuenta solo se borra si cumple TODO lo de decideAccountDeletion (evita borrar la cuenta de un tercero por una reasignación maliciosa).
+    const decision = decideAccountDeletion(accountFacts)
+    if (accountFacts.authUserId && decision.delete) {
+      const { error } = await admin.auth.admin.deleteUser(accountFacts.authUserId)
+      if (error) accountError = error.message
+      else accountDeleted = true
     }
 
-    return json({ ok: true, filesRemoved, accountDeleted, accountError })
+    return json({ ok: true, filesRemoved, accountDeleted, accountError, accountKept: accountFacts.authUserId && !decision.delete ? decision.reason : undefined })
   } catch (err) {
     return json({ error: String(err instanceof Error ? err.message : err) }, 500)
   }

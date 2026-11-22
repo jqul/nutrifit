@@ -5,7 +5,7 @@ import { isStandalone } from './standalone'
 import { LegalSlug, isLegalSlug } from '../legal/documents'
 import { decideForNonTrainerSession, isValidClientToken, readRememberedClientToken, rememberClientToken } from './clientApp'
 
-export type AppView = 'loading' | 'auth' | 'trainer' | 'client-token' | 'pending-approval' | 'reset-password' | 'demo' | 'legal'
+export type AppView = 'loading' | 'auth' | 'trainer' | 'client-token' | 'client-invitation' | 'pending-approval' | 'reset-password' | 'demo' | 'legal'
 
 export interface PendingUser {
   uid: string
@@ -18,6 +18,8 @@ export function useAuthBootstrap() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [pendingUser, setPendingUser] = useState<PendingUser | null>(null)
   const [clientToken, setClientToken] = useState<string | null>(null)
+  // Enlace de acceso de una clienta (/?i=<invitación>): credencial de 24 h y un solo uso; NO se recuerda en el dispositivo.
+  const [invitationToken, setInvitationToken] = useState<string | null>(null)
   const [legalSlug, setLegalSlug] = useState<LegalSlug>('privacidad')
   // true si la app se ha abierto SIN enlace y se ha ido a la del cliente por el token recordado en este dispositivo.
   const [clientFromStorage, setClientFromStorage] = useState(false)
@@ -89,6 +91,8 @@ export function useAuthBootstrap() {
     // Textos legales (/?legal=privacidad…): públicos, no necesitan sesión y no tocan la que haya.
     const legal = params.get('legal')
     if (isLegalSlug(legal)) { setLegalSlug(legal); setView('legal'); return }
+    const invitation = params.get('i')
+    if (invitation && isValidClientToken(invitation)) { setInvitationToken(invitation); setView('client-invitation'); return }
     const token = params.get('c')
     if (token) {
       // El enlace del cliente: se recuerda para que el icono de la pantalla de inicio vuelva a abrirlo.
@@ -125,5 +129,5 @@ export function useAuthBootstrap() {
     return () => subscription.unsubscribe()
   }, [])
 
-  return { view, userProfile, pendingUser, clientToken, clientFromStorage, legalSlug, logout, setView, setUserProfile }
+  return { view, userProfile, pendingUser, clientToken, invitationToken, clientFromStorage, legalSlug, logout, setView, setUserProfile }
 }

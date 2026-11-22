@@ -44,7 +44,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
   const [previewing, setPreviewing] = useState(false)
   // Abrir la ficha queda apuntado en el registro de accesos (una vez cada 30 minutos por persona; ver 0071_access_log.sql).
   useEffect(() => { if (!demoMode) logClientAccess(client.id, 'ficha') }, [client.id, demoMode])
-  const { updateClient, regenerateToken, deleteClient, dismissClient, reactivateClient, markClientReviewed } = useNutricionistaClients({
+  const { updateClient, deleteClient, dismissClient, reactivateClient, markClientReviewed } = useNutricionistaClients({
     nutricionistaId: userProfile.uid, demoClients: demoMode ? [current] : undefined,
   })
   // Abrir Seguimiento ya NO marca la ficha como revisada (un clic equivocado no debe quitar el aviso): se hace con el
@@ -75,11 +75,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
     return ok
   }
 
-  const handleRegenerateToken = async () => {
-    const token = await regenerateToken(current.id)
-    if (token) setCurrent({ ...current, token })
-    return token
-  }
+  const handleLinkChanged = (patch: Partial<typeof current>) => setCurrent(prev => ({ ...prev, ...patch }))
 
   const handleDismiss = async (reason: BajaReason | null, note: string) => {
     const ok = await dismissClient(current.id, reason, note)
@@ -140,7 +136,7 @@ export function ClientPanel({ client, userProfile, onClose, demoMode, initialTab
                 pestaña (ej. a Notas y volver) borra cualquier edición del plan
                 de dieta que no se hubiera guardado todavía. */}
             <div className={tab === 'perfil' ? '' : 'hidden'}>
-              <PerfilTab client={current} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
+              <PerfilTab client={current} onUpdate={handleUpdate} onLinkChanged={handleLinkChanged}
                 onDelete={handleDelete} onDismiss={handleDismiss} demoMode={demoMode} nutricionistaName={userProfile.displayName}
                 customQuestions={userProfile.customAnamnesisQuestions} hasConsentDocument={!!userProfile.consentDocumentUrl} />
             </div>

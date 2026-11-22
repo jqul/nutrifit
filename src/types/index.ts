@@ -57,6 +57,8 @@ export interface ClientData {
   notesUpdatedAt?: number | null
   consentAcceptedAt: string | null
   consentSignedName: string | null
+  /** Marca de «consentimiento cuestionado por suplantación» (0077): el consentimiento solo vale si se firmó DESPUÉS de esta fecha. El original se conserva. */
+  consentInvalidatedAt?: string | null
   monthlyPrice: number | null
   goalWeightKg: number | null
   customMessages: Record<string, string>

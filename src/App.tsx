@@ -13,6 +13,7 @@ import { Mail, Clock } from 'lucide-react'
 
 const NutricionistaDashboard = lazy(() => import('./components/trainer/NutricionistaDashboard').then(m => ({ default: m.NutricionistaDashboard })))
 const ClientPanel = lazy(() => import('./components/trainer/ClientPanel').then(m => ({ default: m.ClientPanel })))
+const ClientInvitation = lazy(() => import('./components/client/ClientInvitation').then(m => ({ default: m.ClientInvitation })))
 const ClientView = lazy(() => import('./components/client/ClientView').then(m => ({ default: m.ClientView })))
 const SuperAdminPanel = lazy(() => import('./components/trainer/SuperAdminPanel').then(m => ({ default: m.SuperAdminPanel })))
 const LegalPage = lazy(() => import('./components/shared/LegalPage').then(m => ({ default: m.LegalPage })))
@@ -96,7 +97,7 @@ function DemoView({ selectedClient, initialTab, openClient, closeClient, onRegis
 }
 
 export default function App() {
-  const { view, userProfile, pendingUser, clientToken, clientFromStorage, legalSlug, logout, setView, setUserProfile } = useAuthBootstrap()
+  const { view, userProfile, pendingUser, clientToken, invitationToken, clientFromStorage, legalSlug, logout, setView, setUserProfile } = useAuthBootstrap()
   const [selectedClient, setSelectedClient] = useState<ClientData | null>(null)
   // Pestaña con la que abrir la ficha cuando se entra desde un aviso del Centro de control.
   const [initialClientTab, setInitialClientTab] = useState<ClientPanelTab | undefined>(undefined)
@@ -113,6 +114,8 @@ export default function App() {
       {view === 'client-token' && clientToken && (
         <ClientView token={clientToken} fromStorage={clientFromStorage} />
       )}
+
+      {view === 'client-invitation' && invitationToken && <ClientInvitation token={invitationToken} />}
 
       {view === 'legal' && <LegalPage slug={legalSlug} />}
 

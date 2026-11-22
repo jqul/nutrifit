@@ -13,7 +13,7 @@ import {
   DEMO_WEIGHTS, DEMO_CHECKINS, DEMO_PHOTOS, DEMO_MEAL_LOGS, DEMO_BLOOD_MARKERS, DEMO_CLINICAL_NOTES, DEMO_CYCLES, DEMO_RECIPES,
 } from '../../lib/demo-data'
 
-type AuthState = 'loading' | 'needs_register' | 'needs_login' | 'needs_consent' | 'authenticated'
+type AuthState = 'loading' | 'needs_invitation' | 'needs_login' | 'needs_consent' | 'authenticated'
 
 // Los enlaces "Copiar enlace del cliente" del panel de demo generan tokens
 // con este prefijo (ver DEMO_CLIENTS) — se resuelven contra los datos de
@@ -32,8 +32,8 @@ export function ClientView({ token, fromStorage = false }: {
   const [error, setError] = useState(demoClient === undefined && token.startsWith(DEMO_TOKEN_PREFIX) ? 'Enlace no válido o expirado.' : '')
   // Datos mínimos del cliente ANTES de autenticarse (nombre para el
   // saludo + los 3 flags que deciden registro/login/consentimiento) —
-  // vienen de get_client_auth_status_by_token, un RPC público deliberadamente
-  // estrecho. La ficha COMPLETA (client, más abajo) solo se carga una vez
+  // vienen de get_client_link_state, un RPC público deliberadamente
+  // estrecho (dice si la ficha está reclamada y si quien llama es su titular, sin revelar ningún uid). La ficha COMPLETA (client, más abajo) solo se carga una vez
   // autenticado de verdad, con una consulta normal protegida por RLS.
   const [authStatus, setAuthStatus] = useState<{ id: string; name: string; surname: string } | null>(null)
   const [client, setClient] = useState<ClienteRow | null>(null)
@@ -62,7 +62,7 @@ export function ClientView({ token, fromStorage = false }: {
 
   const checkAuth = async () => {
     const [{ data: rows, error: cErr }, { data: brandingRows }] = await Promise.all([
-      supabase.rpc('get_client_auth_status_by_token', { p_token: token }),
+      supabase.rpc('get_client_link_state', { p_token: token }),
       supabase.rpc('get_nutricionista_branding_by_token', { p_token: token }),
     ])
     if (cErr) logError('ClientView:loadClient', cErr)
@@ -82,10 +82,9 @@ export function ClientView({ token, fromStorage = false }: {
     setConsentDocumentUrl(branding?.consent_document_url || null)
     setAppName(branding?.app_name || null)
 
-    if (!status.auth_user_id) { setAuthState('needs_register'); return }
-
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!(session?.user && session.user.id === status.auth_user_id)) { setAuthState('needs_login'); return }
+    // Una ficha sin titular ya NO se reclama con este enlace: hace falta una invitación (/?i=…) que genera el profesional.
+    if (!status.claimed) { setAuthState('needs_invitation'); return }
+    if (!status.is_mine) { setAuthState('needs_login'); return }
 
     if (branding?.consent_document_url && !status.consent_accepted_at) {
       setAuthState('needs_consent')
@@ -119,14 +118,24 @@ export function ClientView({ token, fromStorage = false }: {
 
   const clientName = demoClient ? `${demoClient.name} ${demoClient.surname}` : `${authStatus!.name || ''} ${authStatus!.surname || ''}`.trim()
 
-  if (!demoClient && (authState === 'needs_register' || authState === 'needs_login')) {
+  if (!demoClient && authState === 'needs_invitation') {
+    return (
+      <div className="min-h-[100dvh] bg-bg flex flex-col items-center justify-center p-6 text-center">
+        <h1 className="text-xl font-serif font-bold mb-2">Este enlace ya no sirve para crear tu cuenta</h1>
+        <p className="text-sm text-muted max-w-xs leading-relaxed">Pide a {nutricionistaName} un enlace de acceso nuevo (vale 24 horas y se usa una sola vez).</p>
+        {fromStorage && <button type="button" className="mt-6 text-sm font-semibold text-accent underline underline-offset-2" onClick={() => { forgetClientToken(); window.location.replace('/') }}>Volver al inicio</button>}
+      </div>
+    )
+  }
+
+  if (!demoClient && authState === 'needs_login') {
     return (
       <>
         <ClientRegister
-          token={token}
           clientName={clientName}
           nutricionistaName={nutricionistaName}
-          initialStep={authState === 'needs_login' ? 'login' : 'register'}
+          initialStep="login"
+          allowRegister={false}
           onComplete={checkAuth}
         />
         {fromStorage && (

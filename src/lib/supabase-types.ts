@@ -38,6 +38,7 @@ export interface ClienteRow {
   notes_updated_at: string | null
   consent_accepted_at: string | null
   consent_signed_name: string | null
+  consent_invalidated_at?: string | null
   monthly_price: number | null
   goal_weight_kg: number | null
   custom_messages: Record<string, string> | null

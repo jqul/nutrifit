@@ -294,22 +294,9 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
     }
     await fetchClients()
     if (data.accountError) toast(`Cliente eliminado, pero no se pudo borrar su cuenta de acceso: ${data.accountError}`, 'warn')
+    else if (data.accountKept) toast(`Cliente eliminado con sus ficheros. Su cuenta de acceso NO se ha borrado (${data.accountKept}).`, 'ok')
     else toast('Cliente eliminado, con sus ficheros y su cuenta de acceso', 'ok')
     return true
-  }
-
-  const regenerateToken = async (id: string) => {
-    const token = generateClientToken()
-    if (demoClients) {
-      setClients(prev => prev.map(c => c.id === id ? { ...c, token } : c))
-      toast('Enlace regenerado (modo demo — no se guarda)', 'ok')
-      return token
-    }
-    const { error } = await supabase.from('clientes').update({ token }).eq('id', id)
-    if (error) { toast('Error al regenerar el enlace', 'warn'); return null }
-    await fetchClients()
-    toast('Enlace regenerado — el anterior ha dejado de funcionar', 'ok')
-    return token
   }
 
   // Dar de baja NO borra nada: el cliente sale de la lista, el Centro de control, los avisos y los
@@ -355,5 +342,5 @@ export function useNutricionistaClients({ nutricionistaId, demoClients }: Option
     await supabase.from('clientes').update({ last_reviewed_at: now }).eq('id', id)
   }
 
-  return { clients, bajas, loading, fetchClients, addClient, updateClient, deleteClient, dismissClient, reactivateClient, regenerateToken, markClientReviewed }
+  return { clients, bajas, loading, fetchClients, addClient, updateClient, deleteClient, dismissClient, reactivateClient, markClientReviewed }
 }

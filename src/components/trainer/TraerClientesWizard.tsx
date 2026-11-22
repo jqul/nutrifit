@@ -5,6 +5,7 @@ import { Modal } from '../shared/Modal'
 import { Button } from '../shared/Button'
 import { toast } from '../shared/Toast'
 import { generateClientToken } from '../../lib/token'
+import { createInvitationUrl } from '../../lib/clientLinkApi'
 import { toLocalISODate } from '../../lib/date'
 import { readTable } from '../../lib/spreadsheet'
 import { parsePastedTable, parsePastedHistory } from '../../lib/pastedTable'
@@ -309,12 +310,19 @@ export function TraerClientesWizard({ open, onClose, nutricionistaId, existingCl
         } catch (e) { errors.push(`Analíticas: ${e instanceof Error ? e.message : 'error desconocido'}`) }
       }
 
+      // Los enlaces de acceso (24 h, un solo uso) se generan al terminar: el token solo existe en esta pantalla.
+      const linkRows: { name: string; url: string }[] = []
+      for (const c of created) {
+        if (demoMode) { linkRows.push({ name: c.name, url: `${origin}/?c=${c.token}` }); continue }
+        const inv = await createInvitationUrl(c.id)
+        if (inv.ok) linkRows.push({ name: c.name, url: inv.url }); else errors.push(`Enlace de ${c.name}: ${inv.message} (genera uno desde su ficha)`)
+      }
       setResult({
         created: created.length, alreadyExisted: alreadyExisting,
         weights: { inserted: weightsInserted, already: Math.max(0, weightRows.length - weightsInserted) },
         notes: { clients: noteClients, lines: noteLines, already: Math.max(0, noteTotal - noteLines) },
         labs: { inserted: labsInserted, already: Math.max(0, labRows.length - labsInserted) },
-        links: created.map(c => ({ name: c.name, url: `${origin}/?c=${c.token}` })), errors,
+        links: linkRows, errors,
       })
       setStep('hecho')
       if (!demoMode) onImported()
@@ -447,7 +455,7 @@ export function TraerClientesWizard({ open, onClose, nutricionistaId, existingCl
               )}
             </ul>
             <p className="text-xs text-muted rounded-xl bg-bg-alt px-3 py-2.5">
-              {toCreate.length > 0 && <>Los clientes quedan guardados en NutriFit, pero <strong className="text-ink">no tendrán acceso a su app hasta que les envíes su enlace</strong>. Al terminar te lo dejo a mano para copiarlo. </>}
+              {toCreate.length > 0 && <>Los clientes quedan guardados en NutriFit, pero <strong className="text-ink">no tendrán acceso a su app hasta que les envíes su enlace</strong>. Al terminar te lo dejo a mano para copiarlo: vale 24 horas y se usa una sola vez. </>}
               Lo que ya existía (pesajes, resultados de analíticas, líneas de notas) no se duplica ni se pisa: puedes repetir la importación sin miedo.
             </p>
             {nothingToDo && <p className="text-sm text-warn">No hay nada que importar: ningún cliente nuevo ni datos de historial válidos.</p>}
@@ -494,7 +502,7 @@ export function TraerClientesWizard({ open, onClose, nutricionistaId, existingCl
                     </div>
                   ))}
                 </div>
-                {result.links.length > 30 && <p className="text-xs text-muted">Los demás están en su ficha (Perfil → Copiar enlace).</p>}
+                {result.links.length > 30 && <p className="text-xs text-muted">Los demás están en su ficha (Perfil → Generar enlace de acceso).</p>}
                 <Button variant="outline" onClick={() => copy(result.links.map(l => `${l.name}: ${l.url}`).join('\n'), 'Todos los enlaces copiados ✓')}><Copy className="w-4 h-4" /> Copiar todos los enlaces</Button>
               </div>
             )}

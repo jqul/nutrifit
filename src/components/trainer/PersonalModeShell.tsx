@@ -13,7 +13,6 @@ import { PerfilTab } from './client-panel/PerfilTab'
 import { PersonalOnboarding } from './PersonalOnboarding'
 import { AnamnesisForm } from '../client/AnamnesisForm'
 import { LogOut } from 'lucide-react'
-import { generateClientToken } from '../../lib/token'
 
 type Tab = 'hoy' | 'dieta' | 'progreso' | 'plan' | 'perfil'
 
@@ -56,18 +55,6 @@ export function PersonalModeShell({ userProfile, onLogout }: {
     if (error) { toast('Error: ' + error.message, 'warn'); return false }
     setClient({ ...client, ...updates })
     return true
-  }
-
-  // El "enlace" de la ficha no se usa en modo personal (se entra siempre
-  // con la cuenta propia), pero PerfilTab lo muestra igualmente — regenerarlo
-  // es inofensivo, así que se deja funcionar de verdad en vez de ocultarlo.
-  const handleRegenerateToken = async () => {
-    if (!client) return null
-    const token = generateClientToken()
-    const { error } = await supabase.from('clientes').update({ token }).eq('id', client.id)
-    if (error) return null
-    setClient({ ...client, token })
-    return token
   }
 
   // A diferencia de un cliente de verdad, borrar esta ficha dejaría la
@@ -142,7 +129,7 @@ export function PersonalModeShell({ userProfile, onLogout }: {
                 revise las del cliente, no para rellenarlas). */}
             <AnamnesisForm clientId={client.id} nutricionistaId={userProfile.uid} personalMode />
           </div>
-          <PerfilTab client={client} onUpdate={handleUpdate} onRegenerateToken={handleRegenerateToken}
+          <PerfilTab client={client} onUpdate={handleUpdate} onLinkChanged={() => {}}
             onDelete={handleDeleteAccount} nutricionistaName={userProfile.displayName}
             customQuestions={userProfile.customAnamnesisQuestions} hasConsentDocument={!!userProfile.consentDocumentUrl} personalMode />
         </div>

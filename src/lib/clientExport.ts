@@ -28,6 +28,8 @@ export const EXPORT_TABLES: ExportTable[] = [
   { table: 'blood_markers', order: 'date' },
   { table: 'body_metrics', order: 'date' },
   { table: 'client_clinical_notes', order: 'date' },
+  { table: 'client_link_events', order: 'occurred_at' },
+  { table: 'client_link_requests', order: 'created_at' },
   { table: 'client_reviews', order: 'week_start' },
   { table: 'cycle_logs', order: 'start_date' },
   { table: 'daily_checkins', order: 'date' },
@@ -48,6 +50,8 @@ export const EXPORT_TABLES: ExportTable[] = [
 export const EXPORT_EXCLUDED: Record<string, string> = {
   push_subscriptions: 'Datos técnicos del dispositivo para las notificaciones, sin contenido del cliente.',
   nutricionista_alert_state: 'Estado interno de los avisos al nutricionista; no contiene datos del cliente.',
+  client_invitations: 'Credencial de acceso de 24 h: solo guarda el hash del enlace y su estado; el historial de vinculación (client_link_events) sí se exporta.',
+  client_link_notifications: 'Bandeja interna de avisos al nutricionista sobre una vinculación; no contiene datos del cliente.',
 }
 
 export interface ExportSource {
